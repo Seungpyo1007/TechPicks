@@ -63,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(height: 16),
                 _signInButton(
                   'Sign in with Apple',
-                  'assets/logo/`    apple_logo.png', // Add your Apple logo asset here
+                  'assets/logo/apple_logo.png', // Add your Apple logo asset here
                       () {
                     // Handle Apple sign-in
                   },
