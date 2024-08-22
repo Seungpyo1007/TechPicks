@@ -29,7 +29,6 @@ flutter:
     - assets/logo/facebook_logo.png
     - assets/logo/apple_logo.png
     - assets/logo/logo.png
-    - assets/Video/milionLive.mp4
     - assets/Video/backgroundVideo.mp4
 
 flutter_icons:
