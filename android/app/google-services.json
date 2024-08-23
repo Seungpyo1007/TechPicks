@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:746932050988:android:38c726866fc4693a8e8589",
         "android_client_info": {
-          "package_name": "com.techpicks.app"
+          "package_name": "com.example.techpicks"
         }
       },
       "oauth_client": [],
