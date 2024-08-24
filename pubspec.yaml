@@ -22,6 +22,7 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^4.0.0
+  flutter_native_splash: ^2.4.1
 
 flutter:
 
@@ -33,8 +34,19 @@ flutter:
     - assets/logo/apple_logo.png
     - assets/logo/logo.png
     - assets/Video/backgroundVideo.mp4
+    - assets/images/Bottom1.png
+    - assets/images/Bottom2.png
+    - assets/images/main.png
+    - assets/images/top1.png
+    - assets/images/top2.png
 
 flutter_icons:
   android: true
   ios: true
   image_path: "assets/logo/logo.png"
+
+flutter_native_splash:
+  color: "#ffffff" # 배경색
+  image: assets/logo/logo.png
+  android: true
+  ios: true

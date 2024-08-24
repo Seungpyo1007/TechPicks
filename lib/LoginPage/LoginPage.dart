@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:video_player/video_player.dart';
+import 'MainLoginPage.dart'; // MainLoginPage import 추가
 
 class LoginPage extends StatefulWidget {
   @override
@@ -8,6 +11,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   late VideoPlayerController _controller;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
@@ -16,7 +20,7 @@ class _LoginPageState extends State<LoginPage> {
       ..initialize().then((_) {
         setState(() {
           _controller.play();
-          _controller.setLooping(true); // 비디오 반복 재생 설정
+          _controller.setLooping(true);
         });
       });
   }
@@ -35,40 +39,38 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           VideoPlayer(_controller),
           Container(
-            color: Colors.black.withOpacity(0.5), // 영상 위에 반투명 블랙 오버레이
+            color: Colors.black.withOpacity(0.5),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                SizedBox(height: 100), // 여기를 조정해서 버튼들을 더 위로 올립니다.
-                _emailSignInButton(), // 이메일 버튼을 첫 번째로 배치
+                SizedBox(height: 100),
+                _emailSignInButton(),
                 SizedBox(height: 16),
                 _signInButton(
                   'Sign in with Google',
-                  'assets/logo/google_logo.png', // Add your Google logo asset here
-                      () {
-                    // Handle Google sign-in
-                  },
+                  'assets/logo/google_logo.png',
+                  _signInWithGoogle,
                 ),
                 SizedBox(height: 16),
                 _signInButton(
                   'Sign in with Facebook',
-                  'assets/logo/facebook_logo.png', // Add your Facebook logo asset here
+                  'assets/logo/facebook_logo.png',
                       () {
-                    // Handle Facebook sign-in
+                    // 페이스북 로그인 버튼 클릭 시 동작을 여기에 추가하거나 비워둡니다.
                   },
                 ),
                 SizedBox(height: 16),
                 _signInButton(
                   'Sign in with Apple',
-                  'assets/logo/apple_logo.png', // Add your Apple logo asset here
+                  'assets/logo/apple_logo.png',
                       () {
-                    // Handle Apple sign-in
+                    // 애플 로그인 버튼 클릭 시 동작을 여기에 추가하거나 비워둡니다.
                   },
                 ),
-                SizedBox(height: 50), // 하단에도 약간의 여백 추가 (원하는 대로 조정 가능)
+                SizedBox(height: 50),
               ],
             ),
           ),
@@ -77,15 +79,39 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  void _signInWithEmail() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MainLoginPage()),
+    );
+  }
+
+  // Google 로그인
+  Future<void> _signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      // 로그인 성공 처리
+    } catch (e) {
+      // 오류 처리
+      print(e);
+    }
+  }
+
   Widget _signInButton(String text, String asset, Function() onPressed) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
         minimumSize: Size(double.infinity, 50),
-        backgroundColor: Colors.grey[200], // Update here
-        foregroundColor: Colors.black, // Update here
+        backgroundColor: Colors.grey[200],
+        foregroundColor: Colors.black,
       ),
       onPressed: onPressed,
-      icon: Image.asset(asset, height: 24), // Add your logo asset here
+      icon: Image.asset(asset, height: 24),
       label: Text(text),
     );
   }
@@ -95,9 +121,7 @@ class _LoginPageState extends State<LoginPage> {
       style: OutlinedButton.styleFrom(
         minimumSize: Size(double.infinity, 50),
       ),
-      onPressed: () {
-        // Handle email sign-in
-      },
+      onPressed: _signInWithEmail,
       icon: Icon(Icons.email),
       label: Text('Sign in with email'),
     );
