@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../components/MainLoginPageBackground.dart';
-import 'LoginPage.dart';
+import 'MainLoginPage.dart';
 
 class RegisterScreen extends StatelessWidget {
   @override
@@ -20,8 +20,7 @@ class RegisterScreen extends StatelessWidget {
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF2661FA),
-                    fontSize: 36
-                ),
+                    fontSize: 36),
                 textAlign: TextAlign.left,
               ),
             ),
@@ -30,9 +29,7 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.center,
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
-                decoration: InputDecoration(
-                    labelText: "Name"
-                ),
+                decoration: InputDecoration(labelText: "Name"),
               ),
             ),
             SizedBox(height: size.height * 0.03),
@@ -40,9 +37,7 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.center,
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
-                decoration: InputDecoration(
-                    labelText: "Mobile Number"
-                ),
+                decoration: InputDecoration(labelText: "Mobile Number"),
               ),
             ),
             SizedBox(height: size.height * 0.03),
@@ -50,9 +45,7 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.center,
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
-                decoration: InputDecoration(
-                    labelText: "Username"
-                ),
+                decoration: InputDecoration(labelText: "Username"),
               ),
             ),
             SizedBox(height: size.height * 0.03),
@@ -60,9 +53,7 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.center,
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
-                decoration: InputDecoration(
-                    labelText: "Password"
-                ),
+                decoration: InputDecoration(labelText: "Password"),
                 obscureText: true,
               ),
             ),
@@ -106,7 +97,23 @@ class RegisterScreen extends StatelessWidget {
               margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
               child: GestureDetector(
                 onTap: () => {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()))
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) => MainLoginPage(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        var begin = 0.0;
+                        var end = 1.0;
+                        var tween = Tween(begin: begin, end: end);
+                        var opacityAnimation = animation.drive(tween);
+
+                        return FadeTransition(
+                          opacity: opacityAnimation,
+                          child: child,
+                        );
+                      },
+                    ),
+                  )
                 },
                 child: Text(
                   "Already Have an Account? Sign in",

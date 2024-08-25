@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:video_player/video_player.dart';
-import 'MainLoginPage.dart'; // MainLoginPage import 추가
+import 'package:animated_text_kit/animated_text_kit.dart';
+import 'MainLoginPage.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -41,12 +42,37 @@ class _LoginPageState extends State<LoginPage> {
           Container(
             color: Colors.black.withOpacity(0.5),
           ),
+          Positioned(
+            left: MediaQuery.of(context).size.width * 0.1, // 약간 오른쪽으로 위치
+            top: MediaQuery.of(context).size.height * 0.1, // 약간 아래로 위치
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimatedTextKit(
+                  animatedTexts: [
+                    TypewriterAnimatedText(
+                      'TechPicks\nWelcome',
+                      textStyle: TextStyle(
+                        fontSize: 40.0,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      speed: Duration(milliseconds: 200),
+                    ),
+                  ],
+                  repeatForever: true, // 무한 반복 설정
+                  pause: Duration(milliseconds: 1000),
+                  displayFullTextOnTap: true,
+                  stopPauseOnTap: true,
+                ),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                SizedBox(height: 100),
                 _emailSignInButton(),
                 SizedBox(height: 16),
                 _signInButton(
@@ -82,7 +108,20 @@ class _LoginPageState extends State<LoginPage> {
   void _signInWithEmail() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => MainLoginPage()),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => MainLoginPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          var begin = 0.0;
+          var end = 1.0;
+          var tween = Tween(begin: begin, end: end);
+          var fadeAnimation = animation.drive(tween);
+
+          return FadeTransition(
+            opacity: fadeAnimation,
+            child: child,
+          );
+        },
+      ),
     );
   }
 
