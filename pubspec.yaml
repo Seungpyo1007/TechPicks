@@ -17,6 +17,8 @@ dependencies:
   firebase_auth: ^5.1.4
   google_sign_in: ^6.2.1
   animated_text_kit: ^4.2.1
+  salomon_bottom_bar: ^3.3.2
+
 
 dev_dependencies:
   flutter_test:

@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
-import '../components/MainLoginPageBackground.dart';
-import 'MainLoginPage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../components/EmailLoginPageBackground.dart';
+import 'EmailLogin.dart';
 
 class RegisterScreen extends StatelessWidget {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -29,6 +36,7 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.center,
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
+                controller: _nameController,
                 decoration: InputDecoration(labelText: "Name"),
               ),
             ),
@@ -37,6 +45,7 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.center,
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
+                controller: _mobileController,
                 decoration: InputDecoration(labelText: "Mobile Number"),
               ),
             ),
@@ -45,7 +54,8 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.center,
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
-                decoration: InputDecoration(labelText: "Username"),
+                controller: _emailController,
+                decoration: InputDecoration(labelText: "Email"),
               ),
             ),
             SizedBox(height: size.height * 0.03),
@@ -53,6 +63,7 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.center,
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
+                controller: _passwordController,
                 decoration: InputDecoration(labelText: "Password"),
                 obscureText: true,
               ),
@@ -62,21 +73,40 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.centerRight,
               margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  try {
+                    // Firebase 이메일/비밀번호로 사용자 등록
+                    UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+                      email: _emailController.text,
+                      password: _passwordController.text,
+                    );
+
+                    // 등록 성공 시 로그인 화면으로 이동
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => MainLoginPage()),
+                    );
+                  } catch (e) {
+                    // 등록 실패 시 에러 메시지 표시
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Registration failed. Please try again.")),
+                    );
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(80.0),
                   ),
                   padding: const EdgeInsets.all(0),
-                  backgroundColor: Colors.orange, // Button color
+                  backgroundColor: Colors.orange, // 버튼 색상
                 ),
                 child: Container(
                   alignment: Alignment.center,
                   height: 50.0,
                   width: size.width * 0.5,
-                  decoration: new BoxDecoration(
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(80.0),
-                    gradient: new LinearGradient(
+                    gradient: LinearGradient(
                       colors: [
                         Color.fromARGB(255, 255, 136, 34),
                         Color.fromARGB(255, 255, 177, 41)

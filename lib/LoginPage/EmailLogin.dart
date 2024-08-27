@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'RegisterPage.dart';
-import '../components/MainLoginPageBackground.dart';
+import 'package:firebase_auth/firebase_auth.dart';  // Firebase Auth import
+import '../MainPage/MainPage.dart';
+import '../components/EmailLoginPageBackground.dart';
+import 'RegisterPage.dart';  // MainPage import
 
 class MainLoginPage extends StatelessWidget {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -14,12 +20,12 @@ class MainLoginPage extends StatelessWidget {
           children: <Widget>[
             _buildHeaderText(),
             SizedBox(height: size.height * 0.03),
-            _buildTextField("Username"),
+            _buildTextField("Email", controller: _emailController),  // Updated to use controller
             SizedBox(height: size.height * 0.03),
-            _buildTextField("Password", obscureText: true),
+            _buildTextField("Password", controller: _passwordController, obscureText: true),  // Updated to use controller
             _buildForgotPasswordText(),
             SizedBox(height: size.height * 0.05),
-            _buildLoginButton(size),
+            _buildLoginButton(size, context),  // Updated to pass context
             _buildSignUpText(context),
           ],
         ),
@@ -43,11 +49,12 @@ class MainLoginPage extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(String labelText, {bool obscureText = false}) {
+  Widget _buildTextField(String labelText, {bool obscureText = false, required TextEditingController controller}) {
     return Container(
       alignment: Alignment.center,
       margin: EdgeInsets.symmetric(horizontal: 40),
       child: TextField(
+        controller: controller,  // Updated to use the passed controller
         decoration: InputDecoration(labelText: labelText),
         obscureText: obscureText,
       ),
@@ -65,13 +72,30 @@ class MainLoginPage extends StatelessWidget {
     );
   }
 
-  Widget _buildLoginButton(Size size) {
+  Widget _buildLoginButton(Size size, BuildContext context) {
     return Container(
       alignment: Alignment.centerRight,
       margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
       child: ElevatedButton(
-        onPressed: () {
-          // Handle login button press
+        onPressed: () async {
+          // Firebase Authentication 로그인 로직
+          try {
+            UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+              email: _emailController.text,
+              password: _passwordController.text,
+            );
+            if (userCredential.user != null) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) =>  const SimpleBottomNavigation()),
+              );
+            }
+          } catch (e) {
+            // 로그인 실패 시 처리
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Login failed. Please try again.")),
+            );
+          }
         },
         style: ElevatedButton.styleFrom(
           shape: RoundedRectangleBorder(

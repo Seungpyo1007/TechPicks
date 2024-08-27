@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:video_player/video_player.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'MainLoginPage.dart';
+import 'EmailLogin.dart';
 
 class LoginPage extends StatefulWidget {
   @override
