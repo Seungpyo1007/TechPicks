@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';  // Firebase Auth import
+import 'package:flutter/cupertino.dart'; // Import Cupertino package
+import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth import
 import '../MainPage/MainPage.dart';
 import '../components/EmailLoginPageBackground.dart';
-import 'RegisterPage.dart';  // MainPage import
+import 'RegisterPage.dart';
+import 'DeveloperLogin.dart'; // Import DeveloperLogin page
 
-class MainLoginPage extends StatelessWidget {
+class MainLoginPage extends StatefulWidget {
+  @override
+  _MainLoginPageState createState() => _MainLoginPageState();
+}
+
+class _MainLoginPageState extends State<MainLoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  int _selectedIndex = 0; // 0 for Login, 1 for Developer Login
 
   @override
   Widget build(BuildContext context) {
@@ -18,27 +27,125 @@ class MainLoginPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _buildHeaderText(),
+            _buildSegmentedControl(), // Fixed position for toggle control
             SizedBox(height: size.height * 0.03),
-            _buildTextField("Email", controller: _emailController),  // Updated to use controller
-            SizedBox(height: size.height * 0.03),
-            _buildTextField("Password", controller: _passwordController, obscureText: true),  // Updated to use controller
-            _buildForgotPasswordText(),
-            SizedBox(height: size.height * 0.05),
-            _buildLoginButton(size, context),  // Updated to pass context
-            _buildSignUpText(context),
+            _buildContent(size, context), // Content based on toggle selection
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeaderText() {
+  Widget _buildSegmentedControl() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 40.0), // Keep the toggle button in a fixed position
+      child: CupertinoSegmentedControl<int>(
+        borderColor: Color(0xFF2661FA),
+        selectedColor: Color(0xFF2661FA),
+        unselectedColor: Colors.white,
+        children: {
+          0: Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: Text('Login', style: TextStyle(fontSize: 14)), // Reduced font size
+          ),
+          1: Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: Text('Developer Login', style: TextStyle(fontSize: 14)), // Reduced font size
+          ),
+        },
+        groupValue: _selectedIndex,
+        onValueChanged: (int value) {
+          setState(() {
+            _selectedIndex = value;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildContent(Size size, BuildContext context) {
+    // Decides which view to show based on the selected index
+    if (_selectedIndex == 0) {
+      return _buildLoginView(size, context);
+    } else {
+      return _buildDeveloperLoginView(context);
+    }
+  }
+
+  Widget _buildLoginView(Size size, BuildContext context) {
+    return Column(
+      children: [
+        _buildHeaderText("LOGIN"),
+        SizedBox(height: size.height * 0.03),
+        _buildTextField("Email", controller: _emailController),
+        SizedBox(height: size.height * 0.03),
+        _buildTextField("Password", controller: _passwordController, obscureText: true),
+        _buildForgotPasswordText(),
+        SizedBox(height: size.height * 0.05),
+        _buildLoginButton(size, context, "LOGIN"),
+        _buildSignUpText(context),
+      ],
+    );
+  }
+
+  Widget _buildDeveloperLoginView(BuildContext context) {
+    return Column(
+      children: [
+        _buildHeaderText("DEVELOPER LOGIN"),
+        SizedBox(height: 20),
+        _buildDeveloperLoginButton(context),
+      ],
+    );
+  }
+
+  Widget _buildDeveloperLoginButton(BuildContext context) {
+    return Container(
+      alignment: Alignment.centerRight,
+      margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => DeveloperLogin()), // Navigate to Developer Login page
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(80.0),
+          ),
+          padding: const EdgeInsets.all(0),
+          backgroundColor: Colors.transparent,
+        ),
+        child: Container(
+          alignment: Alignment.center,
+          height: 50.0,
+          width: MediaQuery.of(context).size.width * 0.5,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(80.0),
+            gradient: LinearGradient(
+              colors: [
+                Color.fromARGB(255, 255, 136, 34),
+                Color.fromARGB(255, 255, 177, 41),
+              ],
+            ),
+          ),
+          padding: const EdgeInsets.all(0),
+          child: Text(
+            "DEVELOPER LOGIN",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderText(String title) {
     return Container(
       alignment: Alignment.centerLeft,
       padding: EdgeInsets.symmetric(horizontal: 40),
       child: Text(
-        "LOGIN",
+        title,
         style: TextStyle(
           fontWeight: FontWeight.bold,
           color: Color(0xFF2661FA),
@@ -54,7 +161,7 @@ class MainLoginPage extends StatelessWidget {
       alignment: Alignment.center,
       margin: EdgeInsets.symmetric(horizontal: 40),
       child: TextField(
-        controller: controller,  // Updated to use the passed controller
+        controller: controller,
         decoration: InputDecoration(labelText: labelText),
         obscureText: obscureText,
       ),
@@ -72,13 +179,13 @@ class MainLoginPage extends StatelessWidget {
     );
   }
 
-  Widget _buildLoginButton(Size size, BuildContext context) {
+  Widget _buildLoginButton(Size size, BuildContext context, String buttonText) {
     return Container(
       alignment: Alignment.centerRight,
       margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
       child: ElevatedButton(
         onPressed: () async {
-          // Firebase Authentication 로그인 로직
+          // Firebase Authentication login logic
           try {
             UserCredential userCredential = await _auth.signInWithEmailAndPassword(
               email: _emailController.text,
@@ -87,13 +194,13 @@ class MainLoginPage extends StatelessWidget {
             if (userCredential.user != null) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) =>  const SimpleBottomNavigation()),
+                MaterialPageRoute(builder: (context) => const SimpleBottomNavigation()),
               );
             }
           } catch (e) {
-            // 로그인 실패 시 처리
+            // Handle login failure
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Login failed. Please try again.")),
+              SnackBar(content: Text("$buttonText failed. Please try again.")),
             );
           }
         },
@@ -119,7 +226,7 @@ class MainLoginPage extends StatelessWidget {
           ),
           padding: const EdgeInsets.all(0),
           child: Text(
-            "LOGIN",
+            buttonText,
             textAlign: TextAlign.center,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
