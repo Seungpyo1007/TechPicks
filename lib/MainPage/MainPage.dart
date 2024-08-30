@@ -33,7 +33,7 @@ class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
         centerTitle: false,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Image.asset('assets/logo/logo.png'), // 상단 로고 이미지
+          child: Image.asset('assets/logo/NBlogo.png'), // 상단 로고 이미지
         ),
       ),
       body: Stack(

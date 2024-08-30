@@ -63,7 +63,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
           ),
           Positioned(
             left: MediaQuery.of(context).size.width * 0.1,
-            top: MediaQuery.of(context).size.height * 0.1,
+            top: MediaQuery.of(context).size.height * 0.15, // 글자 올리고 싶으면 이거 ㄱㄱㄱ
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -85,6 +85,15 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
                   stopPauseOnTap: true,
                 ),
               ],
+            ),
+          ),
+          // Positioned logo in the top right corner
+          Positioned(
+            right: MediaQuery.of(context).size.width * 0.10,
+            top: MediaQuery.of(context).size.height * 0.10,
+            child: Image.asset(
+              'assets/logo/NBlogo.png', // Adjust the path to your logo
+              height: 100, // Adjust the size as needed
             ),
           ),
           Padding(

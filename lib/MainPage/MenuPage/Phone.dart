@@ -22,9 +22,9 @@ class _PhoneScreenState extends State<PhoneScreen> {
   Future<void> fetchPhoneRankings() async {
     try {
       final response = await http.get(
-        Uri.parse('https://api.example.com/phone-rankings'), // 여기에 실제 API URL을 넣어야 합니다.
+        Uri.parse('https://api.example.com/phone-rankings'), // Replace with actual API URL
         headers: {
-          'Authorization': 'Bearer YOUR_API_KEY', // 필요 시 API 키 추가
+          'Authorization': 'Bearer YOUR_API_KEY', // Add API key if needed
         },
       );
 
@@ -52,18 +52,24 @@ class _PhoneScreenState extends State<PhoneScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Phone Rankings'),
+        backgroundColor: Colors.white, // Keep the AppBar's background color unchanged
+        foregroundColor: Colors.black, // Set the AppBar text color if needed
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-        itemCount: phoneRankings.length,
-        itemBuilder: (context, index) {
-          final phone = phoneRankings[index];
-          return ListTile(
-            title: Text(phone['name'] ?? 'Unknown'),
-            subtitle: Text('Rank: ${phone['rank'] ?? 'N/A'}'),
-          );
-        },
+      backgroundColor: Colors.white, // Set a constant background color
+      body: Container(
+        color: Colors.white, // Set the Container color to match the background
+        child: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : ListView.builder(
+          itemCount: phoneRankings.length,
+          itemBuilder: (context, index) {
+            final phone = phoneRankings[index];
+            return ListTile(
+              title: Text(phone['name'] ?? 'Unknown'),
+              subtitle: Text('Rank: ${phone['rank'] ?? 'N/A'}'),
+            );
+          },
+        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import '../MainPage/MainPage.dart';
 import '../components/EmailLoginPageBackground.dart';
 import 'RegisterPage.dart';
 import 'DeveloperLogin.dart'; // Import DeveloperLogin page
+import 'ChangePassword.dart'; // Import ChangePassword page
 
 class MainLoginPage extends StatefulWidget {
   @override
@@ -29,7 +30,16 @@ class _MainLoginPageState extends State<MainLoginPage> {
           children: <Widget>[
             _buildSegmentedControl(), // Fixed position for toggle control
             SizedBox(height: size.height * 0.03),
-            _buildContent(size, context), // Content based on toggle selection
+            AnimatedSwitcher(
+              duration: Duration(milliseconds: 300), // Duration for the animation
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: child,
+                );
+              },
+              child: _buildContent(size, context), // Animated transition for content
+            ),
           ],
         ),
       ),
@@ -38,7 +48,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
 
   Widget _buildSegmentedControl() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 40.0), // Keep the toggle button in a fixed position
+      padding: EdgeInsets.symmetric(horizontal: 40.0), // Fix the toggle button position
       child: CupertinoSegmentedControl<int>(
         borderColor: Color(0xFF2661FA),
         selectedColor: Color(0xFF2661FA),
@@ -74,13 +84,14 @@ class _MainLoginPageState extends State<MainLoginPage> {
 
   Widget _buildLoginView(Size size, BuildContext context) {
     return Column(
+      key: ValueKey(0), // Unique key for the AnimatedSwitcher
       children: [
         _buildHeaderText("LOGIN"),
         SizedBox(height: size.height * 0.03),
         _buildTextField("Email", controller: _emailController),
         SizedBox(height: size.height * 0.03),
         _buildTextField("Password", controller: _passwordController, obscureText: true),
-        _buildForgotPasswordText(),
+        _buildForgotPasswordText(context), // Updated to include context for navigation
         SizedBox(height: size.height * 0.05),
         _buildLoginButton(size, context, "LOGIN"),
         _buildSignUpText(context),
@@ -90,6 +101,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
 
   Widget _buildDeveloperLoginView(BuildContext context) {
     return Column(
+      key: ValueKey(1), // Unique key for the AnimatedSwitcher
       children: [
         _buildHeaderText("DEVELOPER LOGIN"),
         SizedBox(height: 20),
@@ -140,6 +152,25 @@ class _MainLoginPageState extends State<MainLoginPage> {
     );
   }
 
+  Widget _buildForgotPasswordText(BuildContext context) {
+    return Container(
+      alignment: Alignment.centerRight,
+      margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ChangePassword()), // Navigate to ChangePassword page
+          );
+        },
+        child: Text(
+          "Forgot your password?",
+          style: TextStyle(fontSize: 12, color: Color(0XFF2661FA)),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeaderText(String title) {
     return Container(
       alignment: Alignment.centerLeft,
@@ -164,17 +195,6 @@ class _MainLoginPageState extends State<MainLoginPage> {
         controller: controller,
         decoration: InputDecoration(labelText: labelText),
         obscureText: obscureText,
-      ),
-    );
-  }
-
-  Widget _buildForgotPasswordText() {
-    return Container(
-      alignment: Alignment.centerRight,
-      margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-      child: Text(
-        "Forgot your password?",
-        style: TextStyle(fontSize: 12, color: Color(0XFF2661FA)),
       ),
     );
   }

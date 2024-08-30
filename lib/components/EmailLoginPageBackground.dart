@@ -37,7 +37,7 @@ class Background extends StatelessWidget {
             top: 50,
             right: 30,
             child: Image.asset(
-              "assets/images/main.png",
+              "assets/logo/NBlogo.png",
               width: 70,  // 고정된 너비
               height: 110, // 고정된 높이
               fit: BoxFit.cover, // 이미지가 크기에 맞게 잘림 없이 채워지도록 설정
