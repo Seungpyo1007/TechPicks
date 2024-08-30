@@ -10,6 +10,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+
+  http: ^0.13.5
+
   cupertino_icons: ^1.0.8
   video_player: ^2.4.5
   flutter_launcher_icons: ^0.13.1
@@ -32,16 +35,9 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/logo/google_logo.png
-    - assets/logo/facebook_logo.png
-    - assets/logo/apple_logo.png
-    - assets/logo/logo.png
-    - assets/Video/backgroundVideo.mp4
-    - assets/images/Bottom1.png
-    - assets/images/Bottom2.png
-    - assets/images/main.png
-    - assets/images/top1.png
-    - assets/images/top2.png
+    - assets/logo/
+    - assets/images/
+    - assets/Video/
 
 flutter_icons:
   android: true
