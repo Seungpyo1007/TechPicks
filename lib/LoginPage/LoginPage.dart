@@ -10,13 +10,18 @@ class LoginPage extends StatefulWidget {
   _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
   late VideoPlayerController _controller;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initializeVideo(); // Initialize and play video on page load
+  }
+
+  void _initializeVideo() {
     _controller = VideoPlayerController.asset("assets/Video/backgroundVideo.mp4")
       ..initialize().then((_) {
         setState(() {
@@ -28,8 +33,22 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose(); // Dispose video when leaving the page
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (!_controller.value.isPlaying) {
+        _controller.play(); // Play video when app is resumed
+      }
+    } else if (state == AppLifecycleState.paused) {
+      if (_controller.value.isPlaying) {
+        _controller.pause(); // Pause video when app is in background
+      }
+    }
   }
 
   @override
@@ -43,8 +62,8 @@ class _LoginPageState extends State<LoginPage> {
             color: Colors.black.withOpacity(0.5),
           ),
           Positioned(
-            left: MediaQuery.of(context).size.width * 0.1, // 약간 오른쪽으로 위치
-            top: MediaQuery.of(context).size.height * 0.1, // 약간 아래로 위치
+            left: MediaQuery.of(context).size.width * 0.1,
+            top: MediaQuery.of(context).size.height * 0.1,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -60,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                       speed: Duration(milliseconds: 200),
                     ),
                   ],
-                  repeatForever: true, // 무한 반복 설정
+                  repeatForever: true,
                   pause: Duration(milliseconds: 1000),
                   displayFullTextOnTap: true,
                   stopPauseOnTap: true,
@@ -73,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _emailSignInButton(),
+                _emailSignInButton(), // Updated email sign-in button
                 SizedBox(height: 16),
                 _signInButton(
                   'Sign in with Google',
@@ -85,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                   'Sign in with Facebook',
                   'assets/logo/facebook_logo.png',
                       () {
-                    // 페이스북 로그인 버튼 클릭 시 동작을 여기에 추가하거나 비워둡니다.
+                    // Placeholder for Facebook login action
                   },
                 ),
                 SizedBox(height: 16),
@@ -93,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                   'Sign in with Apple',
                   'assets/logo/apple_logo.png',
                       () {
-                    // 애플 로그인 버튼 클릭 시 동작을 여기에 추가하거나 비워둡니다.
+                    // Placeholder for Apple login action
                   },
                 ),
                 SizedBox(height: 50),
@@ -105,40 +124,42 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _signInWithEmail() {
+  void _stopVideoAndNavigate(Widget page) {
+    _controller.pause(); // Pause video before navigating
     Navigator.push(
       context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => MainLoginPage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          var begin = 0.0;
-          var end = 1.0;
-          var tween = Tween(begin: begin, end: end);
-          var fadeAnimation = animation.drive(tween);
-
-          return FadeTransition(
-            opacity: fadeAnimation,
-            child: child,
-          );
-        },
+      MaterialPageRoute(
+        builder: (context) => page,
+        fullscreenDialog: true,
       ),
-    );
+    ).then((_) {
+      if (!_controller.value.isPlaying) {
+        _controller.play(); // Resume video when returning to the page
+      }
+    });
   }
 
-  // Google 로그인
+  void _signInWithEmail() {
+    _stopVideoAndNavigate(MainLoginPage());
+  }
+
   Future<void> _signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
+      final GoogleSignInAuthentication googleAuth =
+      await googleUser!.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      UserCredential userCredential = await _auth.signInWithCredential(credential);
-      // 로그인 성공 처리
+      UserCredential userCredential =
+      await _auth.signInWithCredential(credential);
+
+      if (userCredential.user != null) {
+        _stopVideoAndNavigate(MainLoginPage());
+      }
     } catch (e) {
-      // 오류 처리
-      print(e);
+      print(e); // Error handling
     }
   }
 
@@ -156,12 +177,14 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _emailSignInButton() {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
         minimumSize: Size(double.infinity, 50),
+        backgroundColor: Colors.white, // White background color for email button
+        foregroundColor: Colors.black,
       ),
       onPressed: _signInWithEmail,
-      icon: Icon(Icons.email),
+      icon: Icon(Icons.email, color: Colors.black, size: 24), // Icon with black color
       label: Text('Sign in with email'),
     );
   }
