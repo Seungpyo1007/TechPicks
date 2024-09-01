@@ -52,12 +52,8 @@ class _PhoneScreenState extends State<PhoneScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Phone Rankings'),
-        backgroundColor: Colors.white, // Keep the AppBar's background color unchanged
-        foregroundColor: Colors.black, // Set the AppBar text color if needed
       ),
-      backgroundColor: Colors.white, // Set a constant background color
       body: Container(
-        color: Colors.white, // Set the Container color to match the background
         child: isLoading
             ? Center(child: CircularProgressIndicator())
             : ListView.builder(

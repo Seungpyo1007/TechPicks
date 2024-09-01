@@ -3,6 +3,7 @@ import 'MenuPage/Home.dart';
 import 'MenuPage/Phone.dart';
 import 'MenuPage/CPU.dart';
 import 'MenuPage/Profile.dart';
+import 'MenuPage/Laptop.dart';
 
 class SimpleBottomNavigation extends StatefulWidget {
   const SimpleBottomNavigation({Key? key}) : super(key: key);
@@ -13,13 +14,14 @@ class SimpleBottomNavigation extends StatefulWidget {
 
 class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
   int _selectedIndex = 0; // 기본 선택된 탭을 PHONE으로 설정
-  BottomNavigationBarType _bottomNavType = BottomNavigationBarType.shifting;
+  BottomNavigationBarType _bottomNavType = BottomNavigationBarType.fixed;
 
   // 각 페이지를 리스트로 정의
   final List<Widget> _pages = [
     const HomeScreen(),
     const CPUScreen(),
     const PhoneScreen(),
+    const LaptopScreen(),
     const ProfileScreen(),
   ];
 
@@ -60,8 +62,8 @@ class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.black, // 선택된 아이템 색상 (검정)
-        unselectedItemColor: Colors.black,
+        selectedItemColor: Colors.white, // 선택된 아이템 색상 (하얀색)
+        unselectedItemColor: Colors.white, // 선택되지 않은 아이템 색상 (하얀색)
         backgroundColor: Colors.black,
         type: _bottomNavType,
         onTap: (index) {
@@ -77,23 +79,28 @@ class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
 
 const _navBarItems = [
   BottomNavigationBarItem(
-    icon: Icon(Icons.home_outlined),
-    activeIcon: Icon(Icons.home_rounded),
+    icon: Icon(Icons.home_outlined, color: Colors.white),
+    activeIcon: Icon(Icons.home_rounded, color: Colors.white),
     label: 'Home',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.memory),
-    activeIcon: Icon(Icons.memory, color: Colors.black),
+    icon: Icon(Icons.memory, color: Colors.white),
+    activeIcon: Icon(Icons.memory, color: Colors.white),
     label: 'CPU',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.phone_android),
-    activeIcon: Icon(Icons.phone_android, color: Colors.black),
-    label: 'PHONE',
+    icon: Icon(Icons.phone_android, color: Colors.white),
+    activeIcon: Icon(Icons.phone_android, color: Colors.white),
+    label: 'Phone',
   ),
   BottomNavigationBarItem(
-    icon: Icon(Icons.person_outline),
-    activeIcon: Icon(Icons.person_outline, color: Colors.black),
+    icon: Icon(Icons.laptop, color: Colors.white),
+    activeIcon: Icon(Icons.laptop, color: Colors.white),
+    label: 'Laptop',
+  ),
+  BottomNavigationBarItem(
+    icon: Icon(Icons.person_outline, color: Colors.white),
+    activeIcon: Icon(Icons.person_outline, color: Colors.white),
     label: 'Profile',
   ),
 ];
