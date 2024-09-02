@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart'; // Import Cupertino package
-import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth import
+import 'package:flutter/cupertino.dart'; // Cupertino 패키지 추가
+import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth 패키지 추가
+import 'package:easy_localization/easy_localization.dart'; // 번역 패키지 추가
 import '../MainPage/MainPage.dart';
 import '../components/EmailLoginPageBackground.dart';
 import 'RegisterPage.dart';
-import 'DeveloperLogin.dart'; // Import DeveloperLogin page
-import 'ChangePassword.dart'; // Import ChangePassword page
+import 'DeveloperLogin.dart'; // DeveloperLogin 페이지 임포트
+import 'ChangePassword.dart'; // ChangePassword 페이지 임포트
 
 class MainLoginPage extends StatefulWidget {
   @override
@@ -28,17 +29,17 @@ class _MainLoginPageState extends State<MainLoginPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _buildSegmentedControl(), // Fixed position for toggle control
+            _buildSegmentedControl(), // 고정된 위치에 토글 컨트롤 추가
             SizedBox(height: size.height * 0.03),
             AnimatedSwitcher(
-              duration: Duration(milliseconds: 300), // Duration for the animation
+              duration: Duration(milliseconds: 300), // 애니메이션 지속 시간
               transitionBuilder: (Widget child, Animation<double> animation) {
                 return FadeTransition(
                   opacity: animation,
                   child: child,
                 );
               },
-              child: _buildContent(size, context), // Animated transition for content
+              child: _buildContent(size, context), // 애니메이션이 적용된 콘텐츠
             ),
           ],
         ),
@@ -48,7 +49,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
 
   Widget _buildSegmentedControl() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 40.0), // Fix the toggle button position
+      padding: EdgeInsets.symmetric(horizontal: 40.0), // 토글 버튼 위치 고정
       child: CupertinoSegmentedControl<int>(
         borderColor: Color(0xFF2661FA),
         selectedColor: Color(0xFF2661FA),
@@ -56,11 +57,11 @@ class _MainLoginPageState extends State<MainLoginPage> {
         children: {
           0: Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text('Login', style: TextStyle(fontSize: 14)), // Reduced font size
+            child: Text('login'.tr(), style: TextStyle(fontSize: 14)), // 텍스트 번역 추가
           ),
           1: Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text('Developer Login', style: TextStyle(fontSize: 14)), // Reduced font size
+            child: Text('developer_login'.tr(), style: TextStyle(fontSize: 14)), // 텍스트 번역 추가
           ),
         },
         groupValue: _selectedIndex,
@@ -74,7 +75,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
   }
 
   Widget _buildContent(Size size, BuildContext context) {
-    // Decides which view to show based on the selected index
+    // 선택된 인덱스에 따라 보여줄 뷰를 결정
     if (_selectedIndex == 0) {
       return _buildLoginView(size, context);
     } else {
@@ -84,16 +85,16 @@ class _MainLoginPageState extends State<MainLoginPage> {
 
   Widget _buildLoginView(Size size, BuildContext context) {
     return Column(
-      key: ValueKey(0), // Unique key for the AnimatedSwitcher
+      key: ValueKey(0), // AnimatedSwitcher를 위한 고유 키
       children: [
-        _buildHeaderText("LOGIN"),
+        _buildHeaderText("login".tr()), // 텍스트 번역 추가
         SizedBox(height: size.height * 0.03),
-        _buildTextField("Email", controller: _emailController),
+        _buildTextField("email".tr(), controller: _emailController), // 텍스트 번역 추가
         SizedBox(height: size.height * 0.03),
-        _buildTextField("Password", controller: _passwordController, obscureText: true),
-        _buildForgotPasswordText(context), // Updated to include context for navigation
+        _buildTextField("password".tr(), controller: _passwordController, obscureText: true), // 텍스트 번역 추가
+        _buildForgotPasswordText(context), // 네비게이션을 위한 컨텍스트 추가
         SizedBox(height: size.height * 0.05),
-        _buildLoginButton(size, context, "LOGIN"),
+        _buildLoginButton(size, context, "login".tr()), // 텍스트 번역 추가
         _buildSignUpText(context),
       ],
     );
@@ -101,9 +102,9 @@ class _MainLoginPageState extends State<MainLoginPage> {
 
   Widget _buildDeveloperLoginView(BuildContext context) {
     return Column(
-      key: ValueKey(1), // Unique key for the AnimatedSwitcher
+      key: ValueKey(1), // AnimatedSwitcher를 위한 고유 키
       children: [
-        _buildHeaderText("DEVELOPER LOGIN"),
+        _buildHeaderText("developer_login".tr()), // 텍스트 번역 추가
         SizedBox(height: 20),
         _buildDeveloperLoginButton(context),
       ],
@@ -118,7 +119,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => DeveloperLogin()), // Navigate to Developer Login page
+            MaterialPageRoute(builder: (context) => DeveloperLogin()), // DeveloperLogin 페이지로 이동
           );
         },
         style: ElevatedButton.styleFrom(
@@ -143,7 +144,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
           ),
           padding: const EdgeInsets.all(0),
           child: Text(
-            "DEVELOPER LOGIN",
+            "developer_login".tr(), // 텍스트 번역 추가
             textAlign: TextAlign.center,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
@@ -160,11 +161,11 @@ class _MainLoginPageState extends State<MainLoginPage> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ChangePassword()), // Navigate to ChangePassword page
+            MaterialPageRoute(builder: (context) => ChangePassword()), // ChangePassword 페이지로 이동
           );
         },
         child: Text(
-          "Forgot your password?",
+          "forgot_password".tr(), // 텍스트 번역 추가
           style: TextStyle(fontSize: 12, color: Color(0XFF2661FA)),
         ),
       ),
@@ -205,7 +206,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
       margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
       child: ElevatedButton(
         onPressed: () async {
-          // Firebase Authentication login logic
+          // Firebase 인증 로그인 로직
           try {
             UserCredential userCredential = await _auth.signInWithEmailAndPassword(
               email: _emailController.text,
@@ -218,9 +219,9 @@ class _MainLoginPageState extends State<MainLoginPage> {
               );
             }
           } catch (e) {
-            // Handle login failure
+            // 로그인 실패 시 처리
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("$buttonText failed. Please try again.")),
+              SnackBar(content: Text("$buttonText".tr() + " " + "failed".tr())), // 텍스트 번역 추가
             );
           }
         },
@@ -264,7 +265,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
           _navigateToRegisterScreen(context);
         },
         child: Text(
-          "Don't Have an Account? Sign up",
+          "no_account_sign_up".tr(), // 텍스트 번역 추가
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,

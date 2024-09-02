@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -34,7 +35,7 @@ class HomeScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Get out and about',
+                          'get_out_and_about'.tr(), // 번역된 텍스트로 변경
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 24,
@@ -45,7 +46,7 @@ class HomeScreen extends StatelessWidget {
                           child: TextButton(
                             onPressed: () {},
                             child: Text(
-                              'Together Technology ->',
+                              'together_technology'.tr() + ' ->', // 번역된 텍스트로 변경
                               style: TextStyle(color: Colors.white, fontSize: 16),
                             ),
                           ),
@@ -62,14 +63,14 @@ class HomeScreen extends StatelessWidget {
                     shrinkWrap: true, // GridView의 크기를 자식 위젯 크기로 맞춤
                     physics: NeverScrollableScrollPhysics(), // 스크롤 비활성화
                     children: [
-                      _buildServiceIcon(Icons.memory, 'CPU'),
-                      _buildServiceIcon(Icons.phone_android, 'Phone'),
-                      _buildServiceIcon(Icons.newspaper_rounded, 'News'),
-                      _buildServiceIcon(Icons.event, 'Reserve'),
-                      _buildServiceIcon(Icons.laptop, 'Laptop'),
-                      _buildServiceIcon(Icons.person_outline, 'Profile'),
-                      _buildServiceIcon(Icons.more_horiz, 'More'),
-                      _buildServiceIcon(Icons.star, 'Bookmarks'),
+                      _buildServiceIcon(Icons.memory, 'cpu'.tr()), // 번역된 텍스트로 변경
+                      _buildServiceIcon(Icons.phone_android, 'phone'.tr()), // 번역된 텍스트로 변경
+                      _buildServiceIcon(Icons.newspaper_rounded, 'news'.tr()), // 번역된 텍스트로 변경
+                      _buildServiceIcon(Icons.event, 'reserve'.tr()), // 번역된 텍스트로 변경
+                      _buildServiceIcon(Icons.laptop, 'laptop'.tr()), // 번역된 텍스트로 변경
+                      _buildServiceIcon(Icons.person_outline, 'profile'.tr()), // 번역된 텍스트로 변경
+                      _buildServiceIcon(Icons.more_horiz, 'more'.tr()), // 번역된 텍스트로 변경
+                      _buildServiceIcon(Icons.star, 'bookmarks'.tr()), // 번역된 텍스트로 변경
                     ],
                   ),
                 ),
@@ -80,7 +81,7 @@ class HomeScreen extends StatelessWidget {
                   child: TextField(
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.search, color: Colors.black),
-                      hintText: 'Where to?',
+                      hintText: 'where_to'.tr(), // 번역된 텍스트로 변경
                       hintStyle: TextStyle(color: Colors.black), // 힌트 텍스트 색상 변경
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30.0),
@@ -97,22 +98,22 @@ class HomeScreen extends StatelessWidget {
                 // 옵션 리스트
                 ListTile(
                   leading: const Icon(Icons.star, color: Colors.white),
-                  title: const Text('Choose a Bookmark',
+                  title: Text('choose_bookmark'.tr(), // 번역된 텍스트로 변경
                       style: TextStyle(color: Colors.white)), // 텍스트 색상 변경
                 ),
                 ListTile(
                   leading: const Icon(Icons.map, color: Colors.white),
-                  title: const Text('Set destination on map',
+                  title: Text('set_destination_on_map'.tr(), // 번역된 텍스트로 변경
                       style: TextStyle(color: Colors.white)), // 텍스트 색상 변경
                 ),
                 const Divider(color: Colors.white), // 구분선 색상 변경
 
                 // 주변 정보 텍스트
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Around you',
+                    child: Text('around_you'.tr(), // 번역된 텍스트로 변경
                         style: TextStyle(
                             fontWeight: FontWeight.bold, color: Colors.white)), // 텍스트 색상 변경
                   ),
@@ -142,10 +143,4 @@ class HomeScreen extends StatelessWidget {
       ],
     );
   }
-}
-
-void main() {
-  runApp(const MaterialApp(
-    home: HomeScreen(),
-  ));
 }

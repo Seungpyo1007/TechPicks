@@ -1,31 +1,69 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:restart_app/restart_app.dart'; // 앱 재시작 패키지 임포트
+import 'package:shared_preferences/shared_preferences.dart'; // SharedPreferences 패키지 추가
+import 'EditProfileScreen.dart';
 import '../../LoginPage/LoginPage.dart';
+import '../../LoginPage/ChangePassword.dart'; // 비밀번호 변경 페이지 임포트
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
+
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isDarkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDarkModeSetting();
+  }
+
+  Future<void> _loadDarkModeSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isDarkMode = prefs.getBool('is_dark_mode') ?? false;
+    });
+  }
+
+  Future<void> _toggleDarkMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isDarkMode = value;
+    });
+    await prefs.setBool('is_dark_mode', value);
+
+    // 재부팅 확인 메시지 표시
+    _showRestartForThemeChangeDialog(context);
+  }
+
+  void _applyTheme() {
+    Restart.restartApp();
+  }
 
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
 
     return WillPopScope(
-      onWillPop: () async => false, // 뒤로 가기 버튼의 기본 동작을 막음
+      onWillPop: () async => false,
       child: Scaffold(
         appBar: AppBar(
-          leading: Container(), // 뒤로 가기 버튼(화살표)을 제거
-          backgroundColor: Colors.transparent, // 앱바 배경색 투명
-          elevation: 0, // 앱바 그림자 제거
+          leading: Container(),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
-        extendBodyBehindAppBar: true, // 앱바를 몸체 뒤에 연장
+        extendBodyBehindAppBar: true,
         body: Stack(
           children: [
-            // 그라데이션 배경
             Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.black, Colors.blue], // 검정색에서 파란색으로 그라데이션
+                  colors: [Colors.black, Colors.blue],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -37,7 +75,6 @@ class ProfileScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // User Information
                     ListTile(
                       leading: CircleAvatar(
                         backgroundImage: NetworkImage(user?.photoURL ?? ''),
@@ -45,27 +82,30 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       title: Text(
                         user?.displayName ?? 'No Name',
-                        style: const TextStyle(color: Colors.white), // 텍스트 색상 변경
+                        style: const TextStyle(color: Colors.white),
                       ),
                       subtitle: Text(
                         'edit_details'.tr(),
-                        style: TextStyle(color: Colors.white70), // 텍스트 색상 변경
+                        style: TextStyle(color: Colors.white70),
                       ),
                       trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
                       onTap: () {
-                        // 프로필 편집 페이지로 이동하는 코드 추가
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => EditProfileScreen()),
+                        );
                       },
                     ),
                     const SizedBox(height: 20),
                     const Divider(color: Colors.white),
 
-                    // Dark Mode Setting
+                    // 다크 모드 설정
                     SwitchListTile(
                       title: Text('dark_mode'.tr(), style: TextStyle(color: Colors.white)),
                       secondary: const Icon(Icons.dark_mode, color: Colors.white),
-                      value: true,
+                      value: _isDarkMode,
                       onChanged: (bool value) {
-                        // 다크 모드 토글 시의 동작 추가
+                        _toggleDarkMode(value); // 다크 모드 토글 시 재부팅 확인 메시지 표시
                       },
                     ),
 
@@ -82,7 +122,10 @@ class ProfileScreen extends StatelessWidget {
                           style: TextStyle(color: Colors.white)),
                       trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
                       onTap: () {
-                        // 프로필 편집 페이지로 이동하는 코드 추가
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => EditProfileScreen()),
+                        );
                       },
                     ),
                     ListTile(
@@ -91,7 +134,10 @@ class ProfileScreen extends StatelessWidget {
                           style: TextStyle(color: Colors.white)),
                       trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
                       onTap: () {
-                        // 비밀번호 변경 페이지로 이동하는 코드 추가
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => ChangePassword()),
+                        );
                       },
                     ),
 
@@ -125,7 +171,7 @@ class ProfileScreen extends StatelessWidget {
                           style: TextStyle(color: Colors.white)),
                       trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
                       onTap: () {
-                        _showLanguageDialog(context); // 언어 선택 팝업 창을 표시
+                        _showLanguageDialog(context);
                       },
                     ),
                     ListTile(
@@ -134,10 +180,10 @@ class ProfileScreen extends StatelessWidget {
                           style: TextStyle(color: Colors.white)),
                       trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
                       onTap: () async {
-                        await FirebaseAuth.instance.signOut(); // 로그아웃 수행
+                        await FirebaseAuth.instance.signOut();
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(builder: (context) => LoginPage()),
-                        ); // LoginPage로 이동
+                        );
                       },
                     ),
 
@@ -161,28 +207,92 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('choose_language'.tr()), // 팝업창 제목
+          title: Text('choose_language'.tr()),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
                 leading: Icon(Icons.language, color: Colors.blue),
                 title: Text('English'),
-                onTap: () {
-                  context.setLocale(Locale('en', 'US')); // 영어로 변경
-                  Navigator.of(context).pop(); // 팝업 닫기
+                onTap: () async {
+                  await _changeLanguage(context, 'en', 'US');
                 },
               ),
               ListTile(
                 leading: Icon(Icons.language, color: Colors.red),
                 title: Text('한국어'),
-                onTap: () {
-                  context.setLocale(Locale('ko', 'KR')); // 한국어로 변경
-                  Navigator.of(context).pop(); // 팝업 닫기
+                onTap: () async {
+                  await _changeLanguage(context, 'ko', 'KR');
                 },
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  // 언어 변경 및 저장 함수
+  Future<void> _changeLanguage(BuildContext context, String languageCode, String countryCode) async {
+    final locale = Locale(languageCode, countryCode);
+    context.setLocale(locale);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selected_locale', '${locale.languageCode}_${locale.countryCode}');
+
+    Navigator.of(context).pop();
+    _showRestartConfirmationDialog(context);
+  }
+
+  // 테마 변경 시 재부팅 확인 메시지 표시 함수
+  void _showRestartForThemeChangeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('restart_required'.tr()), // 재부팅이 필요하다는 메시지
+          content: Text('theme_change_confirm_message'.tr()), // 배경색 변경 재부팅 메시지
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('no'.tr()), // '아니요' 버튼
+            ),
+            TextButton(
+              onPressed: () {
+                Restart.restartApp();
+              },
+              child: Text('yes'.tr()), // '예' 버튼
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 앱 재부팅 확인 메시지 표시 함수 (언어 변경)
+  void _showRestartConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('restart_required'.tr()),
+          content: Text('restart_confirm_message'.tr()),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('no'.tr()),
+            ),
+            TextButton(
+              onPressed: () {
+                Restart.restartApp();
+              },
+              child: Text('yes'.tr()),
+            ),
+          ],
         );
       },
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'MenuPage/Home.dart';
 import 'MenuPage/Phone.dart';
 import 'MenuPage/CPU.dart';
@@ -71,36 +72,34 @@ class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
             _selectedIndex = index;
           });
         },
-        items: _navBarItems,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined, color: Colors.white),
+            activeIcon: Icon(Icons.home_rounded, color: Colors.white),
+            label: 'home'.tr(), // 번역된 텍스트로 변경
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.memory, color: Colors.white),
+            activeIcon: Icon(Icons.memory, color: Colors.white),
+            label: 'cpu'.tr(), // 번역된 텍스트로 변경
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.phone_android, color: Colors.white),
+            activeIcon: Icon(Icons.phone_android, color: Colors.white),
+            label: 'phone'.tr(), // 번역된 텍스트로 변경
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.laptop, color: Colors.white),
+            activeIcon: Icon(Icons.laptop, color: Colors.white),
+            label: 'laptop'.tr(), // 번역된 텍스트로 변경
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline, color: Colors.white),
+            activeIcon: Icon(Icons.person_outline, color: Colors.white),
+            label: 'profile'.tr(), // 번역된 텍스트로 변경
+          ),
+        ],
       ),
     );
   }
 }
-
-const _navBarItems = [
-  BottomNavigationBarItem(
-    icon: Icon(Icons.home_outlined, color: Colors.white),
-    activeIcon: Icon(Icons.home_rounded, color: Colors.white),
-    label: 'Home',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.memory, color: Colors.white),
-    activeIcon: Icon(Icons.memory, color: Colors.white),
-    label: 'CPU',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.phone_android, color: Colors.white),
-    activeIcon: Icon(Icons.phone_android, color: Colors.white),
-    label: 'Phone',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.laptop, color: Colors.white),
-    activeIcon: Icon(Icons.laptop, color: Colors.white),
-    label: 'Laptop',
-  ),
-  BottomNavigationBarItem(
-    icon: Icon(Icons.person_outline, color: Colors.white),
-    activeIcon: Icon(Icons.person_outline, color: Colors.white),
-    label: 'Profile',
-  ),
-];

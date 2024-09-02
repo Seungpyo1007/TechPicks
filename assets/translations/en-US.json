@@ -7,5 +7,47 @@
   "choose_language": "Language",
   "logout": "Logout",
   "app_version": "App ver beta0.0.1",
-  "edit_details": "Edit personal details"
+  "edit_details": "Edit personal details",
+  "get_out_and_about": "Get out and about",
+  "together_technology": "Together Technology",
+  "cpu": "CPU",
+  "phone": "Phone",
+  "news": "News",
+  "reserve": "Reserve",
+  "laptop": "Laptop",
+  "more": "More",
+  "bookmarks": "Bookmarks",
+  "where_to": "Where to?",
+  "choose_bookmark": "Choose a Bookmark",
+  "set_destination_on_map": "Set destination on map",
+  "around_you": "Around you",
+  "home": "Home",
+
+  "login": "Login",
+  "developer_login": "Developer Login",
+  "email": "Email",
+  "password": "Password",
+  "forgot_password": "Forgot your password?",
+  "sign_up": "Sign Up",
+  "failed": "failed. Please try again.",
+  "no_account_sign_up": "Don't Have an Account? Sign up",
+
+  "welcome_message": "TechPicks\nWelcome",
+  "sign_in_with_google": "Sign in with Google",
+  "sign_in_with_facebook": "Sign in with Facebook",
+  "sign_in_with_apple": "Sign in with Apple",
+  "sign_in_with_email": "Sign in with Email",
+
+  "restart_required": "Restart Required",
+  "restart_confirm_message": "You need to restart the app to change the language. Do you want to restart?",
+  "yes": "Yes",
+  "no": "No",
+
+  "username": "User name",
+  "pronouns": "Pronouns",
+  "phone_number": "Phone number",
+  "gender": "Gender",
+  "save": "Save"
 }
+
+

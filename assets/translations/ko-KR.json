@@ -7,5 +7,47 @@
   "choose_language": "언어",
   "logout": "로그아웃",
   "app_version": "앱 버전 beta0.0.1",
-  "edit_details": "개인 정보 수정"
+  "edit_details": "개인 정보 수정",
+  "get_out_and_about": "밖으로 나가서 활동하기",
+  "together_technology": "함께하는 기술",
+  "cpu": "CPU",
+  "phone": "휴대폰",
+  "news": "뉴스",
+  "reserve": "예약",
+  "laptop": "노트북",
+  "more": "더보기",
+  "bookmarks": "북마크",
+  "where_to": "어디로 가시겠습니까?",
+  "choose_bookmark": "북마크 선택",
+  "set_destination_on_map": "지도를 통한 목적지 설정",
+  "around_you": "주변 정보",
+  "home": "홈",
+
+  "welcome_message": "TechPicks\n환영합니다",
+  "sign_in_with_google": "Google로 로그인",
+  "sign_in_with_facebook": "Facebook으로 로그인",
+  "sign_in_with_apple": "Apple로 로그인",
+  "sign_in_with_email": "이메일로 로그인",
+
+  "login": "로그인",
+  "developer_login": "개발자 로그인",
+  "email": "이메일",
+  "password": "비밀번호",
+  "forgot_password": "비밀번호를 잊으셨나요?",
+  "sign_up": "가입하기",
+  "failed": "실패했습니다. 다시 시도해주세요.",
+  "no_account_sign_up": "계정이 없으신가요? 가입하기",
+
+  "restart_required": "재부팅 필요",
+  "restart_confirm_message": "언어를 변경하려면 앱을 재부팅해야 합니다. 재부팅 하시겠습니까?",
+  "yes": "예",
+  "no": "아니요",
+
+  "username": "사용자 이름",
+  "pronouns": "대명사",
+  "phone_number": "전화번호",
+  "gender": "성별",
+  "save": "저장"
+
+
 }

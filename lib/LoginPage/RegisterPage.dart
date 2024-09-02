@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart'; // 번역 패키지 추가
 import '../components/EmailLoginPageBackground.dart';
 import 'EmailLogin.dart';
 
@@ -23,7 +24,7 @@ class RegisterScreen extends StatelessWidget {
               alignment: Alignment.centerLeft,
               padding: EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                "REGISTER",
+                "register".tr(), // 'REGISTER' 텍스트를 번역으로 변경
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF2661FA),
@@ -37,7 +38,7 @@ class RegisterScreen extends StatelessWidget {
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
                 controller: _nameController,
-                decoration: InputDecoration(labelText: "Name"),
+                decoration: InputDecoration(labelText: "name".tr()), // 'Name'을 번역으로 변경
               ),
             ),
             SizedBox(height: size.height * 0.03),
@@ -46,7 +47,7 @@ class RegisterScreen extends StatelessWidget {
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
                 controller: _mobileController,
-                decoration: InputDecoration(labelText: "Mobile Number"),
+                decoration: InputDecoration(labelText: "mobile_number".tr()), // 'Mobile Number'를 번역으로 변경
               ),
             ),
             SizedBox(height: size.height * 0.03),
@@ -55,7 +56,7 @@ class RegisterScreen extends StatelessWidget {
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
                 controller: _emailController,
-                decoration: InputDecoration(labelText: "Email"),
+                decoration: InputDecoration(labelText: "email".tr()), // 'Email'을 번역으로 변경
               ),
             ),
             SizedBox(height: size.height * 0.03),
@@ -64,7 +65,7 @@ class RegisterScreen extends StatelessWidget {
               margin: EdgeInsets.symmetric(horizontal: 40),
               child: TextField(
                 controller: _passwordController,
-                decoration: InputDecoration(labelText: "Password"),
+                decoration: InputDecoration(labelText: "password".tr()), // 'Password'를 번역으로 변경
                 obscureText: true,
               ),
             ),
@@ -89,7 +90,7 @@ class RegisterScreen extends StatelessWidget {
                   } catch (e) {
                     // 등록 실패 시 에러 메시지 표시
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Registration failed. Please try again.")),
+                      SnackBar(content: Text("registration_failed".tr())), // 'Registration failed'를 번역으로 변경
                     );
                   }
                 },
@@ -115,7 +116,7 @@ class RegisterScreen extends StatelessWidget {
                   ),
                   padding: const EdgeInsets.all(0),
                   child: Text(
-                    "SIGN UP",
+                    "sign_up".tr(), // 'SIGN UP'을 번역으로 변경
                     textAlign: TextAlign.center,
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
@@ -146,7 +147,7 @@ class RegisterScreen extends StatelessWidget {
                   )
                 },
                 child: Text(
-                  "Already Have an Account? Sign in",
+                  "already_have_account".tr(), // 'Already Have an Account? Sign in'을 번역으로 변경
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
