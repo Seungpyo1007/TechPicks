@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:restart_app/restart_app.dart'; // 앱 재시작 패키지 임포트
-import 'package:shared_preferences/shared_preferences.dart'; // SharedPreferences 패키지 추가
+import 'package:restart_app/restart_app.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'EditProfileScreen.dart';
 import '../../LoginPage/LoginPage.dart';
-import '../../LoginPage/ChangePassword.dart'; // 비밀번호 변경 페이지 임포트
+import '../../LoginPage/ChangePassword.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -37,7 +37,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
     await prefs.setBool('is_dark_mode', value);
 
-    // 재부팅 확인 메시지 표시
     _showRestartForThemeChangeDialog(context);
   }
 
@@ -47,8 +46,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final User? user = FirebaseAuth.instance.currentUser;
-
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
@@ -75,43 +72,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ListTile(
-                      leading: CircleAvatar(
-                        backgroundImage: NetworkImage(user?.photoURL ?? ''),
-                        radius: 30,
+                    // 상단 핸드폰 이미지와 모델명, 편집 버튼 추가
+                    Center(
+                      child: Column(
+                        children: [
+                          // 핸드폰 이미지
+                          Image.network(
+                            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRan1_0IEDJRBm1YkvqKvTalg83rNIEafe3LA&s', // 여기에 실제 이미지 URL을 넣으세요.
+                            height: 0,
+                          ),
+                          const SizedBox(height: 8),
+                          // 핸드폰 모델명
+                          Text(
+                            'G의 S23 Ultra',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          // 편집 버튼
+                          ElevatedButton(
+                            onPressed: () {
+                              // 편집 버튼의 동작 추가
+                            },
+                            child: Text('편집'),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.black, backgroundColor: Colors.white, // 버튼 텍스트 색상
+                            ),
+                          ),
+                        ],
                       ),
-                      title: Text(
-                        user?.displayName ?? 'No Name',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                      subtitle: Text(
-                        'edit_details'.tr(),
-                        style: TextStyle(color: Colors.white70),
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => EditProfileScreen()),
-                        );
-                      },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 20), // 요소 간 간격
                     const Divider(color: Colors.white),
+                    const SizedBox(height: 8),
 
-                    // 다크 모드 설정
                     SwitchListTile(
                       title: Text('dark_mode'.tr(), style: TextStyle(color: Colors.white)),
                       secondary: const Icon(Icons.dark_mode, color: Colors.white),
                       value: _isDarkMode,
                       onChanged: (bool value) {
-                        _toggleDarkMode(value); // 다크 모드 토글 시 재부팅 확인 메시지 표시
+                        _toggleDarkMode(value);
                       },
                     ),
-
-                    // Profile Settings
+                    const SizedBox(height: 8),
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10.0),
+                      padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text('profile'.tr(),
                           style: TextStyle(
                               fontWeight: FontWeight.bold, color: Colors.white)),
@@ -140,10 +148,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         );
                       },
                     ),
+                    const SizedBox(height: 8),
 
-                    // Notification Settings
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10.0),
+                      padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text('notifications'.tr(),
                           style: TextStyle(
                               fontWeight: FontWeight.bold, color: Colors.white)),
@@ -157,10 +165,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // 알림 설정 토글 시의 동작 추가
                       },
                     ),
+                    const SizedBox(height: 8),
 
-                    // Regional Settings
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10.0),
+                      padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text('choose_language'.tr(),
                           style: TextStyle(
                               fontWeight: FontWeight.bold, color: Colors.white)),
@@ -186,7 +194,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         );
                       },
                     ),
-
                     const Spacer(),
                     Center(
                       child: Text('app_version'.tr(), style: TextStyle(color: Colors.white)),
@@ -201,7 +208,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 언어 선택 팝업 창을 표시하는 함수
   void _showLanguageDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -232,7 +238,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 언어 변경 및 저장 함수
   Future<void> _changeLanguage(BuildContext context, String languageCode, String countryCode) async {
     final locale = Locale(languageCode, countryCode);
     context.setLocale(locale);
@@ -244,26 +249,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _showRestartConfirmationDialog(context);
   }
 
-  // 테마 변경 시 재부팅 확인 메시지 표시 함수
   void _showRestartForThemeChangeDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('restart_required'.tr()), // 재부팅이 필요하다는 메시지
-          content: Text('theme_change_confirm_message'.tr()), // 배경색 변경 재부팅 메시지
+          title: Text('restart_required'.tr()),
+          content: Text('theme_change_confirm_message'.tr()),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('no'.tr()), // '아니요' 버튼
+              child: Text('no'.tr()),
             ),
             TextButton(
               onPressed: () {
                 Restart.restartApp();
               },
-              child: Text('yes'.tr()), // '예' 버튼
+              child: Text('yes'.tr()),
             ),
           ],
         );
@@ -271,7 +275,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // 앱 재부팅 확인 메시지 표시 함수 (언어 변경)
   void _showRestartConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
