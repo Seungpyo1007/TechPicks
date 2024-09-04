@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:restart_app/restart_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'EditProfileScreen.dart';
+import 'PhoneSetting.dart'; // 새로 만든 파일을 import
 import '../../LoginPage/LoginPage.dart';
 import '../../LoginPage/ChangePassword.dart';
 
@@ -16,11 +17,13 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isDarkMode = false;
+  String _phoneNickname = 'Unknown Device'; // 초기 별명 값 설정
 
   @override
   void initState() {
     super.initState();
     _loadDarkModeSetting();
+    _loadPhoneNickname();
   }
 
   Future<void> _loadDarkModeSetting() async {
@@ -30,13 +33,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  Future<void> _loadPhoneNickname() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _phoneNickname = prefs.getString('phone_nickname') ?? 'Galaxy S23 Ultra'; // 기본 모델명 사용
+    });
+  }
+
+  Future<void> _navigateToPhoneSetting() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => PhoneSetting()),
+    );
+    if (result != null) {
+      setState(() {
+        _phoneNickname = result; // 반환된 별명으로 업데이트
+      });
+    }
+  }
+
   Future<void> _toggleDarkMode(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _isDarkMode = value;
     });
     await prefs.setBool('is_dark_mode', value);
-
     _showRestartForThemeChangeDialog(context);
   }
 
@@ -72,19 +93,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 상단 핸드폰 이미지와 모델명, 편집 버튼 추가
                     Center(
                       child: Column(
                         children: [
-                          // 핸드폰 이미지
                           Image.network(
-                            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRan1_0IEDJRBm1YkvqKvTalg83rNIEafe3LA&s', // 여기에 실제 이미지 URL을 넣으세요.
+                            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRan1_0IEDJRBm1YkvqKvTalg83rNIEafe3LA&s',
                             height: 0,
                           ),
                           const SizedBox(height: 8),
-                          // 핸드폰 모델명
                           Text(
-                            'G의 S23 Ultra',
+                            _phoneNickname,
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -92,23 +110,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          // 편집 버튼
                           ElevatedButton(
-                            onPressed: () {
-                              // 편집 버튼의 동작 추가
-                            },
+                            onPressed: _navigateToPhoneSetting,
                             child: Text('편집'),
                             style: ElevatedButton.styleFrom(
-                              foregroundColor: Colors.black, backgroundColor: Colors.white, // 버튼 텍스트 색상
+                              foregroundColor: Colors.black,
+                              backgroundColor: Colors.white,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20), // 요소 간 간격
+                    const SizedBox(height: 20),
                     const Divider(color: Colors.white),
                     const SizedBox(height: 8),
-
                     SwitchListTile(
                       title: Text('dark_mode'.tr(), style: TextStyle(color: Colors.white)),
                       secondary: const Icon(Icons.dark_mode, color: Colors.white),
@@ -149,7 +164,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                     ),
                     const SizedBox(height: 8),
-
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text('notifications'.tr(),
@@ -166,7 +180,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                     ),
                     const SizedBox(height: 8),
-
                     Padding(
                       padding: EdgeInsets.symmetric(vertical: 4.0),
                       child: Text('choose_language'.tr(),

@@ -23,6 +23,9 @@ dependencies:
   salomon_bottom_bar: ^3.3.2
   easy_localization: ^3.0.7
   restart_app: ^1.2.1
+  device_info_plus: ^10.0.2
+  webview_flutter: ^4.9.0
+  permission_handler: ^10.2.0 # 권한 요청 패키지
 
 
 dev_dependencies:
