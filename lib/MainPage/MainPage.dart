@@ -26,8 +26,16 @@ class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
     const ProfileScreen(),
   ];
 
+  bool isBackgroundWhite() {
+    // 배경색이 흰색인지 확인하는 함수
+    // _pages의 _selectedIndex에 따라 배경색을 확인하는 방법을 구현합니다.
+    return Theme.of(context).scaffoldBackgroundColor == Colors.white;
+  }
+
   @override
   Widget build(BuildContext context) {
+    bool backgroundIsWhite = isBackgroundWhite(); // 현재 배경색이 흰색인지 확인
+
     return Scaffold(
       extendBodyBehindAppBar: true, // AppBar 뒤로 바디 확장
       appBar: AppBar(
@@ -36,7 +44,11 @@ class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
         centerTitle: false,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Image.asset('assets/logo/NBlogo.png'), // 상단 로고 이미지
+          child: Image.asset(
+            backgroundIsWhite
+                ? 'assets/logo/NBlogo_black.png' // 배경이 흰색이면 검정 로고
+                : 'assets/logo/NBlogo.png', // 그렇지 않으면 원래 로고
+          ),
         ),
       ),
       body: Stack(
