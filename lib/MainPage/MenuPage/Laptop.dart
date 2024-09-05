@@ -23,35 +23,34 @@ class _LaptopScreenState extends State<LaptopScreen> {
           onPageFinished: (String url) {
             // 웹 페이지 로드가 완료된 후 JavaScript 실행
             _controller.runJavaScript(
-              """
-              // nav-container 요소 제거
-              var navbar = document.querySelector('.nav-container'); 
-              if (navbar) { 
-                navbar.remove(); 
+                """
+              // header 요소 삭제
+              var header = document.querySelector('header'); 
+              if (header) { 
+                header.remove(); 
               }
 
-              // premain-container 요소 제거
-              var premain = document.querySelector('.premain-container');
-              if (premain) { 
-                premain.remove(); 
+              // 'The best laptops reviewed, summer 2024' 요소까지 이전의 모든 요소 삭제
+              var targetElement = document.evaluate("//h2[contains(text(),'The best laptops reviewed, summer 2024')]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+              if (targetElement) {
+                var parent = targetElement.parentNode; // 부모 요소 가져오기
+                var siblings = Array.from(parent.children); // 부모 요소의 자식들을 배열로 변환
+
+                for (var i = 0; i < siblings.length; i++) {
+                  if (siblings[i] === targetElement) break; // 대상 요소에 도달하면 중지
+                  siblings[i].remove(); // 대상 요소 이전의 모든 형제 요소 삭제
+                }
               }
 
               // 페이지의 여백을 제거하여 빈 공간을 채움
               document.body.style.marginTop = '0px';
               document.body.style.paddingTop = '0px';
-
-              // 특정 요소의 여백을 제거하여 상단 공간을 줄임
-              var mainContent = document.querySelector('.main-content'); // 이 부분은 주요 컨텐츠의 클래스명으로 변경
-              if (mainContent) {
-                mainContent.style.marginTop = '0px';
-                mainContent.style.paddingTop = '0px';
-              }
-              """,
+              """
             );
           },
         ),
       )
-      ..loadRequest(Uri.parse('https://nanoreview.net/en/cpu-list/laptop-chips-rating'));
+      ..loadRequest(Uri.parse('https://www.notebookcheck.net/The-best-laptops-of-summer-2024-61-reviewed-laptops-compared.882186.0.html'));
   }
 
   Future<void> _requestPermission() async {

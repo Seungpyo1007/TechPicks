@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'RankingPage/RankingCPU.dart'; // RankingCPU 페이지 import
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -35,7 +36,7 @@ class HomeScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'get_out_and_about'.tr(), // 번역된 텍스트로 변경
+                          'together_technology'.tr(), // 번역된 텍스트로 변경
                           style: TextStyle(
                               color: Colors.white,
                               fontSize: 24,
@@ -46,7 +47,7 @@ class HomeScreen extends StatelessWidget {
                           child: TextButton(
                             onPressed: () {},
                             child: Text(
-                              'together_technology'.tr() + ' ->', // 번역된 텍스트로 변경
+                              'ranking list'.tr() + ' ->', // 번역된 텍스트로 변경
                               style: TextStyle(color: Colors.white, fontSize: 16),
                             ),
                           ),
@@ -63,7 +64,16 @@ class HomeScreen extends StatelessWidget {
                     shrinkWrap: true, // GridView의 크기를 자식 위젯 크기로 맞춤
                     physics: NeverScrollableScrollPhysics(), // 스크롤 비활성화
                     children: [
-                      _buildServiceIcon(Icons.memory, 'cpu'.tr()), // 번역된 텍스트로 변경
+                      GestureDetector(
+                        onTap: () {
+                          // CPU 아이콘 클릭 시 RankingCPU 페이지로 이동
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RankingCPUScreen()),
+                          );
+                        },
+                        child: _buildServiceIcon(Icons.memory, 'cpu'.tr()),
+                      ),
                       _buildServiceIcon(Icons.phone_android, 'phone'.tr()), // 번역된 텍스트로 변경
                       _buildServiceIcon(Icons.newspaper_rounded, 'news'.tr()), // 번역된 텍스트로 변경
                       _buildServiceIcon(Icons.event, 'reserve'.tr()), // 번역된 텍스트로 변경

@@ -2,29 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class PhoneScreen extends StatefulWidget {
-  const PhoneScreen({Key? key}) : super(key: key);
+class RankingCPUScreen extends StatefulWidget {
+  const RankingCPUScreen({Key? key}) : super(key: key);
 
   @override
-  _PhoneScreenState createState() => _PhoneScreenState();
+  _RankingCPUScreenState createState() => _RankingCPUScreenState();
 }
 
-class _PhoneScreenState extends State<PhoneScreen> {
+class _RankingCPUScreenState extends State<RankingCPUScreen> {
   late final WebViewController _controller;
+  bool _isLoading = true; // 로딩 상태 변수
 
   @override
   void initState() {
     super.initState();
     _requestPermission(); // 권한 요청
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onPageStarted: (String url) {
+            // 페이지 로드가 시작되면 로딩 상태 활성화
+            setState(() {
+              _isLoading = true;
+            });
+          },
           onPageFinished: (String url) {
-            // 웹 페이지 로드가 완료된 후 JavaScript 실행
+            // 웹 페이지 로드가 완료된 후 로딩 상태 비활성화
             _controller.runJavaScript(
                 """
-              // nav-container 및 premain-container 요소 삭제
+              // 불필요한 요소 삭제
               var navContainer = document.querySelector('.nav-container'); 
               if (navContainer) { 
                 navContainer.remove(); 
@@ -35,7 +43,6 @@ class _PhoneScreenState extends State<PhoneScreen> {
                 premainContainer.remove(); 
               }
 
-              // mt 클래스 요소 삭제
               var mtElements = document.querySelectorAll('.mt'); 
               mtElements.forEach(function(element) {
                 element.remove();
@@ -44,7 +51,12 @@ class _PhoneScreenState extends State<PhoneScreen> {
               // margin-top: 42px 제거
               document.body.style.marginTop = '0px';
               """
-            );
+            ).then((_) {
+              // JavaScript 실행이 완료되면 로딩 상태 비활성화
+              setState(() {
+                _isLoading = false;
+              });
+            });
           },
         ),
       )
@@ -99,8 +111,25 @@ class _PhoneScreenState extends State<PhoneScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black, // 배경색을 검정색으로 설정
-      body: SafeArea(
-        child: WebViewWidget(controller: _controller),
+      appBar: AppBar(
+        title: const Text('Ranking CPU'),
+        backgroundColor: Colors.black,
+      ),
+      body: Stack(
+        children: [
+          // 웹뷰 로딩 중에는 로딩 인디케이터 표시
+          if (_isLoading)
+            Center(
+              child: CircularProgressIndicator(
+                color: Colors.white,
+              ),
+            ),
+          // 로딩이 끝나면 웹뷰를 표시
+          if (!_isLoading)
+            SafeArea(
+              child: WebViewWidget(controller: _controller),
+            ),
+        ],
       ),
     );
   }

@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-class PhoneScreen extends StatefulWidget {
-  const PhoneScreen({Key? key}) : super(key: key);
+class LaptopCPUScreen extends StatefulWidget {
+  const LaptopCPUScreen({Key? key}) : super(key: key);
 
   @override
-  _PhoneScreenState createState() => _PhoneScreenState();
+  _LaptopCPUScreenState createState() => _LaptopCPUScreenState();
 }
 
-class _PhoneScreenState extends State<PhoneScreen> {
+class _LaptopCPUScreenState extends State<LaptopCPUScreen> {
   late final WebViewController _controller;
 
   @override
@@ -23,32 +23,35 @@ class _PhoneScreenState extends State<PhoneScreen> {
           onPageFinished: (String url) {
             // 웹 페이지 로드가 완료된 후 JavaScript 실행
             _controller.runJavaScript(
-                """
-              // nav-container 및 premain-container 요소 삭제
-              var navContainer = document.querySelector('.nav-container'); 
-              if (navContainer) { 
-                navContainer.remove(); 
-              }
-
-              var premainContainer = document.querySelector('.premain-container'); 
-              if (premainContainer) { 
-                premainContainer.remove(); 
-              }
-
-              // mt 클래스 요소 삭제
-              var mtElements = document.querySelectorAll('.mt'); 
-              mtElements.forEach(function(element) {
-                element.remove();
-              });
-
-              // margin-top: 42px 제거
-              document.body.style.marginTop = '0px';
               """
+              // nav-container 요소 제거
+              var navbar = document.querySelector('.nav-container'); 
+              if (navbar) { 
+                navbar.remove(); 
+              }
+
+              // premain-container 요소 제거
+              var premain = document.querySelector('.premain-container');
+              if (premain) { 
+                premain.remove(); 
+              }
+
+              // 페이지의 여백을 제거하여 빈 공간을 채움
+              document.body.style.marginTop = '0px';
+              document.body.style.paddingTop = '0px';
+
+              // 특정 요소의 여백을 제거하여 상단 공간을 줄임
+              var mainContent = document.querySelector('.main-content'); // 이 부분은 주요 컨텐츠의 클래스명으로 변경
+              if (mainContent) {
+                mainContent.style.marginTop = '0px';
+                mainContent.style.paddingTop = '0px';
+              }
+              """,
             );
           },
         ),
       )
-      ..loadRequest(Uri.parse('https://nanoreview.net/en/phone-list/antutu-rating'));
+      ..loadRequest(Uri.parse('https://nanoreview.net/en/cpu-list/laptop-chips-rating'));
   }
 
   Future<void> _requestPermission() async {
