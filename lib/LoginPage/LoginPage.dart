@@ -23,7 +23,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
   }
 
   void _initializeVideo() {
-    _controller = VideoPlayerController.asset("assets/Video/backgroundVideo.mp4")
+    _controller = VideoPlayerController.asset("assets/Video/TechPicks.mp4")
       ..initialize().then((_) {
         setState(() {
           _controller.play();

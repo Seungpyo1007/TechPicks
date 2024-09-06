@@ -8,7 +8,7 @@
   "logout": "로그아웃",
   "app_version": "앱 버전 beta0.0.1",
   "edit_details": "개인 정보 수정",
-  "ranking list": "랭킹 리스트",
+  "ranking list 2024": "랭킹 리스트 2024",
   "together_technology": "함께하는 기술",
   "cpu": "CPU",
   "phone": "휴대폰",
@@ -22,6 +22,7 @@
   "set_destination_on_map": "지도를 통한 목적지 설정",
   "around_you": "주변 정보",
   "home": "홈",
+  "ap" : "AP",
 
   "welcome_message": "TechPicks\n환영합니다",
   "sign_in_with_google": "Google로 로그인",

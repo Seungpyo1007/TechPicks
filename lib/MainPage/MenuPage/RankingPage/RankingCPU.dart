@@ -60,7 +60,7 @@ class _RankingCPUScreenState extends State<RankingCPUScreen> {
           },
         ),
       )
-      ..loadRequest(Uri.parse('https://nanoreview.net/en/phone-list/antutu-rating'));
+      ..loadRequest(Uri.parse('https://nanoreview.net/en/cpu-list/desktop-chips-rating'));
   }
 
   Future<void> _requestPermission() async {
@@ -110,7 +110,7 @@ class _RankingCPUScreenState extends State<RankingCPUScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // 배경색을 검정색으로 설정
+      backgroundColor: Colors.white, // 배경색을 검정색으로 설정
       appBar: AppBar(
         title: const Text('Ranking CPU'),
         backgroundColor: Colors.black,
@@ -121,7 +121,7 @@ class _RankingCPUScreenState extends State<RankingCPUScreen> {
           if (_isLoading)
             Center(
               child: CircularProgressIndicator(
-                color: Colors.white,
+                color: Colors.black,
               ),
             ),
           // 로딩이 끝나면 웹뷰를 표시

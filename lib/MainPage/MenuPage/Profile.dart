@@ -88,130 +88,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Column(
-                        children: [
-                          Image.network(
-                            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRan1_0IEDJRBm1YkvqKvTalg83rNIEafe3LA&s',
-                            height: 0,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _phoneNickname,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(
+                        child: Column(
+                          children: [
+                            Image.network(
+                              'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRan1_0IEDJRBm1YkvqKvTalg83rNIEafe3LA&s',
+                              height: 0,
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          ElevatedButton(
-                            onPressed: _navigateToPhoneSetting,
-                            child: Text('편집'),
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: Colors.black,
-                              backgroundColor: Colors.white,
+                            const SizedBox(height: 8),
+                            Text(
+                              _phoneNickname,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            ElevatedButton(
+                              onPressed: _navigateToPhoneSetting,
+                              child: Text('편집'),
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.black,
+                                backgroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Divider(color: Colors.white),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      title: Text('dark_mode'.tr(), style: TextStyle(color: Colors.white)),
-                      secondary: const Icon(Icons.dark_mode, color: Colors.white),
-                      value: _isDarkMode,
-                      onChanged: (bool value) {
-                        _toggleDarkMode(value);
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4.0),
-                      child: Text('profile'.tr(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.white)),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.person, color: Colors.white),
-                      title: Text('edit_profile'.tr(),
-                          style: TextStyle(color: Colors.white)),
-                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => EditProfileScreen()),
-                        );
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.lock, color: Colors.white),
-                      title: Text('change_password'.tr(),
-                          style: TextStyle(color: Colors.white)),
-                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => ChangePassword()),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4.0),
-                      child: Text('notifications'.tr(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.white)),
-                    ),
-                    SwitchListTile(
-                      title: Text('notifications'.tr(),
-                          style: TextStyle(color: Colors.white)),
-                      secondary: const Icon(Icons.notifications, color: Colors.white),
-                      value: true,
-                      onChanged: (bool value) {
-                        // 알림 설정 토글 시의 동작 추가
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4.0),
-                      child: Text('choose_language'.tr(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.white)),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.language, color: Colors.white),
-                      title: Text('choose_language'.tr(),
-                          style: TextStyle(color: Colors.white)),
-                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                      onTap: () {
-                        _showLanguageDialog(context);
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.logout, color: Colors.white),
-                      title: Text('logout'.tr(),
-                          style: TextStyle(color: Colors.white)),
-                      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                      onTap: () async {
-                        await FirebaseAuth.instance.signOut();
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (context) => LoginPage()),
-                        );
-                      },
-                    ),
-                    const Spacer(),
-                    Center(
-                      child: Text('app_version'.tr(), style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                      const Divider(color: Colors.white),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        title: Text('dark_mode'.tr(), style: TextStyle(color: Colors.white)),
+                        secondary: const Icon(Icons.dark_mode, color: Colors.white),
+                        value: _isDarkMode,
+                        onChanged: (bool value) {
+                          _toggleDarkMode(value);
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text('profile'.tr(),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.person, color: Colors.white),
+                        title: Text('edit_profile'.tr(),
+                            style: TextStyle(color: Colors.white)),
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => EditProfileScreen()),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.lock, color: Colors.white),
+                        title: Text('change_password'.tr(),
+                            style: TextStyle(color: Colors.white)),
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ChangePassword()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text('notifications'.tr(),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                      SwitchListTile(
+                        title: Text('notifications'.tr(),
+                            style: TextStyle(color: Colors.white)),
+                        secondary: const Icon(Icons.notifications, color: Colors.white),
+                        value: true,
+                        onChanged: (bool value) {
+                          // 알림 설정 토글 시의 동작 추가
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4.0),
+                        child: Text('choose_language'.tr(),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.language, color: Colors.white),
+                        title: Text('choose_language'.tr(),
+                            style: TextStyle(color: Colors.white)),
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        onTap: () {
+                          _showLanguageDialog(context);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.logout, color: Colors.white),
+                        title: Text('logout'.tr(),
+                            style: TextStyle(color: Colors.white)),
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                        onTap: () async {
+                          await FirebaseAuth.instance.signOut();
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (context) => LoginPage()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      Center(
+                        child: Text('app_version'.tr(), style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
