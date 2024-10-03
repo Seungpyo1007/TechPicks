@@ -11,7 +11,7 @@ dependencies:
     sdk: flutter
 
 
-  http: ^0.13.5
+  http: ^1.1.0
 
   cupertino_icons: ^1.0.8
   video_player: ^2.4.5
@@ -26,6 +26,7 @@ dependencies:
   device_info_plus: ^10.0.2
   webview_flutter: ^4.9.0
   permission_handler: ^10.2.0 # 권한 요청 패키지
+  firebase_vertexai: ^0.2.3+4
 
 
 dev_dependencies:
