@@ -5,8 +5,13 @@ gradle-wrapper.jar
 /gradlew.bat
 /local.properties
 GeneratedPluginRegistrant.java
-ios/Runner/GoogleService-Info.plist
+
+
+# Android-specific files
 android/app/google-services.json
+
+# ios-specific files
+ios/Runner/GoogleService-Info.plist
 
 # Remember to never publicly share your keystore.
 # See https://flutter.dev/to/reference-keystore
