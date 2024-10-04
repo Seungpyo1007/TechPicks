@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'ChatAI.dart';
 import 'Model3D.dart';
 import 'RankingPage/RankingCPU.dart'; // RankingCPU 페이지 import
 import 'RankingPage/RankingPhone.dart'; // RankingPhone 페이지 import
@@ -174,6 +175,16 @@ class HomeScreen extends StatelessWidget {
                         _buildServiceIcon(Icons.directions_car, 'button4'.tr()), // 버튼 4
                         _buildServiceIcon(Icons.flight, 'button5'.tr()), // 버튼 5
                         _buildServiceIcon(Icons.restaurant, 'button6'.tr()), // 버튼 6
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const ChatAIScreen()),
+                            );
+                          },
+                          child: _buildServiceIcon(Icons.restaurant, 'button6'.tr()),
+                        ),
+
                       ],
                     ),
                   ),
