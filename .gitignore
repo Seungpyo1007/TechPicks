@@ -7,8 +7,8 @@
 .atom/
 .buildlog/
 .history
+.migrate_working_dir/
 .svn/
-migrate_working_dir/
 
 # IntelliJ related
 *.iml
@@ -21,12 +21,17 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
+# Android-specific files
+android/app/google-services.json
+android/local.properties
+
+# ios-specific files
+ios/Runner/GoogleService-Info.plist
+
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
@@ -38,6 +43,4 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+android/app/build/
