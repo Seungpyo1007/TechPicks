@@ -28,6 +28,7 @@
         <string>LaunchScreen</string>
         <key>UIMainStoryboardFile</key>
         <string>Main</string>
+
         <key>UISupportedInterfaceOrientations</key>
         <array>
             <string>UIInterfaceOrientationPortrait</string>
@@ -60,5 +61,35 @@
             <key>NSAllowsArbitraryLoads</key>
             <true/>
         </dict>
+
+        <!-- Google Sign-In 설정 추가 -->
+        <key>GIDClientID</key>
+        <string>746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq.apps.googleusercontent.com</string>
+
+        <key>CFBundleURLTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <string>com.googleusercontent.apps.746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq</string>
+                </array>
+            </dict>
+        </array>
+
+        <!-- Image Picker 및 카메라 권한 설명 추가 -->
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>이 앱은 사진 라이브러리에서 이미지를 선택하기 위해 권한이 필요합니다.</string>
+        <key>NSCameraUsageDescription</key>
+        <string>이 앱은 카메라를 사용하여 사진을 찍기 위해 권한이 필요합니다.</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>이 앱은 오디오 녹음을 위해 마이크 권한이 필요합니다.</string>
+
+        <!-- 파일 접근 권한 설명 추가 -->
+        <key>NSPhotoLibraryAddUsageDescription</key>
+        <string>이 앱은 사진을 저장하기 위해 사용자의 사진 라이브러리에 접근할 수 있습니다.</string>
+
+        <!-- 앱 외부에서 파일 열기 허용 -->
+        <key>LSSupportsOpeningDocumentsInPlace</key>
+        <true/>
     </dict>
 </plist>

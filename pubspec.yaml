@@ -26,7 +26,11 @@ dependencies:
   device_info_plus: ^10.0.2
   webview_flutter: ^4.9.0
   permission_handler: ^10.2.0 # 권한 요청 패키지
+  shared_preferences: ^2.3.2
   firebase_vertexai: ^0.2.3+4
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.2
+  image_picker: ^1.1.2
   rive: ^0.13.14
 
 

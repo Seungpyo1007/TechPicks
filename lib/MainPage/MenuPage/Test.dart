@@ -32,9 +32,8 @@ class TestScreen extends StatelessWidget {
           width: 200,
           height: 200,
           child: RiveAnimation.asset(
-            'assets/Rive/animgears.riv', // Rive 파일 경로
+            'assets/Rive/developer.riv', // Rive 파일 경로
             fit: BoxFit.contain,
-            animations: ['animate'], // 실행할 애니메이션의 이름 (Rive 파일 내 설정된 애니메이션)
           ),
         ),
       ),

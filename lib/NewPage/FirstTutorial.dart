@@ -71,14 +71,30 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   // "괜찮아요"를 클릭하면 경고창을 표시
   void _showConfirmationDialog() {
+    // 다크 모드 여부에 따라 색상 설정
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? Color(0xFF222222) : Color(0xFFE0E0E0);
+    final borderColor = isDarkMode ? Colors.white : Colors.black;
+
     // 안전한 BuildContext 저장
     dialogContext = context;
     showDialog(
       context: dialogContext,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("정말 괜찮겠습니까?"),
-          content: Text("튜토리얼을 건너뛰면 다시 볼 수 없습니다. 괜찮으신가요?"),
+          backgroundColor: backgroundColor, // 다크 모드에 따라 배경색 설정
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+            side: BorderSide(color: borderColor, width: 2.0), // 다크 모드에 따라 테두리 색상 설정
+          ),
+          title: Text(
+            "정말 괜찮겠습니까?",
+            style: TextStyle(color: borderColor), // 다크 모드에 따라 텍스트 색상 설정
+          ),
+          content: Text(
+            "튜토리얼을 건너뛰면 다시 볼 수 없습니다. 괜찮으신가요?",
+            style: TextStyle(color: borderColor), // 다크 모드에 따라 텍스트 색상 설정
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -86,7 +102,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   Navigator.of(dialogContext).pop(); // 경고창 닫기
                 }
               },
-              child: Text("아니요"),
+              child: Text("아니요", style: TextStyle(color: borderColor)), // 다크 모드에 따라 텍스트 색상 설정
             ),
             TextButton(
               onPressed: () async {
@@ -120,7 +136,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   });
                 });
               },
-              child: Text("예"),
+              child: Text("예", style: TextStyle(color: borderColor)), // 다크 모드에 따라 텍스트 색상 설정
             ),
           ],
         );

@@ -1,93 +1,172 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class EditProfileScreen extends StatelessWidget {
+class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
 
   @override
+  _EditProfileScreenState createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
+  late User? user;
+  String username = '';
+  String pronouns = '';
+  String phoneNumber = '';
+  String gender = '';
+  String password = '************'; // 비밀번호 기본 값
+  bool isPasswordVisible = false; // 비밀번호 가시성 여부
+  String userEmail = ''; // 로그인된 사용자 이메일
+  bool isLoading = true; // 데이터 로딩 상태 확인용
+
+  @override
+  void initState() {
+    super.initState();
+    user = _auth.currentUser;
+    _fetchUserData();
+  }
+
+  // Firestore에서 사용자 데이터를 가져오기
+  Future<void> _fetchUserData() async {
+    if (user != null) {
+      try {
+        // Firestore에서 사용자 문서 가져오기
+        final userDocument = await _firestore.collection('users').doc(user!.uid).get();
+
+        // 문서가 존재하는지 확인
+        if (userDocument.exists) {
+          setState(() {
+            // 데이터가 존재할 때만 필드에 접근
+            final data = userDocument.data() ?? {};
+            username = data['username'] ?? ''; // Firestore 필드: username
+            pronouns = data['pronouns'] ?? ''; // Firestore 필드: pronouns
+            phoneNumber = data['phone_number'] ?? ''; // Firestore 필드: phone_number
+            gender = data['gender'] ?? ''; // Firestore 필드: gender
+            userEmail = user?.email ?? ''; // Firebase 인증 사용자 이메일
+            isLoading = false; // 데이터 로딩 완료
+          });
+        } else {
+          setState(() {
+            isLoading = false; // 데이터 로딩 완료
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('User profile does not exist. Creating default profile...')),
+          );
+
+          // Firestore에 기본 사용자 문서 생성
+          await _firestore.collection('users').doc(user!.uid).set({
+            'username': 'New User',
+            'pronouns': '',
+            'phone_number': '',
+            'gender': '',
+          });
+        }
+      } catch (e) {
+        setState(() {
+          isLoading = false; // 데이터 로딩 완료
+        });
+
+        print("Error fetching user data: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch user data. Please check your permissions or network connection.')),
+        );
+      }
+    }
+  }
+
+  // 사용자 데이터 Firestore에 저장하기
+  Future<void> _saveUserData() async {
+    if (user != null) {
+      try {
+        await _firestore.collection('users').doc(user!.uid).set({
+          'username': username,
+          'pronouns': pronouns,
+          'phone_number': phoneNumber,
+          'gender': gender,
+        }, SetOptions(merge: true));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Profile updated successfully!'.tr())),
+        );
+      } catch (e) {
+        print("Error saving user data: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save user data. Please check your permissions or network connection.')),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // 다크 모드 여부를 확인하여 배경 및 텍스트 색상 설정
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // 표준 배경 및 텍스트 색상 설정
+    final backgroundColor = isDarkMode ? Color(0xFF222222) : Color(0xFFE0E0E0); // 다크 모드: 어두운 색, 라이트 모드: 밝은 색
+    final textColor = isDarkMode ? Colors.white : Colors.black; // 다크 모드: 흰색 텍스트, 라이트 모드: 검정색 텍스트
+
     return Scaffold(
+      backgroundColor: backgroundColor,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: textColor), // 올바른 텍스트 색상 적용
           onPressed: () {
-            Navigator.of(context).pop(); // 뒤로 가기 기능
+            Navigator.of(context).pop();
           },
         ),
-        title: Text('profile'.tr(), style: TextStyle(color: Colors.black)),
+        title: Text('profile'.tr(), style: TextStyle(color: textColor)), // 올바른 텍스트 색상 적용
         centerTitle: true,
       ),
-      body: Stack(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator()) // 데이터 로딩 중일 때 로딩 스피너 표시
+          : Stack(
         children: [
-          // 그라데이션 배경
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.black, Colors.blue],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 프로필 이미지 및 편집 아이콘
-                  Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundImage: AssetImage('assets/images/profile_picture.png'), // 프로필 이미지 경로
-                      ),
-                      CircleAvatar(
-                        radius: 15,
-                        backgroundColor: Colors.white,
-                        child: Icon(Icons.edit, color: Colors.black, size: 15),
-                      ),
-                    ],
+                  // 로그인된 사용자 이메일 표시
+                  Text(
+                    'Logged in as:',
+                    style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    userEmail,
+                    style: TextStyle(color: textColor, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
-                  Text('Asini Sanja', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                  Text('Designer', style: TextStyle(color: Colors.grey, fontSize: 14)),
-                  const SizedBox(height: 20),
 
                   // 사용자 이름 입력 필드
-                  _buildTextField(labelText: 'username'.tr(), initialValue: 'asini.sanja'),
+                  _buildTextField(labelText: 'username'.tr(), initialValue: username, onChanged: (value) => username = value, textColor: textColor),
 
                   // 대명사 입력 필드
-                  _buildTextField(labelText: 'pronouns'.tr(), initialValue: 'she/her'),
-
-                  // 비밀번호 입력 필드
-                  _buildTextField(
-                    labelText: 'password'.tr(),
-                    initialValue: '********************',
-                    isPassword: true,
-                  ),
+                  _buildTextField(labelText: 'pronouns'.tr(), initialValue: pronouns, onChanged: (value) => pronouns = value, textColor: textColor),
 
                   // 전화번호 입력 필드
-                  _buildTextField(labelText: 'phone_number'.tr(), initialValue: '+94 77 745 0101'),
+                  _buildTextField(labelText: 'phone_number'.tr(), initialValue: phoneNumber, onChanged: (value) => phoneNumber = value, textColor: textColor),
 
                   // 성별 입력 필드
-                  _buildTextField(labelText: 'gender'.tr(), initialValue: 'Female'),
+                  _buildTextField(labelText: 'gender'.tr(), initialValue: gender, onChanged: (value) => gender = value, textColor: textColor),
 
                   const SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: () {
-                      // 프로필 저장 기능 추가
-                    },
+                    onPressed: _saveUserData,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
+                      backgroundColor: textColor, // 올바른 텍스트 색상 적용
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     ),
-                    child: Text('save'.tr(), style: TextStyle(color: Colors.white)), // 'Save' 번역 추가
+                    child: Text('save'.tr(), style: TextStyle(color: backgroundColor)),
                   ),
                 ],
               ),
@@ -99,25 +178,27 @@ class EditProfileScreen extends StatelessWidget {
   }
 
   // 텍스트 필드 생성 함수
-  Widget _buildTextField({required String labelText, String? initialValue, bool isPassword = false}) {
+  Widget _buildTextField({
+    required String labelText,
+    String? initialValue,
+    bool isPassword = false,
+    bool isPasswordVisible = false,
+    required ValueChanged<String> onChanged,
+    required Color textColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
         initialValue: initialValue,
-        obscureText: isPassword,
+        obscureText: isPassword && !isPasswordVisible, // 비밀번호 가시성 여부에 따른 텍스트 가리기
+        onChanged: onChanged,
+        style: TextStyle(color: textColor), // 텍스트 색상 적용
         decoration: InputDecoration(
           labelText: labelText,
+          labelStyle: TextStyle(color: textColor), // 라벨 색상 적용
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          suffixIcon: isPassword
-              ? IconButton(
-            icon: Icon(Icons.visibility, color: Colors.black),
-            onPressed: () {
-              // 비밀번호 보이기/숨기기 기능 추가
-            },
-          )
-              : null,
         ),
       ),
     );

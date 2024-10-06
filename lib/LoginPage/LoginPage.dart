@@ -67,6 +67,8 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return WillPopScope(
       onWillPop: () async => false, // 뒤로 가기 버튼 방지
       child: Scaffold(
@@ -118,7 +120,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
               right: MediaQuery.of(context).size.width * 0.10,
               top: MediaQuery.of(context).size.height * 0.10,
               child: Image.asset(
-                'assets/logo/NBlogo.png',
+                isDarkMode ? 'assets/logo/NBlogo.png' : 'assets/logo/NBlogo_black.png', // 다크 모드 여부에 따라 로고 변경
                 height: 100,
               ),
             ),
@@ -138,9 +140,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
                   _signInButton(
                     'sign_in_with_facebook'.tr(),
                     'assets/logo/facebook_logo.png',
-                        () {
-                      // 페이스북 로그인 작업
-                    },
+                    _showIncompleteFeatureDialog, // 페이스북 로그인 미완성 다이얼로그 호출
                   ),
                   SizedBox(height: 16),
                   _anonymousSignInButton(),
@@ -162,14 +162,21 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     );
   }
 
+  // 로딩 애니메이션 다이얼로그
   Future<void> _showLoadingAnimation() async {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        final backgroundColor = isDarkMode ? Color(0xFF222222) : Color(0xFFE0E0E0);
+        final borderColor = isDarkMode ? Colors.white : Colors.black;
+
         return AlertDialog(
+          backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
+            side: BorderSide(color: borderColor, width: 2),
           ),
           content: Container(
             width: 200,
@@ -189,7 +196,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
                 SizedBox(height: 20),
                 Text(
                   "logging_in".tr(),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                 ),
               ],
             ),
@@ -199,14 +206,21 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     );
   }
 
+  // 성공 애니메이션
   Future<void> _showSuccessAnimation() async {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        final backgroundColor = isDarkMode ? Color(0xFF222222) : Color(0xFFE0E0E0);
+        final borderColor = isDarkMode ? Colors.white : Colors.black;
+
         return AlertDialog(
+          backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
+            side: BorderSide(color: borderColor, width: 2),
           ),
           content: Container(
             width: 200,
@@ -226,7 +240,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
                 SizedBox(height: 20),
                 Text(
                   "login_success".tr(),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                 ),
               ],
             ),
@@ -240,14 +254,21 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     Navigator.of(context).pop();
   }
 
+  // 로그인 실패 애니메이션
   Future<void> _showLoginFailedAnimation(String errorMessage) async {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+        final backgroundColor = isDarkMode ? Color(0xFF222222) : Color(0xFFE0E0E0);
+        final borderColor = isDarkMode ? Colors.white : Colors.black;
+
         return AlertDialog(
+          backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.0),
+            side: BorderSide(color: borderColor, width: 2),
           ),
           content: Container(
             width: 200,
@@ -266,8 +287,8 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
                 ),
                 SizedBox(height: 20),
                 Text(
-                  errorMessage, // 에러 메시지 표시
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  errorMessage,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.black),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -282,6 +303,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     Navigator.of(context).pop();
   }
 
+  // 로그인 후 개발자 페이지 또는 메인 페이지로 이동
   void _navigateToAppropriatePage(User? user) {
     if (user != null && developerEmails.contains(user.email)) {
       _stopAnimationAndNavigate(DeveloperLogin());
@@ -291,6 +313,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     }
   }
 
+  // 애니메이션 중단 및 페이지 이동
   void _stopAnimationAndNavigate(Widget page) {
     Navigator.push(
       context,
@@ -303,6 +326,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     });
   }
 
+  // 로그인 버튼 생성
   Widget _signInButton(String text, String asset, Function() onPressed) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
@@ -316,6 +340,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     );
   }
 
+  // 익명 로그인 버튼
   Widget _anonymousSignInButton() {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
@@ -329,6 +354,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     );
   }
 
+  // 이메일 로그인 버튼
   Widget _emailSignInButton() {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
@@ -342,6 +368,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     );
   }
 
+  // 구글 로그인
   Future<void> _signInWithGoogle() async {
     await _showLoadingAnimation();
     try {
@@ -361,23 +388,62 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
     } catch (e) {
       Navigator.of(context).pop();
       print(e);
-      await _showLoginFailedAnimation("Google 로그인에 실패했습니다. 다시 시도해 주세요."); // 실패 애니메이션 호출
+      await _showLoginFailedAnimation("Google 로그인에 실패했습니다."); // 실패 애니메이션 호출
     }
   }
 
-  // 익명 로그인 시 SimpleBottomNavigation으로 이동
+  // 익명 로그인 처리
   Future<void> _signInAnonymously() async {
     await _showLoadingAnimation();
     try {
       UserCredential userCredential = await _auth.signInAnonymously();
       if (userCredential.user != null) {
         await _showSuccessAnimation(); // 성공 애니메이션
-        _stopAnimationAndNavigate(SimpleBottomNavigation()); // 익명 로그인 시 SimpleBottomNavigation으로 이동
+        _stopAnimationAndNavigate(MainLoginPage()); // 익명 로그인 시 MainLoginPage로 이동
       }
     } catch (e) {
       Navigator.of(context).pop();
       print(e);
       await _showLoginFailedAnimation("익명 로그인에 실패했습니다. 다시 시도해 주세요."); // 실패 애니메이션 호출
     }
+  }
+
+  // 페이스북 로그인 미완성 다이얼로그 표시
+  void _showIncompleteFeatureDialog() {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? Color(0xFF222222) : Color(0xFFE0E0E0);
+    final borderColor = isDarkMode ? Colors.white : Colors.black;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: backgroundColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+            side: BorderSide(color: borderColor, width: 2),
+          ),
+          title: Text(
+            "미완성 기능",
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          content: Text(
+            "페이스북 로그인 기능이 아직 구현되지 않았습니다.",
+            style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                "확인",
+                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

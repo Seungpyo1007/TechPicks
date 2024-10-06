@@ -37,6 +37,9 @@ class _BackgroundState extends State<Background> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    // 다크 모드 여부 확인
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     Size size = MediaQuery.of(context).size;
     return Container(
       width: double.infinity,
@@ -69,7 +72,7 @@ class _BackgroundState extends State<Background> with SingleTickerProviderStateM
                 child: Opacity(
                   opacity: _opacityAnimation.value,
                   child: Image.asset(
-                    "assets/logo/NBlogo.png",
+                    isDarkMode ? "assets/logo/NBlogo.png" : "assets/logo/NBlogo_black.png", // 다크 모드 여부에 따라 로고 변경
                     width: 70,
                     height: 110,
                     fit: BoxFit.cover,
