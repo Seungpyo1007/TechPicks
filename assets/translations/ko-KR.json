@@ -1,12 +1,13 @@
 {
   "profile": "프로필",
+  "edit": "설정",
   "edit_profile": "프로필 편집",
   "change_password": "비밀번호 변경",
   "dark_mode": "다크 모드",
   "notifications": "알림",
   "choose_language": "언어",
   "logout": "로그아웃",
-  "app_version": "앱 버전 beta0.0.1",
+  "app_version": "앱 버전 beta0.0.2",
   "edit_details": "개인 정보 수정",
   "ranking list 2024": "랭킹 리스트 2024",
   "together_technology": "함께하는 기술",
@@ -24,11 +25,13 @@
   "home": "홈",
   "ap" : "AP",
 
+
   "welcome_message": "TechPicks\n환영합니다",
   "sign_in_with_google": "Google로 로그인",
   "sign_in_with_facebook": "Facebook으로 로그인",
   "sign_in_with_apple": "Apple로 로그인",
   "sign_in_with_email": "이메일로 로그인",
+  "sign_in_anonymously": "익명으로 로그인",
 
   "login": "로그인",
   "developer_login": "개발자 로그인",

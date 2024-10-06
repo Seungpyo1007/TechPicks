@@ -14,10 +14,9 @@ class SimpleBottomNavigation extends StatefulWidget {
 }
 
 class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
-  int _selectedIndex = 0; // 기본 선택된 탭을 PHONE으로 설정
+  int _selectedIndex = 0;
   BottomNavigationBarType _bottomNavType = BottomNavigationBarType.fixed;
 
-  // 각 페이지를 리스트로 정의
   final List<Widget> _pages = [
     const HomeScreen(),
     const CPUScreen(),
@@ -26,34 +25,32 @@ class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
     const ProfileScreen(),
   ];
 
-  bool isBackgroundWhite() {
-    // 배경색이 흰색인지 확인하는 함수
-    // _pages의 _selectedIndex에 따라 배경색을 확인하는 방법을 구현합니다.
-    return Theme.of(context).scaffoldBackgroundColor == Colors.white;
+  bool isDarkMode() {
+    // 다크모드 여부 확인
+    return Theme.of(context).brightness == Brightness.dark;
   }
 
   @override
   Widget build(BuildContext context) {
-    bool backgroundIsWhite = isBackgroundWhite(); // 현재 배경색이 흰색인지 확인
+    bool darkModeEnabled = isDarkMode(); // 다크모드가 활성화된 상태인지 확인
 
     return Scaffold(
-      extendBodyBehindAppBar: true, // AppBar 뒤로 바디 확장
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // AppBar 배경을 투명하게 설정
-        elevation: 0, // 그림자 제거
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         centerTitle: false,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Image.asset(
-            backgroundIsWhite
-                ? 'assets/logo/NBlogo_black.png' // 배경이 흰색이면 검정 로고
-                : 'assets/logo/NBlogo.png', // 그렇지 않으면 원래 로고
+            darkModeEnabled
+                ? 'assets/logo/NBlogo.png' // 다크모드일 경우 원래 로고
+                : 'assets/logo/NBlogo_black.png', // 그렇지 않으면 검정 로고
           ),
         ),
       ),
       body: Stack(
         children: [
-          // 그라데이션 배경
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -63,21 +60,20 @@ class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
               ),
             ),
           ),
-          // 선택된 페이지를 애니메이션과 함께 보여줍니다
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (Widget child, Animation<double> animation) {
               return FadeTransition(opacity: animation, child: child);
             },
-            child: _pages[_selectedIndex], // 선택된 페이지
+            child: _pages[_selectedIndex],
           ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.white, // 선택된 아이템 색상 (하얀색)
-        unselectedItemColor: Colors.white, // 선택되지 않은 아이템 색상 (하얀색)
-        backgroundColor: Colors.black,
+        selectedItemColor: darkModeEnabled ? Colors.white : Colors.black, // 다크모드면 하얀색, 아니면 검정색
+        unselectedItemColor: darkModeEnabled ? Colors.white70 : Colors.black54, // 다크모드면 하얀색, 아니면 검정색
+        backgroundColor: darkModeEnabled ? Colors.black : Colors.white, // 다크모드면 검정색, 아니면 하얀색
         type: _bottomNavType,
         onTap: (index) {
           setState(() {
@@ -86,29 +82,29 @@ class _SimpleBottomNavigationState extends State<SimpleBottomNavigation> {
         },
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined, color: Colors.white),
-            activeIcon: Icon(Icons.home_rounded, color: Colors.white),
-            label: 'home'.tr(), // 번역된 텍스트로 변경
+            icon: Icon(Icons.home_outlined, color: darkModeEnabled ? Colors.white : Colors.black),
+            activeIcon: Icon(Icons.home_rounded, color: darkModeEnabled ? Colors.white : Colors.black),
+            label: 'home'.tr(),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.memory, color: Colors.white),
-            activeIcon: Icon(Icons.memory, color: Colors.white),
-            label: 'cpu'.tr(), // 번역된 텍스트로 변경
+            icon: Icon(Icons.memory, color: darkModeEnabled ? Colors.white : Colors.black),
+            activeIcon: Icon(Icons.memory, color: darkModeEnabled ? Colors.white : Colors.black),
+            label: 'cpu'.tr(),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.phone_android, color: Colors.white),
-            activeIcon: Icon(Icons.phone_android, color: Colors.white),
-            label: 'phone'.tr(), // 번역된 텍스트로 변경
+            icon: Icon(Icons.phone_android, color: darkModeEnabled ? Colors.white : Colors.black),
+            activeIcon: Icon(Icons.phone_android, color: darkModeEnabled ? Colors.white : Colors.black),
+            label: 'phone'.tr(),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.laptop, color: Colors.white),
-            activeIcon: Icon(Icons.laptop, color: Colors.white),
-            label: 'laptop'.tr(), // 번역된 텍스트로 변경
+            icon: Icon(Icons.laptop, color: darkModeEnabled ? Colors.white : Colors.black),
+            activeIcon: Icon(Icons.laptop, color: darkModeEnabled ? Colors.white : Colors.black),
+            label: 'laptop'.tr(),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline, color: Colors.white),
-            activeIcon: Icon(Icons.person_outline, color: Colors.white),
-            label: 'profile'.tr(), // 번역된 텍스트로 변경
+            icon: Icon(Icons.person_outline, color: darkModeEnabled ? Colors.white : Colors.black),
+            activeIcon: Icon(Icons.person_outline, color: darkModeEnabled ? Colors.white : Colors.black),
+            label: 'profile'.tr(),
           ),
         ],
       ),

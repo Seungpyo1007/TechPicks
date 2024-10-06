@@ -1,12 +1,13 @@
 {
   "profile": "Profile",
+  "edit": "Edit",
   "edit_profile": "Edit Profile",
   "change_password": "Change Password",
   "dark_mode": "Dark Mode",
   "notifications": "Notifications",
   "choose_language": "Language",
   "logout": "Logout",
-  "app_version": "App ver beta0.0.1",
+  "app_version": "App ver beta0.0.2",
   "edit_details": "Edit personal details",
   "ranking list 2024": "Ranking List 2024",
   "together_technology": "Together Technology",
@@ -38,6 +39,7 @@
   "sign_in_with_facebook": "Sign in with Facebook",
   "sign_in_with_apple": "Sign in with Apple",
   "sign_in_with_email": "Sign in with Email",
+  "sign_in_anonymously": "Sign in Anonymously",
 
   "restart_required": "Restart Required",
   "restart_confirm_message": "You need to restart the app to change the language. Do you want to restart?",

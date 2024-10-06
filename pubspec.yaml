@@ -27,6 +27,7 @@ dependencies:
   webview_flutter: ^4.9.0
   permission_handler: ^10.2.0 # 권한 요청 패키지
   firebase_vertexai: ^0.2.3+4
+  rive: ^0.13.14
 
 
 
@@ -46,11 +47,12 @@ flutter:
     - assets/images/
     - assets/Video/
     - assets/translations/
+    - assets/Rive/
 
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/logo/logo.png"
+  image_path: "assets/logo/logo2.png"
 
 flutter_native_splash:
   color: "#ffffff" # 배경색

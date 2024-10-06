@@ -1,12 +1,15 @@
+import 'package:flutter/material.dart' as flutter;
+import 'package:flutter/cupertino.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart'; // Cupertino 패키지 추가
-import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth 패키지 추가
-import 'package:easy_localization/easy_localization.dart'; // 번역 패키지 추가
+import 'package:rive/rive.dart' hide LinearGradient;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../MainPage/MainPage.dart';
 import '../components/EmailLoginPageBackground.dart';
 import 'RegisterPage.dart';
-import 'DeveloperLogin.dart'; // DeveloperLogin 페이지 임포트
-import 'ChangePassword.dart'; // ChangePassword 페이지 임포트
+import 'DeveloperLogin.dart';
+import 'ChangePassword.dart';
 
 class MainLoginPage extends StatefulWidget {
   @override
@@ -17,8 +20,37 @@ class _MainLoginPageState extends State<MainLoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool _isRememberMe = false;
 
-  int _selectedIndex = 0; // 0 for Login, 1 for Developer Login
+  final List<String> developerEmails = ['admin@gmail.com', 'rush94434@gmail.com'];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus(); // 앱 시작 시 로그인 상태 확인
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    if (isLoggedIn) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SimpleBottomNavigation()),
+      );
+    }
+  }
+
+  Future<void> _saveLoginStatus(bool isLoggedIn) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLoggedIn', isLoggedIn);
+  }
+
+  Future<void> _logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isLoggedIn', false); // 로그인 상태 초기화
+    await _auth.signOut(); // Firebase 로그아웃 처리
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,17 +61,16 @@ class _MainLoginPageState extends State<MainLoginPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _buildSegmentedControl(), // 고정된 위치에 토글 컨트롤 추가
             SizedBox(height: size.height * 0.03),
             AnimatedSwitcher(
-              duration: Duration(milliseconds: 300), // 애니메이션 지속 시간
+              duration: Duration(milliseconds: 300),
               transitionBuilder: (Widget child, Animation<double> animation) {
                 return FadeTransition(
                   opacity: animation,
                   child: child,
                 );
               },
-              child: _buildContent(size, context), // 애니메이션이 적용된 콘텐츠
+              child: _buildLoginView(size, context),
             ),
           ],
         ),
@@ -47,109 +78,21 @@ class _MainLoginPageState extends State<MainLoginPage> {
     );
   }
 
-  Widget _buildSegmentedControl() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 40.0), // 토글 버튼 위치 고정
-      child: CupertinoSegmentedControl<int>(
-        borderColor: Color(0xFF2661FA),
-        selectedColor: Color(0xFF2661FA),
-        unselectedColor: Colors.white,
-        children: {
-          0: Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text('login'.tr(), style: TextStyle(fontSize: 14)), // 텍스트 번역 추가
-          ),
-          1: Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text('developer_login'.tr(), style: TextStyle(fontSize: 14)), // 텍스트 번역 추가
-          ),
-        },
-        groupValue: _selectedIndex,
-        onValueChanged: (int value) {
-          setState(() {
-            _selectedIndex = value;
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildContent(Size size, BuildContext context) {
-    // 선택된 인덱스에 따라 보여줄 뷰를 결정
-    if (_selectedIndex == 0) {
-      return _buildLoginView(size, context);
-    } else {
-      return _buildDeveloperLoginView(context);
-    }
-  }
-
   Widget _buildLoginView(Size size, BuildContext context) {
     return Column(
-      key: ValueKey(0), // AnimatedSwitcher를 위한 고유 키
+      key: ValueKey(0),
       children: [
-        _buildHeaderText("login".tr()), // 텍스트 번역 추가
+        _buildHeaderText("login".tr()),
         SizedBox(height: size.height * 0.03),
-        _buildTextField("email".tr(), controller: _emailController), // 텍스트 번역 추가
+        _buildTextField("email".tr(), controller: _emailController),
         SizedBox(height: size.height * 0.03),
-        _buildTextField("password".tr(), controller: _passwordController, obscureText: true), // 텍스트 번역 추가
-        _buildForgotPasswordText(context), // 네비게이션을 위한 컨텍스트 추가
+        _buildTextField("password".tr(), controller: _passwordController, obscureText: true),
+        _buildRememberMeSwitch(), // Remember me 스위치 추가
+        _buildForgotPasswordText(context),
         SizedBox(height: size.height * 0.05),
-        _buildLoginButton(size, context, "login".tr()), // 텍스트 번역 추가
+        _buildLoginButton(size, context, "login".tr()),
         _buildSignUpText(context),
       ],
-    );
-  }
-
-  Widget _buildDeveloperLoginView(BuildContext context) {
-    return Column(
-      key: ValueKey(1), // AnimatedSwitcher를 위한 고유 키
-      children: [
-        _buildHeaderText("developer_login".tr()), // 텍스트 번역 추가
-        SizedBox(height: 20),
-        _buildDeveloperLoginButton(context),
-      ],
-    );
-  }
-
-  Widget _buildDeveloperLoginButton(BuildContext context) {
-    return Container(
-      alignment: Alignment.centerRight,
-      margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => DeveloperLogin()), // DeveloperLogin 페이지로 이동
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(80.0),
-          ),
-          padding: const EdgeInsets.all(0),
-          backgroundColor: Colors.transparent,
-        ),
-        child: Container(
-          alignment: Alignment.center,
-          height: 50.0,
-          width: MediaQuery.of(context).size.width * 0.5,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(80.0),
-            gradient: LinearGradient(
-              colors: [
-                Color.fromARGB(255, 255, 136, 34),
-                Color.fromARGB(255, 255, 177, 41),
-              ],
-            ),
-          ),
-          padding: const EdgeInsets.all(0),
-          child: Text(
-            "developer_login".tr(), // 텍스트 번역 추가
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
     );
   }
 
@@ -161,11 +104,11 @@ class _MainLoginPageState extends State<MainLoginPage> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => ChangePassword()), // ChangePassword 페이지로 이동
+            MaterialPageRoute(builder: (context) => ChangePassword()),
           );
         },
         child: Text(
-          "forgot_password".tr(), // 텍스트 번역 추가
+          "forgot_password".tr(),
           style: TextStyle(fontSize: 12, color: Color(0XFF2661FA)),
         ),
       ),
@@ -200,29 +143,108 @@ class _MainLoginPageState extends State<MainLoginPage> {
     );
   }
 
+  Widget _buildRememberMeSwitch() {
+    return Container(
+      alignment: Alignment.centerLeft,
+      margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text(
+            "remember_me".tr(),
+            style: TextStyle(fontSize: 14),
+          ),
+          Switch(
+            value: _isRememberMe,
+            onChanged: (value) {
+              setState(() {
+                _isRememberMe = value;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLoginButton(Size size, BuildContext context, String buttonText) {
     return Container(
       alignment: Alignment.centerRight,
       margin: EdgeInsets.symmetric(horizontal: 40, vertical: 10),
       child: ElevatedButton(
         onPressed: () async {
-          // Firebase 인증 로그인 로직
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                content: Container(
+                  width: 200,
+                  height: 200,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 150, // 애니메이션 너비
+                        height: 150, // 애니메이션 높이
+                        child: RiveAnimation.asset(
+                          'assets/Rive/animgears.riv',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.center,
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        "logging_in".tr(),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+
           try {
             UserCredential userCredential = await _auth.signInWithEmailAndPassword(
               email: _emailController.text,
               password: _passwordController.text,
             );
+
+            Navigator.of(context).pop();
+
             if (userCredential.user != null) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const SimpleBottomNavigation()),
+              if (_isRememberMe) {
+                _saveLoginStatus(true);
+              }
+
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => _buildSuccessDialog(context),
               );
+
+              Future.delayed(Duration(seconds: 2), () {
+                Navigator.of(context).pop();
+                if (developerEmails.contains(userCredential.user!.email)) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => DeveloperLogin()),
+                  );
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SimpleBottomNavigation()),
+                  );
+                }
+              });
             }
           } catch (e) {
-            // 로그인 실패 시 처리
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("$buttonText".tr() + " " + "failed".tr())), // 텍스트 번역 추가
-            );
+            Navigator.of(context).pop();
+            _showFailureAnimation(); // 로그인 실패 시 애니메이션 표시
           }
         },
         style: ElevatedButton.styleFrom(
@@ -238,7 +260,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
           width: size.width * 0.5,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(80.0),
-            gradient: LinearGradient(
+            gradient: flutter.LinearGradient( // flutter 패키지의 LinearGradient 사용
               colors: [
                 Color.fromARGB(255, 255, 136, 34),
                 Color.fromARGB(255, 255, 177, 41),
@@ -256,6 +278,79 @@ class _MainLoginPageState extends State<MainLoginPage> {
     );
   }
 
+  Widget _buildSuccessDialog(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20.0),
+      ),
+      content: Container(
+        width: 200,
+        height: 200,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 150, // 애니메이션 너비
+              height: 150, // 애니메이션 높이
+              child: RiveAnimation.asset(
+                'assets/Rive/LoginSuccess.riv',
+                fit: BoxFit.contain,
+                alignment: Alignment.center,
+              ),
+            ),
+            SizedBox(height: 20),
+            Text(
+              "login_success".tr(),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 로그인 실패 시 애니메이션 다이얼로그 표시
+  Future<void> _showFailureAnimation() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          content: Container(
+            width: 200,
+            height: 200,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 150,
+                  height: 150,
+                  child: RiveAnimation.asset(
+                    'assets/Rive/error_icon.riv', // 실패 애니메이션 파일 경로
+                    fit: BoxFit.contain,
+                    alignment: Alignment.center,
+                  ),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  "login_failed".tr(), // "로그인 실패" 메시지 표시
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // 2초 후 다이얼로그 닫기
+    await Future.delayed(Duration(seconds: 2));
+    Navigator.of(context).pop();
+  }
+
   Widget _buildSignUpText(BuildContext context) {
     return Container(
       alignment: Alignment.centerRight,
@@ -265,7 +360,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
           _navigateToRegisterScreen(context);
         },
         child: Text(
-          "no_account_sign_up".tr(), // 텍스트 번역 추가
+          "no_account_sign_up".tr(),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,

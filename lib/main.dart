@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'LoginPage/LoginPage.dart';
+import 'NewPage/FirstTutorial.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +13,7 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final String? savedLocale = prefs.getString('selected_locale');
   final bool isDarkMode = prefs.getBool('is_dark_mode') ?? false;
+  final bool isTutorialCompleted = prefs.getBool('is_tutorial_completed') ?? false;
 
   runApp(
     EasyLocalization(
@@ -21,15 +23,23 @@ void main() async {
       startLocale: savedLocale != null
           ? Locale(savedLocale.split('_')[0], savedLocale.split('_')[1])
           : const Locale('en', 'US'),
-      child: MyApp(isDarkMode: isDarkMode),
+      child: MyApp(
+        isDarkMode: isDarkMode,
+        isTutorialCompleted: isTutorialCompleted,
+      ),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
   final bool isDarkMode;
+  final bool isTutorialCompleted;
 
-  const MyApp({Key? key, required this.isDarkMode}) : super(key: key);
+  const MyApp({
+    Key? key,
+    required this.isDarkMode,
+    required this.isTutorialCompleted,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +48,8 @@ class MyApp extends StatelessWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      home: LoginPage(),
+      // isTutorialCompleted가 false일 경우 TutorialPage로 이동
+      home: isTutorialCompleted ? LoginPage() : WelcomeScreen(),
     );
   }
 }
