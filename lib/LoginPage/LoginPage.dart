@@ -399,7 +399,7 @@ class _LoginPageState extends State<LoginPage> with WidgetsBindingObserver {
       UserCredential userCredential = await _auth.signInAnonymously();
       if (userCredential.user != null) {
         await _showSuccessAnimation(); // 성공 애니메이션
-        _stopAnimationAndNavigate(MainLoginPage()); // 익명 로그인 시 MainLoginPage로 이동
+        _stopAnimationAndNavigate(SimpleBottomNavigation()); // 익명 로그인 시 SimpleBottomNavigation로 이동
       }
     } catch (e) {
       Navigator.of(context).pop();

@@ -88,6 +88,13 @@
         <key>NSPhotoLibraryAddUsageDescription</key>
         <string>이 앱은 사진을 저장하기 위해 사용자의 사진 라이브러리에 접근할 수 있습니다.</string>
 
+        <!-- 카메라 권한 설정 -->
+        <key>NSCameraUsageDescription</key>
+        <string>Camera permission is required to capture photos for analysis.</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>Photo library permission is required to access photos for analysis.</string>
+
+
         <!-- 앱 외부에서 파일 열기 허용 -->
         <key>LSSupportsOpeningDocumentsInPlace</key>
         <true/>

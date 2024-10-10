@@ -18,6 +18,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String pronouns = '';
   String phoneNumber = '';
   String gender = '';
+  String userId = ''; // 사용자 ID
+  String newEmail = ''; // 새로운 이메일
   String password = '************'; // 비밀번호 기본 값
   bool isPasswordVisible = false; // 비밀번호 가시성 여부
   String userEmail = ''; // 로그인된 사용자 이메일
@@ -46,7 +48,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             pronouns = data['pronouns'] ?? ''; // Firestore 필드: pronouns
             phoneNumber = data['phone_number'] ?? ''; // Firestore 필드: phone_number
             gender = data['gender'] ?? ''; // Firestore 필드: gender
+            userId = data['user_id'] ?? user!.uid; // Firestore 필드: user_id 또는 기본 UID 사용
             userEmail = user?.email ?? ''; // Firebase 인증 사용자 이메일
+            newEmail = userEmail; // 새로운 이메일 필드 초기화
             isLoading = false; // 데이터 로딩 완료
           });
         } else {
@@ -64,6 +68,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             'pronouns': '',
             'phone_number': '',
             'gender': '',
+            'user_id': user!.uid, // 기본 사용자 ID 설정
+            'email': user!.email ?? '', // 이메일 필드 추가
           });
         }
       } catch (e) {
@@ -79,15 +85,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  // 사용자 데이터 Firestore에 저장하기
+  // 사용자 데이터 Firestore에 저장 및 이메일 업데이트하기
   Future<void> _saveUserData() async {
     if (user != null) {
       try {
+        // Firebase Authentication의 이메일 업데이트
+        if (newEmail.isNotEmpty && newEmail != userEmail) {
+          await user!.updateEmail(newEmail);
+          userEmail = newEmail; // 사용자 이메일 필드 업데이트
+        }
+
+        // Firestore에 사용자 데이터 업데이트
         await _firestore.collection('users').doc(user!.uid).set({
           'username': username,
           'pronouns': pronouns,
           'phone_number': phoneNumber,
           'gender': gender,
+          'user_id': userId,
+          'email': newEmail, // 변경된 이메일 Firestore에 업데이트
         }, SetOptions(merge: true));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Profile updated successfully!'.tr())),
@@ -145,6 +160,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: TextStyle(color: textColor, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
+
+                  // 사용자 ID 표시 필드
+                  _buildTextField(labelText: 'User ID'.tr(), initialValue: userId, onChanged: (value) => userId = value, textColor: textColor),
+
+                  // 새로운 이메일 입력 필드
+                  _buildTextField(labelText: 'New Email'.tr(), initialValue: newEmail, onChanged: (value) => newEmail = value, textColor: textColor),
 
                   // 사용자 이름 입력 필드
                   _buildTextField(labelText: 'username'.tr(), initialValue: username, onChanged: (value) => username = value, textColor: textColor),

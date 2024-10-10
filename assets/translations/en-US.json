@@ -50,7 +50,31 @@
   "pronouns": "Pronouns",
   "phone_number": "Phone number",
   "gender": "Gender",
-  "save": "Save"
+  "save": "Save",
+
+  "selected_by_techpicks_top_5_flagship_latest_phones": "Selected by Techpicks Top 5 flagship latest phones",
+  "phone_details": {
+    "samsung_galaxy_s24_ultra": "Samsung S24 Ultra",
+    "apple_iphone_16_pro_max": "Apple iPhone 16 Pro Max",
+    "google_pixel_9_pro_xl": "Google Pixel 9 Pro XL",
+    "samsung_galaxy_z_fold6": "Samsung Galaxy Z Fold6",
+    "huawei_mate_xt_ultimate": "Huawei Mate XT Ultimate",
+    "screen": "Screen",
+    "soc": "SoC",
+    "main_camera": "Main Camera",
+    "battery": "Battery",
+    "os": "OS",
+    "weight": "Weight",
+    "display": "Display",
+    "camera": "Camera",
+    "performance": "Performance"
+  },
+  "ratings": {
+    "display": "Display",
+    "camera": "Camera",
+    "performance": "Performance"
+  }
+
 }
 
 

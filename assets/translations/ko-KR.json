@@ -51,7 +51,28 @@
   "pronouns": "대명사",
   "phone_number": "전화번호",
   "gender": "성별",
-  "save": "저장"
+  "save": "저장",
 
-
+  "selected_by_techpicks_top_5_flagship_latest_phones": "태크픽스가 뽑은 최신 플래그십 휴대폰 Top 5 ",
+  "phone_details": {
+    "samsung_galaxy_s24_ultra": "삼성 S24 울트라",
+    "apple_iphone_16_pro_max": "애플 아이폰 16 프로 맥스",
+    "google_pixel_9_pro_xl": "구글 픽셀 9 프로 XL",
+    "samsung_galaxy_z_fold6": "삼성 갤럭시 Z 폴드6",
+    "huawei_mate_xt_ultimate": "화웨이 메이트 XT 얼티메이트",
+    "screen": "화면",
+    "soc": "SoC",
+    "main_camera": "메인 카메라",
+    "battery": "배터리",
+    "os": "운영 체제",
+    "weight": "무게",
+    "display": "디스플레이",
+    "camera": "카메라",
+    "performance": "성능"
+  },
+  "ratings": {
+    "display": "디스플레이",
+    "camera": "카메라",
+    "performance": "성능"
+  }
 }
