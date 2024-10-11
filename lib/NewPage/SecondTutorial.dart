@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart'; // Rive 패키지 임포트
-import 'package:shared_preferences/shared_preferences.dart'; // SharedPreferences 임포트
-import '../Loading.dart'; // LoadingScreen 클래스 임포트
 import '../LoginPage/LoginPage.dart'; // LoginPage 파일 임포트
 
 void main() {
@@ -21,17 +19,25 @@ class TechPicksApp extends StatelessWidget {
   }
 }
 
-// SecondTutorial 클래스 정의 - WelcomeScreen의 디자인을 복사하여 사용
+// SecondTutorial 클래스 정의
 class SecondTutorial extends StatefulWidget {
   @override
   _SecondTutorialState createState() => _SecondTutorialState();
 }
 
 class _SecondTutorialState extends State<SecondTutorial> {
-  // Rive Controller
   late RiveAnimationController _controller;
-  String _secondTutorialText = '두 번째 튜토리얼을 시작합니다.';
-  bool _isPlayingSuccess = false;
+  int _currentStep = 0; // 현재 설명 단계
+
+  // 튜토리얼 제목과 설명 리스트
+  List<String> _tutorialTitles = ['CPU', 'PHONE', 'LAPTOP', 'PROFILE', '튜토리얼 완료'];
+  List<String> _tutorialDescriptions = [
+    'CPU는 컴퓨터에서 연산이 가능한 부품입니다. 컴퓨터의 두뇌 역할을 하며, 성능이 좋을수록 빠른 속도로 작업을 처리할 수 있습니다.',
+    '현재 전세계 스마트폰의 랭킹 TOP 10을 알 수 있습니다.\n이를 통해 성능이 좋은 폰을 원하시는 분들께 도움이 될 수 있습니다.',
+    '현재 전세계 노트북의 랭킹 TOP 10을 알 수 있습니다.\n2024 노트북의 세계 랭킹을 통해 최신 노트북 성능을 확인하세요.',
+    '당신의 스마트폰의 기종과 계정 정보, 언어, 화면 모드 등 각종 정보를 확인할 수 있습니다.',
+    '튜토리얼이 끝났습니다, 로그인 페이지로 넘어가는 중...'
+  ];
 
   @override
   void initState() {
@@ -42,26 +48,26 @@ class _SecondTutorialState extends State<SecondTutorial> {
     );
   }
 
-  void _startSecondTutorial() {
+  void _nextStep() {
     setState(() {
-      _secondTutorialText = '튜토리얼 진행 중...'; // 버튼 클릭 시 텍스트 변경
-      _controller.isActive = true;
-    });
-
-    // 5초 후 LoginPage로 이동
-    Future.delayed(Duration(seconds: 5), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
-        );
+      _currentStep++;
+      if (_currentStep == _tutorialTitles.length - 1) {
+        _controller.isActive = true; // 애니메이션 실행
+        // 2초 후 LoginPage로 이동
+        Future.delayed(Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginPage()),
+            );
+          }
+        });
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // 다크 모드 여부에 따라 배경 및 텍스트 색상 설정
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDarkMode ? Color(0xFF222222) : Color(0xFFE0E0E0);
     final textColor = isDarkMode ? Colors.white : Colors.black;
@@ -75,8 +81,9 @@ class _SecondTutorialState extends State<SecondTutorial> {
             padding: const EdgeInsets.only(top: 100.0),
             child: Column(
               children: [
+                // 현재 단계에 맞는 제목 표시
                 Text(
-                  '두 번째 튜토리얼',
+                  _tutorialTitles[_currentStep],
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -84,8 +91,9 @@ class _SecondTutorialState extends State<SecondTutorial> {
                   ),
                 ),
                 SizedBox(height: 20),
+                // 현재 단계에 맞는 설명 표시
                 Text(
-                  _secondTutorialText,
+                  _tutorialDescriptions[_currentStep],
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
@@ -107,22 +115,11 @@ class _SecondTutorialState extends State<SecondTutorial> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0),
-            child: Text(
-              _secondTutorialText,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-          ),
           SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14.0),
             child: ElevatedButton(
-              onPressed: _startSecondTutorial,
+              onPressed: _currentStep < _tutorialTitles.length - 1 ? _nextStep : null, // 마지막 단계에서는 비활성화
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black,
                 backgroundColor: Colors.white,

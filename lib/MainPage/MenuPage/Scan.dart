@@ -1,23 +1,102 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:google_ml_kit/google_ml_kit.dart'; // google_ml_kit 패키지
-import 'package:image_picker/image_picker.dart'; // 이미지 선택 패키지
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_vertexai/firebase_vertexai.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
-class PhoneModelRecognitionPage extends StatefulWidget {
-  @override
-  _PhoneModelRecognitionPageState createState() =>
-      _PhoneModelRecognitionPageState();
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(); // Firebase 초기화
+  runApp(const MyApp());
 }
 
-class _PhoneModelRecognitionPageState extends State<PhoneModelRecognitionPage> {
-  File? _selectedImage;
-  String _recognizedModel = 'No model detected';
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Phone Model Recognition with Gemini',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const ScanPage(), // ScanPage로 설정
+    );
+  }
+}
+
+class ScanPage extends StatefulWidget {
+  const ScanPage({Key? key}) : super(key: key);
+
+  @override
+  _ScanPageState createState() => _ScanPageState();
+}
+
+class _ScanPageState extends State<ScanPage> {
+  File? _selectedImage; // 선택한 이미지 파일
+  String _recognizedModel = 'No model detected'; // 예측된 핸드폰 기종
+  GenerativeModel? _model; // Firebase Vertex AI 모델
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeModel(); // Firebase Vertex AI 모델 초기화
+  }
+
+  // Firebase Vertex AI 모델 초기화 함수
+  Future<void> _initializeModel() async {
+    setState(() {
+      _model = FirebaseVertexAI.instance.generativeModel(model: 'gemini-flash-experimental'); // 모델 ID 설정
+    });
+  }
+
+  // 이미지 선택 및 핸드폰 기종 예측
+  Future<void> _pickImageAndPredict() async {
+    final picker = ImagePicker();
+    final pickedImage = await picker.pickImage(source: ImageSource.gallery); // 갤러리에서 이미지 선택
+
+    if (pickedImage == null) return;
+
+    final imageFile = File(pickedImage.path);
+    setState(() {
+      _selectedImage = imageFile;
+    });
+
+    await _predictPhoneModel(imageFile);
+  }
+
+  // 핸드폰 기종 예측 함수
+  Future<void> _predictPhoneModel(File image) async {
+    if (_model == null) {
+      setState(() {
+        _recognizedModel = 'Model is not initialized yet.';
+      });
+      return;
+    }
+
+    try {
+      // 이미지를 base64로 인코딩하여 전송
+      final bytes = image.readAsBytesSync();
+      final encodedImage = base64Encode(bytes);
+      final prompt = [Content.text('Predict the phone model based on this image: $encodedImage')];
+
+      // Firebase Vertex AI를 사용하여 이미지 예측 (텍스트 기반 설명 요청)
+      final response = await _model!.generateContent(prompt);
+
+      setState(() {
+        _recognizedModel = 'Predicted Model: ${response.text ?? 'No response'}';
+      });
+    } catch (e) {
+      setState(() {
+        _recognizedModel = "Error during prediction: $e";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Phone Model Recognition'),
+        title: const Text('Phone Model Recognition with Gemini'),
       ),
       body: Center(
         child: Column(
@@ -43,61 +122,16 @@ class _PhoneModelRecognitionPageState extends State<PhoneModelRecognitionPage> {
             const SizedBox(height: 20),
             Text(
               _recognizedModel,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _pickImageAndRecognizeModel,
-              child: Text('Select Image and Recognize Model'),
+              onPressed: _pickImageAndPredict,
+              child: const Text('Select Image and Predict Phone Model'),
             ),
           ],
         ),
       ),
     );
-  }
-
-  // 이미지 선택 및 핸드폰 기종 예측
-  Future<void> _pickImageAndRecognizeModel() async {
-    final picker = ImagePicker();
-    final pickedImage = await picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedImage == null) return;
-
-    final imageFile = File(pickedImage.path);
-    setState(() {
-      _selectedImage = imageFile;
-    });
-
-    await _recognizePhoneModel(imageFile);
-  }
-
-  // 핸드폰 기종 인식
-  Future<void> _recognizePhoneModel(File imageFile) async {
-    // google_ml_kit의 ImageLabeler 사용
-    final inputImage = InputImage.fromFile(imageFile);
-    final imageLabeler = GoogleMlKit.vision.imageLabeler();
-
-    try {
-      // 이미지 분석 시작
-      final List<ImageLabel> labels = await imageLabeler.processImage(inputImage);
-
-      // 예측된 라벨과 신뢰도 출력
-      if (labels.isNotEmpty) {
-        final ImageLabel bestLabel = labels.first;
-        setState(() {
-          _recognizedModel = 'Model: ${bestLabel.label} \nConfidence: ${bestLabel.confidence.toStringAsFixed(2)}';
-        });
-      } else {
-        setState(() {
-          _recognizedModel = 'No model detected';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _recognizedModel = 'Error: $e';
-      });
-    } finally {
-      imageLabeler.close();
-    }
   }
 }

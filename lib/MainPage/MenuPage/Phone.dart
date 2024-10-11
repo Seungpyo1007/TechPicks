@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart' as flutter_image; // flutter Image에 대�
 import 'package:easy_localization/easy_localization.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:rive/rive.dart' as rive_image; // rive Image에 대한 별칭
-import 'scan.dart'; // Scan.dart 파일을 불러옵니다.
+import 'Scan.dart';
 
 class PhoneScreen extends StatefulWidget {
   const PhoneScreen({Key? key}) : super(key: key);
@@ -25,7 +25,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
       'battery': '5000mAh - 45W',
       'os': 'Android 14',
       'weight': '232 g or 233 g (8.18 oz)',
-      'ratings': {'performance': 90, 'camera': 85, 'display': 93, 'battery': 80, 'features': 75}
+      'ratings': {'performance': 95, 'camera': 99, 'display': 98, 'battery': 95, 'features': 75}
     },
     {
       'title': 'phone_details.apple_iphone_16_pro_max',
@@ -36,7 +36,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
       'battery': '4685mAh - 27W',
       'os': 'iOS 18',
       'weight': '227 g (8.01 oz)',
-      'ratings': {'performance': 95, 'camera': 90, 'display': 95, 'battery': 78, 'features': 80}
+      'ratings': {'performance': 99, 'camera': 95, 'display': 97, 'battery': 99, 'features': 85}
     },
     {
       'title': 'phone_details.google_pixel_9_pro_xl',
@@ -47,7 +47,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
       'battery': '5060mAh - 37W',
       'os': 'Android 14',
       'weight': '221 g (7.80 oz)',
-      'ratings': {'performance': 85, 'camera': 78, 'display': 88, 'battery': 82, 'features': 72}
+      'ratings': {'performance': 70, 'camera': 96, 'display': 90, 'battery': 80, 'features': 80}
     },
     {
       'title': 'phone_details.samsung_galaxy_z_fold6',
@@ -58,7 +58,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
       'battery': '4400mAh - 25W',
       'os': 'Android 14',
       'weight': '239 g (8.43 oz)',
-      'ratings': {'performance': 86, 'camera': 81, 'display': 87, 'battery': 75, 'features': 78}
+      'ratings': {'performance': 96, 'camera': 80, 'display': 97, 'battery': 70, 'features': 90}
     },
     {
       'title': 'phone_details.huawei_mate_xt_ultimate',
@@ -69,7 +69,7 @@ class _PhoneScreenState extends State<PhoneScreen> {
       'battery': '5600mAh - 66W',
       'os': 'HarmonyOS 4.2',
       'weight': '298 g (10.51 oz)',
-      'ratings': {'performance': 88, 'camera': 83, 'display': 91, 'battery': 85, 'features': 80}
+      'ratings': {'performance': 40, 'camera': 70, 'display': 99, 'battery': 90, 'features': 99}
     },
   ];
 

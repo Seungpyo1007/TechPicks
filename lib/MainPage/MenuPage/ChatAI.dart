@@ -88,7 +88,7 @@ class _ChatAIScreenState extends State<ChatAIScreen> {
 
   Future<void> _initializeModel() async {
     setState(() {
-      _model = FirebaseVertexAI.instance.generativeModel(model: 'gemini-1.5-flash'); // Model ID 설정
+      _model = FirebaseVertexAI.instance.generativeModel(model: 'gemini-flash-experimental'); // Model ID 설정
     });
   }
 
