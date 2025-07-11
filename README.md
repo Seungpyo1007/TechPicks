@@ -1,16 +1,33 @@
-# techpicks
+# TechPicks
 
-A new Flutter project.
+TechPicks는 사용자가 원하는 전자기기를 쉽게 찾고, 성능을 비교하며, AI 챗봇을 통해 맞춤형 추천을 받을 수 있도록 돕는 Flutter 기반 애플리케이션입니다.
 
-## Getting Started
+## 주요 기능
 
-This project is a starting point for a Flutter application.
+- **전자기기 정보 제공**: CPU, 노트북, 스마트폰 등 다양한 전자기기의 상세 정보를 확인할 수 있습니다.
+- **성능 비교**: 여러 제품의 성능을 한눈에 비교하여 합리적인 선택을 돕습니다.
+- **AI 챗봇 상담**: AI 챗봇과의 대화를 통해 사용자에게 맞는 제품을 추천받거나 궁금증을 해결할 수 있습니다.
+- **사용자 맞춤 설정**: 사용자 프로필을 통해 관심 있는 제품군을 설정하고, 앱 테마 등을 변경할 수 있습니다.
+- **3D 모델 뷰어 (지원 예정)**: 제품의 3D 모델을 통해 더욱 자세한 외형 정보를 확인할 수 있습니다.
+- **OCR 스캔 (지원 예정)**: 카메라로 제품 모델명을 스캔하여 빠르게 정보를 검색할 수 있습니다.
 
-A few resources to get you started if this is your first Flutter project:
+## 대상 사용자
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- 새로운 전자기기 구매를 고려하고 있는 모든 분
+- 다양한 전자기기 정보를 한 곳에서 얻고 싶은 분
+- 어떤 제품이 자신에게 맞는지 전문가의 도움이 필요한 분
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 사용 기술
+
+- Flutter 프레임워크를 사용하여 iOS와 Android에서 모두 사용 가능한 크로스 플랫폼 앱으로 개발되었습니다.
+
+## 시작하기
+
+이 프로젝트는 Flutter 애플리케이션의 시작점입니다.
+
+Flutter 프로젝트를 처음 사용하는 경우 다음 리소스를 참조하세요.
+
+- [Lab: 첫 Flutter 앱 작성하기](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: 유용한 Flutter 샘플](https://docs.flutter.dev/cookbook)
+
+Flutter 개발 시작에 대한 도움말은 튜토리얼, 샘플, 모바일 개발 지침 및 전체 API 참조를 제공하는 [온라인 설명서](https://docs.flutter.dev/)를 참조하세요.
