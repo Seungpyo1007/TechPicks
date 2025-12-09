@@ -17,6 +17,21 @@ TechPicks는 사용자가 원하는 전자기기를 쉽게 찾고, 성능을 비
 - 다양한 전자기기 정보를 한 곳에서 얻고 싶은 분
 - 어떤 제품이 자신에게 맞는지 전문가의 도움이 필요한 분
 
+## 실사 화면 (안드로이드)
+
+### 로그인 & 회원가입 화면
+<img width="342" height="798" alt="Image" src="https://github.com/user-attachments/assets/431a10f5-161f-40b3-8c8a-29873a92f855" />
+<img width="342" height="798" alt="image" src="https://github.com/user-attachments/assets/d8f4b81a-2732-43e8-bc81-e6bb181fa135" />
+
+### 메인화면 & 프로필 화면
+<img width="342" height="798" alt="Image" src="https://github.com/user-attachments/assets/b83a6582-c85c-41fe-9f7a-3ae0e22ab13f" />
+<img width="342" height="798" alt="Image" src="https://github.com/user-attachments/assets/96c387ff-1b88-4647-92d0-cb1b89b7102e" />
+
+### 휴대폰 성능 비교 화면
+<img width="342" height="798" alt="Image" src="https://github.com/user-attachments/assets/b1e0f28c-887b-41d6-b64d-745d114e4cb0" />
+
+### 튜토리얼 화면 & 챗봇 화면 등등 업로드 예정
+
 ## 사용 기술
 
 - Flutter 프레임워크를 사용하여 iOS와 Android에서 모두 사용 가능한 크로스 플랫폼 앱으로 개발되었습니다.
