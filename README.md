@@ -35,3 +35,11 @@ Flutter 프로젝트를 처음 사용하는 경우 다음 리소스를 참조하
 - [Cookbook: 유용한 Flutter 샘플](https://docs.flutter.dev/cookbook)
 
 Flutter 개발 시작에 대한 도움말은 튜토리얼, 샘플, 모바일 개발 지침 및 전체 API 참조를 제공하는 [온라인 설명서](https://docs.flutter.dev/)를 참조하세요.
+
+## 추후 계획
+
+- **TechPicks API**: 더욱 풍부하고 실시간적인 데이터 제공을 위해 TechPicks 전용 API 개발 및 통합을 계획 중입니다.
+
+## 라이선스
+
+이 프로젝트는 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
