@@ -7,6 +7,7 @@ import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
 import '../data/repository/tech_api_repository.dart';
+import '../domain/model/device_specs.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_weights.dart';
 
@@ -121,4 +122,69 @@ final deviceProvider = FutureProvider.family<Smartphone, String>((ref, slug) asy
 
   final result = await ref.watch(techApiRepositoryProvider).smartphone(slug);
   return result.fold((d) => d, (f) => throw f);
+});
+
+/// 비교 화면의 두 슬롯.
+///
+/// 명세는 cmpA / cmpB 두 상태로 두고 picker 가 pickSlot 에 따라 한쪽만
+/// 덮어쓴다. 같은 구조 그대로 간다.
+class CompareSlots {
+  const CompareSlots({this.a, this.b});
+
+  final String? a;
+  final String? b;
+
+  CompareSlots write(CompareSide side, String slug) => side == CompareSide.a
+      ? CompareSlots(a: slug, b: b)
+      : CompareSlots(a: a, b: slug);
+
+  String? operator [](CompareSide side) =>
+      side == CompareSide.a ? a : b;
+
+  bool get isComplete => a != null && b != null;
+}
+
+class CompareNotifier extends Notifier<CompareSlots> {
+  @override
+  CompareSlots build() {
+    // 카탈로그가 오면 앞의 둘로 채운다. 빈 비교 화면부터 보여주는 것보다
+    // 뭔가 비교하고 있는 상태로 시작하는 편이 낫다.
+    final catalog = ref.watch(catalogProvider).value;
+    final phones = catalog?.smartphones ?? const <Smartphone>[];
+    if (phones.length < 2) return const CompareSlots();
+    return CompareSlots(a: phones[0].slug, b: phones[1].slug);
+  }
+
+  void pick(CompareSide side, String slug) => state = state.write(side, slug);
+}
+
+final compareProvider =
+    NotifierProvider<CompareNotifier, CompareSlots>(CompareNotifier.new);
+
+/// 어느 슬롯을 고르는 중인지. picker 가 읽는다.
+class PickSlotNotifier extends Notifier<CompareSide> {
+  @override
+  CompareSide build() => CompareSide.a;
+
+  void set(CompareSide side) => state = side;
+}
+
+final pickSlotProvider =
+    NotifierProvider<PickSlotNotifier, CompareSide>(PickSlotNotifier.new);
+
+/// 현재 두 슬롯의 비교 결과.
+final comparisonProvider = Provider<List<SpecPair>>((ref) {
+  final catalog = ref.watch(catalogProvider).value;
+  final slots = ref.watch(compareProvider);
+  if (catalog == null || !slots.isComplete) return const <SpecPair>[];
+
+  Smartphone? find(String? slug) {
+    final hit = catalog.smartphones.where((d) => d.slug == slug);
+    return hit.isEmpty ? null : hit.first;
+  }
+
+  final a = find(slots.a);
+  final b = find(slots.b);
+  if (a == null || b == null) return const <SpecPair>[];
+  return DeviceComparison.of(a, b, ref.watch(weightsProvider));
 });

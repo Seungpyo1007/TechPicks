@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../domain/model/tp_index.dart';
+import '../spec_labels.dart';
 
 /// 점수 5개 축을 각자 트랙 위에 그린다.
 ///
@@ -18,13 +19,7 @@ class TpScoreStrip extends StatelessWidget {
     this.labels = defaultLabels,
   });
 
-  static const Map<TpAxisKind, String> defaultLabels = <TpAxisKind, String>{
-    TpAxisKind.performance: 'Performance',
-    TpAxisKind.camera: 'Camera',
-    TpAxisKind.display: 'Display',
-    TpAxisKind.battery: 'Battery',
-    TpAxisKind.value: 'Value',
-  };
+  static const Map<TpAxisKind, String> defaultLabels = SpecLabels.axis;
 
   final List<TpAxis> axes;
   final Map<TpAxisKind, String> labels;

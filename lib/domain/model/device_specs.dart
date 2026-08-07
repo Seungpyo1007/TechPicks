@@ -144,3 +144,60 @@ abstract final class DeviceSpecs {
   static String _trim(double v) =>
       v == v.roundToDouble() ? v.round().toString() : v.toString();
 }
+
+/// 비교 한 줄. 두 기기의 같은 속성을 나란히 놓고 승자를 표시한다.
+class SpecPair {
+  const SpecPair({
+    required this.kind,
+    required this.a,
+    required this.b,
+    required this.winner,
+  });
+
+  final SpecKind kind;
+  final DeviceSpec a;
+  final DeviceSpec b;
+
+  /// 이긴 쪽. 비길 수 없거나 비교 대상이 아니면 null.
+  final CompareSide? winner;
+
+  bool get isTie => winner == null;
+}
+
+enum CompareSide { a, b }
+
+abstract final class DeviceComparison {
+  /// 두 기기를 명세의 속성 순서대로 짝지어 승자를 낸다.
+  ///
+  /// 수치가 있는 줄만 비교한다. 명세가 "textual rows are marked only where a
+  /// winner is unambiguous" 라고 했는데, 화면·칩셋·OS 같은 문자열은 무엇이
+  /// 나은지 데이터만 보고 정할 수 없다. 그래서 표시하지 않는다.
+  static List<SpecPair> of(
+    Smartphone a,
+    Smartphone b, [
+    TpWeights weights = TpWeights.defaults,
+  ]) {
+    final left = DeviceSpecs.of(a, weights);
+    final right = DeviceSpecs.of(b, weights);
+
+    return <SpecPair>[
+      for (var i = 0; i < left.length; i++)
+        SpecPair(
+          kind: left[i].kind,
+          a: left[i],
+          b: right[i],
+          winner: _winner(left[i], right[i]),
+        ),
+    ];
+  }
+
+  static CompareSide? _winner(DeviceSpec a, DeviceSpec b) {
+    final x = a.comparable;
+    final y = b.comparable;
+    // 한쪽만 값이 있으면 그쪽이 이긴 것처럼 보이지만, 없는 값은 나쁜 값이
+    // 아니라 모르는 값이다. 표시하지 않는다.
+    if (x == null || y == null || x == y) return null;
+    final aWins = a.higherIsBetter ? x > y : x < y;
+    return aWins ? CompareSide.a : CompareSide.b;
+  }
+}
