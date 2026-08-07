@@ -140,14 +140,20 @@ class TpShell extends StatelessWidget {
             child: Row(
               children: <Widget>[
                 if (onBack != null)
-                  TpSurface(
-                    strong: true,
-                    radius: TpTokens.rControl,
-                    onTap: onBack,
-                    child: const SizedBox(
-                      width: 42,
-                      height: 42,
-                      child: Icon(Icons.chevron_left, size: 24),
+                  Semantics(
+                    button: true,
+                    label: K.back.tr(),
+                    child: TpSurface(
+                      strong: true,
+                      radius: TpTokens.rControl,
+                      onTap: onBack,
+                      child: const SizedBox(
+                        // 42 는 접근성 기준(48)에 못 미친다. 유리 알약은
+                        // 명세대로 42 로 그리고 히트 영역만 넓힌다.
+                        width: 48,
+                        height: 48,
+                        child: Icon(Icons.chevron_left, size: 24),
+                      ),
                     ),
                   ),
                 if (title != null) ...<Widget>[
@@ -163,7 +169,7 @@ class TpShell extends StatelessWidget {
                   ),
                   const Spacer(),
                   // 뒤로 버튼과 좌우 균형을 맞춘다.
-                  if (onBack != null) const SizedBox(width: 42),
+                  if (onBack != null) const SizedBox(width: 48),
                 ],
               ],
             ),
@@ -239,6 +245,7 @@ class TpShell extends StatelessWidget {
                         if (onBack != null)
                           IconButton(
                             onPressed: onBack,
+                            tooltip: K.back.tr(),
                             icon: const Icon(Icons.arrow_back),
                           ),
                       ],

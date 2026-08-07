@@ -53,6 +53,8 @@ abstract final class K {
   static const String compareTitle = 'cmpTitle';
   static const String choose = 'choose';
   static const String cancel = 'cancel';
+  static const String back = 'back';
+  static const String send = 'send';
   static const String chooseTwo = 'chooseTwo';
   static const String tapToChange = 'tapToChange';
 

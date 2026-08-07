@@ -11,6 +11,7 @@ import '../../shared/copy_keys.dart';
 import '../../domain/model/ask_answer.dart';
 import '../../shared/widgets/tp_chip.dart';
 import '../../shared/widgets/tp_surface.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 
 /// AI 상담.
 ///
@@ -237,7 +238,7 @@ class _Composer extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Container(
-                  height: 46,
+                  height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -250,7 +251,9 @@ class _Composer extends StatelessWidget {
                     onSubmitted: onSend,
                     style: type.body,
                     decoration: InputDecoration(
-                      isDense: true,
+                      // isDense 를 켜면 필드의 히트 영역이 29px 로 줄어
+                      // 접근성 기준(48)에 못 미친다.
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
                       border: InputBorder.none,
                       hintText: K.askHint.tr(),
                       hintStyle: type.body.copyWith(color: t.dim),
@@ -259,11 +262,12 @@ class _Composer extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              GestureDetector(
+              TpTapTarget(
                 onTap: () => onSend(controller.text),
+                label: K.askHint.tr(),
                 child: Container(
-                  width: 46,
-                  height: 46,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: TpTokens.blue,
                     shape: BoxShape.circle,

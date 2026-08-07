@@ -10,6 +10,7 @@ import '../../shared/copy_keys.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/widgets/tp_surface.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 
 /// 비교할 기기를 고르는 시트.
 ///
@@ -41,7 +42,7 @@ class PickerScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(K.choose.tr(), style: type.largeTitle),
                 ),
-                GestureDetector(
+                TpTapTarget(
                   onTap: onDone,
                   child: Text(
                     K.cancel.tr(),
