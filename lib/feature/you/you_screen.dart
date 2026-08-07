@@ -98,7 +98,7 @@ class YouScreen extends ConsumerWidget {
                       onTap: () => ref.read(weightsProvider.notifier).reset(),
                       child: Text(
                         K.reset.tr(),
-                        style: type.caption.copyWith(color: TpTokens.blue),
+                        style: type.caption.copyWith(color: TpTokens.blueText),
                       ),
                     ),
                   ],
@@ -194,7 +194,7 @@ Future<void> _pickLanguage(
                   children: <Widget>[
                     Expanded(child: Text(option.label, style: type.body)),
                     if (option == controller.current)
-                      const Icon(Icons.check, size: 18, color: TpTokens.blue)
+                      const Icon(Icons.check, size: 18, color: TpTokens.blueText)
                     else
                       SizedBox(width: 18, height: 18, child: ColoredBox(
                         color: t.track.withValues(alpha: 0),
@@ -279,7 +279,7 @@ class _ProfileHeader extends StatelessWidget {
                 onTap: onEdit,
                 child: Text(
                   K.editProfile.tr(),
-                  style: type.caption.copyWith(color: TpTokens.blue),
+                  style: type.caption.copyWith(color: TpTokens.blueText),
                 ),
               ),
             ],

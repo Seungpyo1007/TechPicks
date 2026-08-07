@@ -252,7 +252,7 @@ class _SectionHeader extends StatelessWidget {
             onTap: onAction,
             child: Text(
               action!,
-              style: type.body.copyWith(color: TpTokens.blue),
+              style: type.body.copyWith(color: TpTokens.blueText),
             ),
           ),
       ],

@@ -46,7 +46,7 @@ class PickerScreen extends ConsumerWidget {
                   onTap: onDone,
                   child: Text(
                     K.cancel.tr(),
-                    style: type.body.copyWith(color: TpTokens.blue),
+                    style: type.body.copyWith(color: TpTokens.blueText),
                   ),
                 ),
               ],
