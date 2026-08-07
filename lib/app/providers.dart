@@ -11,9 +11,11 @@ import '../data/repository/catalog_repository.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../data/service/ask_service.dart';
 import '../data/service/auth_service.dart';
+import '../data/service/device_info_service.dart';
 import '../domain/model/ask_answer.dart';
 import '../domain/model/device_specs.dart';
 import '../domain/model/movers.dart';
+import '../domain/model/scan_match.dart';
 import '../domain/model/tp_index.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_weights.dart';
@@ -438,3 +440,23 @@ class NotificationsNotifier extends Notifier<bool> {
 
 final notificationsProvider =
     NotifierProvider<NotificationsNotifier, bool>(NotificationsNotifier.new);
+
+/// 내 기기.
+final deviceInfoServiceProvider = Provider<DeviceInfoService>(
+  (ref) => PlatformDeviceInfoService(),
+);
+
+final thisDeviceProvider = FutureProvider<ThisDevice?>(
+  (ref) => ref.watch(deviceInfoServiceProvider).read(),
+);
+
+/// 내 기기가 카탈로그에 있으면 그 레코드.
+///
+/// 스캔과 같은 매칭을 쓴다. 모델 코드(SM-S931B)만 읽히는 경우가 많아 대부분
+/// 못 찾는데, 그때는 화면이 "아직 카탈로그에 없습니다"로 떨어진다.
+final thisDeviceMatchProvider = Provider<ScanMatch?>((ref) {
+  final device = ref.watch(thisDeviceProvider).value;
+  final catalog = ref.watch(catalogProvider).value;
+  if (device == null || catalog == null) return null;
+  return ScanMatcher.match(device.searchable, catalog.smartphones);
+});

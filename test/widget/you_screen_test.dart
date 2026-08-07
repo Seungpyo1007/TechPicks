@@ -13,6 +13,7 @@ import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/tp_index.dart';
 import 'package:techpicks/domain/model/tp_weights.dart';
 import 'package:techpicks/app/locale_controller.dart';
+import 'package:techpicks/data/service/device_info_service.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
 ProviderContainer? _container;
@@ -23,6 +24,7 @@ Future<void> _pump(
   String? name,
   String? email,
   LocaleController? locale,
+  DeviceInfoService? deviceInfo,
 }) async {
   _container = await pumpScreen(
     tester,
@@ -31,6 +33,8 @@ Future<void> _pump(
     size: const Size(1200, 3600),
     overrides: <Override>[
       if (locale != null) localeControllerProvider.overrideWithValue(locale),
+      if (deviceInfo != null)
+        deviceInfoServiceProvider.overrideWithValue(deviceInfo),
     ],
   );
 }
@@ -189,6 +193,61 @@ void main() {
     expect(find.text('Off'), findsWidgets);
   });
 
+  group('내 기기', () {
+    testWidgets('카탈로그에 있으면 이름과 지수를 보여준다', (tester) async {
+      await _pump(
+        tester,
+        deviceInfo: const _FakeDeviceInfo(
+          ThisDevice(name: 'Galaxy S25 Ultra', brand: 'Samsung'),
+        ),
+      );
+
+      expect(find.text('YOUR DEVICE'), findsOneWidget);
+      expect(find.text('Galaxy S25 Ultra'), findsOneWidget);
+      // 기본 가중치에서 77.
+      expect(find.text('77'), findsOneWidget);
+      expect(find.text('Not in the catalogue yet'), findsNothing);
+    });
+
+    testWidgets('모델 코드만 읽히면 못 찾는다고 알린다', (tester) async {
+      // 실제로는 대부분 이쪽이다.
+      await _pump(
+        tester,
+        deviceInfo: const _FakeDeviceInfo(
+          ThisDevice(name: 'SM-S931B', brand: 'samsung'),
+        ),
+      );
+
+      expect(find.text('SM-S931B'), findsOneWidget);
+      expect(find.text('Not in the catalogue yet'), findsOneWidget);
+    });
+
+    testWidgets('못 읽으면 그렇다고 알린다', (tester) async {
+      await _pump(tester, deviceInfo: const _FakeDeviceInfo(null));
+      expect(find.text('Could not read this device.'), findsOneWidget);
+    });
+
+    testWidgets('누르면 상세로 보낼 slug 를 준다', (tester) async {
+      String? tapped;
+      _container = await pumpScreen(
+        tester,
+        YouScreen(onDeviceTap: (s) => tapped = s),
+        size: const Size(1200, 3600),
+        overrides: <Override>[
+          deviceInfoServiceProvider.overrideWithValue(
+            const _FakeDeviceInfo(
+              ThisDevice(name: 'OnePlus 13', brand: 'OnePlus'),
+            ),
+          ),
+        ],
+      );
+
+      await tester.tap(find.text('OnePlus 13'));
+      await tester.pumpAndSettle();
+      expect(tapped, 'oneplus-13');
+    });
+  });
+
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
     for (final chrome in TpChrome.values) {
       await _pump(tester, chrome: chrome);
@@ -196,6 +255,16 @@ void main() {
       expect(find.text('You'), findsWidgets);
     }
   });
+}
+
+/// 기기 정보를 정해서 넣는 가짜.
+class _FakeDeviceInfo implements DeviceInfoService {
+  const _FakeDeviceInfo(this.device);
+
+  final ThisDevice? device;
+
+  @override
+  Future<ThisDevice?> read() async => device;
 }
 
 /// 언어 전환을 검사하기 위한 가짜 컨트롤러.

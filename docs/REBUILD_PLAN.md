@@ -183,7 +183,7 @@ tool/
 | v1 화면 | v2 처리 |
 |---|---|
 | `Phone.dart` 하드코딩 4종 | `/v1/smartphones` 93,396종 + 필터/정렬 |
-| `CPU.dart` (내 기기 정보) | `/v1/cpus` 3,977종 제품 DB로 **의미 자체를 교체**. 내 기기 정보는 "내 기기 비교" 보조 기능으로 강등 |
+| `CPU.dart` (내 기기 정보) | 제품 DB 는 랭킹 화면이 맡는다. 내 기기 정보는 You 화면의 한 줄로 옮겼고, 카탈로그에 있으면 지수를 붙여 상세로 보낸다 |
 | `Laptop.dart` WebView | `/v1/laptops` 1,951종 네이티브 화면. **WebView 전면 제거** |
 | `RankingCPU/Phone/Laptop.dart` WebView 3종 | 인앱 `rank` 화면 하나로 통합. 5개 축(TP Index/배터리/카메라/가치/가격) 정렬. 이 셋을 지우면 필요 없던 위치 권한 요청도 같이 사라진다 |
 | `Model3D.dart` WebView | 다크 테이크오버 `viewer` 화면으로 재설계됨. 모델 파일은 아직 없어 와이어프레임 대역 |
@@ -242,8 +242,8 @@ v1 화면과 함께 11개를 걷어냈다. `webview_flutter` 와 `permission_han
 
 디버그 APK 295MB → 75MB.
 
-`device_info_plus` 와 `google_sign_in` 은 다시 필요해진다. 전자는 명세가
-"내 기기 정보는 You 화면에 속한다"고 했고, 후자는 `google-services.json` 이
+`device_info_plus` 는 다시 넣었다. 명세가 "내 기기 정보는 You 화면에 속한다"고
+했고 그 자리에 붙였다. `google_sign_in` 은 `google-services.json` 이
 온전해지면 쓴다.
 
 ---

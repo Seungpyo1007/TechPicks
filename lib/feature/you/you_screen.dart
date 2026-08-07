@@ -29,6 +29,7 @@ class YouScreen extends ConsumerWidget {
     this.onEditProfile,
     this.onChangePassword,
     this.onLogout,
+    this.onDeviceTap,
   });
 
   final ValueChanged<TpTab>? onTabSelected;
@@ -40,6 +41,9 @@ class YouScreen extends ConsumerWidget {
   final VoidCallback? onEditProfile;
   final VoidCallback? onChangePassword;
   final VoidCallback? onLogout;
+
+  /// 내 기기가 카탈로그에 있으면 상세로 보낸다.
+  final ValueChanged<String>? onDeviceTap;
 
   /// 앱 버전. 명세의 푸터 문구 그대로.
   static const String versionLine = 'TechPicks version 2.0.0 · Apache-2.0';
@@ -69,6 +73,9 @@ class YouScreen extends ConsumerWidget {
             email: email,
             onEdit: onEditProfile,
           ),
+          const SizedBox(height: 22),
+
+          _YourDevice(onTap: onDeviceTap),
           const SizedBox(height: 22),
 
           Text(K.priorities.tr().toUpperCase(), style: type.eyebrow),
@@ -154,6 +161,68 @@ class YouScreen extends ConsumerWidget {
           const SizedBox(height: 20),
 
           Text(versionLine, style: type.caption),
+        ],
+      ),
+    );
+  }
+}
+
+/// 내 기기 한 줄.
+///
+/// 읽히면 이름을 보여주고, 카탈로그에 있으면 지수를 붙여 상세로 보낸다.
+/// 대부분은 모델 코드(SM-S931B)만 읽혀 못 찾는다.
+class _YourDevice extends ConsumerWidget {
+  const _YourDevice({this.onTap});
+
+  final ValueChanged<String>? onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.tp;
+    final type = context.tpText;
+    final device = ref.watch(thisDeviceProvider).value;
+    final match = ref.watch(thisDeviceMatchProvider);
+    final weights = ref.watch(weightsProvider);
+
+    final index =
+        match == null ? null : TpIndex.of(match.device.score, weights);
+
+    return TpSurface(
+      onTap: match == null || onTap == null
+          ? null
+          : () => onTap!(match.device.slug),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(K.yourDevice.tr().toUpperCase(), style: type.eyebrow),
+                const SizedBox(height: 4),
+                Text(
+                  device == null
+                      ? K.yourDeviceUnavailable.tr()
+                      : (match?.device.name ?? device.name),
+                  style: type.cardTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (device != null && match == null)
+                  Text(K.yourDeviceUnknown.tr(), style: type.caption),
+              ],
+            ),
+          ),
+          if (index != null) ...<Widget>[
+            const SizedBox(width: 10),
+            Text(
+              index.toString(),
+              maxLines: 1,
+              softWrap: false,
+              style: type.cardTitle.copyWith(fontSize: 24),
+            ),
+          ] else
+            Icon(Icons.smartphone, size: 20, color: t.dim),
         ],
       ),
     );

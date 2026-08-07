@@ -138,5 +138,8 @@
   "welcome": "Welcome to\nTechPicks",
   "welcomeSub": "Sign in to keep your shortlist across devices, or skip and start comparing now.",
   "welcomeSubShort": "Score every device the way you weigh it.",
-  "you": "You"
+  "you": "You",
+  "yourDevice": "Your device",
+  "yourDeviceUnavailable": "Could not read this device.",
+  "yourDeviceUnknown": "Not in the catalogue yet"
 }
