@@ -9,6 +9,7 @@ import '../data/dto/smartphone.dart';
 import '../data/repository/catalog_repository.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../data/service/ask_service.dart';
+import '../data/service/auth_service.dart';
 import '../domain/model/ask_answer.dart';
 import '../domain/model/device_specs.dart';
 import '../domain/model/movers.dart';
@@ -354,3 +355,55 @@ class AskNotifier extends Notifier<List<AskMessage>> {
 
 final askProvider =
     NotifierProvider<AskNotifier, List<AskMessage>>(AskNotifier.new);
+
+/// 인증. 기본은 Firebase 구현이다.
+final authServiceProvider = Provider<AuthService>(
+  (ref) => FirebaseAuthService(),
+);
+
+/// 지금 로그인한 사람. 로그인·로그아웃할 때 갱신한다.
+class CurrentUserNotifier extends Notifier<TpUser?> {
+  @override
+  TpUser? build() => ref.watch(authServiceProvider).current;
+
+  Future<bool> signIn(AuthMethod method, {String? email, String? password}) async {
+    final user = await ref
+        .read(authServiceProvider)
+        .signIn(method, email: email, password: password);
+    if (user != null) state = user;
+    return user != null;
+  }
+
+  Future<void> signOut() async {
+    await ref.read(authServiceProvider).signOut();
+    state = null;
+  }
+}
+
+final currentUserProvider =
+    NotifierProvider<CurrentUserNotifier, TpUser?>(CurrentUserNotifier.new);
+
+/// 온보딩을 봤는지. v1 의 is_tutorial_completed 키를 그대로 쓴다.
+class OnboardingNotifier extends Notifier<bool> {
+  static const String _prefsKey = 'is_tutorial_completed';
+
+  @override
+  bool build() {
+    unawaited(_restore());
+    return false;
+  }
+
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_prefsKey) ?? false;
+  }
+
+  Future<void> complete() async {
+    state = true;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsKey, true);
+  }
+}
+
+final onboardingDoneProvider =
+    NotifierProvider<OnboardingNotifier, bool>(OnboardingNotifier.new);
