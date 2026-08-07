@@ -1,0 +1,30 @@
+{
+  "count": 207,
+  "results": [
+    {
+      "slug": "3dfx",
+      "name": "3dfx Interactive",
+      "url": "/v1/brands/3dfx"
+    },
+    {
+      "slug": "amd",
+      "name": "AMD",
+      "url": "/v1/brands/amd"
+    },
+    {
+      "slug": "aoc",
+      "name": "AOC",
+      "url": "/v1/brands/aoc"
+    },
+    {
+      "slug": "aopen",
+      "name": "AOpen",
+      "url": "/v1/brands/aopen"
+    },
+    {
+      "slug": "asrock",
+      "name": "ASRock",
+      "url": "/v1/brands/asrock"
+    }
+  ]
+}

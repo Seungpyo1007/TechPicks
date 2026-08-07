@@ -1,0 +1,13 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # TechAPI의 필드는 모두 snake_case다 (SPEC §14 컨벤션).
+          field_rename: snake
+          # 중첩 객체를 직렬화할 때 toJson()을 명시적으로 호출한다.
+          explicit_to_json: true
+          # 데이터셋에는 큐레이션이 덜 된 레코드가 많아 어떤 필드든 누락될 수 있다.
+          # 알 수 없는 키가 들어와도 파싱을 실패시키지 않는다.
+          disallow_unrecognized_keys: false
+          create_to_json: true
