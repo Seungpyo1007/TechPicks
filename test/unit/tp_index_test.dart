@@ -147,7 +147,7 @@ void main() {
     });
 
     test('깨진 값은 기본값으로 떨어진다', () {
-      final w = TpWeights.fromJson(<String, dynamic>{
+      final w = TpWeights.fromJson(const <String, dynamic>{
         'performance': 'x',
         'camera': -1,
         'display': double.nan,
