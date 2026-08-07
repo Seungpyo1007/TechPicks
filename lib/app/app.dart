@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../feature/login/email_login_screen.dart';
 import '../feature/login/login_screen.dart';
 import '../feature/onboarding/onboarding_screen.dart';
 import 'locale_controller.dart';
@@ -66,6 +67,17 @@ class _RootState extends ConsumerState<_Root> {
       return LoginScreen(
         onSignedIn: () => setState(() {}),
         onSignUp: () => setState(() => _skippedLogin = true),
+        onEmail: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => EmailLoginScreen(
+              onBack: () => Navigator.of(context).pop(),
+              onSignedIn: () {
+                Navigator.of(context).pop();
+                setState(() {});
+              },
+            ),
+          ),
+        ),
       );
     }
     return const TabHost();

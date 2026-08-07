@@ -23,6 +23,9 @@ abstract class AuthService {
 
   Future<TpUser?> signIn(AuthMethod method, {String? email, String? password});
 
+  /// 이메일 가입. 성공하면 그대로 로그인된 상태다.
+  Future<TpUser?> signUp({required String email, required String password});
+
   Future<void> signOut();
 }
 
@@ -58,6 +61,22 @@ class FirebaseAuthService implements AuthService {
         // 아직 미연결.
         AuthMethod.google || AuthMethod.apple || AuthMethod.facebook => null,
       };
+    } on fb.FirebaseAuthException {
+      return null;
+    }
+  }
+
+  @override
+  Future<TpUser?> signUp({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final cred = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return _map(cred.user);
     } on fb.FirebaseAuthException {
       return null;
     }

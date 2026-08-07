@@ -115,6 +115,16 @@ abstract final class K {
   static const String loginAnon = 'lAnon';
   static const String noAccount = 'noAccount';
   static const String signup = 'signup';
+  static const String haveAccount = 'haveAccount';
+  static const String emailTitle = 'emailTitle';
+  static const String signupTitle = 'signupTitle';
+  static const String emailLabel = 'emailLabel';
+  static const String passwordLabel = 'passwordLabel';
+  static const String signIn = 'signIn';
+  static const String emailInvalid = 'emailInvalid';
+  static const String passwordShort = 'passwordShort';
+  static const String authFailed = 'authFailed';
+  static const String signupFailed = 'signupFailed';
 
   // 스캔 · 뷰어
   static const String scanTitle = 'scanTitle';

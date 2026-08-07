@@ -369,6 +369,14 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
     return user != null;
   }
 
+  Future<bool> signUp(String email, String password) async {
+    final user = await ref
+        .read(authServiceProvider)
+        .signUp(email: email, password: password);
+    if (user != null) state = user;
+    return user != null;
+  }
+
   Future<void> signOut() async {
     await ref.read(authServiceProvider).signOut();
     state = null;
