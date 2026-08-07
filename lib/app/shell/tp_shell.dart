@@ -338,6 +338,10 @@ class _IosTabBar extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       K.tab(t).tr(),
+                      // 라벨이 두 줄이 되면 캡슐(62)을 넘긴다. 명세가 높이를
+                      // 고정해서 늘릴 수 없다.
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: type.tabLabel.copyWith(
                         color: active ? Colors.white : tokens.dim,
                       ),

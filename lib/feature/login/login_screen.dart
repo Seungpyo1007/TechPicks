@@ -182,13 +182,20 @@ class _AuthButton extends StatelessWidget {
               Image.asset(asset!, width: 20, height: 20),
               const SizedBox(width: 14),
             ],
-            Text(
-              label,
-              style: type.body.copyWith(
-                fontWeight: t.boldWeight,
-                color: filled
-                    ? Colors.white
-                    : (plain ? TpTokens.blueText : TpTokens.ink),
+            // 라벨이 남은 폭을 넘으면 Row 가 넘친다. 명세가 버튼 높이를 52 로
+            // 고정해서 두 줄로 늘릴 수 없다.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: plain ? TextAlign.center : TextAlign.start,
+                style: type.body.copyWith(
+                  fontWeight: t.boldWeight,
+                  color: filled
+                      ? Colors.white
+                      : (plain ? TpTokens.blueText : TpTokens.ink),
+                ),
               ),
             ),
           ],
