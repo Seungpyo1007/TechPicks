@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/core/failure.dart';
 import 'package:techpicks/data/repository/catalog_repository.dart';
+import 'package:techpicks/domain/model/processor.dart';
 import 'package:techpicks/domain/model/ranking.dart';
 import 'package:techpicks/domain/model/tp_index.dart';
 
@@ -38,6 +39,26 @@ void main() {
     expect(catalog.smartphones, isNotEmpty);
     expect(catalog.cpus, isNotEmpty);
     expect(catalog.socs, isNotEmpty);
+  });
+
+  test('Processors 화면이 요구하는 5행이 세그먼트마다 있다', () async {
+    final repo = CatalogRepository(bundle: _FileBundle());
+    final catalog = (await repo.load()).valueOrNull!;
+
+    // 명세 §5 가 세그먼트당 5행이다. 모자라면 화면이 빈다.
+    expect(catalog.socs.length, greaterThanOrEqualTo(5));
+    expect(catalog.cpus.length, greaterThanOrEqualTo(5));
+
+    for (final soc in catalog.socs) {
+      expect(soc.score?.overall, isNotNull, reason: soc.slug);
+      expect(Processor.fromSoc(soc).sub, isNotEmpty, reason: soc.slug);
+    }
+    for (final cpu in catalog.cpus) {
+      expect(cpu.score?.overall, isNotNull, reason: cpu.slug);
+      // 데스크톱 칩은 실을 화면이 없다.
+      expect(cpu.segment, 'laptop', reason: cpu.slug);
+      expect(Processor.fromCpu(cpu).sub, isNotEmpty, reason: cpu.slug);
+    }
   });
 
   test('모든 기기가 랭킹에 쓸 점수를 갖고 있다', () async {

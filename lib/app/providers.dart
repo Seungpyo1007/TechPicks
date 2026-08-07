@@ -17,6 +17,7 @@ import '../domain/model/device_specs.dart';
 import '../domain/model/movers.dart';
 import '../domain/model/scan_match.dart';
 import '../domain/model/tp_index.dart';
+import '../domain/model/processor.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_weights.dart';
 import '../shared/copy_keys.dart';
@@ -114,6 +115,34 @@ final rankedPhonesProvider = Provider<List<RankedDevice>>((ref) {
     catalog.smartphones,
     ref.watch(rankAxisProvider),
     ref.watch(weightsProvider),
+  );
+});
+
+/// Processors 화면의 세그먼트.
+class ProcessorSegmentNotifier extends Notifier<ProcessorSegment> {
+  @override
+  ProcessorSegment build() => ProcessorSegment.mobile;
+
+  void set(ProcessorSegment segment) => state = segment;
+}
+
+final processorSegmentProvider =
+    NotifierProvider<ProcessorSegmentNotifier, ProcessorSegment>(
+  ProcessorSegmentNotifier.new,
+);
+
+/// 현재 세그먼트의 프로세서 순위.
+final rankedProcessorsProvider = Provider<List<RankedProcessor>>((ref) {
+  final catalog = ref.watch(catalogProvider).value;
+  if (catalog == null) return const <RankedProcessor>[];
+  final segment = ref.watch(processorSegmentProvider);
+  return ProcessorRanking.of(
+    switch (segment) {
+      ProcessorSegment.mobile =>
+        catalog.socs.map(Processor.fromSoc).toList(growable: false),
+      ProcessorSegment.laptop =>
+        catalog.cpus.map(Processor.fromCpu).toList(growable: false),
+    },
   );
 });
 
