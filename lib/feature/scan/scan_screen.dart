@@ -7,6 +7,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 import '../../domain/model/scan_match.dart';
 import '../../domain/model/tp_index.dart';
 
@@ -96,14 +97,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
               right: 16,
               child: Row(
                 children: <Widget>[
-                  GestureDetector(
+                  TpTapTarget(
                     onTap: widget.onBack,
-                    behavior: HitTestBehavior.opaque,
-                    child: const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Icon(Icons.chevron_left,
-                          color: Colors.white, size: 26),
-                    ),
+                    label: K.back.tr(),
+                    child: const Icon(Icons.chevron_left,
+                        color: Colors.white, size: 26),
                   ),
                   const SizedBox(width: 2),
                   Text(

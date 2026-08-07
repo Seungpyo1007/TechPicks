@@ -7,6 +7,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 import '../../data/service/auth_service.dart';
 
 /// 로그인.
@@ -123,7 +124,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: <Widget>[
               Text(K.noAccount.tr(), style: type.secondary),
               const SizedBox(width: 6),
-              GestureDetector(
+              TpTapTarget(
                 onTap: widget.onSignUp,
                 child: Text(
                   K.signup.tr(),

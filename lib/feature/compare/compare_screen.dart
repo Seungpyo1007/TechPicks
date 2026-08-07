@@ -12,6 +12,7 @@ import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 
 /// 비교. 두 기기를 한 표에 놓고 줄마다 이긴 쪽을 칠한다.
 ///
@@ -91,7 +92,7 @@ class CompareScreen extends ConsumerWidget {
             ),
           const SizedBox(height: 16),
           if (pairs.isNotEmpty)
-            GestureDetector(
+            TpTapTarget(
               onTap: onAskWhy,
               child: Container(
                 height: 52,

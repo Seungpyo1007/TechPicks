@@ -8,6 +8,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../data/service/auth_service.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 
 /// 이메일 로그인·가입.
 ///
@@ -105,12 +106,12 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
         children: <Widget>[
           if (widget.onBack != null)
-            GestureDetector(
-              onTap: widget.onBack,
-              behavior: HitTestBehavior.opaque,
-              child: const Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: Icon(Icons.chevron_left, size: 26),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TpTapTarget(
+                onTap: widget.onBack,
+                label: K.back.tr(),
+                child: const Icon(Icons.chevron_left, size: 26),
               ),
             ),
           Text(
@@ -169,7 +170,7 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
                 style: type.secondary,
               ),
               const SizedBox(width: 6),
-              GestureDetector(
+              TpTapTarget(
                 onTap: () => setState(() {
                   _signingUp = !_signingUp;
                   _error = null;
@@ -224,7 +225,9 @@ class _Field extends StatelessWidget {
         onSubmitted: onSubmitted,
         style: type.body,
         decoration: InputDecoration(
-          isDense: true,
+          // isDense 를 켜면 필드의 히트 영역이 글자 높이로 줄어 접근성
+          // 기준(48)에 못 미친다. 세로 여백으로 채운다.
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
           border: InputBorder.none,
           hintText: label,
           hintStyle: type.body.copyWith(color: t.dim),

@@ -12,6 +12,7 @@ import '../../shared/copy_keys.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 
 /// 내 정보.
 ///
@@ -93,7 +94,7 @@ class YouScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    GestureDetector(
+                    TpTapTarget(
                       onTap: () => ref.read(weightsProvider.notifier).reset(),
                       child: Text(
                         K.reset.tr(),
@@ -274,7 +275,7 @@ class _ProfileHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               const SizedBox(height: 4),
-              GestureDetector(
+              TpTapTarget(
                 onTap: onEdit,
                 child: Text(
                   K.editProfile.tr(),

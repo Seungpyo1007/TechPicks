@@ -15,6 +15,7 @@ import '../../domain/model/movers.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/widgets/tp_score_strip.dart';
 import '../../shared/widgets/tp_surface.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 
 /// 홈.
 ///
@@ -247,7 +248,7 @@ class _SectionHeader extends StatelessWidget {
       children: <Widget>[
         Expanded(child: Text(title, style: type.cardTitle)),
         if (action != null)
-          GestureDetector(
+          TpTapTarget(
             onTap: onAction,
             child: Text(
               action!,

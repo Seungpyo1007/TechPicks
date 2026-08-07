@@ -7,6 +7,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 
 /// 온보딩 세 장.
 ///
@@ -66,7 +67,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             alignment: Alignment.centerRight,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(0, 4, 16, 0),
-              child: GestureDetector(
+              child: TpTapTarget(
                 onTap: _finish,
                 child: Text(
                   K.skip.tr(),
