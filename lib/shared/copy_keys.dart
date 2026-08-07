@@ -49,6 +49,12 @@ abstract final class K {
   static const String scanShort = 'scanShort';
   static const String noDevices = 'noDevices';
 
+  // 프로세서
+  static const String cpuTitle = 'cpuTitle';
+  static const String cpuMobile = 'cpuMobile';
+  static const String cpuLaptop = 'cpuLaptop';
+  static const String cpuNote = 'cpuNote';
+
   // 비교
   static const String compareTitle = 'cmpTitle';
   static const String choose = 'choose';
@@ -145,6 +151,7 @@ abstract final class K {
 
   // 스크린 리더 전용. 화면에는 안 보이고 읽히기만 한다.
   static const String a11yRankRow = 'a11yRankRow';
+  static const String a11yProcessorRow = 'a11yProcessorRow';
   static const String a11yAxis = 'a11yAxis';
   static const String a11yAxisMissing = 'a11yAxisMissing';
   static const String a11yIndex = 'a11yIndex';

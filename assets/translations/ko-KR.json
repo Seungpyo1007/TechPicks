@@ -3,6 +3,7 @@
   "a11yAxisMissing": "{} 점수 없음",
   "a11yCompareCell": "{} {}",
   "a11yIndex": "TP 지수 100점 만점에 {}점",
+  "a11yProcessorRow": "{}위. {}, 지수 {}",
   "a11yRankRow": "{}위 {}, TP 지수 {}",
   "a11yWinner": "{} {}, 우세",
   "addDevice": "추가",
