@@ -8,6 +8,7 @@ import '../data/dto/smartphone.dart';
 import '../data/repository/catalog_repository.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../domain/model/device_specs.dart';
+import '../domain/model/movers.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_weights.dart';
 
@@ -187,4 +188,76 @@ final comparisonProvider = Provider<List<SpecPair>>((ref) {
   final b = find(slots.b);
   if (a == null || b == null) return const <SpecPair>[];
   return DeviceComparison.of(a, b, ref.watch(weightsProvider));
+});
+
+/// 지난번에 본 TP Index 순위. Movers 를 내려면 비교 대상이 필요하다.
+class RankSnapshotNotifier extends Notifier<List<String>> {
+  static const String _prefsKey = 'rank_snapshot_slugs';
+
+  @override
+  List<String> build() {
+    unawaited(_restore());
+    return const <String>[];
+  }
+
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getStringList(_prefsKey) ?? const <String>[];
+  }
+
+  /// 지금 순위를 다음 실행의 비교 대상으로 남긴다.
+  Future<void> save(List<String> slugs) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_prefsKey, slugs);
+  }
+}
+
+final rankSnapshotProvider =
+    NotifierProvider<RankSnapshotNotifier, List<String>>(
+  RankSnapshotNotifier.new,
+);
+
+/// 이번 주 변동. 저장된 순위가 없으면 빈 목록이라 섹션이 통째로 빠진다.
+final moversProvider = Provider<List<Mover>>((ref) {
+  final catalog = ref.watch(catalogProvider).value;
+  if (catalog == null) return const <Mover>[];
+
+  // 변동은 기본 가중치 기준이다. 사용자가 슬라이더를 만질 때마다 "이번 주
+  // 변동"이 바뀌면 그건 시간 변화가 아니라 취향 변화다.
+  final ranked = Ranking.of(catalog.smartphones, RankAxis.tpIndex);
+  return Movers.between(
+    previous: ref.watch(rankSnapshotProvider),
+    current: ranked
+        .map((r) => (slug: r.device.slug, name: r.device.name))
+        .toList(growable: false),
+  );
+});
+
+/// shortlist 에 담긴 기기 중 지수가 가장 높은 것. 홈의 결론 카드가 쓴다.
+final verdictProvider = Provider<Smartphone?>((ref) {
+  final catalog = ref.watch(catalogProvider).value;
+  final slugs = ref.watch(shortlistProvider);
+  if (catalog == null || slugs.isEmpty) return null;
+
+  final picked = catalog.smartphones.where((d) => slugs.contains(d.slug));
+  if (picked.isEmpty) return null;
+
+  final weights = ref.watch(weightsProvider);
+  final ranked = Ranking.of(picked.toList(growable: false), RankAxis.tpIndex, weights);
+  return ranked.first.device;
+});
+
+/// shortlist 순서대로의 기기 목록.
+final shortlistDevicesProvider = Provider<List<Smartphone>>((ref) {
+  final catalog = ref.watch(catalogProvider).value;
+  final slugs = ref.watch(shortlistProvider);
+  if (catalog == null) return const <Smartphone>[];
+
+  final by = <String, Smartphone>{
+    for (final d in catalog.smartphones) d.slug: d,
+  };
+  return <Smartphone>[
+    for (final slug in slugs)
+      if (by[slug] != null) by[slug]!,
+  ];
 });
