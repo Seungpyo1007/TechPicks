@@ -8,6 +8,8 @@ import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
 import '../data/repository/tech_api_repository.dart';
+import '../data/service/ask_service.dart';
+import '../domain/model/ask_answer.dart';
 import '../domain/model/device_specs.dart';
 import '../domain/model/movers.dart';
 import '../domain/model/tp_index.dart';
@@ -294,3 +296,61 @@ final shortlistDevicesProvider = Provider<List<Smartphone>>((ref) {
       if (by[slug] != null) by[slug]!,
   ];
 });
+
+/// AI 상담. 기본은 로컬 구현이다.
+///
+/// Gemini 로 바꾸려면 여기만 갈아끼운다. Firebase 설정이 없는 기기에서도
+/// 화면이 죽지 않아야 해서 기본값을 로컬로 뒀다.
+final askServiceProvider = Provider<AskService>(
+  (ref) => LocalAskService(weights: ref.watch(weightsProvider)),
+);
+
+/// 대화 내용.
+class AskNotifier extends Notifier<List<AskMessage>> {
+  /// 명세의 첫 안내 문구.
+  static const String seed =
+      'Give me a budget and the one thing you care about most. '
+      'I will answer with a table.';
+
+  @override
+  List<AskMessage> build() => const <AskMessage>[AskMessage.ai(seed)];
+
+  bool _busy = false;
+  bool get isBusy => _busy;
+
+  Future<void> send(String question) async {
+    final text = question.trim();
+    if (text.isEmpty || _busy) return;
+
+    _busy = true;
+    // 사용자 말풍선을 먼저 올린다. 응답을 기다리는 동안 화면이 멈춘 것처럼
+    // 보이지 않게 한다.
+    state = <AskMessage>[...state, AskMessage.user(text)];
+
+    final catalog = await ref.read(catalogProvider.future);
+    final answer =
+        await ref.read(askServiceProvider).ask(text, catalog.smartphones);
+
+    state = <AskMessage>[
+      ...state,
+      answer == null
+          ? const AskMessage.ai(
+              'Could not answer that one. Try again in a moment.',
+              failed: true,
+            )
+          : AskMessage.ai(answer.pick, answer: answer),
+    ];
+    _busy = false;
+  }
+
+  /// 비교 화면에서 넘어올 때 두 기기를 미리 넣어준다.
+  void seedWithDevices(String a, String b) {
+    state = <AskMessage>[
+      ...state,
+      AskMessage.user('$a or $b?'),
+    ];
+  }
+}
+
+final askProvider =
+    NotifierProvider<AskNotifier, List<AskMessage>>(AskNotifier.new);
