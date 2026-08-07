@@ -23,7 +23,7 @@ env:
 
 jobs:
   analyze-and-test:
-    name: 정적 분석 + 테스트
+    name: analyze & test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,36 +34,36 @@ jobs:
           channel: stable
           cache: true
 
-      - name: 의존성 설치
+      - name: install deps
         run: flutter pub get
 
-      - name: 코드 생성 결과가 최신인지 확인
+      - name: verify generated code is current
         run: |
           if grep -q "build_runner" pubspec.yaml; then
             dart run build_runner build
             # 생성물이 커밋된 것과 다르면 누군가 codegen을 빼먹은 것이다.
             if ! git diff --exit-code --stat -- '*.g.dart' '*.freezed.dart'; then
-              echo "::error::생성 코드가 소스와 어긋난다. 'dart run build_runner build' 후 커밋할 것."
+              echo "::error::Generated code is stale. Run 'dart run build_runner build' and commit."
               exit 1
             fi
           else
-            echo "build_runner 미사용 — 건너뜀"
+            echo "no build_runner in pubspec, skipping"
           fi
 
-      - name: 정적 분석
+      - name: analyze
         # v1 코드에 남은 경고·info는 별도 이슈로 정리 중이므로 에러만 실패로 본다.
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
-      - name: 테스트
+      - name: test
         run: |
           if [ -d test ] && [ -n "$(find test -name '*_test.dart' -print -quit)" ]; then
             flutter test --reporter expanded
           else
-            echo "테스트 파일이 아직 없다 — 건너뜀"
+            echo "no test files yet, skipping"
           fi
 
   build-android:
-    name: Android 디버그 빌드
+    name: android debug build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -80,7 +80,7 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Firebase Android 설정 파일 생성
+      - name: write Firebase Android config
         # google-services.json은 gitignore 대상이라 저장소에 없다.
         # 아래 값은 lib/firebase_options.dart에 이미 커밋된 공개 클라이언트
         # 식별자와 동일하다. oauth_client가 비어 있어 Google 로그인은 되지
@@ -108,10 +108,10 @@ jobs:
           }
           JSON
 
-      - name: 의존성 설치
+      - name: install deps
         run: flutter pub get
 
-      - name: 디버그 APK 빌드
+      - name: build debug APK
         run: flutter build apk --debug
 
       - uses: actions/upload-artifact@v4
