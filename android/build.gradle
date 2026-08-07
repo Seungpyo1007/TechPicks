@@ -9,6 +9,41 @@ rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+// 구버전 Flutter 플러그인들을 최신 AGP/Gradle 위에서 빌드하기 위한 보정.
+// evaluationDependsOn 보다 반드시 먼저 등록되어야 한다.
+subprojects {
+    ["com.android.application", "com.android.library"].each { pluginId ->
+        plugins.withId(pluginId) {
+            def androidExt = extensions.getByName("android")
+            // AGP 8부터 buildConfig 생성이 기본 비활성화됐지만
+            // firebase_ml_model_downloader 등이 buildConfigField를 사용한다.
+            androidExt.buildFeatures.buildConfig = true
+        }
+    }
+    // 플러그인들이 각자 compileOptions에 Java 1.8을 선언해 Kotlin 타깃과 어긋난다.
+    // 각 플러그인의 build.gradle 평가가 끝난 뒤 17로 덮어쓴다.
+    // (아래 evaluationDependsOn 블록보다 먼저 등록되어야 유효하다.)
+    afterEvaluate {
+        def androidExt = extensions.findByName("android")
+        if (androidExt != null) {
+            androidExt.compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_17
+                targetCompatibility = JavaVersion.VERSION_17
+            }
+            // 일부 플러그인이 compileSdk 31 등 옛 값을 선언해
+            // 최신 AndroidX 의존성(compileSdk 33+ 요구)과 충돌한다.
+            if (androidExt.compileSdk == null || androidExt.compileSdk < 36) {
+                androidExt.compileSdk = 36
+            }
+        }
+    }
+    plugins.withId("org.jetbrains.kotlin.android") {
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
 }
