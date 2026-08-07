@@ -2,11 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:techpicks/app/shell/tp_tab.dart';
-import 'package:techpicks/domain/model/device_specs.dart';
-import 'package:techpicks/domain/model/ranking.dart';
-import 'package:techpicks/domain/model/tp_index.dart';
-import 'package:techpicks/shared/copy_keys.dart';
 
 Map<String, dynamic> _load(String locale) => jsonDecode(
       File('assets/translations/$locale.json').readAsStringSync(),
@@ -67,60 +62,57 @@ void main() {
     expect(ko['tabYou'], '내 정보');
   });
 
-  test('K 의 상수가 전부 번역 파일에 있다', () => _guardKeys(en));
+  test('K 가 쓰는 키가 전부 번역 파일에 있다', () {
+    // 키를 오타내면 easy_localization 은 키 문자열을 그대로 화면에 찍는다.
+    // 컴파일로는 안 잡힌다.
+    for (final key in _keysInCode()) {
+      expect(en.containsKey(key), isTrue, reason: '번역 파일에 없는 키: $key');
+    }
+  });
 
-  test('화면이 쓰는 키가 다 있다', () {
-    for (final key in <String>[
-      'tabHome', 'tabRank', 'tabCmp', 'tabAsk', 'tabYou',
-      'homeTitle', 'homeSub', 'verdict', 'shortlist', 'movers',
-      'rankBy', 'rankNote', 'axIndex', 'axBatt', 'axCam', 'axVal', 'axPrice',
-      'cmpTitle', 'choose', 'cancel',
-      'addShort', 'inShort', 'compareB', 'view3d',
-      'priorities', 'prioritiesNote', 'language', 'darkMode', 'logout',
-      'chatSeed', 'askHint',
-      'skip', 'next', 'start', 'onb1', 'onb1b', 'onb2', 'onb2b', 'onb3', 'onb3b',
-      'welcome', 'lGoogle', 'lEmail', 'lAnon', 'noAccount', 'signup',
-      'scanTitle', 'scanHintIdle', 'scanHintDone', 'detected', 'open',
-      'viewerNote', 'partDisplay', 'partBattery', 'partChip', 'partCamera',
-      'dataSource',
-    ]) {
+  test('번역 파일에 안 쓰는 키가 없다', () {
+    final unused = en.keys.toSet()
+      ..removeAll(_keysInCode())
+      ..removeAll(_pending.keys);
+    expect(
+      unused,
+      isEmpty,
+      reason: '어디서도 안 쓰는 키. 화면에 붙이거나 _pending 에 이유와 함께 적는다.',
+    );
+  });
+
+  test('붙일 자리를 못 정한 키가 아직 번역 파일에 있다', () {
+    // 지우면 나중에 그 화면을 만들 때 확정 카피를 다시 찾아야 한다.
+    for (final key in _pending.keys) {
       expect(en.containsKey(key), isTrue, reason: key);
+      expect(ko.containsKey(key), isTrue, reason: key);
     }
   });
 }
 
-/// K 의 모든 상수가 실제 번역 파일에 있는지.
+/// 아직 화면에 안 붙은 확정 카피와 그 이유.
 ///
-/// 키를 오타내면 easy_localization 은 키 문자열을 그대로 화면에 찍는다.
-/// 컴파일로는 안 잡히니 여기서 잡는다.
-void _guardKeys(Map<String, dynamic> en) {
-  final keys = <String>[
-    K.tabHome, K.tabRank, K.tabCompare, K.tabAsk, K.tabYou,
-    K.homeTitle, K.homeSub, K.verdict, K.tpIndex, K.shortlist, K.addDevice,
-    K.compareAll, K.askWhy, K.movers, K.emptyShortlist, K.emptyShortlistBody,
-    K.emptyShortlistCta,
-    K.phones, K.cpus, K.laptops, K.rankBy, K.rankNote, K.scanCta, K.scanShort,
-    K.noDevices,
-    K.compareTitle, K.choose, K.cancel, K.chooseTwo, K.tapToChange,
-    K.addShortlist, K.inShortlist, K.compareButton, K.view3d, K.dataSource,
-    K.loadFailed,
-    K.chatSeed, K.askHint, K.askFailed,
-    K.you, K.editProfile, K.priorities, K.prioritiesNote, K.reset, K.language,
-    K.darkMode, K.notifications, K.currency, K.changePassword, K.logout,
-    K.version, K.on, K.off, K.noAccountYet,
-    K.skip, K.next, K.start,
-    K.welcome, K.welcomeSub, K.loginGoogle, K.loginApple, K.loginFacebook,
-    K.loginEmail, K.loginAnon, K.noAccount, K.signup,
-    K.scanTitle, K.scanHintIdle, K.scanHintDone, K.detected, K.openDevice,
-    K.viewerNote, K.partDisplay, K.partBattery, K.partChip, K.partCamera,
-    for (final o in K.onboarding) ...<String>[o.title, o.body],
-    for (final t in TpTab.values) K.tab(t),
-    for (final a in TpAxisKind.values) K.axis(a),
-    for (final a in RankAxis.values) K.rankAxis(a),
-    for (final s in SpecKind.values) K.spec(s),
-  ];
+/// 명세의 `T` 객체에서 그대로 가져온 문자열이라 값 자체는 확정이다. 어느
+/// 요소에 붙는지가 확정이 아니다 — 프로토타입(`TechPicks-Web`)이 지워져서
+/// 바인딩을 확인할 수 없다. 임의로 정하지 않고 여기 적어둔다.
+const Map<String, String> _pending = <String, String>{
+  'laptopTitle': 'Laptops 화면(명세 §6)이 아직 없다',
+  'seeAll': '명세가 이 버튼을 어느 섹션 헤더에 두는지 안 적었다. Shortlist 는 Add 를 쓴다',
+  'swap': '비교 화면 슬롯은 캡션 tapToChange 를 쓴다. Change 가 별도 버튼인지 불명',
+  'viewerTitle': '뷰어 헤더는 기기 이름을 쓴다. 어느 기기인지가 3D 뷰어라는 사실보다 쓸모 있다',
+  'askPlaceholder': '입력창 힌트는 askHint 를 쓴다. 둘 다 T 에 있고 어느 쪽이 입력창인지 불명',
+  'indexNote': 'TP Index 설명. 명세의 어느 화면 절에도 안 나온다',
+  'welcomeSub': '로그인 부제. welcomeSubShort 도 T 에 있고 지금은 그쪽을 쓴다',
+};
 
-  for (final key in keys) {
-    expect(en.containsKey(key), isTrue, reason: '번역 파일에 없는 키: $key');
-  }
+/// 코드가 실제로 쓰는 번역 키.
+///
+/// 키는 전부 [K] 를 거친다. 손으로 목록을 복사해두면 새 키를 넣을 때마다
+/// 같이 고쳐야 하고, 안 고쳐도 테스트가 통과한다. 그래서 파일을 읽는다.
+Set<String> _keysInCode() {
+  final src = File('lib/shared/copy_keys.dart').readAsStringSync();
+  return RegExp(r"'([A-Za-z][A-Za-z0-9_]*)'")
+      .allMatches(src)
+      .map((m) => m.group(1)!)
+      .toSet();
 }
