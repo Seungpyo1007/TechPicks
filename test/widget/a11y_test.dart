@@ -59,6 +59,20 @@ void main() {
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       handle.dispose();
     });
+
+    testWidgets('${entry.key} — 글자 대비', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpScreen(
+        tester,
+        entry.value,
+        size: const Size(1200, 3200),
+        overrides: <Override>[
+          askServiceProvider.overrideWithValue(const LocalAskService()),
+        ],
+      );
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      handle.dispose();
+    });
   }
 
   for (final entry in _noSettle.entries) {

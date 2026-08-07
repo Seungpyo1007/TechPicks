@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../shared/widgets/tp_surface.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 import '../theme/tp_tokens.dart';
 import '../theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
@@ -136,22 +137,20 @@ class TpShell extends StatelessWidget {
             top: safe.top,
             left: 12,
             right: 12,
-            height: 42,
+            // 유리 알약은 명세대로 42 로 그리고, 히트 영역만 48 을 채운다.
+            height: 48,
             child: Row(
               children: <Widget>[
                 if (onBack != null)
-                  Semantics(
-                    button: true,
+                  TpTapTarget(
+                    onTap: onBack,
                     label: K.back.tr(),
-                    child: TpSurface(
+                    child: const TpSurface(
                       strong: true,
                       radius: TpTokens.rControl,
-                      onTap: onBack,
-                      child: const SizedBox(
-                        // 42 는 접근성 기준(48)에 못 미친다. 유리 알약은
-                        // 명세대로 42 로 그리고 히트 영역만 넓힌다.
-                        width: 48,
-                        height: 48,
+                      child: SizedBox(
+                        width: 42,
+                        height: 42,
                         child: Icon(Icons.chevron_left, size: 24),
                       ),
                     ),

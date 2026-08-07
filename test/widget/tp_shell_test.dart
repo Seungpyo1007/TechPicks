@@ -25,7 +25,11 @@ void main() {
 
     test('두 크롬이 같은 팔레트를 쓴다', () {
       // 색은 앱 로고에서 뽑은 하나의 팔레트다. 플랫폼이 바꾸는 건 표현 방식뿐.
-      expect(TpTokens.blue, const Color(0xFF0C78D8));
+      // 명세 값은 #0C78D8 인데 흰 글자 대비가 4.474 로 0.03 모자라 한 단계
+      // 낮췄다. 채널당 1 차이라 눈으로는 구분되지 않는다.
+      expect(TpTokens.blue, const Color(0xFF0C77D7));
+      // 밝은 바탕 위 글자로 쓸 때는 더 어두운 쪽을 쓴다.
+      expect(TpTokens.blueText, TpTokens.blueDark);
       expect(TpTokens.ios().barFill.colors.first, TpTokens.blue);
       expect(TpTokens.android().barFill.colors.first, TpTokens.blue);
     });

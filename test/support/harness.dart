@@ -85,6 +85,10 @@ Future<void> _pump(
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
+  // 안전 영역이 0 인 기기는 없다. 셸이 헤더·탭 바 위치를 여기서 잡으므로
+  // 이걸 비워두면 콘텐츠가 헤더 스크림 아래로 들어가 실제와 다르게 겹친다.
+  tester.view.viewPadding = const FakeViewPadding(top: 47, bottom: 34);
+  tester.view.padding = const FakeViewPadding(top: 47, bottom: 34);
   addTearDown(tester.view.reset);
 
   await tester.pumpWidget(

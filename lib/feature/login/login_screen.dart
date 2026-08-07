@@ -128,7 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onTap: widget.onSignUp,
                 child: Text(
                   K.signup.tr(),
-                  style: type.body.copyWith(color: TpTokens.blue),
+                  style: type.body.copyWith(color: TpTokens.blueText),
                 ),
               ),
             ],
@@ -188,7 +188,7 @@ class _AuthButton extends StatelessWidget {
                 fontWeight: t.boldWeight,
                 color: filled
                     ? Colors.white
-                    : (plain ? TpTokens.blue : TpTokens.ink),
+                    : (plain ? TpTokens.blueText : TpTokens.ink),
               ),
             ),
           ],

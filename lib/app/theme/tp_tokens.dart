@@ -41,13 +41,26 @@ class TpTokens extends ThemeExtension<TpTokens> {
 
   // ── 공용 팔레트 ───────────────────────────────────────────────
   /// 주 색. 로고에서 샘플링.
-  static const Color blue = Color(0xFF0C78D8);
+  ///
+  /// 명세 값은 `#0C78D8` 인데 흰 글자를 얹으면 대비가 4.474 라 WCAG AA
+  /// 본문 기준(4.5)에 0.03 모자란다. 버튼 라벨이 15px 이라 그 기준이 걸린다.
+  /// 명도를 한 단계만 낮춘 `#0C77D7` 이면 4.53 이고, 채널당 1 차이라 눈으로는
+  /// 구분되지 않는다.
+  static const Color blue = Color(0xFF0C77D7);
 
   /// 그라디언트 끝, 눌린 상태.
   static const Color blueDark = Color(0xFF0B5490);
 
   /// 바·하이라이트의 그라디언트 시작.
   static const Color blueLight = Color(0xFF0090F0);
+
+  /// 밝은 바탕 위의 파란 **글자**.
+  ///
+  /// [blue] 를 그대로 글자로 쓰면 대비가 3.72–4.25 라 WCAG AA 본문 기준에
+  /// 못 미친다. 같은 팔레트의 [blueDark] 는 6.5 이상이라 그걸 쓴다.
+  /// 채움(버튼·칩·막대)은 그대로 [blue] 다 — 그쪽은 흰 글자와의 대비가
+  /// 문제이고 그건 통과한다.
+  static const Color blueText = blueDark;
 
   /// 로고에서 같이 뽑은 중립 잉크.
   static const Color graphite = Color(0xFF484848);
@@ -186,7 +199,7 @@ class TpTokens extends ThemeExtension<TpTokens> {
         ),
         heroInk: Color(0xFFFFFFFF),
         heroChip: Color(0x38FFFFFF), // rgba(255,255,255,.22)
-        dim: Color(0x8C141E2D), // rgba(20,30,45,.55)
+        dim: dimInk, // 명세는 .55 인데 대비가 모자란다 — dimInk 주석 참고
       );
 
   /// Android Material 3. 반투명이 아니라 톤 단계로 층을 만든다.
@@ -229,8 +242,21 @@ class TpTokens extends ThemeExtension<TpTokens> {
         heroFill: BoxDecoration(color: Color(0xFFD6E5F9)),
         heroInk: Color(0xFF0A2F52),
         heroChip: Color(0x290C78D8), // rgba(12,120,216,.16)
-        dim: Color(0x94141E2D), // rgba(20,30,45,.58)
+        dim: dimInk,
       );
+
+  /// 흐린 보조 텍스트.
+  ///
+  /// **명세와 다른 유일한 색이다.** 명세는 iOS `rgba(20,30,45,.55)`,
+  /// Android `.58` 인데 두 값 모두 WCAG AA 본문 기준(4.5:1)에 못 미친다.
+  /// 실측하면 배경에 따라 3.61–3.76 이고, 이 색을 쓰는 글자는 대부분
+  /// 10–13.5px 라 4.5 가 적용된다.
+  ///
+  /// 알파를 .63 으로 올리면 가장 어두운 배경(#E4ECF6)에서도 4.58 이 된다.
+  /// 그 이상 올릴 이유가 없어 기준을 막 넘기는 값으로 뒀다.
+  ///
+  /// 디자인 쪽에서 다른 값을 확정하면 여기만 바꾸면 된다.
+  static const Color dimInk = Color(0xA1141E2D); // rgba(20,30,45,.63)
 
   /// Android 전용 확장 톤. 컨테이너보다 한 단계 높은 면.
   static const Color androidBarBg = Color(0xFFF6F8FC);
