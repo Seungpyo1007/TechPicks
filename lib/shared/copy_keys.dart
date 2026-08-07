@@ -140,6 +140,14 @@ abstract final class K {
   static const String partChip = 'partChip';
   static const String partCamera = 'partCamera';
 
+  // 스크린 리더 전용. 화면에는 안 보이고 읽히기만 한다.
+  static const String a11yRankRow = 'a11yRankRow';
+  static const String a11yAxis = 'a11yAxis';
+  static const String a11yAxisMissing = 'a11yAxisMissing';
+  static const String a11yIndex = 'a11yIndex';
+  static const String a11yCompareCell = 'a11yCompareCell';
+  static const String a11yWinner = 'a11yWinner';
+
   static String tab(TpTab tab) => switch (tab) {
         TpTab.home => tabHome,
         TpTab.rank => tabRank,

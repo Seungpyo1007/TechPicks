@@ -145,21 +145,28 @@ class _VerdictCard extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: <Widget>[
-              Text(
-                index?.toString() ?? DeviceSpecs.empty,
-                style: type.indexNumeral,
-                maxLines: 1,
-                softWrap: false,
-              ),
-              const SizedBox(width: 10),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(K.tpIndex.tr(), style: type.secondary),
-              ),
-            ],
+          Semantics(
+            container: true,
+            label: index == null
+                ? null
+                : K.a11yIndex.tr(args: <String>[index.toString()]),
+            excludeSemantics: index != null,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                Text(
+                  index?.toString() ?? DeviceSpecs.empty,
+                  style: type.indexNumeral,
+                  maxLines: 1,
+                  softWrap: false,
+                ),
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(K.tpIndex.tr(), style: type.secondary),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 6),
           Text(_reason(device, index), style: type.body),

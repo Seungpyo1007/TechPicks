@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../domain/model/tp_index.dart';
+import '../copy_keys.dart';
 import '../spec_labels.dart';
 
 /// 점수 5개 축을 각자 트랙 위에 그린다.
@@ -25,7 +27,18 @@ class TpScoreStrip extends StatelessWidget {
     return Column(
       children: <Widget>[
         for (final axis in axes)
-          Padding(
+          Semantics(
+            container: true,
+            // 라벨·숫자·막대가 따로 읽히면 무슨 값인지 알 수 없다.
+            label: axis.hasData
+                ? K.a11yAxis.tr(args: <String>[
+                    SpecLabels.axis(axis.kind),
+                    axis.score!.round().toString(),
+                  ])
+                : K.a11yAxisMissing
+                    .tr(args: <String>[SpecLabels.axis(axis.kind)]),
+            excludeSemantics: true,
+            child: Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,6 +67,7 @@ class TpScoreStrip extends StatelessWidget {
                 const SizedBox(height: 5),
                 _Segment(fraction: axis.fraction),
               ],
+            ),
             ),
           ),
       ],

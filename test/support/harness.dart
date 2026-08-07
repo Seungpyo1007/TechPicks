@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:easy_localization/src/localization.dart';
 import 'package:easy_localization/src/translations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -102,4 +103,30 @@ Future<void> _pump(
       child: MaterialApp(theme: AppTheme.of(chrome), home: screen),
     ),
   );
+}
+
+
+/// 지금 화면의 시맨틱 라벨 전부.
+///
+/// `find.bySemanticsLabel` 은 병합된 노드를 놓치는 경우가 있어 트리를 직접
+/// 훑는다. 스크린 리더가 실제로 읽는 것이 이 목록이다.
+List<String> semanticsLabels(WidgetTester tester) {
+  final labels = <String>[];
+  void walk(SemanticsNode node) {
+    if (node.label.isNotEmpty) labels.add(node.label);
+    node.visitChildren((child) {
+      walk(child);
+      return true;
+    });
+  }
+
+  // 시맨틱 트리는 뷰별 파이프라인에 달려 있다. 루트와 자식 오너를 모두 본다.
+  void fromOwner(PipelineOwner owner) {
+    final root = owner.semanticsOwner?.rootSemanticsNode;
+    if (root != null) walk(root);
+    owner.visitChildren(fromOwner);
+  }
+
+  fromOwner(tester.binding.rootPipelineOwner);
+  return labels;
 }
