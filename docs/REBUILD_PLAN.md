@@ -71,7 +71,15 @@ GetTechAPI/TechEngine  — 검증·수집·서빙 엔진 (Python) 기본 브랜�
 
 `features` → `value`로 축 하나만 바꾸면 **데이터 매핑이 1:1로 맞는다.** 게다가 `tier`, `percentile`, `era` 같은 v1에 없던 축이 추가로 들어온다.
 
-다만 **표현 형태는 레이더 차트를 유지하지 않는다.** 5개 축이 모두 0–100 동일 척도이므로, 단일 기기는 미터(meter) 5줄 + `overall` 히어로 숫자가, 기기 간 비교는 가로 그룹 막대가 레이더보다 정확하게 읽힌다. 레이더는 축 순서에 따라 면적이 달라 보여 값이 왜곡되고, 두 기기를 겹치면 교차 영역이 판독 불가능해진다. 근거와 스펙은 `docs/DESIGN_BRIEF.md` §5.
+표현 형태는 레이더 차트를 쓰지 않는다. 단일 기기는 62px 히어로 숫자 + 5구간 막대 스트립, 비교는 스펙 표에서 행마다 이긴 셀을 강조한다. 확정 명세는 `docs/DESIGN_HANDOFF.md`.
+
+한 가지 차이가 있다. 디자인의 **TP Index는 사용자가 가중치를 조정하는 값**이라 TechAPI의 `score.overall`을 그대로 쓰지 않는다. 5개 축만 받아 앱에서 계산한다.
+
+```
+idx = round(perf*0.25 + cam*0.25 + disp*0.20 + batt*0.20 + val*0.10)
+```
+
+기본 가중치가 이렇고, You 화면의 슬라이더로 바꾸면 화면에 보이는 모든 지수가 즉시 다시 계산된다.
 
 ### 2.4 데이터 접근 경로 — 지금 당장 쓸 수 있는 것
 
@@ -120,7 +128,7 @@ lib/
   main.dart                      앱 부트스트랩만 (ProviderScope + router)
   app/
     router.dart                  go_router 라우트 정의
-    theme/                       디자인 토큰 → ThemeData (§디자인 브리프 참조)
+    theme/                       디자인 토큰 → ThemeData (iOS/Android 두 크롬)
     localization/
   core/
     network/tech_api_client.dart  덤프/REST 양쪽을 흡수하는 단일 클라이언트
@@ -133,11 +141,12 @@ lib/
     dto/                          freezed + json_serializable
     repository_impl/
   feature/
-    home/  search/  device/  compare/  ranking/  chat/  profile/  onboarding/
+    home/  rank/  compare/  ask/  you/
+    detail/  picker/  scan/  viewer/  onboard/  login/
       ├ presentation/  (widget)
       ├ controller/    (riverpod notifier)
       └ ...
-  shared/                        재사용 위젯 (SpecRow, ScoreRadar, TierBadge …)
+  shared/                        재사용 위젯 (SpecRow, ScoreStrip, IndexNumeral …)
 test/
   unit/  widget/  golden/
 ```
@@ -151,7 +160,7 @@ test/
 | 모델 | **freezed + json_serializable** | 위 스키마를 손으로 파싱하지 않음 |
 | 네트워크 | **dio** + 재시도/캐시 인터셉터 | 정적 덤프는 ETag 캐싱이 잘 먹는다 |
 | 로컬 | **Drift** | 93,396개 폰 오프라인 검색 인덱스 |
-| 차트 | **fl_chart** 단일화 | v1은 fl_chart와 syncfusion을 **둘 다** 넣고 syncfusion만 씀. syncfusion은 상용 라이선스 이슈가 있어 제거 |
+| 차트 | **없음** | 확정 디자인에 차트가 없다. 점수는 5구간 막대 스트립이라 `Container` + `FractionallySizedBox`로 충분하다. fl_chart는 제거했고 syncfusion도 `Phone.dart`와 함께 사라진다 |
 | AI | **firebase_vertexai** 유지, 모델 ID 교체 | §5.4 |
 | 인증 | Firebase Auth 유지 | 재작성 불필요 |
 
@@ -164,8 +173,8 @@ test/
 | `Phone.dart` 하드코딩 4종 | `/v1/smartphones` 93,396종 + 필터/정렬 |
 | `CPU.dart` (내 기기 정보) | `/v1/cpus` 3,977종 제품 DB로 **의미 자체를 교체**. 내 기기 정보는 "내 기기 비교" 보조 기능으로 강등 |
 | `Laptop.dart` WebView | `/v1/laptops` 1,951종 네이티브 화면. **WebView 전면 제거** |
-| `RankingCPU/Phone/Laptop.dart` WebView 3종 | `score.overall` 기준 정렬 + `tier`/`percentile` 뱃지 |
-| `Model3D.dart` WebView | v2 범위에서 제외 (데이터 없음) |
+| `RankingCPU/Phone/Laptop.dart` WebView 3종 | 인앱 `rank` 화면 하나로 통합. 5개 축(TP Index/배터리/카메라/가치/가격) 정렬. 이 셋을 지우면 필요 없던 위치 권한 요청도 같이 사라진다 |
+| `Model3D.dart` WebView | 다크 테이크오버 `viewer` 화면으로 재설계됨. 모델 파일은 아직 없어 와이어프레임 대역 |
 | `Scan.dart` (동작 안 함, §5.4) | Gemini 멀티모달로 재작성 → 인식 결과를 `/v1/search`로 연결 |
 | `ChatAI.dart` | TechAPI 레코드를 컨텍스트로 주입하는 RAG형 상담 |
 | `Test.dart`, `More.dart`(0바이트), `CPUTutorial.dart`(0바이트) | 삭제 |
@@ -249,7 +258,7 @@ feat/v2-skeleton          디렉터리 구조 + Riverpod/go_router 골격
 feat/techapi-client       TechApiClient + freezed DTO + 단위 테스트
 feat/design-system        디자인 토큰 → ThemeData + 공용 위젯
 feat/device-list          목록/필터/정렬
-feat/device-detail        상세 + 스코어 레이더 + 출처 표기
+feat/device-detail        상세 + 스코어 스트립 + 출처 표기
 feat/compare              비교 화면
 feat/search               Drift 로컬 인덱스 검색
 feat/chat-rag             TechAPI 컨텍스트 주입 AI 상담
