@@ -7,10 +7,10 @@ part of 'collection_page.dart';
 // **************************************************************************
 
 _ResourceRef _$ResourceRefFromJson(Map<String, dynamic> json) => _ResourceRef(
-      slug: json['slug'] as String,
-      name: json['name'] as String,
-      url: json['url'] as String?,
-    );
+  slug: json['slug'] as String,
+  name: json['name'] as String,
+  url: json['url'] as String?,
+);
 
 Map<String, dynamic> _$ResourceRefToJson(_ResourceRef instance) =>
     <String, dynamic>{
@@ -22,7 +22,8 @@ Map<String, dynamic> _$ResourceRefToJson(_ResourceRef instance) =>
 _CollectionPage _$CollectionPageFromJson(Map<String, dynamic> json) =>
     _CollectionPage(
       count: (json['count'] as num?)?.toInt() ?? 0,
-      results: (json['results'] as List<dynamic>?)
+      results:
+          (json['results'] as List<dynamic>?)
               ?.map((e) => ResourceRef.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const <ResourceRef>[],
