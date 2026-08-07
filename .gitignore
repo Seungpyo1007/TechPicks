@@ -44,3 +44,5 @@ app.*.map.json
 
 # Android Studio will place build artifacts here
 android/app/build/
+android/build/
+android/.gradle/
