@@ -5,6 +5,7 @@ import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/feature/ask/ask_screen.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
+import 'package:techpicks/feature/cpu/processor_screen.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
@@ -21,6 +22,7 @@ import '../support/harness.dart';
 final _screens = <String, Widget>{
   'home': const HomeScreen(),
   'rank': RankScreen(onScan: () {}),
+  'cpu': const ProcessorScreen(),
   'compare': const CompareScreen(),
   'detail': const DetailScreen(slug: 'galaxy-s25'),
   'ask': const AskScreen(),

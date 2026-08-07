@@ -7,7 +7,7 @@ import '../feature/compare/compare_screen.dart';
 import '../feature/compare/picker_screen.dart';
 import '../feature/detail/detail_screen.dart';
 import '../feature/home/home_screen.dart';
-import '../feature/rank/rank_screen.dart';
+import '../feature/rank/rank_tab.dart';
 import '../feature/scan/scan_screen.dart';
 import '../feature/viewer/viewer_screen.dart';
 import '../feature/you/you_screen.dart';
@@ -99,7 +99,7 @@ class _TabHostState extends ConsumerState<TabHost> {
           onAskWhy: () => _select(TpTab.ask),
           onMoversTap: () => _select(TpTab.rank),
         ),
-        RankScreen(
+        RankTab(
           onTabSelected: _select,
           onDeviceTap: _openDevice,
           onScan: _openScan,

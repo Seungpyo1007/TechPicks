@@ -20,6 +20,7 @@ import '../domain/model/tp_index.dart';
 import '../domain/model/processor.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_weights.dart';
+import '../feature/rank/rank_category.dart';
 import '../shared/copy_keys.dart';
 import 'locale_controller.dart';
 
@@ -117,6 +118,19 @@ final rankedPhonesProvider = Provider<List<RankedDevice>>((ref) {
     ref.watch(weightsProvider),
   );
 });
+
+/// 랭킹 탭 안에서 보고 있는 카테고리.
+class RankCategoryNotifier extends Notifier<RankCategory> {
+  @override
+  RankCategory build() => RankCategory.phones;
+
+  void set(RankCategory category) => state = category;
+}
+
+final rankCategoryProvider =
+    NotifierProvider<RankCategoryNotifier, RankCategory>(
+  RankCategoryNotifier.new,
+);
 
 /// Processors 화면의 세그먼트.
 class ProcessorSegmentNotifier extends Notifier<ProcessorSegment> {

@@ -11,6 +11,7 @@ import '../../shared/copy_keys.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/ranking.dart';
 import '../../shared/widgets/tp_chip.dart';
+import 'category_chips.dart';
 import '../../shared/widgets/tp_surface.dart';
 
 /// 랭킹. v1 의 `RankingCPU/Phone/Laptop.dart` 웹뷰 세 개를 대체한다.
@@ -51,12 +52,7 @@ class RankScreen extends ConsumerWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: <Widget>[
-          _ChipRow(
-            labels: <String>[K.phones.tr(), K.cpus.tr(), K.laptops.tr()],
-            // 카탈로그에 폰만 충분히 들어 있다. 나머지 두 카테고리는 화면이
-            // 생길 때 연결한다.
-            selectedIndex: 0,
-          ),
+          const CategoryChips(),
           const SizedBox(height: 14),
           _EyebrowText(K.rankBy.tr()),
           const SizedBox(height: 8),
