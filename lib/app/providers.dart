@@ -32,13 +32,19 @@ final techApiRepositoryProvider = Provider<TechApiRepository>(
   (ref) => TechApiRepository(),
 );
 
-final catalogProvider = FutureProvider<Catalog>((ref) async {
-  final result = await ref.watch(catalogRepositoryProvider).load();
-  return result.fold(
-    (c) => c,
-    (f) => throw f,
-  );
-});
+final catalogProvider = FutureProvider<Catalog>(
+  (ref) async {
+    final result = await ref.watch(catalogRepositoryProvider).load();
+    return result.fold(
+      (c) => c,
+      (f) => throw f,
+    );
+  },
+  // 앱에 같이 실린 파일이라 재시도해도 결과가 달라지지 않는다. Riverpod 3 의
+  // 기본 재시도를 켜두면 실패한 뒤에도 상태가 계속 `AsyncLoading` 이라
+  // 화면이 영원히 로딩으로 보인다.
+  retry: (_, __) => null,
+);
 
 /// 사용자 가중치.
 ///
@@ -157,14 +163,19 @@ final shortlistProvider =
 ///
 /// 카탈로그는 큐레이션한 일부라 랭킹·홈에 충분하지만, 상세는 그 밖의 기기도
 /// 열려야 한다.
-final deviceProvider = FutureProvider.family<Smartphone, String>((ref, slug) async {
-  final catalog = await ref.watch(catalogProvider.future);
-  final local = catalog.smartphones.where((d) => d.slug == slug);
-  if (local.isNotEmpty) return local.first;
+final deviceProvider = FutureProvider.family<Smartphone, String>(
+  (ref, slug) async {
+    final catalog = await ref.watch(catalogProvider.future);
+    final local = catalog.smartphones.where((d) => d.slug == slug);
+    if (local.isNotEmpty) return local.first;
 
-  final result = await ref.watch(techApiRepositoryProvider).smartphone(slug);
-  return result.fold((d) => d, (f) => throw f);
-});
+    final result = await ref.watch(techApiRepositoryProvider).smartphone(slug);
+    return result.fold((d) => d, (f) => throw f);
+  },
+  // 조용히 재시도하면 상태가 계속 `AsyncLoading` 이라 화면이 뼈대만 보인다.
+  // 실패는 실패로 보여주고, 다시 받는 건 에러 카드의 버튼이 할 일이다.
+  retry: (_, __) => null,
+);
 
 /// 비교 화면의 두 슬롯.
 ///
@@ -328,9 +339,15 @@ class AskNotifier extends Notifier<List<AskMessage>> {
     // 보이지 않게 한다.
     state = <AskMessage>[...state, AskMessage.user(text)];
 
-    final catalog = await ref.read(catalogProvider.future);
-    final answer =
-        await ref.read(askServiceProvider).ask(text, catalog.smartphones);
+    // 카탈로그를 못 읽으면 답할 근거가 없다. 예외를 그대로 올리면 화면이
+    // 멈춘 것처럼 보이고 _busy 도 안 풀린다.
+    AskAnswer? answer;
+    try {
+      final catalog = await ref.read(catalogProvider.future);
+      answer = await ref.read(askServiceProvider).ask(text, catalog.smartphones);
+    } catch (_) {
+      answer = null;
+    }
 
     state = <AskMessage>[
       ...state,

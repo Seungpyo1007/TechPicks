@@ -39,7 +39,9 @@ class RankScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final axis = ref.watch(rankAxisProvider);
     final ranked = ref.watch(rankedPhonesProvider);
-    final loading = ref.watch(catalogProvider).isLoading;
+    // 실패했을 때도 스켈레톤을 계속 돌리면 영원히 로딩처럼 보인다.
+    final catalog = ref.watch(catalogProvider);
+    final loading = catalog is AsyncLoading && !catalog.hasError;
 
     return TpShell(
       title: K.rankTitle.tr(),
