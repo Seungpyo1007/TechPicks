@@ -59,8 +59,13 @@ Future<ProviderContainer> pumpScreen(
   TpChrome chrome = TpChrome.ios,
   List<Override> overrides = const <Override>[],
   Size size = const Size(1200, 3000),
+  String catalogAsset = defaultCatalogAsset,
 }) async {
-  await _pump(tester, screen, chrome: chrome, overrides: overrides, size: size);
+  await _pump(tester, screen,
+      chrome: chrome,
+      overrides: overrides,
+      size: size,
+      catalogAsset: catalogAsset);
   await tester.pumpAndSettle();
   return ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
 }
@@ -72,10 +77,21 @@ Future<void> pumpScreenNoSettle(
   TpChrome chrome = TpChrome.ios,
   List<Override> overrides = const <Override>[],
   Size size = const Size(1200, 3000),
+  String catalogAsset = defaultCatalogAsset,
 }) async {
-  await _pump(tester, screen, chrome: chrome, overrides: overrides, size: size);
+  await _pump(tester, screen,
+      chrome: chrome,
+      overrides: overrides,
+      size: size,
+      catalogAsset: catalogAsset);
   await tester.pump();
 }
+
+/// 구워둔 실제 카탈로그.
+const String defaultCatalogAsset = 'assets/catalog/v1.json';
+
+/// 없는 경로. 애셋이 빠졌거나 깨진 빌드를 흉내낸다.
+const String missingCatalogAsset = 'assets/catalog/없는파일.json';
 
 Future<void> _pump(
   WidgetTester tester,
@@ -83,6 +99,7 @@ Future<void> _pump(
   required TpChrome chrome,
   required List<Override> overrides,
   required Size size,
+  required String catalogAsset,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -96,7 +113,7 @@ Future<void> _pump(
     ProviderScope(
       overrides: <Override>[
         catalogRepositoryProvider.overrideWithValue(
-          CatalogRepository(bundle: FileBundle()),
+          CatalogRepository(bundle: FileBundle(), assetPath: catalogAsset),
         ),
         ...overrides,
       ],
