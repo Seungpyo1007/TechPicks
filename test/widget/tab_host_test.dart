@@ -28,6 +28,13 @@ class _NoAuth implements AuthService {
       null;
 
   @override
+  Future<TpUser?> signUp({
+    required String email,
+    required String password,
+  }) async =>
+      null;
+
+  @override
   Future<void> signOut() async {}
 }
 

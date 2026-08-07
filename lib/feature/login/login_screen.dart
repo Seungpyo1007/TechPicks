@@ -16,10 +16,18 @@ import '../../data/service/auth_service.dart';
 ///
 /// 카피는 아직 하드코딩이다.
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key, this.onSignedIn, this.onSignUp});
+  const LoginScreen({
+    super.key,
+    this.onSignedIn,
+    this.onSignUp,
+    this.onEmail,
+  });
 
   final VoidCallback? onSignedIn;
   final VoidCallback? onSignUp;
+
+  /// 이메일 버튼. 입력 화면이 따로 필요해 바깥에서 띄운다.
+  final VoidCallback? onEmail;
 
   /// 명세의 버튼 순서와 라벨.
   static const List<({AuthMethod method, String key, String? asset})> buttons =
@@ -51,8 +59,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _error;
 
   Future<void> _tap(AuthMethod method) async {
-    // 이메일은 별도 입력 화면이 필요하다. 지금은 익명과 같은 자리에서
-    // 처리하지 않고 안내만 띄운다.
+    if (method == AuthMethod.email && widget.onEmail != null) {
+      widget.onEmail!();
+      return;
+    }
     final ok = await ref.read(currentUserProvider.notifier).signIn(method);
     if (!mounted) return;
     if (ok) {

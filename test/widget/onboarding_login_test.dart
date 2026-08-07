@@ -38,6 +38,13 @@ class _StubAuth implements AuthService {
   }
 
   @override
+  Future<TpUser?> signUp({
+    required String email,
+    required String password,
+  }) async =>
+      null;
+
+  @override
   Future<void> signOut() async => _current = null;
 }
 
