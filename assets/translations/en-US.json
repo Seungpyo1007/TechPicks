@@ -1,4 +1,10 @@
 {
+  "a11yAxis": "{} {} out of 100",
+  "a11yAxisMissing": "{} not scored",
+  "a11yCompareCell": "{}: {}",
+  "a11yIndex": "TP Index {} out of 100",
+  "a11yRankRow": "Rank {}. {}, TP Index {}",
+  "a11yWinner": "{}: {}, better",
   "addDevice": "Add",
   "addShort": "Add to shortlist",
   "anonFailed": "Could not start a session. Try again.",

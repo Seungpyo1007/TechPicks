@@ -8,6 +8,7 @@ import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
+import '../../domain/model/device_specs.dart';
 import '../../domain/model/ranking.dart';
 import '../../shared/widgets/tp_chip.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -186,7 +187,19 @@ class _RankRow extends StatelessWidget {
     // 1–3 위만 파란 숫자.
     final leading = entry.position <= 3 ? TpTokens.blue : TpTokens.graphite;
 
-    return GestureDetector(
+    return Semantics(
+      // container 를 켜야 행마다 별개 노드가 된다. 안 켜면 목록 전체가
+      // 하나로 합쳐져 스크린 리더가 한 번에 다 읽는다.
+      container: true,
+      button: onTap != null,
+      // 숫자 세 개가 따로 읽히면 어느 게 순위이고 어느 게 점수인지 모른다.
+      label: K.a11yRankRow.tr(args: <String>[
+        '${entry.position}',
+        entry.device.name,
+        entry.index?.toString() ?? DeviceSpecs.empty,
+      ]),
+      excludeSemantics: true,
+      child: GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
@@ -241,6 +254,7 @@ class _RankRow extends StatelessWidget {
             _Track(fraction: entry.fraction),
           ],
         ),
+      ),
       ),
     );
   }

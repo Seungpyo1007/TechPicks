@@ -86,14 +86,26 @@ class _DetailBody extends ConsumerWidget {
           children: <Widget>[
             Text(DeviceSpecs.formatPrice(device.msrpUsd), style: type.body),
             const Spacer(),
-            Text(
-              index?.toString() ?? DeviceSpecs.empty,
-              style: type.indexNumeral.copyWith(fontSize: 44),
-            ),
-            const SizedBox(width: 8),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Text(K.tpIndex.tr(), style: type.caption),
+            Semantics(
+              container: true,
+              label: index == null
+                  ? null
+                  : K.a11yIndex.tr(args: <String>[index.toString()]),
+              excludeSemantics: index != null,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Text(
+                    index?.toString() ?? DeviceSpecs.empty,
+                    style: type.indexNumeral.copyWith(fontSize: 44),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(K.tpIndex.tr(), style: type.caption),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

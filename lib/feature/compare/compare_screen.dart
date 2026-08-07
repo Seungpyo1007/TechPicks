@@ -86,7 +86,12 @@ class CompareScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Column(
                 children: <Widget>[
-                  for (final pair in pairs) _CompareRow(pair: pair),
+                  for (final pair in pairs)
+                    _CompareRow(
+                      pair: pair,
+                      nameA: a?.name ?? '',
+                      nameB: b?.name ?? '',
+                    ),
                 ],
               ),
             ),
@@ -159,9 +164,15 @@ class _ColumnHead extends StatelessWidget {
 
 /// 한 줄. 이긴 셀만 파란 틴트로 채우고 굵기를 올린다.
 class _CompareRow extends StatelessWidget {
-  const _CompareRow({required this.pair});
+  const _CompareRow({
+    required this.pair,
+    required this.nameA,
+    required this.nameB,
+  });
 
   final SpecPair pair;
+  final String nameA;
+  final String nameB;
 
   @override
   Widget build(BuildContext context) {
@@ -188,11 +199,19 @@ class _CompareRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 Expanded(
-                  child: _Cell(spec: pair.a, won: pair.winner == CompareSide.a),
+                  child: _Cell(
+                    spec: pair.a,
+                    won: pair.winner == CompareSide.a,
+                    device: nameA,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _Cell(spec: pair.b, won: pair.winner == CompareSide.b),
+                  child: _Cell(
+                    spec: pair.b,
+                    won: pair.winner == CompareSide.b,
+                    device: nameB,
+                  ),
                 ),
               ],
             ),
@@ -204,17 +223,26 @@ class _CompareRow extends StatelessWidget {
 }
 
 class _Cell extends StatelessWidget {
-  const _Cell({required this.spec, required this.won});
+  const _Cell({required this.spec, required this.won, required this.device});
 
   final DeviceSpec spec;
   final bool won;
+
+  /// 어느 기기의 값인지. 셀만 읽으면 알 수 없다.
+  final String device;
 
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
 
-    return Container(
+    return Semantics(
+      container: true,
+      // 승패는 색으로만 표시된다. 색을 못 보면 알 수 없으니 읽어준다.
+      label: (won ? K.a11yWinner : K.a11yCompareCell)
+          .tr(args: <String>[device, spec.value]),
+      excludeSemantics: true,
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
       decoration: BoxDecoration(
         color: won ? t.tintFill : Colors.transparent,
@@ -226,6 +254,7 @@ class _Cell extends StatelessWidget {
           fontWeight: won ? t.boldWeight : FontWeight.w400,
           color: spec.hasValue ? TpTokens.ink : t.dim,
         ),
+      ),
       ),
     );
   }
