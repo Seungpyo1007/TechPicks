@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:easy_localization/easy_localization.dart';
 // Localization·Translations 는 공개 배럴에 없어 내부 경로로 가져온다.
 // 테스트에서만 쓰고, 앱 코드는 .tr() 확장만 쓴다.
 import 'package:easy_localization/src/localization.dart';
