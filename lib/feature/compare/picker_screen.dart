@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,7 @@ import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -37,12 +39,12 @@ class PickerScreen extends ConsumerWidget {
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: Text('Choose a device', style: type.largeTitle),
+                  child: Text(K.choose.tr(), style: type.largeTitle),
                 ),
                 GestureDetector(
                   onTap: onDone,
                   child: Text(
-                    'Cancel',
+                    K.cancel.tr(),
                     style: type.body.copyWith(color: TpTokens.blue),
                   ),
                 ),

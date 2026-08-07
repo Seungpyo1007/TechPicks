@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 
 /// 3D 뷰어.
 ///
@@ -20,16 +22,12 @@ class ViewerScreen extends StatefulWidget {
   static const Color background = Color(0xFF0B0D10);
 
   /// 하단 부품 칩. 누르면 해당 부위를 강조한다.
-  static const List<String> parts = <String>[
-    'Display',
-    'Battery',
-    'Chipset',
-    'Camera module',
+  static const List<String> partKeys = <String>[
+    K.partDisplay,
+    K.partBattery,
+    K.partChip,
+    K.partCamera,
   ];
-
-  static const String note =
-      'Drag to orbit, pinch to zoom. Models stream on demand and cache for '
-      'offline viewing.';
 
   @override
   State<ViewerScreen> createState() => _ViewerScreenState();
@@ -61,7 +59,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: ViewerScreen.parts.length,
+                      itemCount: ViewerScreen.partKeys.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 8),
                       itemBuilder: (context, i) {
                         final on = _highlighted == i;
@@ -81,7 +79,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                                   BorderRadius.circular(TpTokens.rControl),
                             ),
                             child: Text(
-                              ViewerScreen.parts[i],
+                              ViewerScreen.partKeys[i].tr(),
                               style: type.body.copyWith(
                                 fontSize: 13.5,
                                 color: Colors.white,
@@ -95,7 +93,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: Text(
-                      ViewerScreen.note,
+                      K.viewerNote.tr(),
                       style: type.caption.copyWith(color: Colors.white54),
                     ),
                   ),

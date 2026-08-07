@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +7,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../shared/spec_labels.dart';
@@ -49,7 +51,7 @@ class CompareScreen extends ConsumerWidget {
     final b = find(slots.b);
 
     return TpShell(
-      title: 'Compare',
+      title: K.compareTitle.tr(),
       tab: TpTab.compare,
       onTabSelected: onTabSelected,
       child: ListView(
@@ -76,7 +78,7 @@ class CompareScreen extends ConsumerWidget {
           if (pairs.isEmpty)
             TpSurface(
               padding: const EdgeInsets.all(20),
-              child: Text('Choose two devices to compare.', style: type.body),
+              child: Text(K.chooseTwo.tr(), style: type.body),
             )
           else
             TpSurface(
@@ -101,7 +103,7 @@ class CompareScreen extends ConsumerWidget {
                   ),
                 ),
                 child: Text(
-                  'Ask why',
+                  K.askWhy.tr(),
                   style: type.body.copyWith(fontWeight: context.tp.boldWeight),
                 ),
               ),
@@ -140,14 +142,14 @@ class _ColumnHead extends StatelessWidget {
           SizedBox(
             height: 44,
             child: Text(
-              device?.name ?? 'Choose a device',
+              device?.name ?? K.choose.tr(),
               style: type.cardTitle,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(height: 2),
-          Text('Tap to change', style: type.caption.copyWith(color: t.dim)),
+          Text(K.tapToChange.tr(), style: type.caption.copyWith(color: t.dim)),
         ],
       ),
     );

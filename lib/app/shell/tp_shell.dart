@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../shared/widgets/tp_surface.dart';
 import '../theme/tp_tokens.dart';
 import '../theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 import 'tp_tab.dart';
 
 /// 화면이 크롬을 얼마나 쓰는지.
@@ -329,7 +331,7 @@ class _IosTabBar extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      t.key,
+                      K.tab(t).tr(),
                       style: type.tabLabel.copyWith(
                         color: active ? Colors.white : tokens.dim,
                       ),
@@ -373,7 +375,7 @@ class _AndroidTabBar extends StatelessWidget {
               children: <Widget>[
                 Icon(active ? t.activeIcon : t.icon, size: 24, color: color),
                 const SizedBox(height: 4),
-                Text(t.key, style: type.tabLabel.copyWith(color: color)),
+                Text(K.tab(t).tr(), style: type.tabLabel.copyWith(color: color)),
               ],
             ),
           ),

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,7 @@ import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 import '../../data/service/auth_service.dart';
 
 /// 로그인.
@@ -20,25 +22,25 @@ class LoginScreen extends ConsumerStatefulWidget {
   final VoidCallback? onSignUp;
 
   /// 명세의 버튼 순서와 라벨.
-  static const List<({AuthMethod method, String label, String? asset})> buttons =
+  static const List<({AuthMethod method, String key, String? asset})> buttons =
       [
     (
       method: AuthMethod.google,
-      label: 'Continue with Google',
+      key: K.loginGoogle,
       asset: 'assets/logo/google_logo.png',
     ),
     (
       method: AuthMethod.apple,
-      label: 'Continue with Apple',
+      key: K.loginApple,
       asset: 'assets/logo/apple_logo.png',
     ),
     (
       method: AuthMethod.facebook,
-      label: 'Continue with Facebook',
+      key: K.loginFacebook,
       asset: 'assets/logo/facebook_logo.png',
     ),
-    (method: AuthMethod.email, label: 'Continue with email', asset: null),
-    (method: AuthMethod.anonymous, label: 'Browse without an account', asset: null),
+    (method: AuthMethod.email, key: K.loginEmail, asset: null),
+    (method: AuthMethod.anonymous, key: K.loginAnon, asset: null),
   ];
 
   @override
@@ -61,11 +63,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   static String _messageFor(AuthMethod method) => switch (method) {
-        AuthMethod.google => 'Google sign-in is not connected yet.',
-        AuthMethod.apple => 'Apple sign-in is not connected yet.',
-        AuthMethod.facebook => 'Facebook sign-in is not connected yet.',
-        AuthMethod.email => 'Enter an email and password to continue.',
-        AuthMethod.anonymous => 'Could not start a session. Try again.',
+        AuthMethod.google =>
+          K.notConnected.tr(args: const <String>['Google']),
+        AuthMethod.apple => K.notConnected.tr(args: const <String>['Apple']),
+        AuthMethod.facebook =>
+          K.notConnected.tr(args: const <String>['Facebook']),
+        AuthMethod.email => K.emailNeeded.tr(),
+        AuthMethod.anonymous => K.anonFailed.tr(),
       };
 
   @override
@@ -78,17 +82,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
         children: <Widget>[
-          Text('Welcome to\nTechPicks', style: type.largeTitle),
+          Text(K.welcome.tr(), style: type.largeTitle),
           const SizedBox(height: 10),
           Text(
-            'Score every device the way you weigh it.',
+            K.welcomeSub.tr(),
             style: type.body.copyWith(height: 1.5),
           ),
           const SizedBox(height: 28),
 
           for (final b in LoginScreen.buttons) ...<Widget>[
             _AuthButton(
-              label: b.label,
+              label: b.key.tr(),
               asset: b.asset,
               // 이메일만 파란 채움. 익명은 텍스트 버튼.
               filled: b.method == AuthMethod.email,
@@ -107,12 +111,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text('No account yet?', style: type.secondary),
+              Text(K.noAccount.tr(), style: type.secondary),
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: widget.onSignUp,
                 child: Text(
-                  'Sign up',
+                  K.signup.tr(),
                   style: type.body.copyWith(color: TpTokens.blue),
                 ),
               ),

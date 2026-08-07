@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:riverpod/misc.dart' show Override;
+
+import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
@@ -45,25 +49,19 @@ Future<void> _pump(
   AuthService? auth,
   TpChrome chrome = TpChrome.ios,
 }) async {
-  tester.view.physicalSize = const Size(1200, 2400);
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
-
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        if (auth != null) authServiceProvider.overrideWithValue(auth),
-      ],
-      child: MaterialApp(theme: AppTheme.of(chrome), home: screen),
-    ),
+  _container = await pumpScreen(
+    tester,
+    screen,
+    chrome: chrome,
+    size: const Size(1200, 2400),
+    overrides: <Override>[
+      if (auth != null) authServiceProvider.overrideWithValue(auth),
+    ],
   );
-  await tester.pumpAndSettle();
-  _container =
-      ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(initLocalization);
 
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
@@ -127,7 +125,7 @@ void main() {
 
       expect(find.text('Welcome to\nTechPicks'), findsOneWidget);
       for (final b in LoginScreen.buttons) {
-        expect(find.text(b.label), findsOneWidget, reason: b.label);
+        expect(find.text(b.key.tr()), findsOneWidget, reason: b.key);
       }
       expect(find.text('No account yet?'), findsOneWidget);
       expect(find.text('Sign up'), findsOneWidget);

@@ -21,6 +21,11 @@ abstract final class K {
 
   // 홈
   static const String homeTitle = 'homeTitle';
+  static const String homeSubNone = 'homeSubNone';
+  static const String homeSubOne = 'homeSubOne';
+  static const String homeSubMany = 'homeSubMany';
+  static const String verdictReason = 'verdictReason';
+  static const String verdictNoData = 'verdictNoData';
   static const String homeSub = 'homeSub';
   static const String verdict = 'verdict';
   static const String tpIndex = 'tpIndex';
@@ -34,6 +39,7 @@ abstract final class K {
   static const String emptyShortlistCta = 'emptyShortlistCta';
 
   // 랭킹
+  static const String rankTitle = 'rankTitle';
   static const String phones = 'phones';
   static const String cpus = 'cpus';
   static const String laptops = 'laptops';
@@ -62,6 +68,12 @@ abstract final class K {
   static const String chatSeed = 'chatSeed';
   static const String askHint = 'askHint';
   static const String askFailed = 'askFailed';
+  static const List<String> askSuggestions = <String>[
+    'askSuggest1',
+    'askSuggest2',
+    'askSuggest3',
+    'askSuggest4',
+  ];
 
   // 내 정보
   static const String you = 'you';
@@ -92,7 +104,10 @@ abstract final class K {
 
   // 로그인
   static const String welcome = 'welcome';
-  static const String welcomeSub = 'welcomeSub';
+  static const String welcomeSub = 'welcomeSubShort';
+  static const String notConnected = 'notConnected';
+  static const String emailNeeded = 'emailNeeded';
+  static const String anonFailed = 'anonFailed';
   static const String loginGoogle = 'lGoogle';
   static const String loginApple = 'lApple';
   static const String loginFacebook = 'lFacebook';

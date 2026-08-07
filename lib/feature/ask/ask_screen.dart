@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +7,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 import '../../domain/model/ask_answer.dart';
 import '../../shared/widgets/tp_chip.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -23,12 +25,11 @@ class AskScreen extends ConsumerStatefulWidget {
   final ValueChanged<String>? onDeviceTap;
 
   /// 입력 바 위에 깔리는 제안. 명세의 suggestion chips.
-  static const List<String> suggestions = <String>[
-    'Best camera under \$1,000',
-    'Longest battery',
-    'Best value flagship',
-    'Lightest phone',
-  ];
+  ///
+  /// 처음엔 축 이름(Camera, Battery …)을 재활용했는데, 누르면 그 한 단어가
+  /// 그대로 질문으로 나가고 답변 표의 행 이름과도 겹친다. 문장으로 따로 뒀다.
+  static List<String> suggestions() =>
+      K.askSuggestions.map((k) => k.tr()).toList(growable: false);
 
   @override
   ConsumerState<AskScreen> createState() => _AskScreenState();
@@ -63,7 +64,7 @@ class _AskScreenState extends ConsumerState<AskScreen> {
     final messages = ref.watch(askProvider);
 
     return TpShell(
-      title: 'Ask',
+      title: K.tabAsk.tr(),
       tab: TpTab.ask,
       onTabSelected: widget.onTabSelected,
       // 입력 바와 제안 칩이 탭 바 위에 얹힌다. 명세의 iOS 190 / Android 172
@@ -220,12 +221,12 @@ class _Composer extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: AskScreen.suggestions.length,
+            itemCount: AskScreen.suggestions().length,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, i) => TpChip(
-              label: AskScreen.suggestions[i],
+              label: AskScreen.suggestions()[i],
               selected: false,
-              onTap: () => onSend(AskScreen.suggestions[i]),
+              onTap: () => onSend(AskScreen.suggestions()[i]),
             ),
           ),
         ),
@@ -251,7 +252,7 @@ class _Composer extends StatelessWidget {
                     decoration: InputDecoration(
                       isDense: true,
                       border: InputBorder.none,
-                      hintText: 'Ask anything',
+                      hintText: K.askHint.tr(),
                       hintStyle: type.body.copyWith(color: t.dim),
                     ),
                   ),
