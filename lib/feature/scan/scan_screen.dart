@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,7 @@ import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 import '../../domain/model/scan_match.dart';
 import '../../domain/model/tp_index.dart';
 
@@ -31,9 +33,6 @@ class ScanScreen extends ConsumerStatefulWidget {
   final String? recognizedText;
 
   static const Color background = Color(0xFF0B0D10);
-  static const String idleHint =
-      'Point at the model number on the back of the device.';
-  static const String doneHint = 'Matched against the TechPicks catalogue.';
 
   @override
   ConsumerState<ScanScreen> createState() => _ScanScreenState();
@@ -81,9 +80,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: Text(
-                      match == null
-                          ? ScanScreen.idleHint
-                          : ScanScreen.doneHint,
+                      (match == null ? K.scanHintIdle : K.scanHintDone).tr(),
                       textAlign: TextAlign.center,
                       style: type.secondary.copyWith(color: Colors.white70),
                     ),
@@ -110,7 +107,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                   ),
                   const SizedBox(width: 2),
                   Text(
-                    'Scan',
+                    K.scanTitle.tr(),
                     style: type.cardTitle.copyWith(color: Colors.white),
                   ),
                 ],
@@ -235,7 +232,7 @@ class _ResultCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Detected'.toUpperCase(), style: type.eyebrow),
+            Text(K.detected.tr().toUpperCase(), style: type.eyebrow),
             const SizedBox(height: 6),
             Row(
               children: <Widget>[
@@ -268,7 +265,7 @@ class _ResultCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  'Open device',
+                  K.openDevice.tr(),
                   style: type.body.copyWith(
                     color: Colors.white,
                     fontWeight: context.tp.boldWeight,

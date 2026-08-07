@@ -1,46 +1,20 @@
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:techpicks/app/providers.dart';
+import 'package:techpicks/shared/copy_keys.dart';
+import 'package:easy_localization/easy_localization.dart';
+
+import '../support/harness.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
-import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/domain/model/ranking.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
 import 'package:techpicks/shared/widgets/tp_chip.dart';
 
-class _FileBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async =>
-      ByteData.view(File(key).readAsBytesSync().buffer);
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async =>
-      utf8.decode(File(key).readAsBytesSync());
-}
-
-Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) async {
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        catalogRepositoryProvider.overrideWithValue(
-          CatalogRepository(bundle: _FileBundle()),
-        ),
-      ],
-      child: MaterialApp(
-        theme: AppTheme.of(chrome),
-        home: const RankScreen(),
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
+Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) =>
+    pumpScreen(tester, const RankScreen(), chrome: chrome);
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(initLocalization);
 
   testWidgets('카탈로그를 순위로 그린다', (tester) async {
     await _pump(tester);
@@ -54,8 +28,12 @@ void main() {
 
   testWidgets('축 칩이 다섯 개 다 나온다', (tester) async {
     await _pump(tester);
-    for (final label in RankScreen.axisLabels.values) {
-      expect(find.widgetWithText(TpChip, label), findsOneWidget);
+    for (final axis in RankAxis.values) {
+      expect(
+        find.widgetWithText(TpChip, K.rankAxis(axis).tr()),
+        findsWidgets,
+        reason: axis.name,
+      );
     }
   });
 

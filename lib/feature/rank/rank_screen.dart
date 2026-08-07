@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +7,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 import '../../domain/model/ranking.dart';
 import '../../shared/widgets/tp_chip.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -32,14 +34,6 @@ class RankScreen extends ConsumerWidget {
   /// 확장 FAB, iOS 는 콘텐츠 안 인라인 버튼이다.
   final VoidCallback? onScan;
 
-  static const Map<RankAxis, String> axisLabels = <RankAxis, String>{
-    RankAxis.tpIndex: 'TP Index',
-    RankAxis.battery: 'Battery',
-    RankAxis.camera: 'Camera',
-    RankAxis.value: 'Value',
-    RankAxis.price: 'Price',
-  };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final axis = ref.watch(rankAxisProvider);
@@ -47,24 +41,24 @@ class RankScreen extends ConsumerWidget {
     final loading = ref.watch(catalogProvider).isLoading;
 
     return TpShell(
-      title: 'Rankings',
+      title: K.rankTitle.tr(),
       tab: TpTab.rank,
       onTabSelected: onTabSelected,
       floatingAction: onScan == null ? null : _ScanFab(onTap: onScan!),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: <Widget>[
-          const _ChipRow(
-            labels: <String>['Phones', 'Processors', 'Laptops'],
+          _ChipRow(
+            labels: <String>[K.phones.tr(), K.cpus.tr(), K.laptops.tr()],
             // 카탈로그에 폰만 충분히 들어 있다. 나머지 두 카테고리는 화면이
             // 생길 때 연결한다.
             selectedIndex: 0,
           ),
           const SizedBox(height: 14),
-          const _EyebrowText('Rank by'),
+          _EyebrowText(K.rankBy.tr()),
           const SizedBox(height: 8),
           _ChipRow(
-            labels: RankAxis.values.map((a) => axisLabels[a]!).toList(),
+            labels: RankAxis.values.map((a) => K.rankAxis(a).tr()).toList(),
             selectedIndex: RankAxis.values.indexOf(axis),
             onSelected: (i) =>
                 ref.read(rankAxisProvider.notifier).set(RankAxis.values[i]),
@@ -80,7 +74,7 @@ class RankScreen extends ConsumerWidget {
           ],
           const SizedBox(height: 18),
           Text(
-            'Ranked in-app from the TechPicks dataset — no webview, no handoff.',
+            K.rankNote.tr(),
             style: context.tpText.caption,
           ),
         ],
@@ -147,7 +141,7 @@ class _RankList extends StatelessWidget {
     if (ranked.isEmpty) {
       return TpSurface(
         padding: const EdgeInsets.all(20),
-        child: Text('No devices yet.', style: context.tpText.body),
+        child: Text(K.noDevices.tr(), style: context.tpText.body),
       );
     }
 
@@ -347,7 +341,7 @@ class _ScanFab extends StatelessWidget {
             const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Text(
-              'Scan',
+              K.scanShort.tr(),
               style: type.body.copyWith(
                 color: Colors.white,
                 fontWeight: t.boldWeight,
@@ -385,7 +379,7 @@ class _ScanInlineButton extends StatelessWidget {
             const Icon(Icons.qr_code_scanner, size: 18),
             const SizedBox(width: 8),
             Text(
-              'Scan a device',
+              K.scanCta.tr(),
               style: type.body.copyWith(fontWeight: t.boldWeight),
             ),
           ],

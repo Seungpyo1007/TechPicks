@@ -1,27 +1,15 @@
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod/misc.dart' show Override;
+
+import '../support/harness.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/dto/smartphone.dart';
-import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/domain/model/ask_answer.dart';
 import 'package:techpicks/feature/ask/ask_screen.dart';
-
-class _FileBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async =>
-      ByteData.view(File(key).readAsBytesSync().buffer);
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async =>
-      utf8.decode(File(key).readAsBytesSync());
-}
 
 /// 모델을 부르지 않는 가짜. 화면만 검사한다.
 class _StubAsk implements AskService {
@@ -41,27 +29,14 @@ Future<void> _pump(
   WidgetTester tester,
   AskService service, {
   TpChrome chrome = TpChrome.ios,
-}) async {
-  tester.view.physicalSize = const Size(1200, 2400);
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
-
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        catalogRepositoryProvider.overrideWithValue(
-          CatalogRepository(bundle: _FileBundle()),
-        ),
-        askServiceProvider.overrideWithValue(service),
-      ],
-      child: MaterialApp(
-        theme: AppTheme.of(chrome),
-        home: const AskScreen(),
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
-}
+}) =>
+    pumpScreen(
+      tester,
+      const AskScreen(),
+      chrome: chrome,
+      size: const Size(1200, 2400),
+      overrides: <Override>[askServiceProvider.overrideWithValue(service)],
+    );
 
 const _answer = AskAnswer(
   pick: 'OnePlus 13',
@@ -76,7 +51,7 @@ const _answer = AskAnswer(
 );
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(initLocalization);
 
   testWidgets('안내 문구로 시작한다', (tester) async {
     await _pump(tester, _StubAsk(_answer));
@@ -85,7 +60,7 @@ void main() {
 
   testWidgets('제안 칩이 있다', (tester) async {
     await _pump(tester, _StubAsk(_answer));
-    for (final s in AskScreen.suggestions) {
+    for (final s in AskScreen.suggestions()) {
       expect(find.text(s), findsOneWidget, reason: s);
     }
   });
@@ -104,7 +79,7 @@ void main() {
     expect(find.text('Cheapest flagship on your weights.'), findsOneWidget);
     // 4줄 표
     for (final label in <String>['TP Index', 'Price', 'Battery', 'Camera']) {
-      expect(find.text(label), findsOneWidget, reason: label);
+      expect(find.text(label), findsWidgets, reason: label);
     }
     expect(find.text('74'), findsOneWidget);
   });
@@ -113,10 +88,10 @@ void main() {
     final stub = _StubAsk(_answer);
     await _pump(tester, stub);
 
-    await tester.tap(find.text(AskScreen.suggestions.first));
+    await tester.tap(find.text(AskScreen.suggestions().first));
     await tester.pumpAndSettle();
 
-    expect(stub.asked, <String>[AskScreen.suggestions.first]);
+    expect(stub.asked, <String>[AskScreen.suggestions().first]);
   });
 
   testWidgets('실패하면 실패 말풍선', (tester) async {

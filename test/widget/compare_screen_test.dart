@@ -1,26 +1,14 @@
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/harness.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
-import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
-
-class _FileBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async =>
-      ByteData.view(File(key).readAsBytesSync().buffer);
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async =>
-      utf8.decode(File(key).readAsBytesSync());
-}
 
 ProviderContainer? _container;
 
@@ -29,28 +17,13 @@ Future<void> _pump(
   Widget screen, {
   TpChrome chrome = TpChrome.ios,
 }) async {
-  tester.view.physicalSize = const Size(1200, 3200);
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
-
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        catalogRepositoryProvider.overrideWithValue(
-          CatalogRepository(bundle: _FileBundle()),
-        ),
-      ],
-      child: MaterialApp(theme: AppTheme.of(chrome), home: screen),
-    ),
-  );
-  await tester.pumpAndSettle();
-  _container = ProviderScope.containerOf(
-    tester.element(find.byType(MaterialApp)),
-  );
+  _container = await pumpScreen(tester, screen,
+      chrome: chrome,
+      size: const Size(1200, 3200));
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(initLocalization);
 
   testWidgets('카탈로그 앞의 두 기기로 시작한다', (tester) async {
     await _pump(tester, const CompareScreen());

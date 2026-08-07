@@ -1,59 +1,35 @@
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:techpicks/app/providers.dart';
+import 'package:techpicks/shared/copy_keys.dart';
+import 'package:easy_localization/easy_localization.dart';
+
+import '../support/harness.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
-import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
-
-class _FileBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async =>
-      ByteData.view(File(key).readAsBytesSync().buffer);
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async =>
-      utf8.decode(File(key).readAsBytesSync());
-}
 
 Future<void> _pump(
   WidgetTester tester,
   Widget screen, {
   TpChrome chrome = TpChrome.ios,
 }) async {
-  tester.view.physicalSize = const Size(1200, 2400);
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
-
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        catalogRepositoryProvider.overrideWithValue(
-          CatalogRepository(bundle: _FileBundle()),
-        ),
-      ],
-      child: MaterialApp(theme: AppTheme.of(chrome), home: screen),
-    ),
-  );
-  // 스캔 선이 계속 도니 settle 이 끝나지 않는다.
-  await tester.pump();
+  // 스캔 선이 계속 도니 pumpAndSettle 이 끝나지 않는다. 시간을 정해 넘긴다.
+  await pumpScreenNoSettle(tester, screen,
+      chrome: chrome,
+      size: const Size(1200, 2400));
   await tester.pump(const Duration(milliseconds: 300));
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(initLocalization);
 
   group('스캔', () {
     testWidgets('대기 중에는 안내만', (tester) async {
       await _pump(tester, const ScanScreen());
 
       expect(find.text('Scan'), findsOneWidget);
-      expect(find.text(ScanScreen.idleHint), findsOneWidget);
+      expect(find.text(K.scanHintIdle.tr()), findsOneWidget);
       expect(find.text('DETECTED'), findsNothing);
     });
 
@@ -66,7 +42,7 @@ void main() {
       expect(find.text('DETECTED'), findsOneWidget);
       expect(find.text('Galaxy S25 Ultra'), findsOneWidget);
       expect(find.text('Open device'), findsOneWidget);
-      expect(find.text(ScanScreen.doneHint), findsOneWidget);
+      expect(find.text(K.scanHintDone.tr()), findsOneWidget);
     });
 
     testWidgets('못 맞추면 대기 상태 그대로', (tester) async {
@@ -76,7 +52,7 @@ void main() {
       );
 
       expect(find.text('DETECTED'), findsNothing);
-      expect(find.text(ScanScreen.idleHint), findsOneWidget);
+      expect(find.text(K.scanHintIdle.tr()), findsOneWidget);
     });
 
     testWidgets('Open device 가 slug 를 넘긴다', (tester) async {
@@ -100,10 +76,10 @@ void main() {
       await _pump(tester, const ViewerScreen(deviceName: 'Galaxy S25'));
 
       expect(find.text('Galaxy S25'), findsOneWidget);
-      for (final part in ViewerScreen.parts) {
-        expect(find.text(part), findsOneWidget, reason: part);
+      for (final key in ViewerScreen.partKeys) {
+        expect(find.text(key.tr()), findsOneWidget, reason: key);
       }
-      expect(find.text(ViewerScreen.note), findsOneWidget);
+      expect(find.text(K.viewerNote.tr()), findsOneWidget);
     });
 
     testWidgets('칩을 누르면 강조가 토글된다', (tester) async {

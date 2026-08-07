@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,7 @@ import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 
 /// 온보딩 세 장.
 ///
@@ -18,23 +20,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 
   final VoidCallback? onDone;
 
-  static const List<({String title, String body})> panes = [
-    (
-      title: 'Every spec.\nOne number.',
-      body: 'TechPicks scores every device on performance, camera, display, '
-          'battery and value — and always shows the parts behind the score.',
-    ),
-    (
-      title: 'Two devices.\nOne table.',
-      body: 'Put any two side by side and read who wins each row. '
-          'No charts to decode.',
-    ),
-    (
-      title: 'Ask.\nThen decide.',
-      body: 'Tell the assistant your budget and the one thing you care about. '
-          'It answers with a table, not a paragraph.',
-    ),
-  ];
+  /// 문구는 번역 파일에 있다. 제목의 하드 브레이크도 거기 그대로 들어 있다.
 
   @override
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -56,7 +42,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _next() {
-    if (_index == OnboardingScreen.panes.length - 1) {
+    if (_index == K.onboarding.length - 1) {
       _finish();
       return;
     }
@@ -70,7 +56,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
-    final last = _index == OnboardingScreen.panes.length - 1;
+    final last = _index == K.onboarding.length - 1;
 
     return TpShell(
       mode: TpChromeMode.plain,
@@ -83,7 +69,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               child: GestureDetector(
                 onTap: _finish,
                 child: Text(
-                  'Skip',
+                  K.skip.tr(),
                   style: type.body.copyWith(color: TpTokens.blue),
                 ),
               ),
@@ -93,9 +79,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: PageView.builder(
               controller: _pages,
               onPageChanged: (i) => setState(() => _index = i),
-              itemCount: OnboardingScreen.panes.length,
+              itemCount: K.onboarding.length,
               itemBuilder: (context, i) {
-                final pane = OnboardingScreen.panes[i];
+                final pane = K.onboarding[i];
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
@@ -104,10 +90,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     children: <Widget>[
                       _Figure(index: i),
                       const SizedBox(height: 32),
-                      Text(pane.title, style: type.largeTitle),
+                      Text(pane.title.tr(), style: type.largeTitle),
                       const SizedBox(height: 12),
                       Text(
-                        pane.body,
+                        pane.body.tr(),
                         style: type.body.copyWith(height: 1.5),
                       ),
                     ],
@@ -119,7 +105,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              for (var i = 0; i < OnboardingScreen.panes.length; i++)
+              for (var i = 0; i < K.onboarding.length; i++)
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -147,7 +133,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   boxShadow: t.buttonShadow,
                 ),
                 child: Text(
-                  last ? 'Get started' : 'Next',
+                  (last ? K.start : K.next).tr(),
                   style: type.body.copyWith(
                     color: Colors.white,
                     fontWeight: t.boldWeight,

@@ -13,16 +13,9 @@ import '../spec_labels.dart';
 ///
 /// 데이터가 없는 축은 빈 트랙으로 둔다. 0 점과 구분해야 한다.
 class TpScoreStrip extends StatelessWidget {
-  const TpScoreStrip({
-    super.key,
-    required this.axes,
-    this.labels = defaultLabels,
-  });
-
-  static const Map<TpAxisKind, String> defaultLabels = SpecLabels.axis;
+  const TpScoreStrip({super.key, required this.axes});
 
   final List<TpAxis> axes;
-  final Map<TpAxisKind, String> labels;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +34,7 @@ class TpScoreStrip extends StatelessWidget {
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        labels[axis.kind] ?? axis.kind.key,
+                        SpecLabels.axis(axis.kind),
                         style: type.secondary,
                         maxLines: 1,
                         softWrap: false,

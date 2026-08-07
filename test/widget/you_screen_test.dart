@@ -1,27 +1,17 @@
+
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
-import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/domain/model/tp_index.dart';
 import 'package:techpicks/domain/model/tp_weights.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
-
-class _FileBundle extends CachingAssetBundle {
-  @override
-  Future<ByteData> load(String key) async =>
-      ByteData.view(File(key).readAsBytesSync().buffer);
-
-  @override
-  Future<String> loadString(String key, {bool cache = true}) async =>
-      utf8.decode(File(key).readAsBytesSync());
-}
 
 ProviderContainer? _container;
 
@@ -31,30 +21,13 @@ Future<void> _pump(
   String? name,
   String? email,
 }) async {
-  tester.view.physicalSize = const Size(1200, 3600);
-  tester.view.devicePixelRatio = 1;
-  addTearDown(tester.view.reset);
-
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        catalogRepositoryProvider.overrideWithValue(
-          CatalogRepository(bundle: _FileBundle()),
-        ),
-      ],
-      child: MaterialApp(
-        theme: AppTheme.of(chrome),
-        home: YouScreen(name: name, email: email),
-      ),
-    ),
-  );
-  await tester.pumpAndSettle();
-  _container =
-      ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
+  _container = await pumpScreen(tester, YouScreen(name: name, email: email),
+      chrome: chrome,
+      size: const Size(1200, 3600));
 }
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(initLocalization);
 
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
@@ -177,7 +150,8 @@ void main() {
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
     for (final chrome in TpChrome.values) {
       await _pump(tester, chrome: chrome);
-      expect(find.text('You'), findsOneWidget);
+      // 탭 라벨과 화면 제목이 같은 단어라 둘 다 잡힌다.
+      expect(find.text('You'), findsWidgets);
     }
   });
 }

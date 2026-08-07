@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/app/shell/tp_shell.dart';
 import 'package:techpicks/app/shell/tp_tab.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
@@ -82,7 +84,7 @@ void main() {
         expect(find.text('본문'), findsOneWidget);
         expect(find.text('Today'), findsOneWidget);
         for (final t in TpTab.values) {
-          expect(find.text(t.key), findsOneWidget);
+          expect(find.text(K.tab(t).tr()), findsOneWidget);
         }
       });
 
@@ -97,7 +99,7 @@ void main() {
           ),
         ));
 
-        await tester.tap(find.text(TpTab.compare.key));
+        await tester.tap(find.text(K.tab(TpTab.compare).tr()));
         expect(tapped, TpTab.compare);
       });
 
@@ -127,7 +129,7 @@ void main() {
         ));
 
         for (final t in TpTab.values) {
-          expect(find.text(t.key), findsNothing);
+          expect(find.text(K.tab(t).tr()), findsNothing);
         }
       });
     }

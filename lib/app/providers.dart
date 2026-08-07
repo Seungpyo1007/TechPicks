@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,6 +17,7 @@ import '../domain/model/movers.dart';
 import '../domain/model/tp_index.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_weights.dart';
+import '../shared/copy_keys.dart';
 
 /// 앱에 실린 큐레이션 카탈로그. 랭킹·홈·비교가 여기서 목록을 받는다.
 final catalogRepositoryProvider = Provider<CatalogRepository>(
@@ -308,13 +310,8 @@ final askServiceProvider = Provider<AskService>(
 
 /// 대화 내용.
 class AskNotifier extends Notifier<List<AskMessage>> {
-  /// 명세의 첫 안내 문구.
-  static const String seed =
-      'Give me a budget and the one thing you care about most. '
-      'I will answer with a table.';
-
   @override
-  List<AskMessage> build() => const <AskMessage>[AskMessage.ai(seed)];
+  List<AskMessage> build() => <AskMessage>[AskMessage.ai(K.chatSeed.tr())];
 
   bool _busy = false;
   bool get isBusy => _busy;
@@ -335,10 +332,7 @@ class AskNotifier extends Notifier<List<AskMessage>> {
     state = <AskMessage>[
       ...state,
       answer == null
-          ? const AskMessage.ai(
-              'Could not answer that one. Try again in a moment.',
-              failed: true,
-            )
+          ? AskMessage.ai(K.askFailed.tr(), failed: true)
           : AskMessage.ai(answer.pick, answer: answer),
     ];
     _busy = false;

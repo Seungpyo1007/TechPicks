@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +7,8 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
+import '../../shared/spec_labels.dart';
 import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/movers.dart';
@@ -48,7 +51,7 @@ class HomeScreen extends ConsumerWidget {
     return TpShell(
       // Android 는 large app bar 가 제목을 갖고, iOS 는 콘텐츠 안 큰 제목이
       // 그 역할을 한다. 둘 다 그리면 같은 글자가 두 번 나온다.
-      title: t.isGlass ? null : 'Today',
+      title: t.isGlass ? null : K.homeTitle.tr(),
       tab: TpTab.home,
       onTabSelected: onTabSelected,
       child: ListView(
@@ -57,7 +60,7 @@ class HomeScreen extends ConsumerWidget {
           // iOS 는 큰 제목이 콘텐츠 안에 있고, Android 는 large app bar 가
           // 가져간다. 부제는 두 경우 모두 콘텐츠에 남는다.
           if (t.isGlass) ...<Widget>[
-            Text('Today', style: type.largeTitle),
+            Text(K.homeTitle.tr(), style: type.largeTitle),
             const SizedBox(height: 6),
           ],
           Text(_subtitle(shortlist.length), style: type.secondary),
@@ -75,8 +78,8 @@ class HomeScreen extends ConsumerWidget {
           if (shortlist.isNotEmpty) ...<Widget>[
             const SizedBox(height: 22),
             _SectionHeader(
-              title: 'Shortlist',
-              action: 'Add',
+              title: K.shortlist.tr(),
+              action: K.addDevice.tr(),
               onAction: onAdd,
             ),
             const SizedBox(height: 8),
@@ -91,7 +94,7 @@ class HomeScreen extends ConsumerWidget {
 
           if (movers.isNotEmpty) ...<Widget>[
             const SizedBox(height: 22),
-            const _SectionHeader(title: 'Movers this week'),
+            _SectionHeader(title: K.movers.tr()),
             const SizedBox(height: 8),
             for (final m in movers)
               _MoverRow(mover: m, onTap: onMoversTap),
@@ -102,9 +105,9 @@ class HomeScreen extends ConsumerWidget {
   }
 
   static String _subtitle(int count) => switch (count) {
-        0 => 'Nothing to decide yet.',
-        1 => 'One phone on your shortlist.',
-        _ => '$count phones on your shortlist, one decision left.',
+        0 => K.homeSubNone.tr(),
+        1 => K.homeSubOne.tr(),
+        _ => K.homeSubMany.tr(args: <String>['$count']),
       };
 }
 
@@ -129,7 +132,7 @@ class _VerdictCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Where this lands'.toUpperCase(), style: type.eyebrow),
+          Text(K.verdict.tr().toUpperCase(), style: type.eyebrow),
           const SizedBox(height: 8),
           Text(
             device.name,
@@ -153,7 +156,7 @@ class _VerdictCard extends ConsumerWidget {
               const SizedBox(width: 10),
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: Text('TP Index', style: type.secondary),
+                child: Text(K.tpIndex.tr(), style: type.secondary),
               ),
             ],
           ),
@@ -166,7 +169,7 @@ class _VerdictCard extends ConsumerWidget {
             children: <Widget>[
               Expanded(
                 child: _CardButton(
-                  label: 'Compare all',
+                  label: K.compareAll.tr(),
                   filled: true,
                   onTap: onCompareAll,
                 ),
@@ -174,7 +177,7 @@ class _VerdictCard extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _CardButton(
-                  label: 'Ask why',
+                  label: K.askWhy.tr(),
                   filled: false,
                   onTap: onAskWhy,
                 ),
@@ -195,11 +198,10 @@ class _VerdictCard extends ConsumerWidget {
     final scored = TpIndex.axes(device.score).where((a) => a.hasData).toList()
       ..sort((a, b) => b.score!.compareTo(a.score!));
     if (index == null || scored.isEmpty) {
-      return 'Not enough data to score this one yet.';
+      return K.verdictNoData.tr();
     }
-    final best = scored.first;
-    final label = TpScoreStrip.defaultLabels[best.kind] ?? best.kind.key;
-    return 'Leads your shortlist, carried by ${label.toLowerCase()}.';
+    final label = SpecLabels.axis(scored.first.kind);
+    return K.verdictReason.tr(args: <String>[label.toLowerCase()]);
   }
 }
 
@@ -217,14 +219,14 @@ class _EmptyShortlist extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Nothing on your shortlist yet', style: type.cardTitle),
+          Text(K.emptyShortlist.tr(), style: type.cardTitle),
           const SizedBox(height: 6),
           Text(
-            'Add a couple of phones and this card tells you where they land.',
+            K.emptyShortlistBody.tr(),
             style: type.secondary,
           ),
           const SizedBox(height: 14),
-          _CardButton(label: 'Add a device', filled: true, onTap: onAdd),
+          _CardButton(label: K.emptyShortlistCta.tr(), filled: true, onTap: onAdd),
         ],
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +7,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -47,14 +49,14 @@ class YouScreen extends ConsumerWidget {
     final weights = ref.watch(weightsProvider);
 
     return TpShell(
-      title: t.isGlass ? null : 'You',
+      title: t.isGlass ? null : K.you.tr(),
       tab: TpTab.you,
       onTabSelected: onTabSelected,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: <Widget>[
           if (t.isGlass) ...<Widget>[
-            Text('You', style: type.largeTitle),
+            Text(K.you.tr(), style: type.largeTitle),
             const SizedBox(height: 12),
           ],
 
@@ -65,7 +67,7 @@ class YouScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 22),
 
-          Text('What you care about'.toUpperCase(), style: type.eyebrow),
+          Text(K.priorities.tr().toUpperCase(), style: type.eyebrow),
           const SizedBox(height: 8),
           TpSurface(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
@@ -83,8 +85,7 @@ class YouScreen extends ConsumerWidget {
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        'These weights are yours. Change them and every index '
-                        'recalculates.',
+                        K.prioritiesNote.tr(),
                         style: type.caption,
                       ),
                     ),
@@ -92,7 +93,7 @@ class YouScreen extends ConsumerWidget {
                     GestureDetector(
                       onTap: () => ref.read(weightsProvider.notifier).reset(),
                       child: Text(
-                        'Reset',
+                        K.reset.tr(),
                         style: type.caption.copyWith(color: TpTokens.blue),
                       ),
                     ),
@@ -104,14 +105,14 @@ class YouScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 22),
 
-          const TpSurface(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+          TpSurface(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               children: <Widget>[
-                _SettingRow(label: 'Language', value: 'English'),
-                _SettingRow(label: 'Dark mode', value: 'Off'),
-                _SettingRow(label: 'Notifications', value: 'On'),
-                _SettingRow(label: 'Currency', value: 'USD', last: true),
+                _SettingRow(label: K.language.tr(), value: 'English'),
+                _SettingRow(label: K.darkMode.tr(), value: K.off.tr()),
+                _SettingRow(label: K.notifications.tr(), value: K.on.tr()),
+                _SettingRow(label: K.currency.tr(), value: 'USD', last: true),
               ],
             ),
           ),
@@ -122,11 +123,11 @@ class YouScreen extends ConsumerWidget {
             child: Column(
               children: <Widget>[
                 _SettingRow(
-                  label: 'Change password',
+                  label: K.changePassword.tr(),
                   onTap: onChangePassword,
                 ),
                 _SettingRow(
-                  label: 'Log out',
+                  label: K.logout.tr(),
                   onTap: onLogout,
                   last: true,
                 ),
@@ -195,7 +196,7 @@ class _ProfileHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
-                name ?? 'Browsing without an account',
+                name ?? K.noAccountYet.tr(),
                 style: type.cardTitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -211,7 +212,7 @@ class _ProfileHeader extends StatelessWidget {
               GestureDetector(
                 onTap: onEdit,
                 child: Text(
-                  'Edit profile',
+                  K.editProfile.tr(),
                   style: type.caption.copyWith(color: TpTokens.blue),
                 ),
               ),
@@ -249,7 +250,7 @@ class _WeightSlider extends StatelessWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  SpecLabels.axis[kind] ?? kind.key,
+                  SpecLabels.axis(kind),
                   style: type.body,
                   maxLines: 1,
                   softWrap: false,

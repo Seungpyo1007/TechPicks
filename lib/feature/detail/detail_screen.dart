@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,7 @@ import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/copy_keys.dart';
 import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
@@ -91,7 +93,7 @@ class _DetailBody extends ConsumerWidget {
             const SizedBox(width: 8),
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child: Text('TP Index', style: type.caption),
+              child: Text(K.tpIndex.tr(), style: type.caption),
             ),
           ],
         ),
@@ -115,20 +117,20 @@ class _DetailBody extends ConsumerWidget {
         const SizedBox(height: 16),
 
         _PrimaryButton(
-          label: shortlisted ? 'On your shortlist' : 'Add to shortlist',
+          label: (shortlisted ? K.inShortlist : K.addShortlist).tr(),
           filled: !shortlisted,
           onTap: () =>
               ref.read(shortlistProvider.notifier).toggle(device.slug),
         ),
         const SizedBox(height: 10),
         _PrimaryButton(
-          label: 'Compare',
+          label: K.compareButton.tr(),
           filled: false,
           onTap: onCompare == null ? null : () => onCompare!(device.slug),
         ),
         const SizedBox(height: 10),
         _PrimaryButton(
-          label: 'View in 3D',
+          label: K.view3d.tr(),
           filled: false,
           onTap: onView3D == null ? null : () => onView3D!(device.slug),
         ),
@@ -136,7 +138,7 @@ class _DetailBody extends ConsumerWidget {
         if (device.sourceUrls.isNotEmpty) ...<Widget>[
           const SizedBox(height: 20),
           // CC-BY-SA 4.0 상 출처 표기는 선택이 아니다.
-          Text('Data from TechAPI · CC-BY-SA 4.0', style: type.caption),
+          Text(K.dataSource.tr(), style: type.caption),
           for (final url in device.sourceUrls)
             Padding(
               padding: const EdgeInsets.only(top: 2),
@@ -282,7 +284,7 @@ class _DetailError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text('Could not load this device.', style: type.cardTitle),
+            Text(K.loadFailed.tr(), style: type.cardTitle),
             const SizedBox(height: 6),
             Text(message, style: type.caption, textAlign: TextAlign.center),
           ],
