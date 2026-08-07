@@ -7,8 +7,11 @@ name: flutter-ci
 on:
   pull_request:
     branches: [develop, main]
+  # develop 은 PR 에서 이미 검사한 뒤에만 커밋이 들어온다. 머지 커밋으로 다시
+  # 돌리면 같은 코드를 두 번 검사하고 알림도 두 배가 된다. main 은 릴리스
+  # 지점이라 머지 후에도 한 번 더 본다.
   push:
-    branches: [develop, main]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
