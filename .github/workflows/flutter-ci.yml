@@ -5,13 +5,14 @@ name: flutter-ci
 # 브랜치별 pubspec 불일치 때문에 "내 컴퓨터에서는 되는데" 상황을 이미 겪었다.
 
 on:
+  # 자동 실행은 릴리스 지점에서만. develop 으로 가는 PR 마다 돌리면
+  # Android 빌드가 8분대라 알림과 러너 시간이 계속 나간다.
   pull_request:
-    branches: [develop, main]
-  # develop 은 PR 에서 이미 검사한 뒤에만 커밋이 들어온다. 머지 커밋으로 다시
-  # 돌리면 같은 코드를 두 번 검사하고 알림도 두 배가 된다. main 은 릴리스
-  # 지점이라 머지 후에도 한 번 더 본다.
+    branches: [main]
   push:
     branches: [main]
+  # 그 외에는 필요할 때 브랜치를 지정해 직접 돌린다.
+  #   gh workflow run flutter-ci.yml --ref <branch>
   workflow_dispatch:
 
 concurrency:
