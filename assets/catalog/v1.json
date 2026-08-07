@@ -1,0 +1,1266 @@
+{
+  "version": 1,
+  "source": "TechAPI (CC-BY-SA 4.0) — https://github.com/GetTechAPI/TechAPI",
+  "smartphones": [
+    {
+      "slug": "galaxy-s25-ultra",
+      "base_model_slug": null,
+      "name": "Galaxy S25 Ultra",
+      "brand": {
+        "id": 113,
+        "slug": "samsung",
+        "name": "Samsung",
+        "country": "KR",
+        "url": "/v1/brands/samsung"
+      },
+      "soc": {
+        "id": 1780,
+        "slug": "snapdragon-8-elite",
+        "name": "Snapdragon 8 Elite",
+        "manufacturer": {
+          "slug": "qualcomm",
+          "name": "Qualcomm",
+          "url": "/v1/brands/qualcomm"
+        },
+        "process_nm": 3.0,
+        "gpu_name": "Adreno 830",
+        "url": "/v1/socs/snapdragon-8-elite"
+      },
+      "release_date": "2025-02-07",
+      "msrp_usd": 1299,
+      "ram_gb": 12,
+      "storage_options_gb": [
+        256,
+        512,
+        1024
+      ],
+      "display": {
+        "size_inch": 6.9,
+        "resolution": "3120x1440",
+        "refresh_hz": 120,
+        "type": "Dynamic AMOLED 2X",
+        "brightness_nits": 2600,
+        "ppi": 498
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 200,
+          "aperture": 1.7,
+          "ois": true,
+          "sensor": "Samsung HP2"
+        },
+        {
+          "type": "ultrawide",
+          "mp": 50,
+          "aperture": 1.9,
+          "ois": false
+        },
+        {
+          "type": "telephoto",
+          "mp": 50,
+          "aperture": 3.4,
+          "ois": true,
+          "optical_zoom": 5
+        },
+        {
+          "type": "telephoto",
+          "mp": 10,
+          "aperture": 2.4,
+          "ois": true,
+          "optical_zoom": 3
+        },
+        {
+          "type": "selfie",
+          "mp": 12,
+          "aperture": 2.2
+        }
+      ],
+      "battery_mah": 5000,
+      "charging_wired_w": 45.0,
+      "charging_wireless_w": 15.0,
+      "weight_g": 218.0,
+      "dimensions": {
+        "height_mm": 162.8,
+        "width_mm": 77.6,
+        "depth_mm": 8.2
+      },
+      "ip_rating": "IP68",
+      "os": "Android",
+      "os_version": "15",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.4",
+        "nfc": true,
+        "usb": "USB-C 3.2"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/galaxy-s25-ultra.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 78.9,
+        "performance": 88.9,
+        "camera": 88.0,
+        "battery": 67.9,
+        "display": 70.9,
+        "value": 50.2,
+        "perf": {
+          "index": 88.9,
+          "percentile": 92.0,
+          "tier": "A",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.samsung.com/global/galaxy/galaxy-s25-ultra/specs/",
+        "https://en.wikipedia.org/wiki/Samsung_Galaxy_S25_Ultra"
+      ]
+    },
+    {
+      "slug": "iphone-16-pro-max",
+      "base_model_slug": null,
+      "name": "iPhone 16 Pro Max",
+      "brand": {
+        "id": 149,
+        "slug": "apple",
+        "name": "Apple",
+        "country": "US",
+        "url": "/v1/brands/apple"
+      },
+      "soc": {
+        "id": 48,
+        "slug": "apple-a18-pro",
+        "name": "Apple A18 Pro",
+        "manufacturer": {
+          "slug": "apple",
+          "name": "Apple",
+          "url": "/v1/brands/apple"
+        },
+        "process_nm": 3.0,
+        "gpu_name": "Apple GPU (6-core)",
+        "url": "/v1/socs/apple-a18-pro"
+      },
+      "release_date": "2024-09-20",
+      "msrp_usd": 1199,
+      "ram_gb": 8,
+      "storage_options_gb": [
+        256,
+        512,
+        1024
+      ],
+      "display": {
+        "size_inch": 6.9,
+        "resolution": "2868x1320",
+        "refresh_hz": 120,
+        "type": "LTPO Super Retina XDR OLED",
+        "brightness_nits": 2000,
+        "ppi": 460
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 48,
+          "aperture": 1.78,
+          "ois": true,
+          "sensor": "Sony IMX903"
+        },
+        {
+          "type": "ultrawide",
+          "mp": 48,
+          "aperture": 2.2,
+          "ois": false
+        },
+        {
+          "type": "telephoto",
+          "mp": 12,
+          "aperture": 2.8,
+          "ois": true,
+          "optical_zoom": 5
+        },
+        {
+          "type": "selfie",
+          "mp": 12,
+          "aperture": 1.9
+        }
+      ],
+      "battery_mah": 4685,
+      "charging_wired_w": 27.0,
+      "charging_wireless_w": 25.0,
+      "weight_g": 227.0,
+      "dimensions": {
+        "height_mm": 163.0,
+        "width_mm": 77.6,
+        "depth_mm": 8.25
+      },
+      "ip_rating": "IP68",
+      "os": "iOS",
+      "os_version": "18",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.3",
+        "nfc": true,
+        "usb": "USB-C 3.0"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/iphone-16-pro-max.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 60.4,
+        "performance": 82.9,
+        "camera": 35.5,
+        "battery": 63.6,
+        "display": 59.5,
+        "value": 44.5,
+        "perf": {
+          "index": 82.9,
+          "percentile": 83.2,
+          "tier": "A",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.apple.com/iphone-16-pro/specs/",
+        "https://en.wikipedia.org/wiki/IPhone_16_Pro"
+      ]
+    },
+    {
+      "slug": "pixel-9-pro-xl",
+      "base_model_slug": null,
+      "name": "Pixel 9 Pro XL",
+      "brand": {
+        "id": 159,
+        "slug": "google",
+        "name": "Google",
+        "country": "US",
+        "url": "/v1/brands/google"
+      },
+      "soc": {
+        "id": 768,
+        "slug": "tensor-g4",
+        "name": "Google Tensor G4",
+        "manufacturer": {
+          "slug": "google",
+          "name": "Google",
+          "url": "/v1/brands/google"
+        },
+        "process_nm": 4.0,
+        "gpu_name": "Mali-G715 MP7",
+        "url": "/v1/socs/tensor-g4"
+      },
+      "release_date": "2024-08-22",
+      "msrp_usd": 1099,
+      "ram_gb": 16,
+      "storage_options_gb": [
+        128,
+        256,
+        512,
+        1024
+      ],
+      "display": {
+        "size_inch": 6.8,
+        "resolution": "2992x1344",
+        "refresh_hz": 120,
+        "type": "LTPO OLED",
+        "brightness_nits": 3000,
+        "ppi": 486
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 50,
+          "aperture": 1.68,
+          "ois": true,
+          "sensor": "Samsung GN2"
+        },
+        {
+          "type": "ultrawide",
+          "mp": 48,
+          "aperture": 1.7,
+          "ois": false
+        },
+        {
+          "type": "telephoto",
+          "mp": 48,
+          "aperture": 2.8,
+          "ois": true,
+          "optical_zoom": 5
+        },
+        {
+          "type": "selfie",
+          "mp": 10.5,
+          "aperture": 2.2
+        }
+      ],
+      "battery_mah": 5060,
+      "charging_wired_w": 37.0,
+      "charging_wireless_w": 23.0,
+      "weight_g": 221.0,
+      "dimensions": {
+        "height_mm": 162.8,
+        "width_mm": 76.6,
+        "depth_mm": 8.5
+      },
+      "ip_rating": "IP68",
+      "os": "Android",
+      "os_version": "14",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.3",
+        "nfc": true,
+        "usb": "USB-C 3.2"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/pixel-9-pro-xl.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 62.2,
+        "performance": 70.9,
+        "camera": 36.1,
+        "battery": 66.6,
+        "display": 75.2,
+        "value": 49.0,
+        "perf": {
+          "index": 70.9,
+          "percentile": 68.9,
+          "tier": "B",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://store.google.com/product/pixel_9_pro_specs",
+        "https://en.wikipedia.org/wiki/Pixel_9"
+      ]
+    },
+    {
+      "slug": "oneplus-13",
+      "base_model_slug": null,
+      "name": "OnePlus 13",
+      "brand": {
+        "id": 36,
+        "slug": "oneplus",
+        "name": "OnePlus",
+        "country": "CN",
+        "url": "/v1/brands/oneplus"
+      },
+      "soc": {
+        "id": 1780,
+        "slug": "snapdragon-8-elite",
+        "name": "Snapdragon 8 Elite",
+        "manufacturer": {
+          "slug": "qualcomm",
+          "name": "Qualcomm",
+          "url": "/v1/brands/qualcomm"
+        },
+        "process_nm": 3.0,
+        "gpu_name": "Adreno 830",
+        "url": "/v1/socs/snapdragon-8-elite"
+      },
+      "release_date": "2025-01-07",
+      "msrp_usd": 899,
+      "ram_gb": 12,
+      "storage_options_gb": [
+        256,
+        512
+      ],
+      "display": {
+        "size_inch": 6.82,
+        "resolution": "3168x1440",
+        "refresh_hz": 120,
+        "type": "LTPO AMOLED",
+        "brightness_nits": 4500,
+        "ppi": 510
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 50,
+          "aperture": 1.6,
+          "ois": true,
+          "sensor": "Sony LYT-808"
+        },
+        {
+          "type": "ultrawide",
+          "mp": 50,
+          "aperture": 2.0,
+          "ois": false
+        },
+        {
+          "type": "telephoto",
+          "mp": 50,
+          "aperture": 2.6,
+          "ois": true,
+          "optical_zoom": 3
+        },
+        {
+          "type": "selfie",
+          "mp": 32,
+          "aperture": 2.4
+        }
+      ],
+      "battery_mah": 6000,
+      "charging_wired_w": 100.0,
+      "charging_wireless_w": 50.0,
+      "weight_g": 210.0,
+      "dimensions": {
+        "height_mm": 162.9,
+        "width_mm": 76.5,
+        "depth_mm": 8.5
+      },
+      "ip_rating": "IP69",
+      "os": "Android",
+      "os_version": "15",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.4",
+        "nfc": true,
+        "usb": "USB-C 3.2"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/oneplus-13.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 74.2,
+        "performance": 88.9,
+        "camera": 36.1,
+        "battery": 94.4,
+        "display": 77.3,
+        "value": 62.2,
+        "perf": {
+          "index": 88.9,
+          "percentile": 92.0,
+          "tier": "A",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.oneplus.com/global/oneplus-13/specs",
+        "https://en.wikipedia.org/wiki/OnePlus_13"
+      ]
+    },
+    {
+      "slug": "xiaomi-15-ultra",
+      "base_model_slug": null,
+      "name": "Xiaomi 15 Ultra",
+      "brand": {
+        "id": 53,
+        "slug": "xiaomi",
+        "name": "Xiaomi",
+        "country": "CN",
+        "url": "/v1/brands/xiaomi"
+      },
+      "soc": {
+        "id": 1780,
+        "slug": "snapdragon-8-elite",
+        "name": "Snapdragon 8 Elite",
+        "manufacturer": {
+          "slug": "qualcomm",
+          "name": "Qualcomm",
+          "url": "/v1/brands/qualcomm"
+        },
+        "process_nm": 3.0,
+        "gpu_name": "Adreno 830",
+        "url": "/v1/socs/snapdragon-8-elite"
+      },
+      "release_date": "2025-02-26",
+      "msrp_usd": 1599,
+      "ram_gb": 16,
+      "storage_options_gb": [
+        256,
+        512,
+        1024
+      ],
+      "display": {
+        "size_inch": 6.73,
+        "resolution": "3200x1440",
+        "refresh_hz": 120,
+        "type": "LTPO AMOLED",
+        "brightness_nits": 3200,
+        "ppi": 522
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 50,
+          "aperture": 1.63,
+          "ois": true,
+          "sensor": "Sony LYT-900"
+        },
+        {
+          "type": "ultrawide",
+          "mp": 50,
+          "aperture": 1.8,
+          "ois": true
+        },
+        {
+          "type": "telephoto",
+          "mp": 50,
+          "aperture": 2.5,
+          "ois": true,
+          "optical_zoom": 5
+        },
+        {
+          "type": "selfie",
+          "mp": 32,
+          "aperture": 2.0
+        }
+      ],
+      "battery_mah": 5410,
+      "charging_wired_w": 90.0,
+      "charging_wireless_w": 80.0,
+      "weight_g": 226.0,
+      "dimensions": {
+        "height_mm": 161.3,
+        "width_mm": 75.5,
+        "depth_mm": 9.5
+      },
+      "ip_rating": "IP68",
+      "os": "Android",
+      "os_version": "15",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.4",
+        "nfc": true,
+        "usb": "USB-C 3.2"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/xiaomi-15-ultra.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 73.2,
+        "performance": 91.6,
+        "camera": 36.1,
+        "battery": 86.8,
+        "display": 78.3,
+        "value": 36.6,
+        "perf": {
+          "index": 91.6,
+          "percentile": 97.3,
+          "tier": "S",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.mi.com/global/product/xiaomi15ultra",
+        "https://en.wikipedia.org/wiki/Xiaomi_15_Ultra"
+      ]
+    },
+    {
+      "slug": "galaxy-s25",
+      "base_model_slug": null,
+      "name": "Galaxy S25",
+      "brand": {
+        "id": 113,
+        "slug": "samsung",
+        "name": "Samsung",
+        "country": "KR",
+        "url": "/v1/brands/samsung"
+      },
+      "soc": {
+        "id": 1780,
+        "slug": "snapdragon-8-elite",
+        "name": "Snapdragon 8 Elite",
+        "manufacturer": {
+          "slug": "qualcomm",
+          "name": "Qualcomm",
+          "url": "/v1/brands/qualcomm"
+        },
+        "process_nm": 3.0,
+        "gpu_name": "Adreno 830",
+        "url": "/v1/socs/snapdragon-8-elite"
+      },
+      "release_date": "2025-02-07",
+      "msrp_usd": 799,
+      "ram_gb": 12,
+      "storage_options_gb": [
+        128,
+        256,
+        512
+      ],
+      "display": {
+        "size_inch": 6.2,
+        "resolution": "2340x1080",
+        "refresh_hz": 120,
+        "type": "Dynamic AMOLED 2X",
+        "brightness_nits": 2600,
+        "ppi": 416
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 50,
+          "aperture": 1.8,
+          "ois": true,
+          "sensor": "Samsung GN3"
+        },
+        {
+          "type": "ultrawide",
+          "mp": 12,
+          "aperture": 2.2,
+          "ois": false
+        },
+        {
+          "type": "telephoto",
+          "mp": 10,
+          "aperture": 2.4,
+          "ois": true,
+          "optical_zoom": 3
+        },
+        {
+          "type": "selfie",
+          "mp": 12,
+          "aperture": 2.2
+        }
+      ],
+      "battery_mah": 4000,
+      "charging_wired_w": 25.0,
+      "charging_wireless_w": 15.0,
+      "weight_g": 162.0,
+      "dimensions": {
+        "height_mm": 146.9,
+        "width_mm": 70.5,
+        "depth_mm": 7.2
+      },
+      "ip_rating": "IP68",
+      "os": "Android",
+      "os_version": "15",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.4",
+        "nfc": true,
+        "usb": "USB-C 3.2"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/galaxy-s25.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 60.8,
+        "performance": 88.9,
+        "camera": 36.1,
+        "battery": 54.4,
+        "display": 63.8,
+        "value": 59.0,
+        "perf": {
+          "index": 88.9,
+          "percentile": 92.0,
+          "tier": "A",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.samsung.com/global/galaxy/galaxy-s25/specs/",
+        "https://en.wikipedia.org/wiki/Samsung_Galaxy_S25"
+      ]
+    },
+    {
+      "slug": "iphone-16-pro",
+      "base_model_slug": null,
+      "name": "iPhone 16 Pro",
+      "brand": {
+        "id": 149,
+        "slug": "apple",
+        "name": "Apple",
+        "country": "US",
+        "url": "/v1/brands/apple"
+      },
+      "soc": {
+        "id": 48,
+        "slug": "apple-a18-pro",
+        "name": "Apple A18 Pro",
+        "manufacturer": {
+          "slug": "apple",
+          "name": "Apple",
+          "url": "/v1/brands/apple"
+        },
+        "process_nm": 3.0,
+        "gpu_name": "Apple GPU (6-core)",
+        "url": "/v1/socs/apple-a18-pro"
+      },
+      "release_date": "2024-09-20",
+      "msrp_usd": 999,
+      "ram_gb": 8,
+      "storage_options_gb": [
+        128,
+        256,
+        512,
+        1024
+      ],
+      "display": {
+        "size_inch": 6.3,
+        "resolution": "2622x1206",
+        "refresh_hz": 120,
+        "type": "LTPO Super Retina XDR OLED",
+        "brightness_nits": 2000,
+        "ppi": 460
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 48,
+          "aperture": 1.78,
+          "ois": true,
+          "sensor": "Sony IMX903"
+        },
+        {
+          "type": "ultrawide",
+          "mp": 48,
+          "aperture": 2.2,
+          "ois": false
+        },
+        {
+          "type": "telephoto",
+          "mp": 12,
+          "aperture": 2.8,
+          "ois": true,
+          "optical_zoom": 5
+        },
+        {
+          "type": "selfie",
+          "mp": 12,
+          "aperture": 1.9
+        }
+      ],
+      "battery_mah": 3582,
+      "charging_wired_w": 27.0,
+      "charging_wireless_w": 25.0,
+      "weight_g": 199.0,
+      "dimensions": {
+        "height_mm": 149.6,
+        "width_mm": 71.5,
+        "depth_mm": 8.25
+      },
+      "ip_rating": "IP68",
+      "os": "iOS",
+      "os_version": "18",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.3",
+        "nfc": true,
+        "usb": "USB-C 3.0"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/iphone-16-pro.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 57.6,
+        "performance": 82.9,
+        "camera": 35.5,
+        "battery": 52.6,
+        "display": 59.5,
+        "value": 50.2,
+        "perf": {
+          "index": 82.9,
+          "percentile": 83.2,
+          "tier": "A",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.apple.com/iphone-16-pro/specs/",
+        "https://en.wikipedia.org/wiki/IPhone_16_Pro"
+      ]
+    },
+    {
+      "slug": "pixel-9-pro",
+      "base_model_slug": null,
+      "name": "Pixel 9 Pro",
+      "brand": {
+        "id": 159,
+        "slug": "google",
+        "name": "Google",
+        "country": "US",
+        "url": "/v1/brands/google"
+      },
+      "soc": {
+        "id": 768,
+        "slug": "tensor-g4",
+        "name": "Google Tensor G4",
+        "manufacturer": {
+          "slug": "google",
+          "name": "Google",
+          "url": "/v1/brands/google"
+        },
+        "process_nm": 4.0,
+        "gpu_name": "Mali-G715 MP7",
+        "url": "/v1/socs/tensor-g4"
+      },
+      "release_date": "2024-08-22",
+      "msrp_usd": 999,
+      "ram_gb": 16,
+      "storage_options_gb": [
+        128,
+        256,
+        512,
+        1024
+      ],
+      "display": {
+        "size_inch": 6.3,
+        "resolution": "2856x1280",
+        "refresh_hz": 120,
+        "type": "LTPO OLED",
+        "brightness_nits": 3000,
+        "ppi": 495
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 50,
+          "aperture": 1.68,
+          "ois": true,
+          "sensor": "Samsung GNK"
+        },
+        {
+          "type": "ultrawide",
+          "mp": 48,
+          "aperture": 1.7,
+          "ois": false
+        },
+        {
+          "type": "telephoto",
+          "mp": 48,
+          "aperture": 2.8,
+          "ois": true,
+          "optical_zoom": 5
+        },
+        {
+          "type": "selfie",
+          "mp": 42,
+          "aperture": 2.2
+        }
+      ],
+      "battery_mah": 4700,
+      "charging_wired_w": 27.0,
+      "charging_wireless_w": 21.0,
+      "weight_g": 199.0,
+      "dimensions": {
+        "height_mm": 152.8,
+        "width_mm": 72.0,
+        "depth_mm": 8.5
+      },
+      "ip_rating": "IP68",
+      "os": "Android",
+      "os_version": "14",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.3",
+        "nfc": true,
+        "usb": "USB-C 3.2"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/pixel-9-pro.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 61.0,
+        "performance": 70.9,
+        "camera": 36.1,
+        "battery": 60.8,
+        "display": 76.0,
+        "value": 52.0,
+        "perf": {
+          "index": 70.9,
+          "percentile": 68.9,
+          "tier": "B",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://store.google.com/product/pixel_9_pro_specs",
+        "https://en.wikipedia.org/wiki/Pixel_9_Pro"
+      ]
+    },
+    {
+      "slug": "galaxy-z-fold-7",
+      "base_model_slug": null,
+      "name": "Galaxy Z Fold 7",
+      "brand": {
+        "id": 113,
+        "slug": "samsung",
+        "name": "Samsung",
+        "country": "KR",
+        "url": "/v1/brands/samsung"
+      },
+      "soc": {
+        "id": 1780,
+        "slug": "snapdragon-8-elite",
+        "name": "Snapdragon 8 Elite",
+        "manufacturer": {
+          "slug": "qualcomm",
+          "name": "Qualcomm",
+          "url": "/v1/brands/qualcomm"
+        },
+        "process_nm": 3.0,
+        "gpu_name": "Adreno 830",
+        "url": "/v1/socs/snapdragon-8-elite"
+      },
+      "release_date": "2025-07-09",
+      "msrp_usd": 1999,
+      "ram_gb": 12,
+      "storage_options_gb": [
+        256,
+        512,
+        1024
+      ],
+      "display": {
+        "size_inch": 8.0,
+        "resolution": "2184x1968",
+        "refresh_hz": 120,
+        "type": "Dynamic AMOLED 2X",
+        "brightness_nits": 2600,
+        "ppi": 368
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 200,
+          "aperture": 1.7,
+          "ois": true
+        },
+        {
+          "type": "ultrawide",
+          "mp": 12,
+          "aperture": 2.2,
+          "ois": false
+        },
+        {
+          "type": "telephoto",
+          "mp": 10,
+          "aperture": 2.4,
+          "ois": true,
+          "optical_zoom": 3
+        },
+        {
+          "type": "selfie",
+          "mp": 10,
+          "aperture": 2.2
+        }
+      ],
+      "battery_mah": 4400,
+      "charging_wired_w": 25.0,
+      "charging_wireless_w": 15.0,
+      "weight_g": 215.0,
+      "dimensions": {
+        "height_mm": 158.4,
+        "width_mm": 143.2,
+        "depth_mm": 4.2
+      },
+      "ip_rating": "IP48",
+      "os": "Android",
+      "os_version": "16",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.4",
+        "nfc": true,
+        "usb": "USB-C 3.2"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/galaxy-z-fold-7.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 72.5,
+        "performance": 88.9,
+        "camera": 83.0,
+        "battery": 58.4,
+        "display": 59.7,
+        "value": 36.2,
+        "perf": {
+          "index": 88.9,
+          "percentile": 92.0,
+          "tier": "A",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.samsung.com/global/galaxy/galaxy-z-fold7/specs/",
+        "https://en.wikipedia.org/wiki/Samsung_Galaxy_Z_Fold_7"
+      ]
+    },
+    {
+      "slug": "oneplus-13r",
+      "base_model_slug": null,
+      "name": "OnePlus 13R",
+      "brand": {
+        "id": 36,
+        "slug": "oneplus",
+        "name": "OnePlus",
+        "country": "CN",
+        "url": "/v1/brands/oneplus"
+      },
+      "soc": {
+        "id": 1766,
+        "slug": "snapdragon-8-gen-3",
+        "name": "Snapdragon 8 Gen 3",
+        "manufacturer": {
+          "slug": "qualcomm",
+          "name": "Qualcomm",
+          "url": "/v1/brands/qualcomm"
+        },
+        "process_nm": 4.0,
+        "gpu_name": "Adreno 750",
+        "url": "/v1/socs/snapdragon-8-gen-3"
+      },
+      "release_date": "2025-01-07",
+      "msrp_usd": 599,
+      "ram_gb": 12,
+      "storage_options_gb": [
+        128,
+        256,
+        512
+      ],
+      "display": {
+        "size_inch": 6.78,
+        "resolution": "2780x1264",
+        "refresh_hz": 120,
+        "type": "LTPO AMOLED",
+        "brightness_nits": 4500,
+        "ppi": 450
+      },
+      "cameras": [
+        {
+          "type": "main",
+          "mp": 50,
+          "aperture": 1.8,
+          "ois": true,
+          "sensor": "Sony IMX906"
+        },
+        {
+          "type": "ultrawide",
+          "mp": 8,
+          "aperture": 2.2,
+          "ois": false
+        },
+        {
+          "type": "telephoto",
+          "mp": 2,
+          "aperture": 2.4,
+          "ois": false,
+          "optical_zoom": 2
+        },
+        {
+          "type": "selfie",
+          "mp": 16,
+          "aperture": 2.4
+        }
+      ],
+      "battery_mah": 6000,
+      "charging_wired_w": 80.0,
+      "charging_wireless_w": 0.0,
+      "weight_g": 210.0,
+      "dimensions": {
+        "height_mm": 162.9,
+        "width_mm": 75.0,
+        "depth_mm": 8.5
+      },
+      "ip_rating": "IP65",
+      "os": "Android",
+      "os_version": "15",
+      "connectivity": {
+        "wifi": "Wi-Fi 7",
+        "bluetooth": "5.4",
+        "nfc": true,
+        "usb": "USB-C 2.0"
+      },
+      "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/oneplus-13r.webp",
+      "images": [],
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 67.0,
+        "performance": 80.8,
+        "camera": 36.1,
+        "battery": 78.9,
+        "display": 72.1,
+        "value": 69.2,
+        "perf": {
+          "index": 80.8,
+          "percentile": 79.9,
+          "tier": "B",
+          "era": "2024-2026",
+          "source": "geekbench"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.oneplus.com/global/oneplus-13r/specs",
+        "https://en.wikipedia.org/wiki/OnePlus_13R"
+      ]
+    }
+  ],
+  "cpus": [
+    {
+      "slug": "ryzen-9-9950x3d",
+      "name": "AMD Ryzen 9 9950X3D",
+      "manufacturer": {
+        "slug": "amd",
+        "name": "AMD",
+        "url": "/v1/brands/amd"
+      },
+      "release_date": "2025-03-31",
+      "segment": "desktop",
+      "architecture": "Zen 5",
+      "socket": "AM5",
+      "process_node": "TSMC N4",
+      "cores": 16,
+      "threads": 32,
+      "p_cores": null,
+      "e_cores": null,
+      "base_clock_ghz": 4.3,
+      "boost_clock_ghz": 5.7,
+      "l3_cache_mb": 144.0,
+      "tdp_w": 170,
+      "max_tdp_w": 230,
+      "integrated_graphics": null,
+      "memory_support": "DDR5-5600",
+      "msrp_usd": 699,
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 82.9,
+        "single": {
+          "index": 99.2,
+          "percentile": 93.1,
+          "tier": "A",
+          "era": "2024-2026",
+          "source": "cinebench_r23_single"
+        },
+        "multi": {
+          "index": 69.5,
+          "percentile": 70.0,
+          "tier": "B",
+          "era": "2024-2026",
+          "source": "cinebench_r23_multi"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.amd.com/en/products/processors/desktops/ryzen/9000-series/amd-ryzen-9-9950x3d.html",
+        "https://en.wikipedia.org/wiki/Ryzen_9000_series",
+        "https://www.cpubenchmark.net/cpu.php?id=6549&cpu=AMD+Ryzen+9+9950X3D",
+        "https://technical.city/en/cpu/Ryzen-9-9950X3D",
+        "https://www.notebookcheck.net/Mobile-Processors-Benchmark-List.2436.0.html",
+        "https://www.topcpu.net/en/cpu-r/"
+      ],
+      "url": "/v1/cpus/ryzen-9-9950x3d"
+    },
+    {
+      "slug": "core-i9-14900k",
+      "name": "Intel Core i9-14900K",
+      "manufacturer": {
+        "slug": "intel",
+        "name": "Intel",
+        "url": "/v1/brands/intel"
+      },
+      "release_date": "2023-10-17",
+      "segment": "desktop",
+      "architecture": "Raptor Lake Refresh",
+      "socket": "LGA1700",
+      "process_node": "Intel 7",
+      "cores": 24,
+      "threads": 32,
+      "p_cores": 8,
+      "e_cores": 16,
+      "base_clock_ghz": 3.2,
+      "boost_clock_ghz": 6.0,
+      "l3_cache_mb": 36.0,
+      "tdp_w": 125,
+      "max_tdp_w": 253,
+      "integrated_graphics": "Intel UHD 770",
+      "memory_support": "DDR5-5600 / DDR4-3200",
+      "msrp_usd": 589,
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 80.6,
+        "single": {
+          "index": 97.0,
+          "percentile": 98.8,
+          "tier": "S",
+          "era": "2022-2023",
+          "source": "cinebench_r23_single"
+        },
+        "multi": {
+          "index": 67.2,
+          "percentile": 63.4,
+          "tier": "B",
+          "era": "2022-2023",
+          "source": "cinebench_r23_multi"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://ark.intel.com/content/www/us/en/ark/products/236773/intel-core-i9-processor-14900k-36m-cache-up-to-6-00-ghz.html",
+        "https://en.wikipedia.org/wiki/List_of_Intel_processors#Raptor_Lake_Refresh",
+        "https://www.cpubenchmark.net/cpu.php?id=5717&cpu=Intel+Core+i9-14900K",
+        "https://technical.city/en/cpu/Core-i9-14900K",
+        "https://www.cgdirector.com/cinebench-2024-scores/",
+        "https://browser.geekbench.com/processors/intel-core-i9-14900k"
+      ],
+      "url": "/v1/cpus/core-i9-14900k"
+    }
+  ],
+  "socs": [
+    {
+      "slug": "snapdragon-8-elite",
+      "name": "Snapdragon 8 Elite",
+      "manufacturer": {
+        "slug": "qualcomm",
+        "name": "Qualcomm",
+        "url": "/v1/brands/qualcomm"
+      },
+      "release_date": "2024-10-21",
+      "process_nm": 3.0,
+      "transistors_billion": null,
+      "cpu_config": {
+        "performance": 2,
+        "efficiency": 6,
+        "architecture": "Oryon (2nd gen)",
+        "clocks_ghz": [
+          4.32,
+          3.53
+        ]
+      },
+      "gpu_name": "Adreno 830",
+      "gpu_cores": null,
+      "gpu_clock_mhz": 1100,
+      "npu_tops": 45.0,
+      "modem": "Snapdragon X80 5G",
+      "score": {
+        "algorithm_version": "2.0.0",
+        "overall": 96.7,
+        "cpu": {
+          "index": 97.3,
+          "percentile": 87.5,
+          "tier": "A",
+          "era": "2024-2026",
+          "source": "geekbench"
+        },
+        "system": {
+          "index": 95.4,
+          "percentile": 84.4,
+          "tier": "A",
+          "era": "2024-2026",
+          "source": "antutu_score"
+        }
+      },
+      "verified": true,
+      "source_urls": [
+        "https://www.qualcomm.com/products/mobile/snapdragon/smartphones/snapdragon-8-series-mobile-platforms/snapdragon-8-elite-mobile-platform",
+        "https://en.wikipedia.org/wiki/Snapdragon_8_Elite"
+      ],
+      "url": "/v1/socs/snapdragon-8-elite"
+    }
+  ]
+}
