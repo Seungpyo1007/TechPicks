@@ -8,6 +8,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
+import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_score_strip.dart';
 import '../../shared/widgets/tp_surface.dart';
 
@@ -169,19 +170,6 @@ class _ImageSlot extends StatelessWidget {
 class _SpecRow extends StatelessWidget {
   const _SpecRow({required this.spec});
 
-  static const Map<SpecKind, String> labels = <SpecKind, String>{
-    SpecKind.tpIndex: 'TP Index',
-    SpecKind.price: 'Price',
-    SpecKind.screen: 'Screen',
-    SpecKind.chipset: 'Chipset',
-    SpecKind.camera: 'Camera',
-    SpecKind.battery: 'Battery',
-    SpecKind.os: 'OS',
-    SpecKind.weight: 'Weight',
-    SpecKind.thickness: 'Thickness',
-    SpecKind.released: 'Released',
-  };
-
   final DeviceSpec spec;
 
   @override
@@ -199,8 +187,7 @@ class _SpecRow extends StatelessWidget {
         children: <Widget>[
           SizedBox(
             width: 96,
-            child: Text(labels[spec.kind] ?? spec.kind.key,
-                style: type.secondary),
+            child: Text(SpecLabels.of(spec.kind), style: type.secondary),
           ),
           Expanded(
             child: Text(
