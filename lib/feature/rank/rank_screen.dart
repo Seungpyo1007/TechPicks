@@ -18,10 +18,19 @@ import '../../shared/widgets/tp_surface.dart';
 /// 카피는 아직 하드코딩이다. 명세에 EN/KO 표가 통째로 있어서 화면마다 조금씩
 /// 옮기는 것보다 한 번에 번역 파일로 넘기는 편이 낫다. 그 작업은 따로 한다.
 class RankScreen extends ConsumerWidget {
-  const RankScreen({super.key, this.onTabSelected, this.onDeviceTap});
+  const RankScreen({
+    super.key,
+    this.onTabSelected,
+    this.onDeviceTap,
+    this.onScan,
+  });
 
   final ValueChanged<TpTab>? onTabSelected;
   final ValueChanged<String>? onDeviceTap;
+
+  /// 뒷면을 찍어 기기를 찾는다. 명세의 chrome geometry 표대로 Android 는
+  /// 확장 FAB, iOS 는 콘텐츠 안 인라인 버튼이다.
+  final VoidCallback? onScan;
 
   static const Map<RankAxis, String> axisLabels = <RankAxis, String>{
     RankAxis.tpIndex: 'TP Index',
@@ -41,6 +50,7 @@ class RankScreen extends ConsumerWidget {
       title: 'Rankings',
       tab: TpTab.rank,
       onTabSelected: onTabSelected,
+      floatingAction: onScan == null ? null : _ScanFab(onTap: onScan!),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: <Widget>[
@@ -64,6 +74,10 @@ class RankScreen extends ConsumerWidget {
             const _RowSkeletons()
           else
             _RankList(ranked: ranked, axis: axis, onDeviceTap: onDeviceTap),
+          if (onScan != null && context.tp.isGlass) ...<Widget>[
+            const SizedBox(height: 16),
+            _ScanInlineButton(onTap: onScan!),
+          ],
           const SizedBox(height: 18),
           Text(
             'Ranked in-app from the TechPicks dataset — no webview, no handoff.',
@@ -304,4 +318,79 @@ String formatAxisValue(RankAxis axis, double? value) {
     return '\$$buf';
   }
   return value.round().toString();
+}
+
+
+/// Android 확장 FAB.
+class _ScanFab extends StatelessWidget {
+  const _ScanFab({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tp;
+    final type = context.tpText;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 56,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: TpTokens.blue,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: TpTokens.fabShadow,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Text(
+              'Scan',
+              style: type.body.copyWith(
+                color: Colors.white,
+                fontWeight: t.boldWeight,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// iOS 는 FAB 가 없다. 콘텐츠 안에 버튼으로 둔다.
+class _ScanInlineButton extends StatelessWidget {
+  const _ScanInlineButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tp;
+    final type = context.tpText;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: t.chipBg,
+          borderRadius: BorderRadius.circular(TpTokens.rControl),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Icon(Icons.qr_code_scanner, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              'Scan a device',
+              style: type.body.copyWith(fontWeight: t.boldWeight),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
