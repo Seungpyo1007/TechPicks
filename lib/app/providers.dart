@@ -18,6 +18,7 @@ import '../domain/model/tp_index.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_weights.dart';
 import '../shared/copy_keys.dart';
+import 'locale_controller.dart';
 
 /// 앱에 실린 큐레이션 카탈로그. 랭킹·홈·비교가 여기서 목록을 받는다.
 final catalogRepositoryProvider = Provider<CatalogRepository>(
@@ -401,3 +402,31 @@ class OnboardingNotifier extends Notifier<bool> {
 
 final onboardingDoneProvider =
     NotifierProvider<OnboardingNotifier, bool>(OnboardingNotifier.new);
+
+/// 언어 전환. 앱은 화면에서 context 로 만들어 넣고, 테스트는 가짜를 끼운다.
+final localeControllerProvider = Provider<LocaleController?>((ref) => null);
+
+/// 알림 켬/끔. 아직 실제 푸시에 연결돼 있지 않고 설정만 기억한다.
+class NotificationsNotifier extends Notifier<bool> {
+  static const String _prefsKey = 'notifications_enabled';
+
+  @override
+  bool build() {
+    unawaited(_restore());
+    return true;
+  }
+
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_prefsKey) ?? true;
+  }
+
+  Future<void> set(bool value) async {
+    state = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsKey, value);
+  }
+}
+
+final notificationsProvider =
+    NotifierProvider<NotificationsNotifier, bool>(NotificationsNotifier.new);

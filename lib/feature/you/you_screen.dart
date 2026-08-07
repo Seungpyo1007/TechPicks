@@ -7,6 +7,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../app/locale_controller.dart';
 import '../../shared/copy_keys.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
@@ -47,6 +48,8 @@ class YouScreen extends ConsumerWidget {
     final t = context.tp;
     final type = context.tpText;
     final weights = ref.watch(weightsProvider);
+    final locale = ref.watch(localeControllerProvider);
+    final notifications = ref.watch(notificationsProvider);
 
     return TpShell(
       title: t.isGlass ? null : K.you.tr(),
@@ -109,9 +112,22 @@ class YouScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               children: <Widget>[
-                _SettingRow(label: K.language.tr(), value: 'English'),
+                _SettingRow(
+                  label: K.language.tr(),
+                  value: (locale?.current ?? TpLocale.en).label,
+                  onTap: locale == null
+                      ? null
+                      : () => _pickLanguage(context, ref, locale),
+                ),
+                // 다크 모드는 명세에 토큰이 없다. 색을 지어내지 않고 자리만 둔다.
                 _SettingRow(label: K.darkMode.tr(), value: K.off.tr()),
-                _SettingRow(label: K.notifications.tr(), value: K.on.tr()),
+                _SettingRow(
+                  label: K.notifications.tr(),
+                  value: (notifications ? K.on : K.off).tr(),
+                  onTap: () => ref
+                      .read(notificationsProvider.notifier)
+                      .set(!notifications),
+                ),
                 _SettingRow(label: K.currency.tr(), value: 'USD', last: true),
               ],
             ),
@@ -141,6 +157,55 @@ class YouScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// 언어 목록. 지원 언어가 둘뿐이라 시트 하나로 끝난다.
+Future<void> _pickLanguage(
+  BuildContext context,
+  WidgetRef ref,
+  LocaleController controller,
+) async {
+  final t = context.tp;
+  final type = context.tpText;
+
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => TpSurface(
+      strong: true,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(K.language.tr(), style: type.cardTitle),
+          const SizedBox(height: 8),
+          for (final option in TpLocale.values)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () async {
+                Navigator.of(sheetContext).pop();
+                await controller.set(option);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(child: Text(option.label, style: type.body)),
+                    if (option == controller.current)
+                      const Icon(Icons.check, size: 18, color: TpTokens.blue)
+                    else
+                      SizedBox(width: 18, height: 18, child: ColoredBox(
+                        color: t.track.withValues(alpha: 0),
+                      )),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ProfileHeader extends StatelessWidget {
