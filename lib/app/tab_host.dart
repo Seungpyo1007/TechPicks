@@ -118,6 +118,7 @@ class _TabHostState extends ConsumerState<TabHost> {
           name: ref.watch(currentUserProvider)?.name,
           email: ref.watch(currentUserProvider)?.email,
           onLogout: () => ref.read(currentUserProvider.notifier).signOut(),
+          onDeviceTap: _openDevice,
         ),
       ],
     );

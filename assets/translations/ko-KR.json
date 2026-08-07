@@ -138,5 +138,8 @@
   "welcome": "TechPicks에\n오신 것을 환영합니다",
   "welcomeSub": "로그인하면 관심 목록이 기기 간에 유지됩니다. 건너뛰고 바로 비교할 수도 있습니다.",
   "welcomeSubShort": "내 기준으로 모든 기기에 점수를 매기세요.",
-  "you": "내 정보"
+  "you": "내 정보",
+  "yourDevice": "내 기기",
+  "yourDeviceUnavailable": "기기 정보를 읽지 못했습니다.",
+  "yourDeviceUnknown": "아직 카탈로그에 없습니다"
 }

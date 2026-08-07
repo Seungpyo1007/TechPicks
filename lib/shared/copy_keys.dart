@@ -93,6 +93,9 @@ abstract final class K {
   static const String on = 'on';
   static const String off = 'off';
   static const String noAccountYet = 'noAccountYet';
+  static const String yourDevice = 'yourDevice';
+  static const String yourDeviceUnknown = 'yourDeviceUnknown';
+  static const String yourDeviceUnavailable = 'yourDeviceUnavailable';
 
   // 온보딩
   static const String skip = 'skip';
