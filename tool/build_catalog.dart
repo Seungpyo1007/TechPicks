@@ -35,13 +35,25 @@ const List<String> _phones = <String>[
   'oneplus-13r',
 ];
 
+/// Processors 화면의 Laptop 세그먼트. 명세가 5행을 요구한다.
+///
+/// 데스크톱 CPU 는 뺐다. 명세의 세그먼트는 Mobile / Laptop 둘뿐이라
+/// `ryzen-9-9950x3d`, `core-i9-14900k` 는 실을 화면이 없다.
 const List<String> _cpus = <String>[
-  'ryzen-9-9950x3d',
-  'core-i9-14900k',
+  'core-i9-14900hx',
+  'ryzen-9-7945hx',
+  'ryzen-ai-9-hx-370',
+  'ryzen-ai-9-365',
+  'snapdragon-x-elite-x1e-84-100',
 ];
 
+/// Mobile 세그먼트. 카탈로그 폰들이 쓰는 칩 위주로 골랐다.
 const List<String> _socs = <String>[
   'snapdragon-8-elite',
+  'dimensity-9400',
+  'apple-a18-pro',
+  'exynos-2500',
+  'snapdragon-8-gen-3',
 ];
 
 Future<void> main() async {
