@@ -1,6 +1,9 @@
 # TechPicks 재구축 계획서
 
-> 작성일 2026-08-07 · 대상 브랜치 `develop` · 현재 버전 v1.0.1beta → 목표 v2.0.0
+> 작성 2026-08-07 · 갱신 2026-08-08 · 브랜치 `feat/design-handoff` · v1.0.1beta → v2.0.0
+>
+> **화면 열넷과 데이터 계층이 다 올라왔다.** 아래 계획 중 실제로 채택한 것과
+> 바꾼 것을 §3.1 과 §8 에 적어뒀다. 남은 일은 §9.
 
 ---
 
@@ -125,44 +128,53 @@ created_at, updated_at
 
 ```
 lib/
-  main.dart                      앱 부트스트랩만 (ProviderScope + router)
+  main.dart                      Firebase·번역 초기화 후 앱 실행
   app/
-    router.dart                  go_router 라우트 정의
-    theme/                       디자인 토큰 → ThemeData (iOS/Android 두 크롬)
-    localization/
+    app.dart                     온보딩 → 로그인 → 탭
+    tab_host.dart                탭 5개 + 푸시 화면(상세·선택·스캔·뷰어)
+    providers.dart               Riverpod 프로바이더 전부
+    locale_controller.dart       언어 전환
+    shell/                       크롬(헤더·탭 바·인셋), 탭 정의
+    theme/                       토큰·타이포·ThemeData
   core/
-    network/tech_api_client.dart  덤프/REST 양쪽을 흡수하는 단일 클라이언트
-    result.dart                   Result<T, Failure>
-    cache/                        Hive 또는 Drift 로컬 캐시
+    network/                     TechApiSource(덤프/REST), TechApiClient
+    failure.dart  result.dart    Result<T> 와 실패 분류
   domain/
-    entity/                       Smartphone, Cpu, Gpu, Soc, Brand, Score
-    repository/                   추상 인터페이스
+    model/                       TpIndex·TpWeights·Ranking·DeviceSpecs·
+                                 Movers·ScanMatch·AskAnswer
+    repository/                  추상 인터페이스
   data/
-    dto/                          freezed + json_serializable
-    repository_impl/
+    dto/                         freezed + json_serializable
+    repository/                  TechApiRepository, CatalogRepository
+    service/                     AskService, AuthService
   feature/
-    home/  rank/  compare/  ask/  you/
-    detail/  picker/  scan/  viewer/  onboard/  login/
-      ├ presentation/  (widget)
-      ├ controller/    (riverpod notifier)
-      └ ...
-  shared/                        재사용 위젯 (SpecRow, ScoreStrip, IndexNumeral …)
+    home/ rank/ compare/ detail/ ask/ you/
+    login/ onboarding/ scan/ viewer/
+  shared/
+    copy_keys.dart               번역 키 상수
+    spec_labels.dart             상세·비교 공용 라벨
+    widgets/                     TpSurface·TpChip·TpScoreStrip·TpTapTarget
 test/
-  unit/  widget/  golden/
+  unit/  widget/  support/harness.dart
+tool/
+  build_catalog.dart             카탈로그 애셋 굽기
+  gen_idea_libs.dart             IDE 설정 복구
+  smoke_techapi.dart             원격 왕복 확인
 ```
 
 ### 3.1 스택 결정
 
-| 영역 | 채택 | 이유 |
+| 영역 | 채택 | 비고 |
 |---|---|---|
-| 상태관리 | **Riverpod (code-gen)** | v1의 `setState` 난립 해소, 비동기 캐싱 내장 |
-| 라우팅 | **go_router** | 딥링크(`techpicks://device/galaxy-s25`) 필요 |
-| 모델 | **freezed + json_serializable** | 위 스키마를 손으로 파싱하지 않음 |
-| 네트워크 | **dio** + 재시도/캐시 인터셉터 | 정적 덤프는 ETag 캐싱이 잘 먹는다 |
-| 로컬 | **Drift** | 93,396개 폰 오프라인 검색 인덱스 |
-| 차트 | **없음** | 확정 디자인에 차트가 없다. 점수는 5구간 막대 스트립이라 `Container` + `FractionallySizedBox`로 충분하다. fl_chart는 제거했고 syncfusion도 `Phone.dart`와 함께 사라진다 |
-| AI | **firebase_vertexai** 유지, 모델 ID 교체 | §5.4 |
-| 인증 | Firebase Auth 유지 | 재작성 불필요 |
+| 상태관리 | **Riverpod** (수동 프로바이더) | 계획은 code-gen 이었다. build_runner 를 하나 더 태울 만큼 얻는 게 없어 손으로 쓴다 |
+| 라우팅 | **Navigator** | 계획은 go_router 였다. 명세에 딥링크 요구가 없고 back stack 이 한 단계뿐이라 필요가 없었다. 딥링크가 생기면 그때 바꾼다 |
+| 모델 | freezed + json_serializable | 그대로 |
+| 네트워크 | dio | 그대로 |
+| 로컬 | **없음** | 계획은 Drift 로 93,396개를 인덱싱하는 것이었다. 목록 인덱스가 19MB 라 앱에서 받을 수 없어 폐기했다. §5.1 참조 |
+| 차트 | **없음** | 확정 디자인에 차트가 없다. 점수는 5구간 막대라 `Container` + `FractionallySizedBox` 로 충분하다 |
+| 번역 | easy_localization | EN/KO 133키. 언어 전환은 즉시 반영 |
+| AI | firebase_vertexai + 로컬 대체 구현 | 기본은 로컬. Firebase 설정이 없어도 화면이 죽지 않아야 한다 |
+| 인증 | Firebase Auth | 인터페이스로 감싸 테스트가 Firebase 를 띄우지 않는다 |
 
 ---
 
@@ -184,8 +196,26 @@ test/
 
 ## 5. 알려진 리스크와 대응
 
-### 5.1 정적 덤프에는 검색·비교 엔드포인트가 없다
-`/v1/smartphones/index.json`(전체 목록)을 최초 1회 받아 Drift에 인덱싱하고, 검색·비교는 **로컬에서 수행**한다. 목록 인덱스는 slug/name/brand 정도의 경량 필드만 담기므로 현실적인 크기다. 실제 응답 크기는 Phase 1 착수 시 반드시 계측할 것 — 예상보다 크면 브랜드별 샤딩으로 전환한다.
+### 5.1 목록 인덱스가 19MB 다
+
+계획은 `/v1/smartphones/index.json` 을 받아 Drift 에 인덱싱하는 것이었다.
+실측하니 **19,797,065 바이트 / 93,396건**이라 앱에서 받을 수 없다. 게다가 그
+인덱스에는 `slug`/`name`/`url` 만 있고 점수가 없어서 정렬에도 못 쓴다.
+관계 엔드포인트(`/brands/{slug}/smartphones`)는 덤프에 없다 — 404 다.
+
+명세가 같은 상황을 예상하고 답을 적어뒀다.
+
+> until then ship it as a versioned JSON asset so scores can be updated
+> without a store release
+
+`tool/build_catalog.dart` 가 큐레이션한 slug 목록으로 상세를 받아
+`assets/catalog/v1.json` 을 굽는다. 2025 플래그십 10종 + CPU 2 + SoC 1,
+30.7KB. 상세 화면처럼 기기 하나만 필요한 곳은 카탈로그를 거치지 않고
+`TechApiRepository` 로 직접 받는다.
+
+데이터셋에 정제되지 않은 레코드가 섞여 있다. 목록 첫 항목이
+`slug: "1", name: "1"` 이고 `socs` 에도 `slug: "0"` 이 있다. 검색을 붙일 때
+걸러야 한다.
 
 ### 5.2 `api.techapi.dev`는 아직 없다
 `TechApiClient`를 **덤프 모드 / REST 모드** 두 전략으로 추상화해 두고, 기본값은 덤프. 서버가 뜨면 설정 한 줄로 전환.
@@ -193,14 +223,28 @@ test/
 ### 5.3 라이선스 의무
 데이터는 CC-BY-SA 4.0. 앱 내 "데이터 출처" 화면과 각 상세 화면의 `source_urls` 노출은 **법적 요구사항**이다. 누락 시 라이선스 위반.
 
-### 5.4 v1에서 이월된 실제 버그 (재구축 시 반드시 수정)
-- `Scan.dart:79` — 이미지를 base64 문자열로 만들어 **텍스트 프롬프트에 이어붙이고** 있다. Gemini에 이미지를 넘기려면 `Content.multi([TextPart(...), InlineDataPart('image/jpeg', bytes)])` 형태여야 한다. 현재 코드는 동작할 수 없다.
-- `ChatAI.dart:95`, `Scan.dart:46` — 모델 ID `gemini-flash-experimental`은 유효한 식별자가 아니다.
-- `LoginPage.dart:20` — 개발자 이메일이 평문 하드코딩되어 있고 권한 검사가 클라이언트에서 이뤄진다. v2에서는 Firebase Custom Claims로 이전.
-- `firebase_options.dart`와 `macos/Runner/GoogleService-Info.plist`가 저장소에 커밋되어 있다. Firestore/Storage 보안 규칙 점검 필요.
+### 5.4 v1 에서 이월된 버그 — 처리됨
 
-### 5.5 미사용 의존성
-`google_ml_kit`, `tflite_flutter`, `camera`, `firebase_ml_model_downloader`가 pubspec에 있으나 코드에서 전혀 쓰이지 않는다. 이들이 Android 빌드 시간의 상당 부분을 차지한다. v2 pubspec에서 제외하고, OCR이 실제로 필요해질 때 다시 넣는다.
+파일이 통째로 사라져 자연히 해결된 것과, 새로 쓰면서 고친 것이 섞여 있다.
+
+| 버그 | 처리 |
+|---|---|
+| `Scan.dart:79` 이미지를 base64 문자열로 프롬프트에 이어붙임 | 파일 삭제. 새 스캔은 인식 결과를 `ScanMatcher` 로 카탈로그에 맞춘다 |
+| 모델 ID `gemini-flash-experimental` (존재하지 않음) | `GeminiAskService.modelId` 를 유효한 값으로. 테스트가 `experimental` 포함 여부를 막는다 |
+| `LoginPage.dart:20` 개발자 이메일 평문·클라이언트 권한 검사 | 파일 삭제. v2 로그인에는 그런 분기가 없다 |
+| `firebase_options.dart` 커밋됨 | 그대로다. 클라이언트 키라 공개돼도 치명적이지 않지만 **보안 규칙 점검은 남아 있다** (§9) |
+
+### 5.5 미사용 의존성 — 정리됨
+
+v1 화면과 함께 11개를 걷어냈다. `webview_flutter` 와 `permission_handler` 가
+나가면서 랭킹 웹뷰가 요구하던 위치 권한도 사라졌고, `syncfusion_flutter_charts`
+가 나가면서 상용 라이선스 문제도 끝났다.
+
+디버그 APK 295MB → 75MB.
+
+`device_info_plus` 와 `google_sign_in` 은 다시 필요해진다. 전자는 명세가
+"내 기기 정보는 You 화면에 속한다"고 했고, 후자는 `google-services.json` 이
+온전해지면 쓴다.
 
 ---
 
@@ -249,79 +293,84 @@ gh pr create --base develop --title "chore: Gradle 9.1 / AGP 8.13 toolchain" --f
 
 > `gh repo edit`과 브랜치 보호는 원격 저장소 설정을 바꾸는 작업이다. 실행 전 확인 필요.
 
-### 6.2 v2 작업 브랜치 계획
+### 6.2 실제로 나간 순서
 
-`develop`에서 잘라 아래 순서로 진행. 각각 독립 PR.
+`feat/design-handoff` 한 브랜치에 쌓았다. 계획은 기능마다 브랜치를 자르는
+것이었는데, 화면이 서로 물려 있어 쪼개도 따로 리뷰할 수 없었다.
 
 ```
-feat/v2-skeleton          디렉터리 구조 + Riverpod/go_router 골격
-feat/techapi-client       TechApiClient + freezed DTO + 단위 테스트
-feat/design-system        디자인 토큰 → ThemeData + 공용 위젯
-feat/device-list          목록/필터/정렬
-feat/device-detail        상세 + 스코어 스트립 + 출처 표기
-feat/compare              비교 화면
-feat/search               Drift 로컬 인덱스 검색
-feat/chat-rag             TechAPI 컨텍스트 주입 AI 상담
-chore/remove-legacy       v1 화면·미사용 의존성 제거
+디자인 핸드오프 반입          TechPicks-Web 에서 옮기고 그 저장소는 삭제
+토큰 + 두 크롬 셸
+TP Index + 가중치
+카탈로그 애셋 + 랭킹 계산
+랭킹 → 상세 → 비교/선택 → 홈 → 내 정보 → 상담 → 온보딩/로그인 → 스캔/뷰어
+화면 연결 (탭 호스트, main.dart 교체)
+v1 화면 26개와 의존성 11개 삭제
+번역 이관 (EN/KO 133키)
+언어 즉시 전환, 이메일 로그인
+접근성 — 탭 타깃·라벨·대비·스크린 리더 문장
 ```
 
 ---
 
-## 7. 단계별 로드맵
+## 7. 명세의 빌드 순서 — 전부 완료
 
-| Phase | 산출물 | 완료 기준 |
+`docs/DESIGN_HANDOFF.md` 의 "Suggested build order" 여덟 단계를 그 순서대로 했다.
+
+| # | 내용 | 결과 |
 |---|---|---|
-| **0. 정지 작업** | `chore/gradle-9-upgrade` 머지, git-flow 전환 | `develop`이 기본 브랜치, CI 통과 |
-| **1. 데이터 계층** | `TechApiClient`, DTO, 리포지토리 | 위젯 없이 **테스트만으로** galaxy-s25를 파싱해 score 5축을 뽑아낼 수 있음 |
-| **2. 디자인 시스템** | 토큰·테마·공용 위젯 | 라이트/다크 골든 테스트 통과 |
-| **3. 핵심 화면** | 목록 / 상세 / 비교 | 하드코딩 데이터 0줄 |
-| **4. 검색·랭킹** | Drift 인덱스, 랭킹 | 오프라인에서 검색 동작 |
-| **5. AI·부가** | RAG 상담, OCR 스캔 | 실제 이미지로 기종 인식 성공 |
-| **6. 릴리스** | `release/v2.0.0` → `main` | 서명키 적용, `applicationId` 확정 |
+| 1 | 토큰 + 두 크롬 셸 | iOS 유리 / Android M3, 안전 영역 기준으로 환산 |
+| 2 | 데이터 모델 + TP Index | 빈 축은 0점이 아니라 계산에서 제외 |
+| 3 | 랭킹 → 상세 → 비교 | 웹뷰 3개와 위치 권한이 사라졌다 |
+| 4 | 홈 | 결론 카드·shortlist·이번 주 변동 |
+| 5 | 내 정보 | 가중치 슬라이더가 앱 전체 지수를 다시 계산한다 |
+| 6 | 상담 | 응답을 `{pick, reason, rows[]}` 로 받아 표로 그린다 |
+| 7 | 온보딩 + 로그인 | 되돌릴 수 없던 건너뛰기 경고를 없앴다 |
+| 8 | 스캔 + 3D 뷰어 | 인식 결과를 카탈로그에 맞춘다 |
 
 ---
 
-## 8. 지금 즉시 해결할 것 — `main.dart`에 뜨는 X 표시
+## 8. 계획과 다르게 간 것
 
-**코드 문제가 아니다.** 확인 결과:
+| 계획 | 실제 | 이유 |
+|---|---|---|
+| go_router | Navigator | 딥링크 요구가 없고 back stack 이 한 단계다 |
+| Drift 로컬 인덱스 | 큐레이션 카탈로그 애셋 | 목록 인덱스가 19MB (§5.1) |
+| fl_chart 로 단일화 | 차트 라이브러리 없음 | 확정 디자인에 차트가 없다. 정작 미사용이던 쪽이 fl_chart 였다 |
+| Riverpod code-gen | 수동 프로바이더 | build_runner 를 하나 더 태울 이유가 없다 |
+| 기능별 브랜치 | 한 브랜치 | 화면이 서로 물려 있어 따로 리뷰가 안 된다 |
 
-```
-$ dart analyze lib/main.dart
-   info - main.dart:38:9 - Parameter 'key' could be a super parameter … use_super_parameters
-1 issue found.
-```
-
-에러는 0건이고 `info` 1건뿐이다. `.dart_tool/package_config.json`에도 `permission_handler`, `firebase_core`, `firebase_vertexai`, `rive`가 모두 정상 등록돼 있다.
-
-원인은 **IDE(Android Studio/IntelliJ)의 Dart 분석 서버 캐시**다. 이번에 `pubspec.yaml`(permission_handler 10 → 12)과 Gradle 툴체인을 바꿨는데, 열려 있던 IDE가 예전 패키지 구성을 붙들고 있으면 해결되지 않은 import가 있는 것처럼 빨간 X를 띄운다.
-
-해결 순서:
-
-1. **File → Invalidate Caches… → Invalidate and Restart**
-2. 재시작 후 **Tools → Flutter → Flutter Pub Get**
-3. 그래도 남으면 **Help → Find Action → "Restart Dart Analysis Server"**
-
-`use_super_parameters` info를 없애려면 `lib/main.dart:38`을 이렇게 고친다:
-
-```dart
-// before
-const MyApp({ Key? key, required this.isDarkMode, required this.isTutorialCompleted })
-    : super(key: key);
-
-// after
-const MyApp({ super.key, required this.isDarkMode, required this.isTutorialCompleted });
-```
-
-다만 v2에서 `main.dart`는 어차피 전면 재작성되므로 우선순위는 낮다.
+명세 값을 바꾼 곳은 색 세 군데뿐이다. 전부 WCAG AA 미달이라 최소로 조정했고
+실측값을 `lib/app/theme/tp_tokens.dart` 주석에 남겼다.
 
 ---
 
-## 9. 검증 방법
+## 9. 남은 일
 
-- **데이터 계층**: `dart test test/unit/tech_api_client_test.dart` — 실제 덤프 URL 픽스처로 galaxy-s25 파싱, score 5축 검증
-- **디자인**: 골든 테스트로 라이트/다크 스냅샷 비교
-- **엔드투엔드**: `flutter run -d emulator-5554` 후 홈 → 검색 → 상세 → 비교 경로를 실기기에서 확인
-- **회귀**: `flutter analyze`가 **에러 0, 경고 0** (v1은 경고 8건 + info 355건)
+- **다크 모드** — 명세의 토큰 표가 라이트 한 벌뿐이다. 색을 지어내지 않고
+  자리만 뒀다. 디자인 쪽에서 다크 토큰을 받아야 한다.
+- **`google-services.json`** — `oauth_client` 가 비어 Google 로그인이 안 된다.
+  Firebase 콘솔의 실제 파일이 필요하다.
+- **iOS/macOS 빌드** — CocoaPods 미설치, `ios/Runner/GoogleService-Info.plist` 없음.
+- **릴리스 서명·applicationId** — `com.example.techpicks` 는 스토어가 거부한다.
+- **Firestore/Storage 보안 규칙** — v1.0.1beta 가 공개돼 있고 실제 프로젝트를 문다.
+- **카메라·OCR** — 스캔 화면은 인식 결과를 받아 맞추는 부분까지만 있다.
+- **검색** — 카탈로그 10종 밖을 찾으려면 서버 쿼리나 브랜드별 샤딩이 필요하다.
+- **제품 사진·3D 모델** — 명세도 "Not supplied" 라고 적어뒀다.
+
+### 확인 방법
+
+```
+flutter test        223건
+flutter analyze     이슈 0
+dart tool/smoke_techapi.dart   원격 왕복
+```
+
+접근성은 `test/widget/a11y_test.dart` 가 화면마다 탭 타깃·라벨·대비
+가이드라인을 건다. 스크린 리더가 읽는 문장은
+`test/widget/semantics_test.dart` 에 있다.
+
+CI 는 사용자 요청으로 꺼져 있다. 위 숫자는 로컬 결과이고 검증이 아니다.
 
 ---
 
