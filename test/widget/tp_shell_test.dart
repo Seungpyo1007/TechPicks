@@ -58,7 +58,7 @@ void main() {
         android.indexNumeral,
         android.appBarTitle,
       ]) {
-        expect(s.fontWeight!.index, lessThanOrEqualTo(FontWeight.w500.index));
+        expect(s.fontWeight!.value, lessThanOrEqualTo(FontWeight.w500.value));
       }
 
       final ios = TpTypography.of(TpTokens.ios());
