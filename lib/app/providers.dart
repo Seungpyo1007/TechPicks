@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,7 @@ import '../data/repository/catalog_repository.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../domain/model/device_specs.dart';
 import '../domain/model/movers.dart';
+import '../domain/model/tp_index.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_weights.dart';
 
@@ -34,15 +36,46 @@ final catalogProvider = FutureProvider<Catalog>((ref) async {
 ///
 /// 화면 여러 곳이 이걸 읽는다. You 화면에서 슬라이더를 움직이면 랭킹·홈·상세의
 /// 지수가 한꺼번에 다시 계산되어야 하므로 앱 전역 상태다.
-///
-/// 아직 저장은 붙이지 않았다. You 화면을 만들 때 SharedPreferences 로 잇는다.
 class WeightsNotifier extends Notifier<TpWeights> {
+  static const String _prefsKey = 'tp_weights';
+
   @override
-  TpWeights build() => TpWeights.defaults;
+  TpWeights build() {
+    unawaited(_restore());
+    return TpWeights.defaults;
+  }
 
-  void set(TpWeights next) => state = next;
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    if (raw == null) return;
+    try {
+      state = TpWeights.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } on FormatException {
+      // 저장값이 깨졌으면 기본값을 그대로 둔다.
+    }
+  }
 
-  void reset() => state = TpWeights.defaults;
+  Future<void> _persist() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, jsonEncode(state.toJson()));
+  }
+
+  void set(TpWeights next) {
+    state = next;
+    unawaited(_persist());
+  }
+
+  /// 축 하나만 바꾼다. 슬라이더가 이걸 부른다.
+  void setAxis(TpAxisKind kind, double value) => set(switch (kind) {
+        TpAxisKind.performance => state.copyWith(performance: value),
+        TpAxisKind.camera => state.copyWith(camera: value),
+        TpAxisKind.display => state.copyWith(display: value),
+        TpAxisKind.battery => state.copyWith(battery: value),
+        TpAxisKind.value => state.copyWith(value: value),
+      });
+
+  void reset() => set(TpWeights.defaults);
 }
 
 final weightsProvider =
