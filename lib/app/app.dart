@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../feature/login/login_screen.dart';
 import '../feature/onboarding/onboarding_screen.dart';
+import 'locale_controller.dart';
 import 'providers.dart';
 import 'tab_host.dart';
 import 'theme/app_theme.dart';
@@ -24,7 +25,17 @@ class TechPicksApp extends StatelessWidget {
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      home: const _Root(),
+      home: Builder(
+        // LocaleController 는 easy_localization 의 context 가 필요해서
+        // MaterialApp 아래에서 만들어 넣는다.
+        builder: (inner) => ProviderScope(
+          overrides: [
+            localeControllerProvider
+                .overrideWithValue(EasyLocaleController(inner)),
+          ],
+          child: const _Root(),
+        ),
+      ),
     );
   }
 }

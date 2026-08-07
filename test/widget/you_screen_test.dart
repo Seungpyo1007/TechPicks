@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod/misc.dart' show Override;
 
 import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,7 @@ import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/tp_index.dart';
 import 'package:techpicks/domain/model/tp_weights.dart';
+import 'package:techpicks/app/locale_controller.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
 ProviderContainer? _container;
@@ -20,10 +22,17 @@ Future<void> _pump(
   TpChrome chrome = TpChrome.ios,
   String? name,
   String? email,
+  LocaleController? locale,
 }) async {
-  _container = await pumpScreen(tester, YouScreen(name: name, email: email),
-      chrome: chrome,
-      size: const Size(1200, 3600));
+  _container = await pumpScreen(
+    tester,
+    YouScreen(name: name, email: email),
+    chrome: chrome,
+    size: const Size(1200, 3600),
+    overrides: <Override>[
+      if (locale != null) localeControllerProvider.overrideWithValue(locale),
+    ],
+  );
 }
 
 void main() {
@@ -147,6 +156,39 @@ void main() {
     expect(find.text('a@b.com'), findsOneWidget);
   });
 
+  testWidgets('언어 줄이 현재 언어를 보여준다', (tester) async {
+    await _pump(tester, locale: _FakeLocale(TpLocale.ko));
+    expect(find.text('한국어'), findsOneWidget);
+  });
+
+  testWidgets('언어를 고르면 즉시 바뀐다', (tester) async {
+    // v1 은 여기서 앱을 재시작했다. 명세가 그 안내를 없애라고 했다.
+    final locale = _FakeLocale();
+    await _pump(tester, locale: locale);
+
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+
+    // 시트가 열리고 두 언어가 나온다.
+    expect(find.text('한국어'), findsOneWidget);
+
+    await tester.tap(find.text('한국어'));
+    await tester.pumpAndSettle();
+
+    expect(locale.set_, <TpLocale>[TpLocale.ko]);
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
+  testWidgets('알림을 눌러 껐다 켠다', (tester) async {
+    await _pump(tester);
+    expect(_container!.read(notificationsProvider), isTrue);
+
+    await tester.tap(find.text('Notifications'));
+    await tester.pumpAndSettle();
+    expect(_container!.read(notificationsProvider), isFalse);
+    expect(find.text('Off'), findsWidgets);
+  });
+
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
     for (final chrome in TpChrome.values) {
       await _pump(tester, chrome: chrome);
@@ -154,4 +196,21 @@ void main() {
       expect(find.text('You'), findsWidgets);
     }
   });
+}
+
+/// 언어 전환을 검사하기 위한 가짜 컨트롤러.
+class _FakeLocale implements LocaleController {
+  _FakeLocale([this._current = TpLocale.en]);
+
+  TpLocale _current;
+  final List<TpLocale> set_ = <TpLocale>[];
+
+  @override
+  TpLocale get current => _current;
+
+  @override
+  Future<void> set(TpLocale next) async {
+    set_.add(next);
+    _current = next;
+  }
 }
