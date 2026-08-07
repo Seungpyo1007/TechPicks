@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
 import '../data/repository/tech_api_repository.dart';
@@ -61,4 +66,59 @@ final rankedPhonesProvider = Provider<List<RankedDevice>>((ref) {
     ref.watch(rankAxisProvider),
     ref.watch(weightsProvider),
   );
+});
+
+/// 비교 중인 기기 목록. 홈 화면의 주인공이다.
+///
+/// 저장은 SharedPreferences 로 한다. 명세는 Firestore 도 후보로 적었지만,
+/// 로그인 없이도 쓸 수 있어야 하는 화면이라 로컬이 먼저다.
+class ShortlistNotifier extends Notifier<List<String>> {
+  static const String _prefsKey = 'shortlist_slugs';
+
+  @override
+  List<String> build() {
+    unawaited(_restore());
+    return const <String>[];
+  }
+
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList(_prefsKey);
+    if (saved != null && saved.isNotEmpty) state = saved;
+  }
+
+  Future<void> _persist() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_prefsKey, state);
+  }
+
+  bool contains(String slug) => state.contains(slug);
+
+  void toggle(String slug) {
+    state = state.contains(slug)
+        ? <String>[...state.where((s) => s != slug)]
+        : <String>[...state, slug];
+    unawaited(_persist());
+  }
+
+  void remove(String slug) {
+    state = <String>[...state.where((s) => s != slug)];
+    unawaited(_persist());
+  }
+}
+
+final shortlistProvider =
+    NotifierProvider<ShortlistNotifier, List<String>>(ShortlistNotifier.new);
+
+/// 기기 하나. 카탈로그에 있으면 그걸 쓰고, 없으면 TechAPI 에서 받는다.
+///
+/// 카탈로그는 큐레이션한 일부라 랭킹·홈에 충분하지만, 상세는 그 밖의 기기도
+/// 열려야 한다.
+final deviceProvider = FutureProvider.family<Smartphone, String>((ref, slug) async {
+  final catalog = await ref.watch(catalogProvider.future);
+  final local = catalog.smartphones.where((d) => d.slug == slug);
+  if (local.isNotEmpty) return local.first;
+
+  final result = await ref.watch(techApiRepositoryProvider).smartphone(slug);
+  return result.fold((d) => d, (f) => throw f);
 });
