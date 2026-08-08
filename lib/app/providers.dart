@@ -493,13 +493,17 @@ final currentUserProvider = NotifierProvider<CurrentUserNotifier, TpUser?>(
 );
 
 /// 온보딩을 봤는지. v1 의 is_tutorial_completed 키를 그대로 쓴다.
-class OnboardingNotifier extends Notifier<bool> {
+class OnboardingNotifier extends Notifier<bool?> {
   static const String _prefsKey = 'is_tutorial_completed';
 
+  /// null 은 "아직 안 읽었다" 다.
+  ///
+  /// false 로 시작하면 앱을 켤 때마다 온보딩이 한 프레임 스쳐 지나간다.
+  /// 저장값은 뒤늦게 오고, 그때 화면이 갈린다.
   @override
-  bool build() {
+  bool? build() {
     unawaited(_restore());
-    return false;
+    return null;
   }
 
   Future<void> _restore() async {
@@ -515,7 +519,7 @@ class OnboardingNotifier extends Notifier<bool> {
   }
 }
 
-final onboardingDoneProvider = NotifierProvider<OnboardingNotifier, bool>(
+final onboardingDoneProvider = NotifierProvider<OnboardingNotifier, bool?>(
   OnboardingNotifier.new,
 );
 
