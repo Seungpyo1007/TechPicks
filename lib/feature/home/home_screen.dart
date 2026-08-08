@@ -289,6 +289,9 @@ class _ShortlistRow extends StatelessWidget {
         background: const SizedBox.shrink(),
         child: TpSurface(
           onTap: onTap,
+          // 명세 §3 은 스와이프와 길게 누르기 둘 다 지우기다. 스와이프는
+          // 스크린 리더로 못 하니 길게 누르기가 유일한 경로가 된다.
+          onLongPress: onRemove,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           child: Row(
             children: <Widget>[
