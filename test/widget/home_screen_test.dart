@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,10 +11,16 @@ import 'package:techpicks/shared/widgets/tp_score_strip.dart';
 
 ProviderContainer? _container;
 
-Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) async {
-  _container = await pumpScreen(tester, const HomeScreen(),
-      chrome: chrome,
-      size: const Size(1200, 3200));
+Future<void> _pump(
+  WidgetTester tester, {
+  TpChrome chrome = TpChrome.ios,
+}) async {
+  _container = await pumpScreen(
+    tester,
+    const HomeScreen(),
+    chrome: chrome,
+    size: const Size(1200, 3200),
+  );
 }
 
 void main() {

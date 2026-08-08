@@ -11,19 +11,18 @@ Smartphone _phone(
   double? batt,
   double? val,
   int? usd,
-}) =>
-    Smartphone(
-      slug: slug,
-      name: slug,
-      msrpUsd: usd,
-      score: SmartphoneScore(
-        performance: perf,
-        camera: cam,
-        battery: batt,
-        display: 50,
-        value: val,
-      ),
-    );
+}) => Smartphone(
+  slug: slug,
+  name: slug,
+  msrpUsd: usd,
+  score: SmartphoneScore(
+    performance: perf,
+    camera: cam,
+    battery: batt,
+    display: 50,
+    value: val,
+  ),
+);
 
 void main() {
   group('Ranking', () {
@@ -84,11 +83,7 @@ void main() {
     });
 
     test('값이 다 없으면 이름순으로 안정된다', () {
-      final none = <Smartphone>[
-        _phone('z'),
-        _phone('m'),
-        _phone('a'),
-      ];
+      final none = <Smartphone>[_phone('z'), _phone('m'), _phone('a')];
       final r = Ranking.of(none, RankAxis.price);
       expect(r.map((e) => e.device.slug), <String>['a', 'm', 'z']);
     });

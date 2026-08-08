@@ -58,8 +58,6 @@ class TechPicksRoot extends ConsumerStatefulWidget {
 }
 
 class _RootState extends ConsumerState<TechPicksRoot> {
-  bool _skippedLogin = false;
-
   void _openEmail({bool signUp = false}) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -79,6 +77,7 @@ class _RootState extends ConsumerState<TechPicksRoot> {
   Widget build(BuildContext context) {
     final onboarded = ref.watch(onboardingDoneProvider);
     final user = ref.watch(currentUserProvider);
+    final guest = ref.watch(guestProvider);
 
     // 아직 저장값을 못 읽었다. 온보딩과 탭 중 뭘 보여줄지 모르는 상태라
     // 아무것도 안 그린다. 배경색은 테마가 이미 깔아둔다.
@@ -88,14 +87,14 @@ class _RootState extends ConsumerState<TechPicksRoot> {
     if (!onboarded) {
       return const OnboardingScreen();
     }
-    if (user == null && !_skippedLogin) {
+    if (user == null && !guest) {
       return LoginScreen(
         onSignedIn: () => setState(() {}),
         // 푸터의 `Sign up` 은 가입 화면을 연다. 지금까지는 로그인을
         // 건너뛰어서, 가입하려던 사람이 그냥 앱에 들어와 버렸다.
         onSignUp: () => _openEmail(signUp: true),
         onEmail: () => _openEmail(),
-        onBrowse: () => setState(() => _skippedLogin = true),
+        onBrowse: () => ref.read(guestProvider.notifier).stay(),
       );
     }
     return const TabHost();

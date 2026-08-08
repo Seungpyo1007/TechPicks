@@ -261,6 +261,7 @@ void _disposeRace() {
     '지난 순위': (c) => c.read(rankSnapshotProvider),
     '온보딩': (c) => c.read(onboardingDoneProvider),
     '알림 설정': (c) => c.read(notificationsProvider),
+    '손님': (c) => c.read(guestProvider),
   }.entries) {
     test('${entry.key} — 복원 도중에 버려도 안 터진다', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});

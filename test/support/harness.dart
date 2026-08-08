@@ -49,9 +49,9 @@ Future<void> initLocalization({
   SharedPreferences.setMockInitialValues(<String, Object>{});
 
   final name = '${locale.languageCode}-${locale.countryCode}';
-  final raw = jsonDecode(
-    File('assets/translations/$name.json').readAsStringSync(),
-  ) as Map<String, dynamic>;
+  final raw =
+      jsonDecode(File('assets/translations/$name.json').readAsStringSync())
+          as Map<String, dynamic>;
 
   Localization.load(locale, translations: Translations(raw));
 }
@@ -66,12 +66,15 @@ Future<ProviderContainer> pumpScreen(
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
 }) async {
-  await _pump(tester, screen,
-      chrome: chrome,
-      overrides: overrides,
-      size: size,
-      catalogAsset: catalogAsset,
-      textScale: textScale);
+  await _pump(
+    tester,
+    screen,
+    chrome: chrome,
+    overrides: overrides,
+    size: size,
+    catalogAsset: catalogAsset,
+    textScale: textScale,
+  );
   await tester.pumpAndSettle();
   return ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
 }
@@ -86,12 +89,15 @@ Future<void> pumpScreenNoSettle(
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
 }) async {
-  await _pump(tester, screen,
-      chrome: chrome,
-      overrides: overrides,
-      size: size,
-      catalogAsset: catalogAsset,
-      textScale: textScale);
+  await _pump(
+    tester,
+    screen,
+    chrome: chrome,
+    overrides: overrides,
+    size: size,
+    catalogAsset: catalogAsset,
+    textScale: textScale,
+  );
   await tester.pump();
 }
 
@@ -129,8 +135,9 @@ Future<void> _pump(
       child: MaterialApp(
         theme: AppTheme.of(chrome),
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
         home: screen,
@@ -138,7 +145,6 @@ Future<void> _pump(
     ),
   );
 }
-
 
 /// 지금 화면의 시맨틱 라벨 전부.
 ///

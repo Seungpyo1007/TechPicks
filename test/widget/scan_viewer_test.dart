@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/shared/copy_keys.dart';
@@ -15,9 +14,12 @@ Future<void> _pump(
   TpChrome chrome = TpChrome.ios,
 }) async {
   // 스캔 선이 계속 도니 pumpAndSettle 이 끝나지 않는다. 시간을 정해 넘긴다.
-  await pumpScreenNoSettle(tester, screen,
-      chrome: chrome,
-      size: const Size(1200, 2400));
+  await pumpScreenNoSettle(
+    tester,
+    screen,
+    chrome: chrome,
+    size: const Size(1200, 2400),
+  );
   await tester.pump(const Duration(milliseconds: 300));
 }
 

@@ -18,16 +18,15 @@ void main() {
 
   for (final method in AuthMethod.values) {
     test('$method 로그인은 null 로 떨어진다', () async {
-      expect(await service.signIn(method, email: 'a@b.com', password: '123456'),
-          isNull);
+      expect(
+        await service.signIn(method, email: 'a@b.com', password: '123456'),
+        isNull,
+      );
     });
   }
 
   test('가입도 null 로 떨어진다', () async {
-    expect(
-      await service.signUp(email: 'a@b.com', password: '123456'),
-      isNull,
-    );
+    expect(await service.signUp(email: 'a@b.com', password: '123456'), isNull);
   });
 
   test('로그아웃은 조용히 지나간다', () async {

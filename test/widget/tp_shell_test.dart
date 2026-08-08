@@ -8,10 +8,8 @@ import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/app/theme/tp_tokens.dart';
 import 'package:techpicks/app/theme/tp_typography.dart';
 
-Widget _host(TpChrome chrome, Widget child) => MaterialApp(
-      theme: AppTheme.of(chrome),
-      home: child,
-    );
+Widget _host(TpChrome chrome, Widget child) =>
+    MaterialApp(theme: AppTheme.of(chrome), home: child);
 
 void main() {
   group('앱 마크', () {
@@ -106,14 +104,16 @@ void main() {
   group('셸', () {
     for (final chrome in TpChrome.values) {
       testWidgets('$chrome — 탭 5개와 콘텐츠를 그린다', (tester) async {
-        await tester.pumpWidget(_host(
-          chrome,
-          const TpShell(
-            title: 'Today',
-            tab: TpTab.home,
-            child: Center(child: Text('본문')),
+        await tester.pumpWidget(
+          _host(
+            chrome,
+            const TpShell(
+              title: 'Today',
+              tab: TpTab.home,
+              child: Center(child: Text('본문')),
+            ),
           ),
-        ));
+        );
 
         expect(find.text('본문'), findsOneWidget);
         expect(find.text('Today'), findsOneWidget);
@@ -124,28 +124,32 @@ void main() {
 
       testWidgets('$chrome — 탭을 누르면 콜백이 온다', (tester) async {
         TpTab? tapped;
-        await tester.pumpWidget(_host(
-          chrome,
-          TpShell(
-            tab: TpTab.home,
-            onTabSelected: (t) => tapped = t,
-            child: const SizedBox.shrink(),
+        await tester.pumpWidget(
+          _host(
+            chrome,
+            TpShell(
+              tab: TpTab.home,
+              onTabSelected: (t) => tapped = t,
+              child: const SizedBox.shrink(),
+            ),
           ),
-        ));
+        );
 
         await tester.tap(find.text(K.tab(TpTab.compare).tr()));
         expect(tapped, TpTab.compare);
       });
 
       testWidgets('$chrome — takeover는 크롬을 그리지 않는다', (tester) async {
-        await tester.pumpWidget(_host(
-          chrome,
-          const TpShell(
-            title: 'Scan',
-            mode: TpChromeMode.takeover,
-            child: Center(child: Text('뷰파인더')),
+        await tester.pumpWidget(
+          _host(
+            chrome,
+            const TpShell(
+              title: 'Scan',
+              mode: TpChromeMode.takeover,
+              child: Center(child: Text('뷰파인더')),
+            ),
           ),
-        ));
+        );
 
         expect(find.text('뷰파인더'), findsOneWidget);
         // 제목을 넘겨도 인수 화면에서는 헤더가 나오지 않는다.
@@ -154,13 +158,9 @@ void main() {
       });
 
       testWidgets('$chrome — 탭이 없으면 탭 바도 없다', (tester) async {
-        await tester.pumpWidget(_host(
-          chrome,
-          const TpShell(
-            title: '상세',
-            child: SizedBox.shrink(),
-          ),
-        ));
+        await tester.pumpWidget(
+          _host(chrome, const TpShell(title: '상세', child: SizedBox.shrink())),
+        );
 
         for (final t in TpTab.values) {
           expect(find.text(K.tab(t).tr()), findsNothing);
@@ -171,14 +171,16 @@ void main() {
     testWidgets('Android만 FAB를 그린다', (tester) async {
       const fab = Text('비교하기');
 
-      await tester.pumpWidget(_host(
-        TpChrome.android,
-        const TpShell(
-          tab: TpTab.rank,
-          floatingAction: fab,
-          child: SizedBox.shrink(),
+      await tester.pumpWidget(
+        _host(
+          TpChrome.android,
+          const TpShell(
+            tab: TpTab.rank,
+            floatingAction: fab,
+            child: SizedBox.shrink(),
+          ),
         ),
-      ));
+      );
       expect(find.text('비교하기'), findsOneWidget);
     });
   });

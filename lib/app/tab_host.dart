@@ -160,7 +160,11 @@ class _TabHostState extends ConsumerState<TabHost> {
           onTabSelected: _select,
           name: ref.watch(currentUserProvider)?.name,
           email: ref.watch(currentUserProvider)?.email,
-          onLogout: () => ref.read(currentUserProvider.notifier).signOut(),
+          // 손님 표시도 같이 지운다. 안 지우면 로그아웃해도 탭에 남는다.
+          onLogout: () {
+            unawaited(ref.read(currentUserProvider.notifier).signOut());
+            unawaited(ref.read(guestProvider.notifier).clear());
+          },
           onDeviceTap: _openDevice,
         ),
       ],

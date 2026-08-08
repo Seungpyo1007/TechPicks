@@ -10,9 +10,9 @@ import 'package:techpicks/feature/you/you_screen.dart';
 /// 앱이 거짓말을 한다.
 void main() {
   test('pubspec 과 푸터의 버전이 같다', () {
-    final line = File('pubspec.yaml')
-        .readAsLinesSync()
-        .firstWhere((l) => l.startsWith('version:'));
+    final line = File(
+      'pubspec.yaml',
+    ).readAsLinesSync().firstWhere((l) => l.startsWith('version:'));
     // `2.0.0+1` 에서 빌드 번호를 뗀다.
     final pubspec = line.split(':')[1].trim().split('+').first;
 

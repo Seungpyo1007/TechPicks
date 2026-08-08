@@ -22,8 +22,11 @@ void main() {
   setUp(initLocalization);
 
   testWidgets('랭킹은 빈 목록을 보여준다', (tester) async {
-    await pumpScreen(tester, const RankScreen(),
-        catalogAsset: missingCatalogAsset);
+    await pumpScreen(
+      tester,
+      const RankScreen(),
+      catalogAsset: missingCatalogAsset,
+    );
     // 실패는 비동기로 전파된다. 한 프레임 더 돌린다.
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -32,24 +35,33 @@ void main() {
   });
 
   testWidgets('홈은 빈 shortlist 상태로 떨어진다', (tester) async {
-    await pumpScreen(tester, const HomeScreen(),
-        catalogAsset: missingCatalogAsset);
+    await pumpScreen(
+      tester,
+      const HomeScreen(),
+      catalogAsset: missingCatalogAsset,
+    );
 
     expect(find.text(K.emptyShortlist.tr()), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('비교는 고르라고 안내한다', (tester) async {
-    await pumpScreen(tester, const CompareScreen(),
-        catalogAsset: missingCatalogAsset);
+    await pumpScreen(
+      tester,
+      const CompareScreen(),
+      catalogAsset: missingCatalogAsset,
+    );
 
     expect(find.text(K.chooseTwo.tr()), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('선택 시트는 빈 목록으로 뜬다', (tester) async {
-    await pumpScreen(tester, const PickerScreen(),
-        catalogAsset: missingCatalogAsset);
+    await pumpScreen(
+      tester,
+      const PickerScreen(),
+      catalogAsset: missingCatalogAsset,
+    );
 
     expect(find.text(K.choose.tr()), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -57,8 +69,11 @@ void main() {
 
   testWidgets('상세는 못 불러왔다고 알린다', (tester) async {
     // 카탈로그가 없으면 원격으로 넘어가는데 테스트에서는 그것도 실패한다.
-    await pumpScreen(tester, const DetailScreen(slug: 'galaxy-s25'),
-        catalogAsset: missingCatalogAsset);
+    await pumpScreen(
+      tester,
+      const DetailScreen(slug: 'galaxy-s25'),
+      catalogAsset: missingCatalogAsset,
+    );
 
     expect(find.text(K.loadFailed.tr()), findsOneWidget);
     expect(tester.takeException(), isNull);

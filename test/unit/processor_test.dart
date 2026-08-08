@@ -6,13 +6,13 @@ import 'package:techpicks/data/dto/soc.dart';
 import 'package:techpicks/domain/model/processor.dart';
 
 Soc _soc(String slug, {double? overall, double? nm, String? gpu}) => Soc(
-      slug: slug,
-      name: slug,
-      manufacturer: const Brand(slug: 'qualcomm', name: 'Qualcomm'),
-      processNm: nm,
-      gpuName: gpu,
-      score: overall == null ? null : SocScore(overall: overall),
-    );
+  slug: slug,
+  name: slug,
+  manufacturer: const Brand(slug: 'qualcomm', name: 'Qualcomm'),
+  processNm: nm,
+  gpuName: gpu,
+  score: overall == null ? null : SocScore(overall: overall),
+);
 
 Cpu _cpu(String slug, {double? overall, int? cores, int? threads, int? tdp}) =>
     Cpu(

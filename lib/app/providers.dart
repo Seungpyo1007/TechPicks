@@ -546,6 +546,42 @@ final onboardingDoneProvider = NotifierProvider<OnboardingNotifier, bool?>(
   OnboardingNotifier.new,
 );
 
+/// 계정 없이 쓰기로 한 사람.
+///
+/// 이걸 안 남기면 `Browse without an account` 를 고른 사람이 앱을 켤 때마다
+/// 로그인 화면을 다시 본다. 관심 목록도 온보딩도 남는데 이것만 안 남을
+/// 이유가 없다.
+class GuestNotifier extends Notifier<bool> {
+  static const String _prefsKey = 'browsing_as_guest';
+
+  @override
+  bool build() {
+    unawaited(_restore());
+    return false;
+  }
+
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted) return;
+    state = prefs.getBool(_prefsKey) ?? false;
+  }
+
+  Future<void> stay() async {
+    state = true;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsKey, true);
+  }
+
+  /// 로그아웃하면 다시 로그인 화면으로 보낸다.
+  Future<void> clear() async {
+    state = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsKey);
+  }
+}
+
+final guestProvider = NotifierProvider<GuestNotifier, bool>(GuestNotifier.new);
+
 /// 언어 전환. 앱은 화면에서 context 로 만들어 넣고, 테스트는 가짜를 끼운다.
 final localeControllerProvider = Provider<LocaleController?>((ref) => null);
 

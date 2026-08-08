@@ -63,9 +63,7 @@ void main() {
       tester,
       const DetailScreen(slug: 'galaxy-s25-ultra'),
       size: const Size(1200, 3200),
-      overrides: <Override>[
-        techApiRepositoryProvider.overrideWithValue(api),
-      ],
+      overrides: <Override>[techApiRepositoryProvider.overrideWithValue(api)],
     );
 
     expect(find.text('Galaxy S25 Ultra'), findsWidgets);
@@ -80,9 +78,7 @@ void main() {
       tester,
       const DetailScreen(slug: 'pixel-10-pro'),
       size: const Size(1200, 3200),
-      overrides: <Override>[
-        techApiRepositoryProvider.overrideWithValue(api),
-      ],
+      overrides: <Override>[techApiRepositoryProvider.overrideWithValue(api)],
     );
 
     expect(api.calls, 1);
@@ -97,9 +93,7 @@ void main() {
       tester,
       const DetailScreen(slug: 'pixel-10-pro'),
       size: const Size(1200, 3200),
-      overrides: <Override>[
-        techApiRepositoryProvider.overrideWithValue(api),
-      ],
+      overrides: <Override>[techApiRepositoryProvider.overrideWithValue(api)],
     );
 
     expect(find.text(K.loadFailed.tr()), findsOneWidget);
@@ -107,16 +101,12 @@ void main() {
   });
 
   testWidgets('점수도 가격도 없는 기기가 와도 안 터진다', (tester) async {
-    final api = _FakeApi(
-      Ok(const Smartphone(slug: '이름만', name: '이름만 있는 기기')),
-    );
+    final api = _FakeApi(Ok(const Smartphone(slug: '이름만', name: '이름만 있는 기기')));
     await pumpScreen(
       tester,
       const DetailScreen(slug: '이름만'),
       size: const Size(1200, 3200),
-      overrides: <Override>[
-        techApiRepositoryProvider.overrideWithValue(api),
-      ],
+      overrides: <Override>[techApiRepositoryProvider.overrideWithValue(api)],
     );
 
     expect(find.text('이름만 있는 기기'), findsWidgets);

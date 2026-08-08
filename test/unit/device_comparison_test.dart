@@ -10,21 +10,20 @@ Smartphone _phone(
   int? mah,
   double? perf,
   String? soc,
-}) =>
-    Smartphone(
-      slug: slug,
-      name: slug,
-      msrpUsd: usd,
-      batteryMah: mah,
-      soc: soc == null ? null : Soc(slug: soc, name: soc),
-      score: SmartphoneScore(
-        performance: perf,
-        camera: 50,
-        display: 50,
-        battery: 50,
-        value: 50,
-      ),
-    );
+}) => Smartphone(
+  slug: slug,
+  name: slug,
+  msrpUsd: usd,
+  batteryMah: mah,
+  soc: soc == null ? null : Soc(slug: soc, name: soc),
+  score: SmartphoneScore(
+    performance: perf,
+    camera: 50,
+    display: 50,
+    battery: 50,
+    value: 50,
+  ),
+);
 
 void main() {
   group('DeviceComparison', () {
@@ -51,8 +50,7 @@ void main() {
         _phone('a', usd: 1200),
         _phone('b', usd: 700),
       );
-      final price =
-          pairs.firstWhere((p) => p.kind == SpecKind.price);
+      final price = pairs.firstWhere((p) => p.kind == SpecKind.price);
       expect(price.winner, CompareSide.b);
     });
 
@@ -68,10 +66,7 @@ void main() {
 
     test('한쪽만 값이 있으면 표시하지 않는다', () {
       // 없는 값은 나쁜 값이 아니라 모르는 값이다.
-      final pairs = DeviceComparison.of(
-        _phone('a', usd: 700),
-        _phone('b'),
-      );
+      final pairs = DeviceComparison.of(_phone('a', usd: 700), _phone('b'));
       final price = pairs.firstWhere((p) => p.kind == SpecKind.price);
       expect(price.winner, isNull);
     });

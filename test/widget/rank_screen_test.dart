@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/shared/copy_keys.dart';
@@ -51,8 +50,7 @@ void main() {
     await tester.tap(find.widgetWithText(TpChip, 'Price'));
     await tester.pumpAndSettle();
 
-    expect(order(), isNot(equals(byIndex)),
-        reason: '가격순은 지수순과 달라야 한다');
+    expect(order(), isNot(equals(byIndex)), reason: '가격순은 지수순과 달라야 한다');
   });
 
   testWidgets('가격 축은 통화로, 점수 축은 정수로 보여준다', (tester) async {

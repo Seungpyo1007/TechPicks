@@ -56,8 +56,11 @@ void main() {
     test('쓸 축이 없으면 null', () {
       expect(TpIndex.of(null), isNull);
       expect(TpIndex.of(const SmartphoneScore()), isNull);
-      expect(TpIndex.of(const SmartphoneScore(overall: 60)), isNull,
-          reason: 'overall 은 TechAPI 가 자기 가중치로 접은 값이라 쓰지 않는다');
+      expect(
+        TpIndex.of(const SmartphoneScore(overall: 60)),
+        isNull,
+        reason: 'overall 은 TechAPI 가 자기 가중치로 접은 값이라 쓰지 않는다',
+      );
     });
 
     test('가중치가 전부 0이면 null', () {

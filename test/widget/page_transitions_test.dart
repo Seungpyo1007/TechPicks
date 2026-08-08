@@ -45,9 +45,9 @@ void main() {
         theme: AppTheme.of(TpChrome.android),
         home: Builder(
           builder: (context) => TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const Text('다음')),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute<void>(builder: (_) => const Text('다음'))),
             child: const Text('밀기'),
           ),
         ),
@@ -73,9 +73,9 @@ void main() {
         theme: AppTheme.of(TpChrome.android),
         home: Builder(
           builder: (context) => TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const Text('다음')),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute<void>(builder: (_) => const Text('다음'))),
             child: const Text('밀기'),
           ),
         ),
