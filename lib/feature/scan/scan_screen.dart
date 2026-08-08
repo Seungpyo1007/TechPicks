@@ -100,8 +100,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen>
                   TpTapTarget(
                     onTap: widget.onBack,
                     label: K.back.tr(),
-                    child: const Icon(Icons.chevron_left,
-                        color: Colors.white, size: 26),
+                    child: const Icon(
+                      Icons.chevron_left,
+                      color: Colors.white,
+                      size: 26,
+                    ),
                   ),
                   const SizedBox(width: 2),
                   Text(
@@ -146,7 +149,10 @@ class _Viewfinder extends StatelessWidget {
     return Stack(
       children: <Widget>[
         for (final corner in _corners)
-          Align(alignment: corner, child: _Corner(corner: corner)),
+          Align(
+            alignment: corner,
+            child: _Corner(corner: corner),
+          ),
         AnimatedBuilder(
           animation: progress,
           builder: (context, _) => Align(
@@ -179,10 +185,7 @@ class _Corner extends StatelessWidget {
   Widget build(BuildContext context) {
     final top = corner.y < 0;
     final left = corner.x < 0;
-    const side = BorderSide(
-      color: TpTokens.blue,
-      width: _Viewfinder._stroke,
-    );
+    const side = BorderSide(color: TpTokens.blue, width: _Viewfinder._stroke);
 
     return SizedBox(
       width: _Viewfinder._bracket,
@@ -217,10 +220,8 @@ class _ResultCard extends StatelessWidget {
       tween: Tween<double>(begin: 1, end: 0),
       duration: const Duration(milliseconds: 240),
       curve: const Cubic(.2, .8, .2, 1),
-      builder: (context, t, child) => FractionalTranslation(
-        translation: Offset(0, t),
-        child: child,
-      ),
+      builder: (context, t, child) =>
+          FractionalTranslation(translation: Offset(0, t), child: child),
       child: Container(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
         decoration: BoxDecoration(
@@ -251,22 +252,27 @@ class _ResultCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            GestureDetector(
-              onTap: onOpen,
-              child: Container(
-                height: 46,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: TpTokens.blue,
-                  borderRadius: BorderRadius.circular(
-                    context.tp.isGlass ? TpTokens.rControl : context.tp.rInner,
+            Semantics(
+              button: true,
+              child: GestureDetector(
+                onTap: onOpen,
+                child: Container(
+                  height: 46,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: TpTokens.blue,
+                    borderRadius: BorderRadius.circular(
+                      context.tp.isGlass
+                          ? TpTokens.rControl
+                          : context.tp.rInner,
+                    ),
                   ),
-                ),
-                child: Text(
-                  K.openDevice.tr(),
-                  style: type.body.copyWith(
-                    color: Colors.white,
-                    fontWeight: context.tp.boldWeight,
+                  child: Text(
+                    K.openDevice.tr(),
+                    style: type.body.copyWith(
+                      color: Colors.white,
+                      fontWeight: context.tp.boldWeight,
+                    ),
                   ),
                 ),
               ),

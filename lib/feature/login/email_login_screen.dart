@@ -139,23 +139,26 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
           ],
 
           const SizedBox(height: 20),
-          GestureDetector(
-            onTap: _submit,
-            child: Container(
-              height: 52,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: TpTokens.blue,
-                borderRadius: BorderRadius.circular(
-                  t.isGlass ? TpTokens.rControl : t.rCard,
+          Semantics(
+            button: true,
+            child: GestureDetector(
+              onTap: _submit,
+              child: Container(
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: TpTokens.blue,
+                  borderRadius: BorderRadius.circular(
+                    t.isGlass ? TpTokens.rControl : t.rCard,
+                  ),
+                  boxShadow: t.buttonShadow,
                 ),
-                boxShadow: t.buttonShadow,
-              ),
-              child: Text(
-                (_signingUp ? K.signup : K.signIn).tr(),
-                style: type.body.copyWith(
-                  color: Colors.white,
-                  fontWeight: t.boldWeight,
+                child: Text(
+                  (_signingUp ? K.signup : K.signIn).tr(),
+                  style: type.body.copyWith(
+                    color: Colors.white,
+                    fontWeight: t.boldWeight,
+                  ),
                 ),
               ),
             ),

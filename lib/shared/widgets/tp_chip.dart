@@ -30,29 +30,37 @@ class _TpChipState extends State<TpChip> {
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
+    final enabled = widget.onTap != null;
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1,
-        duration: const Duration(milliseconds: 90),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            color: widget.selected ? TpTokens.blue : t.chipBg,
-            borderRadius: BorderRadius.circular(TpTokens.rControl),
-          ),
-          child: Text(
-            widget.label,
-            style: type.body.copyWith(
-              fontSize: 13.5,
-              fontWeight: t.boldWeight,
-              color: widget.selected ? Colors.white : TpTokens.ink,
+    return Semantics(
+      // 못 누르는 칩은 버튼이라고 하지 않는다.
+      button: enabled,
+      selected: widget.selected,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        // 못 누르는 칩은 눌린 척도 하지 않는다. onTapDown 만 달아둬도
+        // 시맨틱 트리에 탭 액션이 생겨 버튼처럼 읽힌다.
+        onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
+        onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
+        onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
+        child: AnimatedScale(
+          scale: _pressed ? 0.97 : 1,
+          duration: const Duration(milliseconds: 90),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            decoration: BoxDecoration(
+              color: widget.selected ? TpTokens.blue : t.chipBg,
+              borderRadius: BorderRadius.circular(TpTokens.rControl),
+            ),
+            child: Text(
+              widget.label,
+              style: type.body.copyWith(
+                fontSize: 13.5,
+                fontWeight: t.boldWeight,
+                color: widget.selected ? Colors.white : TpTokens.ink,
+              ),
             ),
           ),
         ),
