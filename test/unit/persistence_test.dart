@@ -159,6 +159,25 @@ void main() {
     });
   });
 
+  group('복원 도중 종료', _disposeRace);
+
+  group('알림 설정', () {
+    test('끈 상태가 다음 실행에 남는다', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final first = _restart();
+      first.read(notificationsProvider);
+      await _settle();
+      expect(first.read(notificationsProvider), isTrue);
+
+      await first.read(notificationsProvider.notifier).set(false);
+
+      expect(
+        await _readAfterRestart((c) => c.read(notificationsProvider)),
+        isFalse,
+      );
+    });
+  });
+
   group('온보딩', () {
     test('한 번 보면 다시 안 나온다', () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -186,4 +205,28 @@ void main() {
       );
     });
   });
+}
+
+/// 복원이 끝나기 전에 화면을 떠난 경우.
+///
+/// `build()` 가 시작한 복원은 SharedPreferences 를 한 번 왕복한 뒤에 state 를
+/// 쓴다. 그 사이에 프로바이더가 버려지면 Riverpod 이 throw 하고, 그 예외는
+/// unawaited 라 아무 데도 안 잡힌다.
+void _disposeRace() {
+  for (final entry in <String, void Function(ProviderContainer)>{
+    '가중치': (c) => c.read(weightsProvider),
+    '관심 목록': (c) => c.read(shortlistProvider),
+    '지난 순위': (c) => c.read(rankSnapshotProvider),
+    '온보딩': (c) => c.read(onboardingDoneProvider),
+    '알림 설정': (c) => c.read(notificationsProvider),
+  }.entries) {
+    test('${entry.key} — 복원 도중에 버려도 안 터진다', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final container = ProviderContainer();
+      entry.value(container);
+      // 복원이 착지하기 전에 버린다.
+      container.dispose();
+      await _settle();
+    });
+  }
 }
