@@ -16,10 +16,18 @@ import '../../shared/widgets/tp_tap_target.dart';
 /// 필요해서 만들었고, 다른 화면과 같은 토큰·간격을 쓴다. v1 의
 /// EmailLogin/RegisterPage 두 화면을 하나로 합친 셈이다.
 class EmailLoginScreen extends ConsumerStatefulWidget {
-  const EmailLoginScreen({super.key, this.onBack, this.onSignedIn});
+  const EmailLoginScreen({
+    super.key,
+    this.onBack,
+    this.onSignedIn,
+    this.startInSignUp = false,
+  });
 
   final VoidCallback? onBack;
   final VoidCallback? onSignedIn;
+
+  /// 로그인의 `Sign up` 링크로 들어온 경우 가입 쪽부터 보여준다.
+  final bool startInSignUp;
 
   /// 최소 비밀번호 길이. Firebase 가 6자 미만을 거부한다.
   static const int minPasswordLength = 6;
@@ -44,7 +52,7 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
 
-  bool _signingUp = false;
+  late bool _signingUp = widget.startInSignUp;
   bool _busy = false;
   String? _error;
 

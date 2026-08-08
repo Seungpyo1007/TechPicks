@@ -17,13 +17,24 @@ import '../../data/service/auth_service.dart';
 ///
 /// 카피는 아직 하드코딩이다.
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key, this.onSignedIn, this.onSignUp, this.onEmail});
+  const LoginScreen({
+    super.key,
+    this.onSignedIn,
+    this.onSignUp,
+    this.onEmail,
+    this.onBrowse,
+  });
 
   final VoidCallback? onSignedIn;
+
+  /// 푸터의 `Sign up` 링크. 이메일 가입 화면을 연다.
   final VoidCallback? onSignUp;
 
   /// 이메일 버튼. 입력 화면이 따로 필요해 바깥에서 띄운다.
   final VoidCallback? onEmail;
+
+  /// `Browse without an account`. 계정 없이 그냥 들어간다.
+  final VoidCallback? onBrowse;
 
   /// 명세의 버튼 순서와 라벨.
   static const List<({AuthMethod method, String key, String? asset})> buttons =
@@ -63,6 +74,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     if (ok) {
       widget.onSignedIn?.call();
+      return;
+    }
+    // 계정 없이 둘러보기는 익명 로그인이 실패해도 들어가야 한다. 명세가
+    // "계정 없이도 비교가 된다"는 쪽이고, Firebase 가 없는 빌드에서 이게
+    // 막히면 앱에 들어갈 방법이 하나도 없다.
+    if (method == AuthMethod.anonymous && widget.onBrowse != null) {
+      widget.onBrowse!();
       return;
     }
     setState(() => _error = _messageFor(method));
