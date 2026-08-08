@@ -77,8 +77,13 @@ class _AskScreenState extends ConsumerState<AskScreen> {
             controller: _scroll,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             itemCount: messages.length,
-            itemBuilder: (context, i) =>
-                _Bubble(message: messages[i], onDeviceTap: widget.onDeviceTap),
+            itemBuilder: (context, i) => _Bubble(
+              message: messages[i],
+              // 답이 도착한 걸 스크린 리더가 알려줘야 한다. 화면은 스크롤로
+              // 알리지만 그건 눈으로 보는 사람에게만 통한다.
+              announce: i == messages.length - 1 && !messages[i].isUser,
+              onDeviceTap: widget.onDeviceTap,
+            ),
           ),
           Positioned(
             left: 0,
@@ -93,9 +98,17 @@ class _AskScreenState extends ConsumerState<AskScreen> {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message, this.onDeviceTap});
+  const _Bubble({
+    required this.message,
+    this.announce = false,
+    this.onDeviceTap,
+  });
 
   final AskMessage message;
+
+  /// 방금 도착한 AI 답. 스크린 리더가 읽어준다.
+  final bool announce;
+
   final ValueChanged<String>? onDeviceTap;
 
   @override
@@ -126,38 +139,41 @@ class _Bubble extends StatelessWidget {
       );
     }
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: FractionallySizedBox(
+    return Semantics(
+      liveRegion: announce,
+      child: Align(
         alignment: Alignment.centerLeft,
-        widthFactor: 0.78,
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: TpSurface(
-            strong: true,
-            radius: t.rInner,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            onTap: answer?.pickSlug == null || onDeviceTap == null
-                ? null
-                : () => onDeviceTap!(answer!.pickSlug!),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  message.text,
-                  style: answer == null ? type.body : type.cardTitle,
-                ),
-                if (answer != null) ...<Widget>[
-                  if (answer.reason.isNotEmpty) ...<Widget>[
-                    const SizedBox(height: 4),
-                    Text(answer.reason, style: type.secondary),
-                  ],
-                  if (answer.rows.isNotEmpty) ...<Widget>[
-                    const SizedBox(height: 10),
-                    for (final row in answer.rows) _AnswerRow(row: row),
+        child: FractionallySizedBox(
+          alignment: Alignment.centerLeft,
+          widthFactor: 0.78,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: TpSurface(
+              strong: true,
+              radius: t.rInner,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              onTap: answer?.pickSlug == null || onDeviceTap == null
+                  ? null
+                  : () => onDeviceTap!(answer!.pickSlug!),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    message.text,
+                    style: answer == null ? type.body : type.cardTitle,
+                  ),
+                  if (answer != null) ...<Widget>[
+                    if (answer.reason.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(answer.reason, style: type.secondary),
+                    ],
+                    if (answer.rows.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 10),
+                      for (final row in answer.rows) _AnswerRow(row: row),
+                    ],
                   ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -239,17 +255,29 @@ class _Composer extends StatelessWidget {
                     borderRadius: BorderRadius.circular(TpTokens.rControl),
                     boxShadow: t.inputShadow,
                   ),
-                  child: TextField(
-                    controller: controller,
-                    onSubmitted: onSend,
-                    style: type.body,
-                    decoration: InputDecoration(
-                      // isDense 를 켜면 필드의 히트 영역이 29px 로 줄어
-                      // 접근성 기준(48)에 못 미친다.
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      border: InputBorder.none,
-                      hintText: K.askHint.tr(),
-                      hintStyle: type.body.copyWith(color: t.dim),
+                  // 힌트는 글자를 치면 사라진다. 이름은 남아 있어야 한다.
+                  child: Semantics(
+                    label: K.askHint.tr(),
+                    child: TextField(
+                      controller: controller,
+                      onSubmitted: onSend,
+                      style: type.body,
+                      decoration: InputDecoration(
+                        // isDense 를 켜면 필드의 히트 영역이 29px 로 줄어
+                        // 접근성 기준(48)에 못 미친다.
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                        ),
+                        border: InputBorder.none,
+                        // 이름은 Semantics 가 준다. 힌트까지 시맨틱에 들어가면
+                        // 두 번 읽힌다.
+                        hint: ExcludeSemantics(
+                          child: Text(
+                            K.askHint.tr(),
+                            style: type.body.copyWith(color: t.dim),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),

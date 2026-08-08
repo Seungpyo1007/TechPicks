@@ -224,19 +224,26 @@ class _Field extends StatelessWidget {
           t.isGlass ? TpTokens.rControl : t.rCard,
         ),
       ),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure,
-        keyboardType: keyboardType,
-        onSubmitted: onSubmitted,
-        style: type.body,
-        decoration: InputDecoration(
-          // isDense 를 켜면 필드의 히트 영역이 글자 높이로 줄어 접근성
-          // 기준(48)에 못 미친다. 세로 여백으로 채운다.
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
-          border: InputBorder.none,
-          hintText: label,
-          hintStyle: type.body.copyWith(color: t.dim),
+      // hintText 는 글자를 치면 사라진다. 그러면 필드에 읽을 이름이 없어진다.
+      child: Semantics(
+        label: label,
+        child: TextField(
+          controller: controller,
+          obscureText: obscure,
+          keyboardType: keyboardType,
+          onSubmitted: onSubmitted,
+          style: type.body,
+          decoration: InputDecoration(
+            // isDense 를 켜면 필드의 히트 영역이 글자 높이로 줄어 접근성
+            // 기준(48)에 못 미친다. 세로 여백으로 채운다.
+            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            border: InputBorder.none,
+            // hintText 로 주면 그 문자열이 시맨틱에 한 번 더 들어가서
+            // 이름이 두 번 읽힌다. 위젯으로 주고 시맨틱에서는 뺀다.
+            hint: ExcludeSemantics(
+              child: Text(label, style: type.body.copyWith(color: t.dim)),
+            ),
+          ),
         ),
       ),
     );
