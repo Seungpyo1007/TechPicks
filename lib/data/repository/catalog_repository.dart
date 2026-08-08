@@ -19,7 +19,7 @@ import '../dto/soc.dart';
 /// `TechApiRepository` 로 직접 받는다. 카탈로그에 없는 기기도 열려야 한다.
 class CatalogRepository {
   CatalogRepository({AssetBundle? bundle, this.assetPath = _defaultAsset})
-      : _bundle = bundle ?? rootBundle;
+    : _bundle = bundle ?? rootBundle;
 
   static const String _defaultAsset = 'assets/catalog/v1.json';
 

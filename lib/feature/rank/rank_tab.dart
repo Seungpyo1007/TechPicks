@@ -24,10 +24,10 @@ class RankTab extends ConsumerWidget {
       RankCategory.processors => ProcessorScreen(onTabSelected: onTabSelected),
       // Laptops 화면(명세 §6)은 아직 없다. 칩도 눌리지 않는다.
       RankCategory.phones || RankCategory.laptops => RankScreen(
-          onTabSelected: onTabSelected,
-          onDeviceTap: onDeviceTap,
-          onScan: onScan,
-        ),
+        onTabSelected: onTabSelected,
+        onDeviceTap: onDeviceTap,
+        onScan: onScan,
+      ),
     };
   }
 }

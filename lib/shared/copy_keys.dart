@@ -159,39 +159,39 @@ abstract final class K {
   static const String a11yWinner = 'a11yWinner';
 
   static String tab(TpTab tab) => switch (tab) {
-        TpTab.home => tabHome,
-        TpTab.rank => tabRank,
-        TpTab.compare => tabCompare,
-        TpTab.ask => tabAsk,
-        TpTab.you => tabYou,
-      };
+    TpTab.home => tabHome,
+    TpTab.rank => tabRank,
+    TpTab.compare => tabCompare,
+    TpTab.ask => tabAsk,
+    TpTab.you => tabYou,
+  };
 
   static String axis(TpAxisKind kind) => switch (kind) {
-        TpAxisKind.performance => 'axPerf',
-        TpAxisKind.camera => 'axCam',
-        TpAxisKind.display => 'axDisplay',
-        TpAxisKind.battery => 'axBatt',
-        TpAxisKind.value => 'axVal',
-      };
+    TpAxisKind.performance => 'axPerf',
+    TpAxisKind.camera => 'axCam',
+    TpAxisKind.display => 'axDisplay',
+    TpAxisKind.battery => 'axBatt',
+    TpAxisKind.value => 'axVal',
+  };
 
   static String rankAxis(RankAxis axis) => switch (axis) {
-        RankAxis.tpIndex => 'axIndex',
-        RankAxis.battery => 'axBatt',
-        RankAxis.camera => 'axCam',
-        RankAxis.value => 'axVal',
-        RankAxis.price => 'axPrice',
-      };
+    RankAxis.tpIndex => 'axIndex',
+    RankAxis.battery => 'axBatt',
+    RankAxis.camera => 'axCam',
+    RankAxis.value => 'axVal',
+    RankAxis.price => 'axPrice',
+  };
 
   static String spec(SpecKind kind) => switch (kind) {
-        SpecKind.tpIndex => tpIndex,
-        SpecKind.price => 'detailSpecPrice',
-        SpecKind.screen => 'detailSpecScreen',
-        SpecKind.chipset => 'detailSpecChipset',
-        SpecKind.camera => 'detailSpecCamera',
-        SpecKind.battery => 'detailSpecBattery',
-        SpecKind.os => 'detailSpecOs',
-        SpecKind.weight => 'detailSpecWeight',
-        SpecKind.thickness => 'detailSpecThickness',
-        SpecKind.released => 'detailSpecReleased',
-      };
+    SpecKind.tpIndex => tpIndex,
+    SpecKind.price => 'detailSpecPrice',
+    SpecKind.screen => 'detailSpecScreen',
+    SpecKind.chipset => 'detailSpecChipset',
+    SpecKind.camera => 'detailSpecCamera',
+    SpecKind.battery => 'detailSpecBattery',
+    SpecKind.os => 'detailSpecOs',
+    SpecKind.weight => 'detailSpecWeight',
+    SpecKind.thickness => 'detailSpecThickness',
+    SpecKind.released => 'detailSpecReleased',
+  };
 }

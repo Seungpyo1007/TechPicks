@@ -15,21 +15,21 @@ sealed class Result<T> {
 
   /// 성공이면 값, 실패면 null.
   T? get valueOrNull => switch (this) {
-        Ok<T>(:final value) => value,
-        Err<T>() => null,
-      };
+    Ok<T>(:final value) => value,
+    Err<T>() => null,
+  };
 
   /// 실패면 [Failure], 성공이면 null.
   Failure? get failureOrNull => switch (this) {
-        Ok<T>() => null,
-        Err<T>(:final failure) => failure,
-      };
+    Ok<T>() => null,
+    Err<T>(:final failure) => failure,
+  };
 
   /// 성공 값을 변환한다. 실패는 그대로 통과시킨다.
   Result<R> map<R>(R Function(T value) transform) => switch (this) {
-        Ok<T>(:final value) => Ok<R>(transform(value)),
-        Err<T>(:final failure) => Err<R>(failure),
-      };
+    Ok<T>(:final value) => Ok<R>(transform(value)),
+    Err<T>(:final failure) => Err<R>(failure),
+  };
 
   /// 두 갈래를 모두 처리해 하나의 값으로 접는다.
   R fold<R>(R Function(T value) onOk, R Function(Failure failure) onErr) =>

@@ -19,7 +19,7 @@ abstract class AskService {
 /// Firebase Vertex AI 를 쓰는 구현.
 class GeminiAskService implements AskService {
   GeminiAskService({GenerativeModel? model, this.weights = TpWeights.defaults})
-      : _model = model;
+    : _model = model;
 
   /// v1 은 'gemini-flash-experimental' 을 넣었는데 그런 모델 ID 는 없다.
   static const String modelId = 'gemini-2.0-flash';
@@ -30,14 +30,18 @@ class GeminiAskService implements AskService {
   GenerativeModel get _resolved =>
       _model ??= FirebaseVertexAI.instance.generativeModel(
         model: modelId,
-        generationConfig: GenerationConfig(responseMimeType: 'application/json'),
+        generationConfig: GenerationConfig(
+          responseMimeType: 'application/json',
+        ),
       );
 
   @override
   Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
     final prompt = buildPrompt(question, catalog, weights);
     try {
-      final res = await _resolved.generateContent(<Content>[Content.text(prompt)]);
+      final res = await _resolved.generateContent(<Content>[
+        Content.text(prompt),
+      ]);
       final text = res.text;
       if (text == null) return null;
       final parsed = AskAnswer.tryParse(text);
@@ -151,14 +155,18 @@ class LocalAskService implements AskService {
     final budget = _budget(question);
     var pool = catalog;
     if (budget != null) {
-      final affordable =
-          catalog.where((d) => (d.msrpUsd ?? 1 << 30) <= budget).toList();
+      final affordable = catalog
+          .where((d) => (d.msrpUsd ?? 1 << 30) <= budget)
+          .toList();
       if (affordable.isNotEmpty) pool = affordable;
     }
 
     final sorted = pool.toList()
-      ..sort((a, b) => (TpIndex.of(b.score, weights) ?? -1)
-          .compareTo(TpIndex.of(a.score, weights) ?? -1));
+      ..sort(
+        (a, b) => (TpIndex.of(b.score, weights) ?? -1).compareTo(
+          TpIndex.of(a.score, weights) ?? -1,
+        ),
+      );
     final best = sorted.first;
 
     return AskAnswer(
@@ -170,8 +178,8 @@ class LocalAskService implements AskService {
       rows: <AskRow>[
         AskRow(
           label: 'TP Index',
-          value: TpIndex.of(best.score, weights)?.toString() ??
-              DeviceSpecs.empty,
+          value:
+              TpIndex.of(best.score, weights)?.toString() ?? DeviceSpecs.empty,
         ),
         AskRow(label: 'Price', value: DeviceSpecs.formatPrice(best.msrpUsd)),
         AskRow(

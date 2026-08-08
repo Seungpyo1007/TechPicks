@@ -239,22 +239,23 @@ class _Cell extends StatelessWidget {
     return Semantics(
       container: true,
       // 승패는 색으로만 표시된다. 색을 못 보면 알 수 없으니 읽어준다.
-      label: (won ? K.a11yWinner : K.a11yCompareCell)
-          .tr(args: <String>[device, spec.value]),
+      label: (won ? K.a11yWinner : K.a11yCompareCell).tr(
+        args: <String>[device, spec.value],
+      ),
       excludeSemantics: true,
       child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-      decoration: BoxDecoration(
-        color: won ? t.tintFill : Colors.transparent,
-        borderRadius: BorderRadius.circular(t.rInner - 6),
-      ),
-      child: Text(
-        spec.value,
-        style: type.body.copyWith(
-          fontWeight: won ? t.boldWeight : FontWeight.w400,
-          color: spec.hasValue ? TpTokens.ink : t.dim,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+        decoration: BoxDecoration(
+          color: won ? t.tintFill : Colors.transparent,
+          borderRadius: BorderRadius.circular(t.rInner - 6),
         ),
-      ),
+        child: Text(
+          spec.value,
+          style: type.body.copyWith(
+            fontWeight: won ? t.boldWeight : FontWeight.w400,
+            color: spec.hasValue ? TpTokens.ink : t.dim,
+          ),
+        ),
       ),
     );
   }

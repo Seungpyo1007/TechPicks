@@ -39,32 +39,32 @@ class Processor {
   final int? index;
 
   factory Processor.fromSoc(Soc soc) => Processor(
-        slug: soc.slug,
-        name: soc.name,
-        segment: ProcessorSegment.mobile,
-        sub: _join(<String?>[
-          soc.manufacturer?.name,
-          soc.processNm == null ? null : '${_trimZero(soc.processNm!)}nm',
-          soc.gpuName,
-        ]),
-        index: soc.score?.overall?.round(),
-      );
+    slug: soc.slug,
+    name: soc.name,
+    segment: ProcessorSegment.mobile,
+    sub: _join(<String?>[
+      soc.manufacturer?.name,
+      soc.processNm == null ? null : '${_trimZero(soc.processNm!)}nm',
+      soc.gpuName,
+    ]),
+    index: soc.score?.overall?.round(),
+  );
 
   factory Processor.fromCpu(Cpu cpu) => Processor(
-        slug: cpu.slug,
-        name: cpu.name,
-        segment: ProcessorSegment.laptop,
-        sub: _join(<String?>[
-          cpu.manufacturer?.name,
-          cpu.cores == null
-              ? null
-              : cpu.threads == null
-                  ? '${cpu.cores}C'
-                  : '${cpu.cores}C/${cpu.threads}T',
-          cpu.tdpW == null ? null : '${cpu.tdpW}W',
-        ]),
-        index: cpu.score?.overall?.round(),
-      );
+    slug: cpu.slug,
+    name: cpu.name,
+    segment: ProcessorSegment.laptop,
+    sub: _join(<String?>[
+      cpu.manufacturer?.name,
+      cpu.cores == null
+          ? null
+          : cpu.threads == null
+          ? '${cpu.cores}C'
+          : '${cpu.cores}C/${cpu.threads}T',
+      cpu.tdpW == null ? null : '${cpu.tdpW}W',
+    ]),
+    index: cpu.score?.overall?.round(),
+  );
 
   static String _join(List<String?> parts) =>
       parts.whereType<String>().where((p) => p.isNotEmpty).join(' · ');
@@ -96,7 +96,8 @@ class RankedProcessor {
 /// 폰 랭킹과 같은 규칙이다 — 점수 없는 칩은 목록에서 빼지 않고 아래로 민다.
 abstract final class ProcessorRanking {
   static List<RankedProcessor> of(List<Processor> processors) {
-    final sorted = <Processor>[...processors]..sort((a, b) {
+    final sorted = <Processor>[...processors]
+      ..sort((a, b) {
         if (a.index == null && b.index == null) return a.name.compareTo(b.name);
         if (a.index == null) return 1;
         if (b.index == null) return -1;

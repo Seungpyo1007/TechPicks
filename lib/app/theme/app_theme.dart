@@ -27,21 +27,21 @@ enum TpChrome {
 /// Material 위젯이 기본으로 집어가는 값만 맞춘다.
 abstract final class AppTheme {
   static ThemeData of(TpChrome chrome) {
-    final tokens =
-        chrome == TpChrome.ios ? TpTokens.ios() : TpTokens.android();
+    final tokens = chrome == TpChrome.ios ? TpTokens.ios() : TpTokens.android();
     final type = TpTypography.of(tokens);
 
-    final scheme = ColorScheme.fromSeed(
-      seedColor: TpTokens.blue,
-      brightness: Brightness.light,
-    ).copyWith(
-      primary: TpTokens.blue,
-      onPrimary: Colors.white,
-      surface: chrome == TpChrome.ios
-          ? const Color(0xFFEEF3FA)
-          : const Color(0xFFF6F8FC),
-      onSurface: TpTokens.ink,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: TpTokens.blue,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: TpTokens.blue,
+          onPrimary: Colors.white,
+          surface: chrome == TpChrome.ios
+              ? const Color(0xFFEEF3FA)
+              : const Color(0xFFF6F8FC),
+          onSurface: TpTokens.ink,
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -49,8 +49,9 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: Colors.transparent,
       fontFamily: tokens.fontFamily,
       fontFamilyFallback: tokens.fontFamilyFallback,
-      splashFactory:
-          chrome == TpChrome.ios ? NoSplash.splashFactory : InkRipple.splashFactory,
+      splashFactory: chrome == TpChrome.ios
+          ? NoSplash.splashFactory
+          : InkRipple.splashFactory,
       // 명세 Interactions: iOS 는 오른쪽에서 밀려 들어오고(가장자리 스와이프
       // 포함), Android 는 shared axis X.
       //

@@ -131,119 +131,119 @@ class TpTokens extends ThemeExtension<TpTokens> {
 
   /// iOS 26 Liquid Glass.
   factory TpTokens.ios() => const TpTokens(
-        isGlass: true,
-        // 시스템 폰트를 그대로 쓴다. null 이면 Flutter 가 SF Pro 로 붙는다.
-        fontFamily: null,
-        fontFamilyFallback: <String>[],
-        boldWeight: FontWeight.w600,
-        pageBackground: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              Color(0xFFEEF3FA),
-              Color(0xFFE4ECF6),
-              Color(0xFFEAF1F9),
-              Color(0xFFF1F5FB),
-            ],
-            stops: <double>[0, .42, .78, 1],
-          ),
-        ),
-        card: Color(0x94FFFFFF), // rgba(255,255,255,.58)
-        cardStrong: Color(0xB8FFFFFF), // rgba(255,255,255,.72)
-        blurSigma: 26,
-        saturation: 1.8,
-        cardShadow: <BoxShadow>[
-          BoxShadow(
-            color: Color(0x0F122644), // rgba(18,38,68,.06)
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
-          BoxShadow(
-            color: Color(0x14122644), // rgba(18,38,68,.08)
-            blurRadius: 28,
-            offset: Offset(0, 10),
-          ),
+    isGlass: true,
+    // 시스템 폰트를 그대로 쓴다. null 이면 Flutter 가 SF Pro 로 붙는다.
+    fontFamily: null,
+    fontFamilyFallback: <String>[],
+    boldWeight: FontWeight.w600,
+    pageBackground: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Color(0xFFEEF3FA),
+          Color(0xFFE4ECF6),
+          Color(0xFFEAF1F9),
+          Color(0xFFF1F5FB),
         ],
-        buttonShadow: <BoxShadow>[
-          BoxShadow(
-            color: Color(0x520C78D8), // rgba(12,120,216,.32)
-            blurRadius: 18,
-            offset: Offset(0, 6),
-          ),
-        ],
-        hasSpecular: true,
-        rCard: 28,
-        rInner: 22,
-        rIcon: 26,
-        hairline: Color(0x14142846), // rgba(20,40,70,.08)
-        track: Color(0x17142846), // rgba(20,40,70,.09)
-        barFill: LinearGradient(colors: <Color>[blue, blueLight]),
-        tintFill: Color(0x1F0C78D8), // rgba(12,120,216,.12)
-        chipBg: Color(0xB3FFFFFF), // rgba(255,255,255,.7)
-        inputBg: Color(0xB8FFFFFF), // rgba(255,255,255,.72)
-        inputShadow: <BoxShadow>[
-          BoxShadow(
-            color: Color(0x24122644), // rgba(18,38,68,.14)
-            blurRadius: 26,
-            offset: Offset(0, 8),
-          ),
-        ],
-        slotBg: Color(0x73FFFFFF), // rgba(255,255,255,.45)
-        heroFill: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: <Color>[blue, blueDark],
-          ),
-        ),
-        heroInk: Color(0xFFFFFFFF),
-        heroChip: Color(0x38FFFFFF), // rgba(255,255,255,.22)
-        dim: dimInk, // 명세는 .55 인데 대비가 모자란다 — dimInk 주석 참고
-      );
+        stops: <double>[0, .42, .78, 1],
+      ),
+    ),
+    card: Color(0x94FFFFFF), // rgba(255,255,255,.58)
+    cardStrong: Color(0xB8FFFFFF), // rgba(255,255,255,.72)
+    blurSigma: 26,
+    saturation: 1.8,
+    cardShadow: <BoxShadow>[
+      BoxShadow(
+        color: Color(0x0F122644), // rgba(18,38,68,.06)
+        blurRadius: 2,
+        offset: Offset(0, 1),
+      ),
+      BoxShadow(
+        color: Color(0x14122644), // rgba(18,38,68,.08)
+        blurRadius: 28,
+        offset: Offset(0, 10),
+      ),
+    ],
+    buttonShadow: <BoxShadow>[
+      BoxShadow(
+        color: Color(0x520C78D8), // rgba(12,120,216,.32)
+        blurRadius: 18,
+        offset: Offset(0, 6),
+      ),
+    ],
+    hasSpecular: true,
+    rCard: 28,
+    rInner: 22,
+    rIcon: 26,
+    hairline: Color(0x14142846), // rgba(20,40,70,.08)
+    track: Color(0x17142846), // rgba(20,40,70,.09)
+    barFill: LinearGradient(colors: <Color>[blue, blueLight]),
+    tintFill: Color(0x1F0C78D8), // rgba(12,120,216,.12)
+    chipBg: Color(0xB3FFFFFF), // rgba(255,255,255,.7)
+    inputBg: Color(0xB8FFFFFF), // rgba(255,255,255,.72)
+    inputShadow: <BoxShadow>[
+      BoxShadow(
+        color: Color(0x24122644), // rgba(18,38,68,.14)
+        blurRadius: 26,
+        offset: Offset(0, 8),
+      ),
+    ],
+    slotBg: Color(0x73FFFFFF), // rgba(255,255,255,.45)
+    heroFill: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[blue, blueDark],
+      ),
+    ),
+    heroInk: Color(0xFFFFFFFF),
+    heroChip: Color(0x38FFFFFF), // rgba(255,255,255,.22)
+    dim: dimInk, // 명세는 .55 인데 대비가 모자란다 — dimInk 주석 참고
+  );
 
   /// Android Material 3. 반투명이 아니라 톤 단계로 층을 만든다.
   factory TpTokens.android() => const TpTokens(
-        isGlass: false,
-        fontFamily: 'Roboto Flex',
-        fontFamilyFallback: <String>['Roboto'],
-        boldWeight: FontWeight.w500,
-        pageBackground: BoxDecoration(color: Color(0xFFF6F8FC)),
-        card: Color(0xFFEDF1F7),
-        cardStrong: Color(0xFFE6EDF6),
-        blurSigma: 0,
-        saturation: 1,
-        cardShadow: <BoxShadow>[],
-        buttonShadow: <BoxShadow>[
-          BoxShadow(
-            color: Color(0x2E000000), // rgba(0,0,0,.18)
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
-        ],
-        hasSpecular: false,
-        rCard: 20,
-        rInner: 16,
-        rIcon: 24,
-        hairline: Color(0x12142846), // rgba(20,40,70,.07)
-        track: Color(0xFFD6E2F2),
-        barFill: LinearGradient(colors: <Color>[blue, blue]),
-        tintFill: Color(0xFFD6E5F9),
-        chipBg: Color(0xFFE3EBF6),
-        inputBg: Color(0xFFE6EDF6),
-        inputShadow: <BoxShadow>[
-          BoxShadow(
-            color: Color(0x1A000000), // rgba(0,0,0,.10)
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
-        slotBg: Color(0xFFE1E8F2),
-        heroFill: BoxDecoration(color: Color(0xFFD6E5F9)),
-        heroInk: Color(0xFF0A2F52),
-        heroChip: Color(0x290C78D8), // rgba(12,120,216,.16)
-        dim: dimInk,
-      );
+    isGlass: false,
+    fontFamily: 'Roboto Flex',
+    fontFamilyFallback: <String>['Roboto'],
+    boldWeight: FontWeight.w500,
+    pageBackground: BoxDecoration(color: Color(0xFFF6F8FC)),
+    card: Color(0xFFEDF1F7),
+    cardStrong: Color(0xFFE6EDF6),
+    blurSigma: 0,
+    saturation: 1,
+    cardShadow: <BoxShadow>[],
+    buttonShadow: <BoxShadow>[
+      BoxShadow(
+        color: Color(0x2E000000), // rgba(0,0,0,.18)
+        blurRadius: 2,
+        offset: Offset(0, 1),
+      ),
+    ],
+    hasSpecular: false,
+    rCard: 20,
+    rInner: 16,
+    rIcon: 24,
+    hairline: Color(0x12142846), // rgba(20,40,70,.07)
+    track: Color(0xFFD6E2F2),
+    barFill: LinearGradient(colors: <Color>[blue, blue]),
+    tintFill: Color(0xFFD6E5F9),
+    chipBg: Color(0xFFE3EBF6),
+    inputBg: Color(0xFFE6EDF6),
+    inputShadow: <BoxShadow>[
+      BoxShadow(
+        color: Color(0x1A000000), // rgba(0,0,0,.10)
+        blurRadius: 6,
+        offset: Offset(0, 2),
+      ),
+    ],
+    slotBg: Color(0xFFE1E8F2),
+    heroFill: BoxDecoration(color: Color(0xFFD6E5F9)),
+    heroInk: Color(0xFF0A2F52),
+    heroChip: Color(0x290C78D8), // rgba(12,120,216,.16)
+    dim: dimInk,
+  );
 
   /// 흐린 보조 텍스트.
   ///
@@ -287,8 +287,8 @@ class TpTokens extends ThemeExtension<TpTokens> {
   @override
   TpTokens copyWith({bool? isGlass}) =>
       isGlass == null || isGlass == this.isGlass
-          ? this
-          : (isGlass ? TpTokens.ios() : TpTokens.android());
+      ? this
+      : (isGlass ? TpTokens.ios() : TpTokens.android());
 
   /// 두 크롬 사이를 애니메이션할 일이 없다. 중간값 대신 한쪽을 고른다.
   @override

@@ -37,10 +37,7 @@ final techApiRepositoryProvider = Provider<TechApiRepository>(
 final catalogProvider = FutureProvider<Catalog>(
   (ref) async {
     final result = await ref.watch(catalogRepositoryProvider).load();
-    return result.fold(
-      (c) => c,
-      (f) => throw f,
-    );
+    return result.fold((c) => c, (f) => throw f);
   },
   // 앱에 같이 실린 파일이라 재시도해도 결과가 달라지지 않는다. Riverpod 3 의
   // 기본 재시도를 켜두면 실패한 뒤에도 상태가 계속 `AsyncLoading` 이라
@@ -86,18 +83,19 @@ class WeightsNotifier extends Notifier<TpWeights> {
 
   /// 축 하나만 바꾼다. 슬라이더가 이걸 부른다.
   void setAxis(TpAxisKind kind, double value) => set(switch (kind) {
-        TpAxisKind.performance => state.copyWith(performance: value),
-        TpAxisKind.camera => state.copyWith(camera: value),
-        TpAxisKind.display => state.copyWith(display: value),
-        TpAxisKind.battery => state.copyWith(battery: value),
-        TpAxisKind.value => state.copyWith(value: value),
-      });
+    TpAxisKind.performance => state.copyWith(performance: value),
+    TpAxisKind.camera => state.copyWith(camera: value),
+    TpAxisKind.display => state.copyWith(display: value),
+    TpAxisKind.battery => state.copyWith(battery: value),
+    TpAxisKind.value => state.copyWith(value: value),
+  });
 
   void reset() => set(TpWeights.defaults);
 }
 
-final weightsProvider =
-    NotifierProvider<WeightsNotifier, TpWeights>(WeightsNotifier.new);
+final weightsProvider = NotifierProvider<WeightsNotifier, TpWeights>(
+  WeightsNotifier.new,
+);
 
 /// 랭킹 화면에서 고른 정렬 축.
 class RankAxisNotifier extends Notifier<RankAxis> {
@@ -107,8 +105,9 @@ class RankAxisNotifier extends Notifier<RankAxis> {
   void set(RankAxis axis) => state = axis;
 }
 
-final rankAxisProvider =
-    NotifierProvider<RankAxisNotifier, RankAxis>(RankAxisNotifier.new);
+final rankAxisProvider = NotifierProvider<RankAxisNotifier, RankAxis>(
+  RankAxisNotifier.new,
+);
 
 /// 현재 축과 가중치로 세운 순위.
 final rankedPhonesProvider = Provider<List<RankedDevice>>((ref) {
@@ -131,8 +130,8 @@ class RankCategoryNotifier extends Notifier<RankCategory> {
 
 final rankCategoryProvider =
     NotifierProvider<RankCategoryNotifier, RankCategory>(
-  RankCategoryNotifier.new,
-);
+      RankCategoryNotifier.new,
+    );
 
 /// Processors 화면의 세그먼트.
 class ProcessorSegmentNotifier extends Notifier<ProcessorSegment> {
@@ -144,22 +143,20 @@ class ProcessorSegmentNotifier extends Notifier<ProcessorSegment> {
 
 final processorSegmentProvider =
     NotifierProvider<ProcessorSegmentNotifier, ProcessorSegment>(
-  ProcessorSegmentNotifier.new,
-);
+      ProcessorSegmentNotifier.new,
+    );
 
 /// 현재 세그먼트의 프로세서 순위.
 final rankedProcessorsProvider = Provider<List<RankedProcessor>>((ref) {
   final catalog = ref.watch(catalogProvider).value;
   if (catalog == null) return const <RankedProcessor>[];
   final segment = ref.watch(processorSegmentProvider);
-  return ProcessorRanking.of(
-    switch (segment) {
-      ProcessorSegment.mobile =>
-        catalog.socs.map(Processor.fromSoc).toList(growable: false),
-      ProcessorSegment.laptop =>
-        catalog.cpus.map(Processor.fromCpu).toList(growable: false),
-    },
-  );
+  return ProcessorRanking.of(switch (segment) {
+    ProcessorSegment.mobile =>
+      catalog.socs.map(Processor.fromSoc).toList(growable: false),
+    ProcessorSegment.laptop =>
+      catalog.cpus.map(Processor.fromCpu).toList(growable: false),
+  });
 });
 
 /// 비교 중인 기기 목록. 홈 화면의 주인공이다.
@@ -202,8 +199,9 @@ class ShortlistNotifier extends Notifier<List<String>> {
   }
 }
 
-final shortlistProvider =
-    NotifierProvider<ShortlistNotifier, List<String>>(ShortlistNotifier.new);
+final shortlistProvider = NotifierProvider<ShortlistNotifier, List<String>>(
+  ShortlistNotifier.new,
+);
 
 /// 기기 하나. 카탈로그에 있으면 그걸 쓰고, 없으면 TechAPI 에서 받는다.
 ///
@@ -237,8 +235,7 @@ class CompareSlots {
       ? CompareSlots(a: slug, b: b)
       : CompareSlots(a: a, b: slug);
 
-  String? operator [](CompareSide side) =>
-      side == CompareSide.a ? a : b;
+  String? operator [](CompareSide side) => side == CompareSide.a ? a : b;
 
   bool get isComplete => a != null && b != null;
 }
@@ -257,8 +254,9 @@ class CompareNotifier extends Notifier<CompareSlots> {
   void pick(CompareSide side, String slug) => state = state.write(side, slug);
 }
 
-final compareProvider =
-    NotifierProvider<CompareNotifier, CompareSlots>(CompareNotifier.new);
+final compareProvider = NotifierProvider<CompareNotifier, CompareSlots>(
+  CompareNotifier.new,
+);
 
 /// 어느 슬롯을 고르는 중인지. picker 가 읽는다.
 class PickSlotNotifier extends Notifier<CompareSide> {
@@ -268,8 +266,9 @@ class PickSlotNotifier extends Notifier<CompareSide> {
   void set(CompareSide side) => state = side;
 }
 
-final pickSlotProvider =
-    NotifierProvider<PickSlotNotifier, CompareSide>(PickSlotNotifier.new);
+final pickSlotProvider = NotifierProvider<PickSlotNotifier, CompareSide>(
+  PickSlotNotifier.new,
+);
 
 /// 현재 두 슬롯의 비교 결과.
 final comparisonProvider = Provider<List<SpecPair>>((ref) {
@@ -328,8 +327,8 @@ class RankSnapshotNotifier extends Notifier<List<String>> {
 
 final rankSnapshotProvider =
     NotifierProvider<RankSnapshotNotifier, List<String>>(
-  RankSnapshotNotifier.new,
-);
+      RankSnapshotNotifier.new,
+    );
 
 /// 기본 가중치 기준 TP Index 순위.
 ///
@@ -342,10 +341,12 @@ final indexRankingProvider = Provider<List<RankedDevice>>((ref) {
 });
 
 /// 다음 실행에 남길 순위. 스냅샷과 Movers 가 같은 목록을 봐야 한다.
-final rankSnapshotSlugsProvider = Provider<List<String>>((ref) =>
-    ref.watch(indexRankingProvider).map((r) => r.device.slug).toList(
-          growable: false,
-        ));
+final rankSnapshotSlugsProvider = Provider<List<String>>(
+  (ref) => ref
+      .watch(indexRankingProvider)
+      .map((r) => r.device.slug)
+      .toList(growable: false),
+);
 
 /// 이번 주 변동. 저장된 순위가 없으면 빈 목록이라 섹션이 통째로 빠진다.
 final moversProvider = Provider<List<Mover>>((ref) {
@@ -368,7 +369,11 @@ final verdictProvider = Provider<Smartphone?>((ref) {
   if (picked.isEmpty) return null;
 
   final weights = ref.watch(weightsProvider);
-  final ranked = Ranking.of(picked.toList(growable: false), RankAxis.tpIndex, weights);
+  final ranked = Ranking.of(
+    picked.toList(growable: false),
+    RankAxis.tpIndex,
+    weights,
+  );
   return ranked.first.device;
 });
 
@@ -417,7 +422,9 @@ class AskNotifier extends Notifier<List<AskMessage>> {
     AskAnswer? answer;
     try {
       final catalog = await ref.read(catalogProvider.future);
-      answer = await ref.read(askServiceProvider).ask(text, catalog.smartphones);
+      answer = await ref
+          .read(askServiceProvider)
+          .ask(text, catalog.smartphones);
     } catch (_) {
       answer = null;
     }
@@ -440,8 +447,9 @@ class AskNotifier extends Notifier<List<AskMessage>> {
   Future<void> askAbout(String a, String b) => send('$a or $b?');
 }
 
-final askProvider =
-    NotifierProvider<AskNotifier, List<AskMessage>>(AskNotifier.new);
+final askProvider = NotifierProvider<AskNotifier, List<AskMessage>>(
+  AskNotifier.new,
+);
 
 /// 인증. 기본은 Firebase 구현이다.
 final authServiceProvider = Provider<AuthService>(
@@ -453,7 +461,11 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
   @override
   TpUser? build() => ref.watch(authServiceProvider).current;
 
-  Future<bool> signIn(AuthMethod method, {String? email, String? password}) async {
+  Future<bool> signIn(
+    AuthMethod method, {
+    String? email,
+    String? password,
+  }) async {
     final user = await ref
         .read(authServiceProvider)
         .signIn(method, email: email, password: password);
@@ -476,8 +488,9 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
   }
 }
 
-final currentUserProvider =
-    NotifierProvider<CurrentUserNotifier, TpUser?>(CurrentUserNotifier.new);
+final currentUserProvider = NotifierProvider<CurrentUserNotifier, TpUser?>(
+  CurrentUserNotifier.new,
+);
 
 /// 온보딩을 봤는지. v1 의 is_tutorial_completed 키를 그대로 쓴다.
 class OnboardingNotifier extends Notifier<bool> {
@@ -502,8 +515,9 @@ class OnboardingNotifier extends Notifier<bool> {
   }
 }
 
-final onboardingDoneProvider =
-    NotifierProvider<OnboardingNotifier, bool>(OnboardingNotifier.new);
+final onboardingDoneProvider = NotifierProvider<OnboardingNotifier, bool>(
+  OnboardingNotifier.new,
+);
 
 /// 언어 전환. 앱은 화면에서 context 로 만들어 넣고, 테스트는 가짜를 끼운다.
 final localeControllerProvider = Provider<LocaleController?>((ref) => null);
@@ -531,8 +545,9 @@ class NotificationsNotifier extends Notifier<bool> {
   }
 }
 
-final notificationsProvider =
-    NotifierProvider<NotificationsNotifier, bool>(NotificationsNotifier.new);
+final notificationsProvider = NotifierProvider<NotificationsNotifier, bool>(
+  NotificationsNotifier.new,
+);
 
 /// 내 기기.
 final deviceInfoServiceProvider = Provider<DeviceInfoService>(

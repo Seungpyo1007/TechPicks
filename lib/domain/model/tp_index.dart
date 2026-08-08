@@ -11,7 +11,10 @@ import 'tp_weights.dart';
 /// 떨어져서, 실제 성능이 아니라 큐레이션 진척도를 보여주게 된다.
 abstract final class TpIndex {
   /// [score] 를 [weights] 로 접은 0–100 값. 쓸 축이 하나도 없으면 null.
-  static int? of(SmartphoneScore? score, [TpWeights weights = TpWeights.defaults]) {
+  static int? of(
+    SmartphoneScore? score, [
+    TpWeights weights = TpWeights.defaults,
+  ]) {
     if (score == null) return null;
 
     var weighted = 0.0;
@@ -37,12 +40,12 @@ abstract final class TpIndex {
   ///
   /// 순서는 명세의 `perf / camera / display / battery / value` 를 따른다.
   static List<TpAxis> axes(SmartphoneScore? score) => <TpAxis>[
-        TpAxis(TpAxisKind.performance, score?.performance),
-        TpAxis(TpAxisKind.camera, score?.camera),
-        TpAxis(TpAxisKind.display, score?.display),
-        TpAxis(TpAxisKind.battery, score?.battery),
-        TpAxis(TpAxisKind.value, score?.value),
-      ];
+    TpAxis(TpAxisKind.performance, score?.performance),
+    TpAxis(TpAxisKind.camera, score?.camera),
+    TpAxis(TpAxisKind.display, score?.display),
+    TpAxis(TpAxisKind.battery, score?.battery),
+    TpAxis(TpAxisKind.value, score?.value),
+  ];
 }
 
 enum TpAxisKind {
@@ -58,12 +61,12 @@ enum TpAxisKind {
   final String key;
 
   double weightIn(TpWeights w) => switch (this) {
-        TpAxisKind.performance => w.performance,
-        TpAxisKind.camera => w.camera,
-        TpAxisKind.display => w.display,
-        TpAxisKind.battery => w.battery,
-        TpAxisKind.value => w.value,
-      };
+    TpAxisKind.performance => w.performance,
+    TpAxisKind.camera => w.camera,
+    TpAxisKind.display => w.display,
+    TpAxisKind.battery => w.battery,
+    TpAxisKind.value => w.value,
+  };
 }
 
 /// 축 하나. [score] 가 null 이면 그 축은 데이터가 없다.

@@ -56,18 +56,19 @@ abstract final class Ranking {
     TpWeights weights = TpWeights.defaults,
   ]) {
     double? valueOf(Smartphone d) => switch (axis) {
-          RankAxis.tpIndex => TpIndex.of(d.score, weights)?.toDouble(),
-          RankAxis.battery => d.score?.battery,
-          RankAxis.camera => d.score?.camera,
-          RankAxis.value => d.score?.value,
-          RankAxis.price => d.msrpUsd?.toDouble(),
-        };
+      RankAxis.tpIndex => TpIndex.of(d.score, weights)?.toDouble(),
+      RankAxis.battery => d.score?.battery,
+      RankAxis.camera => d.score?.camera,
+      RankAxis.value => d.score?.value,
+      RankAxis.price => d.msrpUsd?.toDouble(),
+    };
 
     final entries = devices
         .map((d) => (device: d, value: valueOf(d)))
         .toList(growable: false);
 
-    final ranked = <({Smartphone device, double? value})>[...entries]..sort((a, b) {
+    final ranked = <({Smartphone device, double? value})>[...entries]
+      ..sort((a, b) {
         // 값 없는 쪽이 항상 뒤로.
         if (a.value == null && b.value == null) {
           return a.device.name.compareTo(b.device.name);

@@ -74,10 +74,7 @@ class TpSurface extends StatelessWidget {
       surface = BackdropFilter(
         filter: ui.ImageFilter.compose(
           outer: ui.ColorFilter.matrix(_saturate(t.saturation)),
-          inner: ui.ImageFilter.blur(
-            sigmaX: t.blurSigma,
-            sigmaY: t.blurSigma,
-          ),
+          inner: ui.ImageFilter.blur(sigmaX: t.blurSigma, sigmaY: t.blurSigma),
         ),
         child: surface,
       );
