@@ -17,6 +17,7 @@ import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/scan/scan_screen.dart';
+import 'package:techpicks/feature/viewer/viewer_screen.dart';
 
 class _NoAuth implements AuthService {
   @override
@@ -61,6 +62,7 @@ void main() {
   group('이번 주 변동', _moversRoundTrip);
   group('비교에서 상담으로', _askFromCompare);
   group('비교 열 고르기', _pickerSlots);
+  group('밀려 올라오는 화면', _pushedScreens);
 
   setUp(initLocalization);
 
@@ -336,5 +338,73 @@ void _pickerSlots() {
 
     expect(container.read(compareProvider).a, 'galaxy-s25-ultra');
     expect(container.read(compareProvider).b, 'oneplus-13');
+  });
+}
+
+/// 상세에서 밀려 올라오는 화면들, 그리고 스캔 결과에서 상세로.
+void _pushedScreens() {
+  testWidgets('상세의 View in 3D 가 뷰어를 연다', (tester) async {
+    await initLocalization();
+    await pumpScreen(
+      tester,
+      const TabHost(initialTab: TpTab.rank),
+      size: const Size(1200, 3200),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+
+    await tester.tap(find.text('Galaxy S25 Ultra').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(K.view3d.tr()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(ViewerScreen), findsOneWidget);
+    // 뷰어 머리에는 기기 이름이 붙는다.
+    expect(find.text('Galaxy S25 Ultra'), findsWidgets);
+  });
+
+  testWidgets('스캔 결과에서 상세로 넘어간다', (tester) async {
+    await initLocalization();
+    await pumpScreen(
+      tester,
+      const TabHost(initialTab: TpTab.rank),
+      size: const Size(1200, 3200),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+
+    await tester.tap(find.text(K.scanCta.tr()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(ScanScreen), findsOneWidget);
+  });
+
+  testWidgets('뒤로 가면 원래 탭으로 돌아온다', (tester) async {
+    await initLocalization();
+    await pumpScreen(
+      tester,
+      const TabHost(initialTab: TpTab.rank),
+      size: const Size(1200, 3200),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+
+    await tester.tap(find.text('Galaxy S25 Ultra').first);
+    await tester.pumpAndSettle();
+    expect(find.byType(DetailScreen), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.chevron_left).first);
+    await tester.pumpAndSettle();
+
+    // 명세의 back stack 은 한 단계다 — 랭킹으로 돌아온다.
+    expect(find.byType(DetailScreen), findsNothing);
+    expect(find.text(K.rankNote.tr()), findsOneWidget);
   });
 }
