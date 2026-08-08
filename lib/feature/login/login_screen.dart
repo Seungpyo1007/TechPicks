@@ -17,12 +17,7 @@ import '../../data/service/auth_service.dart';
 ///
 /// 카피는 아직 하드코딩이다.
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({
-    super.key,
-    this.onSignedIn,
-    this.onSignUp,
-    this.onEmail,
-  });
+  const LoginScreen({super.key, this.onSignedIn, this.onSignUp, this.onEmail});
 
   final VoidCallback? onSignedIn;
   final VoidCallback? onSignUp;
@@ -33,24 +28,24 @@ class LoginScreen extends ConsumerStatefulWidget {
   /// 명세의 버튼 순서와 라벨.
   static const List<({AuthMethod method, String key, String? asset})> buttons =
       [
-    (
-      method: AuthMethod.google,
-      key: K.loginGoogle,
-      asset: 'assets/logo/google_logo.png',
-    ),
-    (
-      method: AuthMethod.apple,
-      key: K.loginApple,
-      asset: 'assets/logo/apple_logo.png',
-    ),
-    (
-      method: AuthMethod.facebook,
-      key: K.loginFacebook,
-      asset: 'assets/logo/facebook_logo.png',
-    ),
-    (method: AuthMethod.email, key: K.loginEmail, asset: null),
-    (method: AuthMethod.anonymous, key: K.loginAnon, asset: null),
-  ];
+        (
+          method: AuthMethod.google,
+          key: K.loginGoogle,
+          asset: 'assets/logo/google_logo.png',
+        ),
+        (
+          method: AuthMethod.apple,
+          key: K.loginApple,
+          asset: 'assets/logo/apple_logo.png',
+        ),
+        (
+          method: AuthMethod.facebook,
+          key: K.loginFacebook,
+          asset: 'assets/logo/facebook_logo.png',
+        ),
+        (method: AuthMethod.email, key: K.loginEmail, asset: null),
+        (method: AuthMethod.anonymous, key: K.loginAnon, asset: null),
+      ];
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -74,14 +69,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   static String _messageFor(AuthMethod method) => switch (method) {
-        AuthMethod.google =>
-          K.notConnected.tr(args: const <String>['Google']),
-        AuthMethod.apple => K.notConnected.tr(args: const <String>['Apple']),
-        AuthMethod.facebook =>
-          K.notConnected.tr(args: const <String>['Facebook']),
-        AuthMethod.email => K.emailNeeded.tr(),
-        AuthMethod.anonymous => K.anonFailed.tr(),
-      };
+    AuthMethod.google => K.notConnected.tr(args: const <String>['Google']),
+    AuthMethod.apple => K.notConnected.tr(args: const <String>['Apple']),
+    AuthMethod.facebook => K.notConnected.tr(args: const <String>['Facebook']),
+    AuthMethod.email => K.emailNeeded.tr(),
+    AuthMethod.anonymous => K.anonFailed.tr(),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -95,10 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         children: <Widget>[
           Text(K.welcome.tr(), style: type.largeTitle),
           const SizedBox(height: 10),
-          Text(
-            K.welcomeSub.tr(),
-            style: type.body.copyWith(height: 1.5),
-          ),
+          Text(K.welcomeSub.tr(), style: type.body.copyWith(height: 1.5)),
           const SizedBox(height: 28),
 
           for (final b in LoginScreen.buttons) ...<Widget>[
@@ -163,46 +153,51 @@ class _AuthButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
-    final radius =
-        BorderRadius.circular(t.isGlass ? TpTokens.rControl : t.rCard);
+    final radius = BorderRadius.circular(
+      t.isGlass ? TpTokens.rControl : t.rCard,
+    );
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        decoration: BoxDecoration(
-          color: plain
-              ? Colors.transparent
-              : (filled ? TpTokens.blue : t.chipBg),
-          borderRadius: radius,
-          boxShadow: filled ? t.buttonShadow : null,
-        ),
-        child: Row(
-          mainAxisAlignment:
-              plain ? MainAxisAlignment.center : MainAxisAlignment.start,
-          children: <Widget>[
-            if (asset != null) ...<Widget>[
-              Image.asset(asset!, width: 20, height: 20),
-              const SizedBox(width: 14),
-            ],
-            // 라벨이 남은 폭을 넘으면 Row 가 넘친다. 명세가 버튼 높이를 52 로
-            // 고정해서 두 줄로 늘릴 수 없다.
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: plain ? TextAlign.center : TextAlign.start,
-                style: type.body.copyWith(
-                  fontWeight: t.boldWeight,
-                  color: filled
-                      ? Colors.white
-                      : (plain ? TpTokens.blueText : TpTokens.ink),
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          decoration: BoxDecoration(
+            color: plain
+                ? Colors.transparent
+                : (filled ? TpTokens.blue : t.chipBg),
+            borderRadius: radius,
+            boxShadow: filled ? t.buttonShadow : null,
+          ),
+          child: Row(
+            mainAxisAlignment: plain
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
+            children: <Widget>[
+              if (asset != null) ...<Widget>[
+                Image.asset(asset!, width: 20, height: 20),
+                const SizedBox(width: 14),
+              ],
+              // 라벨이 남은 폭을 넘으면 Row 가 넘친다. 명세가 버튼 높이를 52 로
+              // 고정해서 두 줄로 늘릴 수 없다.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: plain ? TextAlign.center : TextAlign.start,
+                  style: type.body.copyWith(
+                    fontWeight: t.boldWeight,
+                    color: filled
+                        ? Colors.white
+                        : (plain ? TpTokens.blueText : TpTokens.ink),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

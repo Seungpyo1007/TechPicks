@@ -51,9 +51,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
               child: Column(
                 children: <Widget>[
                   Expanded(
-                    child: Center(
-                      child: _Stage(highlighted: _highlighted),
-                    ),
+                    child: Center(child: _Stage(highlighted: _highlighted)),
                   ),
                   SizedBox(
                     height: 38,
@@ -64,26 +62,31 @@ class _ViewerScreenState extends State<ViewerScreen> {
                       separatorBuilder: (_, __) => const SizedBox(width: 8),
                       itemBuilder: (context, i) {
                         final on = _highlighted == i;
-                        return GestureDetector(
-                          onTap: () =>
-                              setState(() => _highlighted = on ? null : i),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 9,
-                            ),
-                            decoration: BoxDecoration(
-                              color: on
-                                  ? TpTokens.blue
-                                  : Colors.white.withValues(alpha: 0.12),
-                              borderRadius:
-                                  BorderRadius.circular(TpTokens.rControl),
-                            ),
-                            child: Text(
-                              ViewerScreen.partKeys[i].tr(),
-                              style: type.body.copyWith(
-                                fontSize: 13.5,
-                                color: Colors.white,
+                        return Semantics(
+                          button: true,
+                          selected: on,
+                          child: GestureDetector(
+                            onTap: () =>
+                                setState(() => _highlighted = on ? null : i),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 9,
+                              ),
+                              decoration: BoxDecoration(
+                                color: on
+                                    ? TpTokens.blue
+                                    : Colors.white.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(
+                                  TpTokens.rControl,
+                                ),
+                              ),
+                              child: Text(
+                                ViewerScreen.partKeys[i].tr(),
+                                style: type.body.copyWith(
+                                  fontSize: 13.5,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
@@ -113,8 +116,11 @@ class _ViewerScreenState extends State<ViewerScreen> {
                   TpTapTarget(
                     onTap: widget.onBack,
                     label: K.back.tr(),
-                    child: const Icon(Icons.chevron_left,
-                        color: Colors.white, size: 26),
+                    child: const Icon(
+                      Icons.chevron_left,
+                      color: Colors.white,
+                      size: 26,
+                    ),
                   ),
                   const SizedBox(width: 2),
                   Expanded(

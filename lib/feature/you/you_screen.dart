@@ -68,11 +68,7 @@ class YouScreen extends ConsumerWidget {
             const SizedBox(height: 12),
           ],
 
-          _ProfileHeader(
-            name: name,
-            email: email,
-            onEdit: onEditProfile,
-          ),
+          _ProfileHeader(name: name, email: email, onEdit: onEditProfile),
           const SizedBox(height: 22),
 
           _YourDevice(onTap: onDeviceTap),
@@ -95,10 +91,7 @@ class YouScreen extends ConsumerWidget {
                 Row(
                   children: <Widget>[
                     Expanded(
-                      child: Text(
-                        K.prioritiesNote.tr(),
-                        style: type.caption,
-                      ),
+                      child: Text(K.prioritiesNote.tr(), style: type.caption),
                     ),
                     const SizedBox(width: 10),
                     TpTapTarget(
@@ -150,11 +143,7 @@ class YouScreen extends ConsumerWidget {
                   label: K.changePassword.tr(),
                   onTap: onChangePassword,
                 ),
-                _SettingRow(
-                  label: K.logout.tr(),
-                  onTap: onLogout,
-                  last: true,
-                ),
+                _SettingRow(label: K.logout.tr(), onTap: onLogout, last: true),
               ],
             ),
           ),
@@ -184,8 +173,9 @@ class _YourDevice extends ConsumerWidget {
     final match = ref.watch(thisDeviceMatchProvider);
     final weights = ref.watch(weightsProvider);
 
-    final index =
-        match == null ? null : TpIndex.of(match.device.score, weights);
+    final index = match == null
+        ? null
+        : TpIndex.of(match.device.score, weights);
 
     return TpSurface(
       onTap: match == null || onTap == null
@@ -251,24 +241,35 @@ Future<void> _pickLanguage(
           Text(K.language.tr(), style: type.cardTitle),
           const SizedBox(height: 8),
           for (final option in TpLocale.values)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () async {
-                Navigator.of(sheetContext).pop();
-                await controller.set(option);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(child: Text(option.label, style: type.body)),
-                    if (option == controller.current)
-                      const Icon(Icons.check, size: 18, color: TpTokens.blueText)
-                    else
-                      SizedBox(width: 18, height: 18, child: ColoredBox(
-                        color: t.track.withValues(alpha: 0),
-                      )),
-                  ],
+            Semantics(
+              button: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  await controller.set(option);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(child: Text(option.label, style: type.body)),
+                      if (option == controller.current)
+                        const Icon(
+                          Icons.check,
+                          size: 18,
+                          color: TpTokens.blueText,
+                        )
+                      else
+                        SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: ColoredBox(
+                            color: t.track.withValues(alpha: 0),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -296,7 +297,8 @@ class _ProfileHeader extends StatelessWidget {
       return (parts.first[0] + parts[1][0]).toUpperCase();
     }
     if (parts.length == 1) {
-      return parts.first.substring(0, parts.first.length >= 2 ? 2 : 1)
+      return parts.first
+          .substring(0, parts.first.length >= 2 ? 2 : 1)
           .toUpperCase();
     }
     final e = (email ?? '').trim();
@@ -319,10 +321,7 @@ class _ProfileHeader extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             initials(name, email),
-            style: type.cardTitle.copyWith(
-              fontSize: 22,
-              color: Colors.white,
-            ),
+            style: type.cardTitle.copyWith(fontSize: 22, color: Colors.white),
           ),
         ),
         const SizedBox(width: 14),
@@ -408,10 +407,7 @@ class _WeightSlider extends StatelessWidget {
               thumbColor: Colors.white,
               overlayShape: SliderComponentShape.noOverlay,
             ),
-            child: Slider(
-              value: value.clamp(0, 1),
-              onChanged: onChanged,
-            ),
+            child: Slider(value: value.clamp(0, 1), onChanged: onChanged),
           ),
         ],
       ),
@@ -437,24 +433,28 @@ class _SettingRow extends StatelessWidget {
     final t = context.tp;
     final type = context.tpText;
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          border: last
-              ? null
-              : Border(bottom: BorderSide(color: t.hairline)),
-        ),
-        child: Row(
-          children: <Widget>[
-            Expanded(child: Text(label, style: type.body)),
-            if (value != null)
-              Text(value!, style: type.secondary)
-            else
-              Icon(Icons.chevron_right, size: 18, color: t.dim),
-          ],
+    return Semantics(
+      button: onTap != null,
+      // 라벨과 값이 따로 읽히면 "알림", "켬" 이 무슨 관계인지 모른다.
+      label: value == null ? label : '$label, $value',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          decoration: BoxDecoration(
+            border: last ? null : Border(bottom: BorderSide(color: t.hairline)),
+          ),
+          child: Row(
+            children: <Widget>[
+              Expanded(child: Text(label, style: type.body)),
+              if (value != null)
+                Text(value!, style: type.secondary)
+              else
+                Icon(Icons.chevron_right, size: 18, color: t.dim),
+            ],
+          ),
         ),
       ),
     );

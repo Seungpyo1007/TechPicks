@@ -241,21 +241,24 @@ class _PrimaryButton extends StatelessWidget {
       t.isGlass ? TpTokens.rControl : t.rCard,
     );
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: filled ? TpTokens.blue : t.chipBg,
-          borderRadius: radius,
-          boxShadow: filled ? t.buttonShadow : null,
-        ),
-        child: Text(
-          label,
-          style: type.body.copyWith(
-            fontWeight: t.boldWeight,
-            color: filled ? Colors.white : TpTokens.ink,
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 52,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: filled ? TpTokens.blue : t.chipBg,
+            borderRadius: radius,
+            boxShadow: filled ? t.buttonShadow : null,
+          ),
+          child: Text(
+            label,
+            style: type.body.copyWith(
+              fontWeight: t.boldWeight,
+              color: filled ? Colors.white : TpTokens.ink,
+            ),
           ),
         ),
       ),

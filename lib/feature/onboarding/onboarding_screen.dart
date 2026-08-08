@@ -123,23 +123,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 18, 24, 10),
-            child: GestureDetector(
-              onTap: _next,
-              child: Container(
-                height: 52,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: TpTokens.blue,
-                  borderRadius: BorderRadius.circular(
-                    t.isGlass ? TpTokens.rControl : t.rCard,
+            child: Semantics(
+              button: true,
+              child: GestureDetector(
+                onTap: _next,
+                child: Container(
+                  height: 52,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: TpTokens.blue,
+                    borderRadius: BorderRadius.circular(
+                      t.isGlass ? TpTokens.rControl : t.rCard,
+                    ),
+                    boxShadow: t.buttonShadow,
                   ),
-                  boxShadow: t.buttonShadow,
-                ),
-                child: Text(
-                  (last ? K.start : K.next).tr(),
-                  style: type.body.copyWith(
-                    color: Colors.white,
-                    fontWeight: t.boldWeight,
+                  child: Text(
+                    (last ? K.start : K.next).tr(),
+                    style: type.body.copyWith(
+                      color: Colors.white,
+                      fontWeight: t.boldWeight,
+                    ),
                   ),
                 ),
               ),
@@ -165,74 +168,74 @@ class _Figure extends StatelessWidget {
       child: switch (index) {
         // 점수 다섯 줄이 숫자 하나로 접히는 그림.
         0 => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              for (final f in <double>[.9, .5, .7, .6, .4])
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 7),
-                  child: FractionallySizedBox(
-                    widthFactor: f,
-                    child: Container(
-                      height: 6,
-                      decoration: BoxDecoration(
-                        gradient: t.barFill,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            for (final f in <double>[.9, .5, .7, .6, .4])
+              Padding(
+                padding: const EdgeInsets.only(bottom: 7),
+                child: FractionallySizedBox(
+                  widthFactor: f,
+                  child: Container(
+                    height: 6,
+                    decoration: BoxDecoration(
+                      gradient: t.barFill,
+                      borderRadius: BorderRadius.circular(3),
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
+        ),
         // 두 열이 나란히 선 그림.
         1 => Row(
-            children: <Widget>[
-              for (var i = 0; i < 2; i++) ...<Widget>[
-                if (i > 0) const SizedBox(width: 10),
-                Expanded(
-                  child: Container(
-                    height: 96,
-                    decoration: BoxDecoration(
-                      color: i == 0 ? t.tintFill : t.track,
-                      borderRadius: BorderRadius.circular(t.rInner),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        // 말풍선 두 개.
-        _ => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              FractionallySizedBox(
-                widthFactor: .55,
+          children: <Widget>[
+            for (var i = 0; i < 2; i++) ...<Widget>[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(
                 child: Container(
-                  height: 34,
+                  height: 96,
                   decoration: BoxDecoration(
-                    color: t.track,
+                    color: i == 0 ? t.tintFill : t.track,
                     borderRadius: BorderRadius.circular(t.rInner),
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              Align(
+            ],
+          ],
+        ),
+        // 말풍선 두 개.
+        _ => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            FractionallySizedBox(
+              widthFactor: .55,
+              child: Container(
+                height: 34,
+                decoration: BoxDecoration(
+                  color: t.track,
+                  borderRadius: BorderRadius.circular(t.rInner),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FractionallySizedBox(
+                widthFactor: .45,
                 alignment: Alignment.centerRight,
-                child: FractionallySizedBox(
-                  widthFactor: .45,
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: TpTokens.blue,
-                      borderRadius: BorderRadius.circular(t.rInner),
-                    ),
+                child: Container(
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: TpTokens.blue,
+                    borderRadius: BorderRadius.circular(t.rInner),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
       },
     );
   }

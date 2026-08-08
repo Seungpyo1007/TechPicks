@@ -72,10 +72,7 @@ class RankScreen extends ConsumerWidget {
             _ScanInlineButton(onTap: onScan!),
           ],
           const SizedBox(height: 18),
-          Text(
-            K.rankNote.tr(),
-            style: context.tpText.caption,
-          ),
+          Text(K.rankNote.tr(), style: context.tpText.caption),
         ],
       ),
     );
@@ -191,68 +188,70 @@ class _RankRow extends StatelessWidget {
       container: true,
       button: onTap != null,
       // 숫자 세 개가 따로 읽히면 어느 게 순위이고 어느 게 점수인지 모른다.
-      label: K.a11yRankRow.tr(args: <String>[
-        '${entry.position}',
-        entry.device.name,
-        entry.index?.toString() ?? DeviceSpecs.empty,
-      ]),
+      label: K.a11yRankRow.tr(
+        args: <String>[
+          '${entry.position}',
+          entry.device.name,
+          entry.index?.toString() ?? DeviceSpecs.empty,
+        ],
+      ),
       excludeSemantics: true,
       child: GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            SizedBox(
-              // 행 높이가 고정이라 안쪽도 고정한다. 숫자가 두 자리가 되면서
-              // 줄바꿈되면 Column 이 넘친다.
-              height: 34,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  SizedBox(
-                    width: 46,
-                    child: Text(
-                      '${entry.position}',
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SizedBox(
+                // 행 높이가 고정이라 안쪽도 고정한다. 숫자가 두 자리가 되면서
+                // 줄바꿈되면 Column 이 넘친다.
+                height: 34,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    SizedBox(
+                      width: 46,
+                      child: Text(
+                        '${entry.position}',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: type.cardTitle.copyWith(
+                          fontSize: 28,
+                          fontWeight: t.isGlass
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: leading,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        entry.device.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: type.cardTitle,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      formatAxisValue(axis, entry.axisValue),
                       maxLines: 1,
                       softWrap: false,
                       style: type.cardTitle.copyWith(
-                        fontSize: 28,
-                        fontWeight: t.isGlass
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: leading,
+                        color: entry.axisValue == null ? t.dim : TpTokens.ink,
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      entry.device.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: type.cardTitle,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    formatAxisValue(axis, entry.axisValue),
-                    maxLines: 1,
-                    softWrap: false,
-                    style: type.cardTitle.copyWith(
-                      color: entry.axisValue == null ? t.dim : TpTokens.ink,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 7),
-            _Track(fraction: entry.fraction),
-          ],
+              const SizedBox(height: 7),
+              _Track(fraction: entry.fraction),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -326,7 +325,6 @@ String formatAxisValue(RankAxis axis, double? value) {
   return value.round().toString();
 }
 
-
 /// Android 확장 FAB.
 class _ScanFab extends StatelessWidget {
   const _ScanFab({required this.onTap});
@@ -337,29 +335,32 @@ class _ScanFab extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 56,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: TpTokens.blue,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: TpTokens.fabShadow,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Text(
-              K.scanShort.tr(),
-              style: type.body.copyWith(
-                color: Colors.white,
-                fontWeight: t.boldWeight,
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: TpTokens.blue,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: TpTokens.fabShadow,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                K.scanShort.tr(),
+                style: type.body.copyWith(
+                  color: Colors.white,
+                  fontWeight: t.boldWeight,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -376,25 +377,28 @@ class _ScanInlineButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: t.chipBg,
-          borderRadius: BorderRadius.circular(TpTokens.rControl),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Icon(Icons.qr_code_scanner, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              K.scanCta.tr(),
-              style: type.body.copyWith(fontWeight: t.boldWeight),
-            ),
-          ],
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 52,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: t.chipBg,
+            borderRadius: BorderRadius.circular(TpTokens.rControl),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(Icons.qr_code_scanner, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                K.scanCta.tr(),
+                style: type.body.copyWith(fontWeight: t.boldWeight),
+              ),
+            ],
+          ),
         ),
       ),
     );

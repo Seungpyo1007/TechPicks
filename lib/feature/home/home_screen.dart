@@ -97,8 +97,7 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 22),
             _SectionHeader(title: K.movers.tr()),
             const SizedBox(height: 8),
-            for (final m in movers)
-              _MoverRow(mover: m, onTap: onMoversTap),
+            for (final m in movers) _MoverRow(mover: m, onTap: onMoversTap),
           ],
         ],
       ),
@@ -106,10 +105,10 @@ class HomeScreen extends ConsumerWidget {
   }
 
   static String _subtitle(int count) => switch (count) {
-        0 => K.homeSubNone.tr(),
-        1 => K.homeSubOne.tr(),
-        _ => K.homeSubMany.tr(args: <String>['$count']),
-      };
+    0 => K.homeSubNone.tr(),
+    1 => K.homeSubOne.tr(),
+    _ => K.homeSubMany.tr(args: <String>['$count']),
+  };
 }
 
 /// 결론 카드. 홈의 주인공이다.
@@ -229,12 +228,13 @@ class _EmptyShortlist extends StatelessWidget {
         children: <Widget>[
           Text(K.emptyShortlist.tr(), style: type.cardTitle),
           const SizedBox(height: 6),
-          Text(
-            K.emptyShortlistBody.tr(),
-            style: type.secondary,
-          ),
+          Text(K.emptyShortlistBody.tr(), style: type.secondary),
           const SizedBox(height: 14),
-          _CardButton(label: K.emptyShortlistCta.tr(), filled: true, onTap: onAdd),
+          _CardButton(
+            label: K.emptyShortlistCta.tr(),
+            filled: true,
+            onTap: onAdd,
+          ),
         ],
       ),
     );
@@ -303,8 +303,7 @@ class _ShortlistRow extends StatelessWidget {
                   softWrap: false,
                   style: type.cardTitle.copyWith(
                     fontSize: 34,
-                    fontWeight:
-                        t.isGlass ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: t.isGlass ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ),
@@ -427,25 +426,28 @@ class _CardButton extends StatelessWidget {
     final t = context.tp;
     final type = context.tpText;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 46,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: filled ? TpTokens.blue : t.chipBg,
-          borderRadius: BorderRadius.circular(
-            t.isGlass ? TpTokens.rControl : t.rInner,
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 46,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: filled ? TpTokens.blue : t.chipBg,
+            borderRadius: BorderRadius.circular(
+              t.isGlass ? TpTokens.rControl : t.rInner,
+            ),
+            boxShadow: filled ? t.buttonShadow : null,
           ),
-          boxShadow: filled ? t.buttonShadow : null,
-        ),
-        child: Text(
-          label,
-          maxLines: 1,
-          softWrap: false,
-          style: type.body.copyWith(
-            fontWeight: t.boldWeight,
-            color: filled ? Colors.white : TpTokens.ink,
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            style: type.body.copyWith(
+              fontWeight: t.boldWeight,
+              color: filled ? Colors.white : TpTokens.ink,
+            ),
           ),
         ),
       ),

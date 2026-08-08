@@ -98,7 +98,7 @@ class TpShell extends StatelessWidget {
     final bottomInset = takeover
         ? safe.bottom
         : (tab != null ? tabBottom + _iosTabHeight + 16 : safe.bottom + 24) +
-            extraBottomInset;
+              extraBottomInset;
 
     return Stack(
       children: <Widget>[
@@ -213,8 +213,10 @@ class TpShell extends StatelessWidget {
     };
     final bottomInset = takeover
         ? safe.bottom
-        : (tab != null ? _androidTabHeight + safe.bottom + 12 : safe.bottom + 24) +
-            extraBottomInset;
+        : (tab != null
+                  ? _androidTabHeight + safe.bottom + 12
+                  : safe.bottom + 24) +
+              extraBottomInset;
 
     return Stack(
       children: <Widget>[
@@ -269,7 +271,9 @@ class TpShell extends StatelessWidget {
         if (floatingAction != null)
           Positioned(
             right: 16,
-            bottom: (tab != null ? _androidTabHeight + safe.bottom : safe.bottom) + 16,
+            bottom:
+                (tab != null ? _androidTabHeight + safe.bottom : safe.bottom) +
+                16,
             child: floatingAction!,
           ),
 
@@ -315,38 +319,47 @@ class _IosTabBar extends StatelessWidget {
       children: TpTab.values.map((TpTab t) {
         final active = t == current;
         return Expanded(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: onSelected == null ? null : () => onSelected!(t),
-            child: Center(
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: active ? TpTokens.blue : Colors.transparent,
-                  borderRadius: BorderRadius.circular(TpTokens.rControl),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(
-                      active ? t.activeIcon : t.icon,
-                      size: 22,
-                      color: active ? Colors.white : tokens.dim,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      K.tab(t).tr(),
-                      // 라벨이 두 줄이 되면 캡슐(62)을 넘긴다. 명세가 높이를
-                      // 고정해서 늘릴 수 없다.
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: type.tabLabel.copyWith(
+          child: Semantics(
+            button: true,
+            selected: active,
+            label: K.tab(t).tr(),
+            excludeSemantics: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onSelected == null ? null : () => onSelected!(t),
+              child: Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: active ? TpTokens.blue : Colors.transparent,
+                    borderRadius: BorderRadius.circular(TpTokens.rControl),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        active ? t.activeIcon : t.icon,
+                        size: 22,
                         color: active ? Colors.white : tokens.dim,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        K.tab(t).tr(),
+                        // 라벨이 두 줄이 되면 캡슐(62)을 넘긴다. 명세가 높이를
+                        // 고정해서 늘릴 수 없다.
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: type.tabLabel.copyWith(
+                          color: active ? Colors.white : tokens.dim,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -385,7 +398,10 @@ class _AndroidTabBar extends StatelessWidget {
               children: <Widget>[
                 Icon(active ? t.activeIcon : t.icon, size: 24, color: color),
                 const SizedBox(height: 4),
-                Text(K.tab(t).tr(), style: type.tabLabel.copyWith(color: color)),
+                Text(
+                  K.tab(t).tr(),
+                  style: type.tabLabel.copyWith(color: color),
+                ),
               ],
             ),
           ),
