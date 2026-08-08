@@ -13,13 +13,13 @@ void main() {
   setUp(initLocalization);
 
   Widget card(VoidCallback? onTap, {VoidCallback? onLongPress}) => Center(
-        child: TpSurface(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          padding: const EdgeInsets.all(20),
-          child: const Text('카드'),
-        ),
-      );
+    child: TpSurface(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      padding: const EdgeInsets.all(20),
+      child: const Text('카드'),
+    ),
+  );
 
   testWidgets('iOS 는 누르는 동안 밝아진다', (tester) async {
     await pumpScreen(tester, card(() {}), chrome: TpChrome.ios);
@@ -27,7 +27,9 @@ void main() {
     expect(find.byType(ColorFiltered), findsNothing);
     expect(find.byType(InkWell), findsNothing);
 
-    final gesture = await tester.startGesture(tester.getCenter(find.text('카드')));
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('카드')),
+    );
     await tester.pump();
     expect(find.byType(ColorFiltered), findsOneWidget);
 
@@ -41,7 +43,9 @@ void main() {
 
     expect(find.byType(InkWell), findsOneWidget);
 
-    final gesture = await tester.startGesture(tester.getCenter(find.text('카드')));
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('카드')),
+    );
     await tester.pump();
     expect(find.byType(ColorFiltered), findsNothing);
     await gesture.up();
@@ -67,8 +71,11 @@ void main() {
   testWidgets('두 크롬 다 길게 누르기가 전달된다', (tester) async {
     for (final chrome in TpChrome.values) {
       var held = 0;
-      await pumpScreen(tester, card(() {}, onLongPress: () => held++),
-          chrome: chrome);
+      await pumpScreen(
+        tester,
+        card(() {}, onLongPress: () => held++),
+        chrome: chrome,
+      );
       await tester.longPress(find.text('카드'));
       await tester.pumpAndSettle();
       expect(held, 1, reason: '$chrome');
@@ -77,8 +84,11 @@ void main() {
 
   testWidgets('길게 누르기만 있어도 반응한다', (tester) async {
     var held = 0;
-    await pumpScreen(tester, card(null, onLongPress: () => held++),
-        chrome: TpChrome.ios);
+    await pumpScreen(
+      tester,
+      card(null, onLongPress: () => held++),
+      chrome: TpChrome.ios,
+    );
     await tester.longPress(find.text('카드'));
     await tester.pumpAndSettle();
     expect(held, 1);

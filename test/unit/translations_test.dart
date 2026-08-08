@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-Map<String, dynamic> _load(String locale) => jsonDecode(
-      File('assets/translations/$locale.json').readAsStringSync(),
-    ) as Map<String, dynamic>;
+Map<String, dynamic> _load(String locale) =>
+    jsonDecode(File('assets/translations/$locale.json').readAsStringSync())
+        as Map<String, dynamic>;
 
 void main() {
   final en = _load('en-US');
@@ -111,8 +111,7 @@ const Map<String, String> _pending = <String, String>{
 /// 같이 고쳐야 하고, 안 고쳐도 테스트가 통과한다. 그래서 파일을 읽는다.
 Set<String> _keysInCode() {
   final src = File('lib/shared/copy_keys.dart').readAsStringSync();
-  return RegExp(r"'([A-Za-z][A-Za-z0-9_]*)'")
-      .allMatches(src)
-      .map((m) => m.group(1)!)
-      .toSet();
+  return RegExp(
+    r"'([A-Za-z][A-Za-z0-9_]*)'",
+  ).allMatches(src).map((m) => m.group(1)!).toSet();
 }

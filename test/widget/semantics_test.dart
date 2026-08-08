@@ -36,7 +36,10 @@ void main() {
     );
 
     final labels = semanticsLabels(tester);
-    expect(labels, contains(K.a11yAxis.tr(args: <String>['Performance', '89'])));
+    expect(
+      labels,
+      contains(K.a11yAxis.tr(args: <String>['Performance', '89'])),
+    );
     // 지수 숫자도 단독 숫자가 아니라 문장으로.
     expect(labels, contains(K.a11yIndex.tr(args: <String>['61'])));
     handle.dispose();
@@ -51,10 +54,7 @@ void main() {
     );
 
     // 카탈로그 기기는 다섯 축이 다 있다. 라벨 형식만 확인한다.
-    expect(
-      K.a11yAxisMissing.tr(args: <String>['Camera']),
-      'Camera not scored',
-    );
+    expect(K.a11yAxisMissing.tr(args: <String>['Camera']), 'Camera not scored');
     handle.dispose();
   });
 

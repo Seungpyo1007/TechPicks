@@ -48,13 +48,12 @@ Future<void> _pump(
   WidgetTester tester,
   AuthService auth, {
   VoidCallback? onSignedIn,
-}) =>
-    pumpScreen(
-      tester,
-      EmailLoginScreen(onSignedIn: onSignedIn),
-      size: const Size(1200, 2000),
-      overrides: <Override>[authServiceProvider.overrideWithValue(auth)],
-    );
+}) => pumpScreen(
+  tester,
+  EmailLoginScreen(onSignedIn: onSignedIn),
+  size: const Size(1200, 2000),
+  overrides: <Override>[authServiceProvider.overrideWithValue(auth)],
+);
 
 Future<void> _fill(WidgetTester tester, String email, String password) async {
   final fields = find.byType(TextField);

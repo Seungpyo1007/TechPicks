@@ -176,7 +176,9 @@ class LocalAskService implements AskService {
       pickSlug: best.slug,
       reason: budget == null
           ? K.askLocalTop.tr()
-          : K.askLocalBudget.tr(args: <String>[DeviceSpecs.formatPrice(budget)]),
+          : K.askLocalBudget.tr(
+              args: <String>[DeviceSpecs.formatPrice(budget)],
+            ),
       // 표 라벨은 비교·상세와 같은 걸 쓴다. 여기만 영어로 남으면 한국어에서
       // 한 화면 안에 두 언어가 섞인다.
       rows: <AskRow>[

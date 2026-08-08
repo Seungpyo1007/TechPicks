@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,9 +16,12 @@ Future<void> _pump(
   Widget screen, {
   TpChrome chrome = TpChrome.ios,
 }) async {
-  _container = await pumpScreen(tester, screen,
-      chrome: chrome,
-      size: const Size(1200, 3200));
+  _container = await pumpScreen(
+    tester,
+    screen,
+    chrome: chrome,
+    size: const Size(1200, 3200),
+  );
 }
 
 void main() {
@@ -54,10 +56,7 @@ void main() {
 
   testWidgets('열 머리를 누르면 어느 슬롯인지 알려준다', (tester) async {
     CompareSide? picked;
-    await _pump(
-      tester,
-      CompareScreen(onPick: (s) => picked = s),
-    );
+    await _pump(tester, CompareScreen(onPick: (s) => picked = s));
 
     await tester.tap(find.text('Galaxy S25 Ultra'));
     await tester.pumpAndSettle();

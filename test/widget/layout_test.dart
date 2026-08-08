@@ -40,24 +40,24 @@ const Size _iosFrame = Size(402, 874);
 const Size _androidFrame = Size(412, 892);
 
 Map<String, Widget> _screens() => <String, Widget>{
-      'home': HomeScreen(onDeviceTap: (_) {}, onAdd: () {}),
-      'rank': RankScreen(onDeviceTap: (_) {}, onScan: () {}),
-      'cpu': const ProcessorScreen(),
-      'compare': CompareScreen(onPick: (_) {}),
-      'picker': PickerScreen(onDone: () {}),
-      'detail': DetailScreen(slug: 'galaxy-s25-ultra', onBack: () {}),
-      'ask': const AskScreen(),
-      'you': const YouScreen(name: '홍길동', email: 'hong@example.com'),
-      'login': const LoginScreen(),
-      'email-login': EmailLoginScreen(onBack: () {}),
-      'onboarding': const OnboardingScreen(),
-    };
+  'home': HomeScreen(onDeviceTap: (_) {}, onAdd: () {}),
+  'rank': RankScreen(onDeviceTap: (_) {}, onScan: () {}),
+  'cpu': const ProcessorScreen(),
+  'compare': CompareScreen(onPick: (_) {}),
+  'picker': PickerScreen(onDone: () {}),
+  'detail': DetailScreen(slug: 'galaxy-s25-ultra', onBack: () {}),
+  'ask': const AskScreen(),
+  'you': const YouScreen(name: '홍길동', email: 'hong@example.com'),
+  'login': const LoginScreen(),
+  'email-login': EmailLoginScreen(onBack: () {}),
+  'onboarding': const OnboardingScreen(),
+};
 
 /// 끝나지 않는 애니메이션이 있어 settle 이 안 끝나는 화면.
 Map<String, Widget> _noSettle() => <String, Widget>{
-      'scan': ScanScreen(onBack: () {}, recognizedText: 'Galaxy S25 Ultra'),
-      'viewer': ViewerScreen(deviceName: 'Galaxy S25 Ultra', onBack: () {}),
-    };
+  'scan': ScanScreen(onBack: () {}, recognizedText: 'Galaxy S25 Ultra'),
+  'viewer': ViewerScreen(deviceName: 'Galaxy S25 Ultra', onBack: () {}),
+};
 
 void main() {
   for (final locale in <Locale>[

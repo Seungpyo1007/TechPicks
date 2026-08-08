@@ -37,10 +37,7 @@ void main() {
     await tester.tap(find.text(K.cpuLaptop.tr()));
     await tester.pumpAndSettle();
 
-    expect(
-      container.read(processorSegmentProvider),
-      ProcessorSegment.laptop,
-    );
+    expect(container.read(processorSegmentProvider), ProcessorSegment.laptop);
     expect(find.text('Intel Core i9-14900HX'), findsOneWidget);
     expect(find.text('Snapdragon 8 Elite'), findsNothing);
   });
@@ -73,23 +70,26 @@ void main() {
 
     expect(
       semanticsLabels(tester),
-      contains(K.a11yProcessorRow
-          .tr(args: <String>['1', 'Snapdragon 8 Elite', '97'])),
+      contains(
+        K.a11yProcessorRow.tr(args: <String>['1', 'Snapdragon 8 Elite', '97']),
+      ),
     );
     handle.dispose();
   });
 
   testWidgets('애셋이 없으면 빈 목록을 알린다', (tester) async {
-    await pumpScreen(tester, const ProcessorScreen(),
-        catalogAsset: missingCatalogAsset);
+    await pumpScreen(
+      tester,
+      const ProcessorScreen(),
+      catalogAsset: missingCatalogAsset,
+    );
 
     expect(find.text(K.noDevices.tr()), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('Android 크롬에서도 뜬다', (tester) async {
-    await pumpScreen(tester, const ProcessorScreen(),
-        chrome: TpChrome.android);
+    await pumpScreen(tester, const ProcessorScreen(), chrome: TpChrome.android);
 
     expect(find.text('Snapdragon 8 Elite'), findsOneWidget);
     expect(tester.takeException(), isNull);

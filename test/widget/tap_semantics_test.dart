@@ -31,25 +31,24 @@ import '../support/harness.dart';
 /// 이름이 있는지.
 
 Map<String, Widget> _screens() => <String, Widget>{
-      'home': HomeScreen(onDeviceTap: (_) {}, onAdd: () {}),
-      'rank': RankScreen(onDeviceTap: (_) {}, onScan: () {}),
-      'cpu': const ProcessorScreen(),
-      'compare': CompareScreen(onPick: (_) {}),
-      'picker': PickerScreen(onDone: () {}),
-      'detail': DetailScreen(slug: 'galaxy-s25-ultra', onBack: () {}),
-      'ask': const AskScreen(),
-      'you': const YouScreen(name: '홍길동', email: 'hong@example.com'),
-      'login': const LoginScreen(),
-      'email-login': EmailLoginScreen(onBack: () {}),
-      'onboarding': const OnboardingScreen(),
-    };
+  'home': HomeScreen(onDeviceTap: (_) {}, onAdd: () {}),
+  'rank': RankScreen(onDeviceTap: (_) {}, onScan: () {}),
+  'cpu': const ProcessorScreen(),
+  'compare': CompareScreen(onPick: (_) {}),
+  'picker': PickerScreen(onDone: () {}),
+  'detail': DetailScreen(slug: 'galaxy-s25-ultra', onBack: () {}),
+  'ask': const AskScreen(),
+  'you': const YouScreen(name: '홍길동', email: 'hong@example.com'),
+  'login': const LoginScreen(),
+  'email-login': EmailLoginScreen(onBack: () {}),
+  'onboarding': const OnboardingScreen(),
+};
 
 /// 끝나지 않는 애니메이션이 있어 settle 이 안 끝나는 화면.
 Map<String, Widget> _noSettle() => <String, Widget>{
-      'scan': ScanScreen(onBack: () {}, recognizedText: 'Galaxy S25 Ultra'),
-      'viewer': ViewerScreen(deviceName: 'Galaxy S25 Ultra', onBack: () {}),
-    };
-
+  'scan': ScanScreen(onBack: () {}, recognizedText: 'Galaxy S25 Ultra'),
+  'viewer': ViewerScreen(deviceName: 'Galaxy S25 Ultra', onBack: () {}),
+};
 
 /// 탭 액션이 있는데 버튼이 아니거나 이름이 없는 노드.
 List<String> _unlabeledTapTargets(WidgetTester tester) {
@@ -107,8 +106,11 @@ void main() {
   for (final entry in _noSettle().entries) {
     testWidgets(entry.key, (tester) async {
       final handle = tester.ensureSemantics();
-      await pumpScreenNoSettle(tester, entry.value,
-          size: const Size(1200, 3200));
+      await pumpScreenNoSettle(
+        tester,
+        entry.value,
+        size: const Size(1200, 3200),
+      );
       expect(_unlabeledTapTargets(tester), isEmpty);
       handle.dispose();
     });

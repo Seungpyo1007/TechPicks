@@ -34,12 +34,12 @@ class _StubAdapter implements HttpClientAdapter {
 }
 
 ResponseBody _json(Object data, {int status = 200}) => ResponseBody.fromString(
-      jsonEncode(data),
-      status,
-      headers: {
-        Headers.contentTypeHeader: [Headers.jsonContentType],
-      },
-    );
+  jsonEncode(data),
+  status,
+  headers: {
+    Headers.contentTypeHeader: [Headers.jsonContentType],
+  },
+);
 
 TechApiRepository _repoWith(_StubAdapter adapter) {
   final dio = Dio()..httpClientAdapter = adapter;
@@ -50,8 +50,9 @@ TechApiRepository _repoWith(_StubAdapter adapter) {
 
 void main() {
   test('상세를 요청하면 덤프 URL을 치고 DTO로 돌려준다', () async {
-    final adapter =
-        _StubAdapter((_) => _json(loadFixture('smartphone_galaxy_s25')));
+    final adapter = _StubAdapter(
+      (_) => _json(loadFixture('smartphone_galaxy_s25')),
+    );
     final result = await _repoWith(adapter).smartphone('galaxy-s25');
 
     expect(result.isOk, isTrue);
@@ -103,8 +104,7 @@ void main() {
 
   test('목록은 컬렉션 enum으로 경로를 만든다', () async {
     final adapter = _StubAdapter((_) => _json(loadFixture('brands_list')));
-    final result =
-        await _repoWith(adapter).list(TechApiCollection.brands);
+    final result = await _repoWith(adapter).list(TechApiCollection.brands);
 
     expect(result.valueOrNull?.count, 207);
     expect(

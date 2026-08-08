@@ -41,8 +41,7 @@ class _StubAuth implements AuthService {
   Future<TpUser?> signUp({
     required String email,
     required String password,
-  }) async =>
-      null;
+  }) async => null;
 
   @override
   Future<void> signOut() async => _current = null;
@@ -77,8 +76,10 @@ void main() {
       await _pump(tester, const OnboardingScreen(), auth: _StubAuth());
 
       expect(find.text('Every spec.\nOne number.'), findsOneWidget);
-      expect(find.textContaining('scores every device on performance'),
-          findsOneWidget);
+      expect(
+        find.textContaining('scores every device on performance'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Next 로 넘기면 마지막에 Get started', (tester) async {
@@ -157,7 +158,9 @@ void main() {
 
     testWidgets('아직 연결 안 된 방법은 안내를 띄운다', (tester) async {
       // 익명만 성공하도록 두면 나머지 넷은 안내로 떨어진다.
-      final auth = _StubAuth(succeeds: const <AuthMethod>{AuthMethod.anonymous});
+      final auth = _StubAuth(
+        succeeds: const <AuthMethod>{AuthMethod.anonymous},
+      );
       await _pump(tester, const LoginScreen(), auth: auth);
 
       await tester.tap(find.text('Continue with Apple'));

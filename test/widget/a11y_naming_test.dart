@@ -86,15 +86,18 @@ void main() {
     );
 
     // 씨앗 인사 하나뿐일 때도 그게 마지막 AI 말풍선이다.
-    expect(_nodes(tester).where((d) => d.flagsCollection.isLiveRegion).length,
-        1);
+    expect(
+      _nodes(tester).where((d) => d.flagsCollection.isLiveRegion).length,
+      1,
+    );
 
     await tester.enterText(find.byType(TextField), '뭐가 좋아?');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
-    final live =
-        _nodes(tester).where((d) => d.flagsCollection.isLiveRegion).toList();
+    final live = _nodes(
+      tester,
+    ).where((d) => d.flagsCollection.isLiveRegion).toList();
     // 답이 왔어도 알리는 건 여전히 하나 — 가장 마지막 것.
     expect(live.length, 1);
     expect(live.single.label, isNot(K.chatSeed.tr()));

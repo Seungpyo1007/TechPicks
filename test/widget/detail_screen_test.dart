@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -12,10 +11,12 @@ Future<void> _pump(
   WidgetTester tester,
   String slug, {
   TpChrome chrome = TpChrome.ios,
-}) =>
-    pumpScreen(tester, DetailScreen(slug: slug),
-        chrome: chrome,
-      size: const Size(1200, 3200));
+}) => pumpScreen(
+  tester,
+  DetailScreen(slug: slug),
+  chrome: chrome,
+  size: const Size(1200, 3200),
+);
 
 void main() {
   setUp(initLocalization);

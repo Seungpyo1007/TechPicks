@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -29,14 +28,13 @@ Future<void> _pump(
   WidgetTester tester,
   AskService service, {
   TpChrome chrome = TpChrome.ios,
-}) =>
-    pumpScreen(
-      tester,
-      const AskScreen(),
-      chrome: chrome,
-      size: const Size(1200, 2400),
-      overrides: <Override>[askServiceProvider.overrideWithValue(service)],
-    );
+}) => pumpScreen(
+  tester,
+  const AskScreen(),
+  chrome: chrome,
+  size: const Size(1200, 2400),
+  overrides: <Override>[askServiceProvider.overrideWithValue(service)],
+);
 
 const _answer = AskAnswer(
   pick: 'OnePlus 13',

@@ -10,21 +10,18 @@ void main() {
     final low = Smartphone.fromJson(loadFixture('smartphone_unscored'));
 
     test('명세의 속성 순서를 지킨다', () {
-      expect(
-        DeviceSpecs.of(s25).map((s) => s.kind),
-        <SpecKind>[
-          SpecKind.tpIndex,
-          SpecKind.price,
-          SpecKind.screen,
-          SpecKind.chipset,
-          SpecKind.camera,
-          SpecKind.battery,
-          SpecKind.os,
-          SpecKind.weight,
-          SpecKind.thickness,
-          SpecKind.released,
-        ],
-      );
+      expect(DeviceSpecs.of(s25).map((s) => s.kind), <SpecKind>[
+        SpecKind.tpIndex,
+        SpecKind.price,
+        SpecKind.screen,
+        SpecKind.chipset,
+        SpecKind.camera,
+        SpecKind.battery,
+        SpecKind.os,
+        SpecKind.weight,
+        SpecKind.thickness,
+        SpecKind.released,
+      ]);
     });
 
     test('실제 레코드를 사람이 읽는 문자열로 만든다', () {
@@ -43,9 +40,9 @@ void main() {
     });
 
     test('후면 카메라만 큰 순서로 붙인다', () {
-      final cam = DeviceSpecs.of(s25)
-          .firstWhere((s) => s.kind == SpecKind.camera)
-          .value;
+      final cam = DeviceSpecs.of(
+        s25,
+      ).firstWhere((s) => s.kind == SpecKind.camera).value;
       // 셀피 12MP 는 빠지고 후면 50/12/10 만 남는다.
       expect(cam, '50MP + 12MP + 10MP');
     });
@@ -60,10 +57,9 @@ void main() {
     });
 
     test('비교 대상은 지수·가격·배터리 셋뿐', () {
-      final comparable = DeviceSpecs.of(s25)
-          .where((s) => s.comparable != null)
-          .map((s) => s.kind)
-          .toSet();
+      final comparable = DeviceSpecs.of(
+        s25,
+      ).where((s) => s.comparable != null).map((s) => s.kind).toSet();
       expect(comparable, <SpecKind>{
         SpecKind.tpIndex,
         SpecKind.price,
@@ -74,24 +70,20 @@ void main() {
     test('가격만 낮은 쪽이 이긴다', () {
       final specs = DeviceSpecs.of(s25);
       for (final s in specs.where((s) => s.comparable != null)) {
-        expect(
-          s.higherIsBetter,
-          s.kind != SpecKind.price,
-          reason: '${s.kind}',
-        );
+        expect(s.higherIsBetter, s.kind != SpecKind.price, reason: '${s.kind}');
       }
     });
 
     test('소수점이 0이면 떼고 찍는다', () {
       // 6.2 인치는 그대로, 두께 7.2mm 도 그대로.
-      final screen = DeviceSpecs.of(s25)
-          .firstWhere((s) => s.kind == SpecKind.screen)
-          .value;
+      final screen = DeviceSpecs.of(
+        s25,
+      ).firstWhere((s) => s.kind == SpecKind.screen).value;
       expect(screen.startsWith('6.2"'), isTrue);
       // 50.0MP 는 50MP 로.
-      final cam = DeviceSpecs.of(s25)
-          .firstWhere((s) => s.kind == SpecKind.camera)
-          .value;
+      final cam = DeviceSpecs.of(
+        s25,
+      ).firstWhere((s) => s.kind == SpecKind.camera).value;
       expect(cam.contains('50.0'), isFalse);
     });
 

@@ -79,9 +79,7 @@ void main() {
   });
 
   test('404 는 NotFoundFailure', () async {
-    final client = _client(
-      _Stub(() => ResponseBody.fromString('', 404)),
-    );
+    final client = _client(_Stub(() => ResponseBody.fromString('', 404)));
 
     expect(
       () => client.getJson(_uri, collection: 'smartphones', slug: 'x'),
@@ -90,9 +88,7 @@ void main() {
   });
 
   test('5xx 는 ServerFailure 이고 코드를 들고 있다', () async {
-    final client = _client(
-      _Stub(() => ResponseBody.fromString('', 503)),
-    );
+    final client = _client(_Stub(() => ResponseBody.fromString('', 503)));
 
     await expectLater(
       client.getJson(_uri),

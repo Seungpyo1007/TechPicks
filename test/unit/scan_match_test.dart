@@ -4,10 +4,10 @@ import 'package:techpicks/data/dto/smartphone.dart';
 import 'package:techpicks/domain/model/scan_match.dart';
 
 Smartphone _phone(String slug, String name, {String? brand}) => Smartphone(
-      slug: slug,
-      name: name,
-      brand: brand == null ? null : Brand(slug: brand, name: brand),
-    );
+  slug: slug,
+  name: name,
+  brand: brand == null ? null : Brand(slug: brand, name: brand),
+);
 
 final _catalog = <Smartphone>[
   _phone('galaxy-s25-ultra', 'Galaxy S25 Ultra', brand: 'Samsung'),

@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -87,7 +86,9 @@ void main() {
     // 기본 가중치에서 galaxy-s25 는 61.
     expect(indexOf('galaxy-s25'), 61);
 
-    container.read(weightsProvider.notifier).set(
+    container
+        .read(weightsProvider.notifier)
+        .set(
           const TpWeights(
             performance: 1,
             camera: 0,
@@ -106,10 +107,9 @@ void main() {
     await _pump(tester);
     final container = _container!;
 
-    container.read(weightsProvider.notifier).setAxis(
-          TpAxisKind.performance,
-          0.9,
-        );
+    container
+        .read(weightsProvider.notifier)
+        .setAxis(TpAxisKind.performance, 0.9);
     await tester.pumpAndSettle();
     expect(container.read(weightsProvider).performance, 0.9);
 
