@@ -60,12 +60,14 @@ Future<ProviderContainer> pumpScreen(
   List<Override> overrides = const <Override>[],
   Size size = const Size(1200, 3000),
   String catalogAsset = defaultCatalogAsset,
+  double textScale = 1,
 }) async {
   await _pump(tester, screen,
       chrome: chrome,
       overrides: overrides,
       size: size,
-      catalogAsset: catalogAsset);
+      catalogAsset: catalogAsset,
+      textScale: textScale);
   await tester.pumpAndSettle();
   return ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
 }
@@ -78,12 +80,14 @@ Future<void> pumpScreenNoSettle(
   List<Override> overrides = const <Override>[],
   Size size = const Size(1200, 3000),
   String catalogAsset = defaultCatalogAsset,
+  double textScale = 1,
 }) async {
   await _pump(tester, screen,
       chrome: chrome,
       overrides: overrides,
       size: size,
-      catalogAsset: catalogAsset);
+      catalogAsset: catalogAsset,
+      textScale: textScale);
   await tester.pump();
 }
 
@@ -100,6 +104,7 @@ Future<void> _pump(
   required List<Override> overrides,
   required Size size,
   required String catalogAsset,
+  required double textScale,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -117,7 +122,15 @@ Future<void> _pump(
         ),
         ...overrides,
       ],
-      child: MaterialApp(theme: AppTheme.of(chrome), home: screen),
+      child: MaterialApp(
+        theme: AppTheme.of(chrome),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
+        home: screen,
+      ),
     ),
   );
 }

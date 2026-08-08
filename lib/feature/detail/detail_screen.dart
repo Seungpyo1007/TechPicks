@@ -40,11 +40,8 @@ class DetailScreen extends ConsumerWidget {
       child: device.when(
         loading: () => const _DetailSkeleton(),
         error: (e, _) => _DetailError(message: '$e'),
-        data: (d) => _DetailBody(
-          device: d,
-          onCompare: onCompare,
-          onView3D: onView3D,
-        ),
+        data: (d) =>
+            _DetailBody(device: d, onCompare: onCompare, onView3D: onView3D),
       ),
     );
   }
@@ -84,27 +81,39 @@ class _DetailBody extends ConsumerWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
-            Text(DeviceSpecs.formatPrice(device.msrpUsd), style: type.body),
-            const Spacer(),
-            Semantics(
-              container: true,
-              label: index == null
-                  ? null
-                  : K.a11yIndex.tr(args: <String>[index.toString()]),
-              excludeSemantics: index != null,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  Text(
-                    index?.toString() ?? DeviceSpecs.empty,
-                    style: type.indexNumeral.copyWith(fontSize: 44),
-                  ),
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Text(K.tpIndex.tr(), style: type.caption),
-                  ),
-                ],
+            Expanded(
+              child: Text(
+                DeviceSpecs.formatPrice(device.msrpUsd),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: type.body,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // 지수 숫자는 이미 44px 이다. 손쉬운 사용 배율을 그대로 곱하면
+            // 가격과 한 줄에 안 들어간다. 읽는 데 지장이 없는 선까지만 키운다.
+            MediaQuery.withClampedTextScaling(
+              maxScaleFactor: 1.3,
+              child: Semantics(
+                container: true,
+                label: index == null
+                    ? null
+                    : K.a11yIndex.tr(args: <String>[index.toString()]),
+                excludeSemantics: index != null,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    Text(
+                      index?.toString() ?? DeviceSpecs.empty,
+                      style: type.indexNumeral.copyWith(fontSize: 44),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(K.tpIndex.tr(), style: type.caption),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -131,8 +140,7 @@ class _DetailBody extends ConsumerWidget {
         _PrimaryButton(
           label: (shortlisted ? K.inShortlist : K.addShortlist).tr(),
           filled: !shortlisted,
-          onTap: () =>
-              ref.read(shortlistProvider.notifier).toggle(device.slug),
+          onTap: () => ref.read(shortlistProvider.notifier).toggle(device.slug),
         ),
         const SizedBox(height: 10),
         _PrimaryButton(
@@ -219,11 +227,7 @@ class _SpecRow extends StatelessWidget {
 }
 
 class _PrimaryButton extends StatelessWidget {
-  const _PrimaryButton({
-    required this.label,
-    required this.filled,
-    this.onTap,
-  });
+  const _PrimaryButton({required this.label, required this.filled, this.onTap});
 
   final String label;
   final bool filled;
@@ -233,7 +237,9 @@ class _PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
-    final radius = BorderRadius.circular(t.isGlass ? TpTokens.rControl : t.rCard);
+    final radius = BorderRadius.circular(
+      t.isGlass ? TpTokens.rControl : t.rCard,
+    );
 
     return GestureDetector(
       onTap: onTap,
