@@ -46,7 +46,10 @@ class YouScreen extends ConsumerWidget {
   final ValueChanged<String>? onDeviceTap;
 
   /// 앱 버전. 명세의 푸터 문구 그대로.
-  static const String versionLine = 'TechPicks version 2.0.0 · Apache-2.0';
+  /// 명세 §13 의 확정 카피. 숫자는 pubspec 의 version 과 같아야 한다
+  /// (test/unit/version_test.dart 가 확인한다).
+  static const String version = '2.0.0';
+  static const String versionLine = 'TechPicks version $version · Apache-2.0';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
