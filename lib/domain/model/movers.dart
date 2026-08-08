@@ -44,12 +44,14 @@ abstract final class Movers {
       final before = was[current[i].slug];
       // 지난 목록에 없던 기기는 변동이 아니라 신규다. 순위 이동으로 치지 않는다.
       if (before == null || before == i) continue;
-      moved.add(Mover(
-        slug: current[i].slug,
-        name: current[i].name,
-        position: i + 1,
-        delta: before - i,
-      ));
+      moved.add(
+        Mover(
+          slug: current[i].slug,
+          name: current[i].name,
+          position: i + 1,
+          delta: before - i,
+        ),
+      );
     }
 
     moved.sort((a, b) => b.delta.abs().compareTo(a.delta.abs()));

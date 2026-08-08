@@ -31,8 +31,9 @@ class TechPicksApp extends StatelessWidget {
         // MaterialApp 아래에서 만들어 넣는다.
         builder: (inner) => ProviderScope(
           overrides: [
-            localeControllerProvider
-                .overrideWithValue(EasyLocaleController(inner)),
+            localeControllerProvider.overrideWithValue(
+              EasyLocaleController(inner),
+            ),
           ],
           child: const _Root(),
         ),

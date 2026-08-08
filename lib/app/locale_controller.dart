@@ -14,9 +14,9 @@ enum TpLocale {
   final String label;
 
   static TpLocale of(Locale locale) => values.firstWhere(
-        (l) => l.locale.languageCode == locale.languageCode,
-        orElse: () => TpLocale.en,
-      );
+    (l) => l.locale.languageCode == locale.languageCode,
+    orElse: () => TpLocale.en,
+  );
 }
 
 /// 언어 전환.

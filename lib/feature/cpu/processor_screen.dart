@@ -159,11 +159,13 @@ class _ProcessorRow extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: K.a11yProcessorRow.tr(args: <String>[
-        '${entry.position}',
-        p.name,
-        index?.toString() ?? DeviceSpecs.empty,
-      ]),
+      label: K.a11yProcessorRow.tr(
+        args: <String>[
+          '${entry.position}',
+          p.name,
+          index?.toString() ?? DeviceSpecs.empty,
+        ],
+      ),
       excludeSemantics: true,
       child: Padding(
         padding: const EdgeInsets.only(bottom: 14),

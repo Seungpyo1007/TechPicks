@@ -2,7 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 /// 로그인한 사람.
 class TpUser {
-  const TpUser({required this.uid, this.name, this.email, this.isAnonymous = false});
+  const TpUser({
+    required this.uid,
+    this.name,
+    this.email,
+    this.isAnonymous = false,
+  });
 
   final String uid;
   final String? name;
@@ -35,7 +40,7 @@ abstract class AuthService {
 /// 필요하다. 누르면 null 을 돌려 화면이 안내를 띄운다.
 class FirebaseAuthService implements AuthService {
   FirebaseAuthService({fb.FirebaseAuth? auth})
-      : _auth = auth ?? fb.FirebaseAuth.instance;
+    : _auth = auth ?? fb.FirebaseAuth.instance;
 
   final fb.FirebaseAuth _auth;
 
@@ -51,13 +56,15 @@ class FirebaseAuthService implements AuthService {
     try {
       return switch (method) {
         AuthMethod.anonymous => _map((await _auth.signInAnonymously()).user),
-        AuthMethod.email => email == null || password == null
-            ? null
-            : _map((await _auth.signInWithEmailAndPassword(
-                email: email,
-                password: password,
-              ))
-                .user),
+        AuthMethod.email =>
+          email == null || password == null
+              ? null
+              : _map(
+                  (await _auth.signInWithEmailAndPassword(
+                    email: email,
+                    password: password,
+                  )).user,
+                ),
         // 아직 미연결.
         AuthMethod.google || AuthMethod.apple || AuthMethod.facebook => null,
       };

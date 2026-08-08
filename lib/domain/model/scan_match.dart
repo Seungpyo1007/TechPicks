@@ -59,11 +59,9 @@ abstract final class ScanMatcher {
       device.name,
       if (device.brand?.name != null) device.brand!.name,
     ].join(' ');
-    return _normalize(raw)
-        .split(' ')
-        .where((t) => t.length >= 2)
-        .toSet()
-        .toList(growable: false);
+    return _normalize(
+      raw,
+    ).split(' ').where((t) => t.length >= 2).toSet().toList(growable: false);
   }
 
   /// 소문자로 낮추고 기호를 공백으로. OCR 이 하이픈이나 점을 흘리는 일이 많다.

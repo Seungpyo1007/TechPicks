@@ -39,9 +39,7 @@ class PickerScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Row(
               children: <Widget>[
-                Expanded(
-                  child: Text(K.choose.tr(), style: type.largeTitle),
-                ),
+                Expanded(child: Text(K.choose.tr(), style: type.largeTitle)),
                 TpTapTarget(
                   onTap: onDone,
                   child: Text(

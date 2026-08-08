@@ -77,19 +77,14 @@ class _AskScreenState extends ConsumerState<AskScreen> {
             controller: _scroll,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             itemCount: messages.length,
-            itemBuilder: (context, i) => _Bubble(
-              message: messages[i],
-              onDeviceTap: widget.onDeviceTap,
-            ),
+            itemBuilder: (context, i) =>
+                _Bubble(message: messages[i], onDeviceTap: widget.onDeviceTap),
           ),
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: _Composer(
-              controller: _input,
-              onSend: _send,
-            ),
+            child: _Composer(controller: _input, onSend: _send),
           ),
         ],
       ),
@@ -150,9 +145,7 @@ class _Bubble extends StatelessWidget {
               children: <Widget>[
                 Text(
                   message.text,
-                  style: answer == null
-                      ? type.body
-                      : type.cardTitle,
+                  style: answer == null ? type.body : type.cardTitle,
                 ),
                 if (answer != null) ...<Widget>[
                   if (answer.reason.isNotEmpty) ...<Widget>[

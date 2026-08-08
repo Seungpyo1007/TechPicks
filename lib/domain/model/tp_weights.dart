@@ -41,22 +41,21 @@ class TpWeights {
     double? display,
     double? battery,
     double? value,
-  }) =>
-      TpWeights(
-        performance: performance ?? this.performance,
-        camera: camera ?? this.camera,
-        display: display ?? this.display,
-        battery: battery ?? this.battery,
-        value: value ?? this.value,
-      );
+  }) => TpWeights(
+    performance: performance ?? this.performance,
+    camera: camera ?? this.camera,
+    display: display ?? this.display,
+    battery: battery ?? this.battery,
+    value: value ?? this.value,
+  );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'performance': performance,
-        'camera': camera,
-        'display': display,
-        'battery': battery,
-        'value': value,
-      };
+    'performance': performance,
+    'camera': camera,
+    'display': display,
+    'battery': battery,
+    'value': value,
+  };
 
   /// 저장된 값이 깨졌거나 없으면 기본값으로 떨어진다.
   factory TpWeights.fromJson(Map<String, dynamic> json) {
@@ -84,10 +83,10 @@ class TpWeights {
       other.value == value;
 
   @override
-  int get hashCode =>
-      Object.hash(performance, camera, display, battery, value);
+  int get hashCode => Object.hash(performance, camera, display, battery, value);
 
   @override
-  String toString() => 'TpWeights(perf: $performance, cam: $camera, '
+  String toString() =>
+      'TpWeights(perf: $performance, cam: $camera, '
       'disp: $display, batt: $battery, val: $value)';
 }

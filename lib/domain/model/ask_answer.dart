@@ -77,12 +77,12 @@ class AskRow {
 /// 화면에 쌓이는 말풍선 하나.
 class AskMessage {
   const AskMessage.user(this.text)
-      : isUser = true,
-        answer = null,
-        failed = false;
+    : isUser = true,
+      answer = null,
+      failed = false;
 
   const AskMessage.ai(this.text, {this.answer, this.failed = false})
-      : isUser = false;
+    : isUser = false;
 
   final String text;
   final bool isUser;

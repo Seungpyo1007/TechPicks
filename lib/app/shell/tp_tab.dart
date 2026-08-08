@@ -6,7 +6,11 @@ import 'package:flutter/material.dart';
 enum TpTab {
   home('home', Icons.home_outlined, Icons.home_rounded),
   rank('rank', Icons.leaderboard_outlined, Icons.leaderboard_rounded),
-  compare('compare', Icons.compare_arrows_outlined, Icons.compare_arrows_rounded),
+  compare(
+    'compare',
+    Icons.compare_arrows_outlined,
+    Icons.compare_arrows_rounded,
+  ),
   ask('ask', Icons.forum_outlined, Icons.forum_rounded),
   you('you', Icons.person_outline, Icons.person_rounded);
 

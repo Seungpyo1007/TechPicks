@@ -120,11 +120,12 @@ abstract final class DeviceSpecs {
 
   /// 후면 카메라 화소를 큰 순서로. 셀피는 뺀다.
   static String _camera(Smartphone d) {
-    final rear = d.cameras
-        .where((c) => c.type != 'selfie' && c.mp != null)
-        .map((c) => c.mp!)
-        .toList()
-      ..sort((a, b) => b.compareTo(a));
+    final rear =
+        d.cameras
+            .where((c) => c.type != 'selfie' && c.mp != null)
+            .map((c) => c.mp!)
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
     if (rear.isEmpty) return empty;
     return rear.map((mp) => '${_trim(mp)}MP').join(' + ');
   }

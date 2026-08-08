@@ -24,7 +24,7 @@ abstract class DeviceInfoService {
 
 class PlatformDeviceInfoService implements DeviceInfoService {
   PlatformDeviceInfoService({DeviceInfoPlugin? plugin})
-      : _plugin = plugin ?? DeviceInfoPlugin();
+    : _plugin = plugin ?? DeviceInfoPlugin();
 
   final DeviceInfoPlugin _plugin;
 

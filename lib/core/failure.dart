@@ -22,7 +22,7 @@ class NetworkFailure extends Failure {
 /// TechAPI 데이터셋은 큐레이션 중이라 상위 목록에 있어도 상세가 없을 수 있다.
 class NotFoundFailure extends Failure {
   const NotFoundFailure(this.collection, this.slug)
-      : super('$collection/$slug 레코드를 찾을 수 없다');
+    : super('$collection/$slug 레코드를 찾을 수 없다');
 
   final String collection;
   final String slug;

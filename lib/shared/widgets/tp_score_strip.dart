@@ -31,43 +31,46 @@ class TpScoreStrip extends StatelessWidget {
             container: true,
             // 라벨·숫자·막대가 따로 읽히면 무슨 값인지 알 수 없다.
             label: axis.hasData
-                ? K.a11yAxis.tr(args: <String>[
-                    SpecLabels.axis(axis.kind),
-                    axis.score!.round().toString(),
-                  ])
-                : K.a11yAxisMissing
-                    .tr(args: <String>[SpecLabels.axis(axis.kind)]),
+                ? K.a11yAxis.tr(
+                    args: <String>[
+                      SpecLabels.axis(axis.kind),
+                      axis.score!.round().toString(),
+                    ],
+                  )
+                : K.a11yAxisMissing.tr(
+                    args: <String>[SpecLabels.axis(axis.kind)],
+                  ),
             excludeSemantics: true,
             child: Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        SpecLabels.axis(axis.kind),
-                        style: type.secondary,
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          SpecLabels.axis(axis.kind),
+                          style: type.secondary,
+                          maxLines: 1,
+                          softWrap: false,
+                        ),
+                      ),
+                      Text(
+                        axis.hasData ? axis.score!.round().toString() : '—',
                         maxLines: 1,
                         softWrap: false,
+                        style: type.secondary.copyWith(
+                          color: axis.hasData ? TpTokens.ink : t.dim,
+                          fontWeight: t.boldWeight,
+                        ),
                       ),
-                    ),
-                    Text(
-                      axis.hasData ? axis.score!.round().toString() : '—',
-                      maxLines: 1,
-                      softWrap: false,
-                      style: type.secondary.copyWith(
-                        color: axis.hasData ? TpTokens.ink : t.dim,
-                        fontWeight: t.boldWeight,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                _Segment(fraction: axis.fraction),
-              ],
-            ),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  _Segment(fraction: axis.fraction),
+                ],
+              ),
             ),
           ),
       ],
