@@ -19,6 +19,8 @@ Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) async 
 }
 
 void main() {
+  group('shortlist 지우기', _shortlistRemoval);
+
   setUp(initLocalization);
 
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
@@ -106,5 +108,42 @@ void main() {
       // iOS 는 콘텐츠 안, Android 는 large app bar 에 제목이 있다.
       expect(find.text('Today'), findsOneWidget);
     }
+  });
+}
+
+/// 명세 §3 — shortlist 행은 스와이프와 길게 누르기로 지운다.
+void _shortlistRemoval() {
+  testWidgets('길게 누르면 목록에서 빠진다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
+    });
+
+    final container = await pumpScreen(tester, const HomeScreen());
+    await tester.pumpAndSettle();
+    expect(container.read(shortlistProvider).length, 2);
+
+    await tester.longPress(find.text('iPhone 16 Pro Max').first);
+    await tester.pumpAndSettle();
+
+    expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
+  });
+
+  testWidgets('스와이프도 그대로 지운다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
+    });
+
+    final container = await pumpScreen(tester, const HomeScreen());
+    await tester.pumpAndSettle();
+
+    await tester.drag(
+      find.text('iPhone 16 Pro Max').first,
+      const Offset(-500, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
   });
 }

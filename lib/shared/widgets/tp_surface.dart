@@ -20,6 +20,7 @@ class TpSurface extends StatelessWidget {
     this.padding,
     this.shadow = true,
     this.onTap,
+    this.onLongPress,
   });
 
   final Widget child;
@@ -33,6 +34,9 @@ class TpSurface extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final bool shadow;
   final VoidCallback? onTap;
+
+  /// 길게 눌러 지우는 행에 쓴다. 명세 §3 의 shortlist 행이 그렇다.
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -88,15 +92,24 @@ class TpSurface extends StatelessWidget {
       );
     }
 
-    if (onTap != null) {
+    if (onTap != null || onLongPress != null) {
       // 명세 Interactions: iOS 는 밝기 +4%, Android 는 M3 리플.
       surface = t.isGlass
-          ? _PressBrightness(onTap: onTap!, child: surface)
+          ? _PressBrightness(
+              onTap: onTap,
+              onLongPress: onLongPress,
+              child: surface,
+            )
           : Material(
               color: Colors.transparent,
               borderRadius: r,
               clipBehavior: Clip.antiAlias,
-              child: InkWell(onTap: onTap, borderRadius: r, child: surface),
+              child: InkWell(
+                onTap: onTap,
+                onLongPress: onLongPress,
+                borderRadius: r,
+                child: surface,
+              ),
             );
     }
 
@@ -112,9 +125,14 @@ class TpSurface extends StatelessWidget {
 /// 지속 시간은 명세에 없다. 칩은 90ms 라고 적혀 있지만 카드는 비어 있어서
 /// 누른 즉시 반영하고 뗄 때 되돌린다.
 class _PressBrightness extends StatefulWidget {
-  const _PressBrightness({required this.onTap, required this.child});
+  const _PressBrightness({
+    required this.onTap,
+    required this.onLongPress,
+    required this.child,
+  });
 
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final Widget child;
 
   /// `filter: brightness(1.04)` 와 같다.
@@ -144,6 +162,7 @@ class _PressBrightnessState extends State<_PressBrightness> {
       button: true,
       child: GestureDetector(
         onTap: widget.onTap,
+        onLongPress: widget.onLongPress,
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => _set(true),
         onTapUp: (_) => _set(false),

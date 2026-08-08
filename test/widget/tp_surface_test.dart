@@ -12,9 +12,10 @@ import '../support/harness.dart';
 void main() {
   setUp(initLocalization);
 
-  Widget card(VoidCallback? onTap) => Center(
+  Widget card(VoidCallback? onTap, {VoidCallback? onLongPress}) => Center(
         child: TpSurface(
           onTap: onTap,
+          onLongPress: onLongPress,
           padding: const EdgeInsets.all(20),
           child: const Text('카드'),
         ),
@@ -61,6 +62,26 @@ void main() {
       await tester.pumpAndSettle();
       expect(taps, 1, reason: '$chrome');
     }
+  });
+
+  testWidgets('두 크롬 다 길게 누르기가 전달된다', (tester) async {
+    for (final chrome in TpChrome.values) {
+      var held = 0;
+      await pumpScreen(tester, card(() {}, onLongPress: () => held++),
+          chrome: chrome);
+      await tester.longPress(find.text('카드'));
+      await tester.pumpAndSettle();
+      expect(held, 1, reason: '$chrome');
+    }
+  });
+
+  testWidgets('길게 누르기만 있어도 반응한다', (tester) async {
+    var held = 0;
+    await pumpScreen(tester, card(null, onLongPress: () => held++),
+        chrome: TpChrome.ios);
+    await tester.longPress(find.text('카드'));
+    await tester.pumpAndSettle();
+    expect(held, 1);
   });
 
   testWidgets('스크린 리더가 버튼으로 읽는다', (tester) async {
