@@ -60,6 +60,7 @@ Future<void> _pump(
 void main() {
   group('이번 주 변동', _moversRoundTrip);
   group('비교에서 상담으로', _askFromCompare);
+  group('비교 열 고르기', _pickerSlots);
 
   setUp(initLocalization);
 
@@ -282,5 +283,58 @@ void _askFromCompare() {
     expect(find.text(K.askWhy.tr()), findsNothing);
     expect(container.read(askProvider).length, 1);
     expect(tester.takeException(), isNull);
+  });
+}
+
+/// 명세 §7·§8 — 열 머리를 누르면 picker 가 그 열에 쓴다.
+void _pickerSlots() {
+  Future<void> pick(
+    WidgetTester tester,
+    String columnName,
+    String pickName,
+  ) async {
+    await tester.tap(find.text(columnName).first);
+    await tester.pumpAndSettle();
+    expect(find.byType(PickerScreen), findsOneWidget);
+
+    await tester.tap(find.text(pickName).first);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('왼쪽 머리를 누르면 A 에 쓴다', (tester) async {
+    await initLocalization();
+    final container = await pumpScreen(
+      tester,
+      const TabHost(initialTab: TpTab.compare),
+      size: const Size(1200, 3200),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+
+    expect(container.read(compareProvider).a, 'galaxy-s25-ultra');
+    await pick(tester, 'Galaxy S25 Ultra', 'Pixel 9 Pro XL');
+
+    expect(container.read(compareProvider).a, 'pixel-9-pro-xl');
+    expect(container.read(compareProvider).b, 'iphone-16-pro-max');
+  });
+
+  testWidgets('오른쪽 머리를 누르면 B 에 쓴다', (tester) async {
+    await initLocalization();
+    final container = await pumpScreen(
+      tester,
+      const TabHost(initialTab: TpTab.compare),
+      size: const Size(1200, 3200),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+
+    await pick(tester, 'iPhone 16 Pro Max', 'OnePlus 13');
+
+    expect(container.read(compareProvider).a, 'galaxy-s25-ultra');
+    expect(container.read(compareProvider).b, 'oneplus-13');
   });
 }
