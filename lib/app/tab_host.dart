@@ -120,6 +120,19 @@ class _TabHostState extends ConsumerState<TabHost> {
 
   @override
   Widget build(BuildContext context) {
+    // 다른 탭에서 시스템 뒤로 가기를 누르면 앱을 끄는 대신 홈으로 온다.
+    // 명세의 back stack 은 밀어 올린 화면만 다루고 탭은 언급하지 않는데,
+    // Android 에서 탭 하나 눌렀다가 뒤로 갔다고 앱이 꺼지면 사고에 가깝다.
+    return PopScope(
+      canPop: _tab == TpTab.home,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _select(TpTab.home);
+      },
+      child: _stack(),
+    );
+  }
+
+  Widget _stack() {
     // IndexedStack 이라 탭을 오가도 스크롤 위치와 입력이 남는다.
     return IndexedStack(
       index: TpTab.values.indexOf(_tab),
