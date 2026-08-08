@@ -55,6 +55,12 @@ class WeightsNotifier extends Notifier<TpWeights> {
   @override
   TpWeights build() {
     unawaited(_restore());
+    // 미뤄둔 쓰기가 있으면 사라지기 전에 내보낸다.
+    ref.onDispose(() {
+      _saveTimer?.cancel();
+      final pending = _unsaved;
+      if (pending != null) unawaited(_write(pending));
+    });
     return TpWeights.defaults;
   }
 
@@ -71,14 +77,31 @@ class WeightsNotifier extends Notifier<TpWeights> {
     }
   }
 
-  Future<void> _persist() async {
+  /// 값을 인자로 받는다. 버려진 뒤에 불릴 수 있어서 state 를 읽으면 터진다.
+  Future<void> _write(TpWeights value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefsKey, jsonEncode(state.toJson()));
+    await prefs.setString(_prefsKey, jsonEncode(value.toJson()));
   }
+
+  /// 저장을 모아서 한 번에 한다.
+  ///
+  /// 슬라이더는 끄는 동안 픽셀마다 [set] 을 부른다. 그대로 두면 한 번
+  /// 끌 때마다 SharedPreferences 에 백 번 가까이 쓴다. 화면은 즉시
+  /// 바뀌어야 하니 state 는 그대로 두고 쓰기만 미룬다.
+  static const Duration saveDelay = Duration(milliseconds: 400);
+  Timer? _saveTimer;
+
+  /// 아직 안 쓴 값. 버려질 때 이걸 내보낸다 — 그 시점엔 state 를 못 읽는다.
+  TpWeights? _unsaved;
 
   void set(TpWeights next) {
     state = next;
-    unawaited(_persist());
+    _unsaved = next;
+    _saveTimer?.cancel();
+    _saveTimer = Timer(saveDelay, () {
+      _unsaved = null;
+      unawaited(_write(next));
+    });
   }
 
   /// 축 하나만 바꾼다. 슬라이더가 이걸 부른다.

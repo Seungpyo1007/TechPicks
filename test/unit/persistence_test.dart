@@ -13,6 +13,11 @@ import 'package:techpicks/domain/model/tp_weights.dart';
 /// 복원이 조용히 실패해도 화면은 기본값으로 멀쩡히 뜨기 때문에 눈으로는
 /// 안 잡힌다.
 
+/// 가중치 저장은 [WeightsNotifier.saveDelay] 만큼 미뤄진다.
+Future<void> _afterSave() => Future<void>.delayed(
+  WeightsNotifier.saveDelay + const Duration(milliseconds: 50),
+);
+
 /// 복원은 SharedPreferences 채널을 한 번 왕복한 뒤에 끝난다.
 Future<void> _settle() =>
     Future<void>.delayed(const Duration(milliseconds: 20));
@@ -43,7 +48,7 @@ void main() {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final first = _restart();
       first.read(weightsProvider.notifier).setAxis(TpAxisKind.camera, 0.5);
-      await _settle();
+      await _afterSave();
 
       expect(
         (await _readAfterRestart((c) => c.read(weightsProvider))).camera,
@@ -63,7 +68,7 @@ void main() {
       expect(first.read(weightsProvider).battery, 0.9);
 
       first.read(weightsProvider.notifier).reset();
-      await _settle();
+      await _afterSave();
 
       expect(
         await _readAfterRestart((c) => c.read(weightsProvider)),
@@ -99,6 +104,43 @@ void main() {
       expect(
         await _readAfterRestart((c) => c.read(weightsProvider)),
         TpWeights.defaults,
+      );
+    });
+  });
+
+  group('가중치 저장 미루기', () {
+    test('끄는 동안에는 안 쓰고 마지막 값만 남는다', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final container = _restart();
+      final notifier = container.read(weightsProvider.notifier);
+
+      // 슬라이더를 끄는 흉내.
+      for (var i = 1; i <= 20; i++) {
+        notifier.setAxis(TpAxisKind.display, i / 20);
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      // 아직 아무것도 안 썼다.
+      expect(prefs.getString('tp_weights'), isNull);
+
+      await _afterSave();
+      expect(
+        (await _readAfterRestart((c) => c.read(weightsProvider))).display,
+        1.0,
+      );
+    });
+
+    test('미뤄둔 쓰기는 버려지기 전에 나간다', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final container = ProviderContainer();
+      container.read(weightsProvider.notifier).setAxis(TpAxisKind.value, 0.7);
+      // 타이머가 울리기 전에 앱이 내려간다.
+      container.dispose();
+      await _settle();
+
+      expect(
+        (await _readAfterRestart((c) => c.read(weightsProvider))).value,
+        0.7,
       );
     });
   });
