@@ -89,15 +89,73 @@ class TpSurface extends StatelessWidget {
     }
 
     if (onTap != null) {
-      surface = Material(
-        color: Colors.transparent,
-        borderRadius: r,
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(onTap: onTap, borderRadius: r, child: surface),
-      );
+      // 명세 Interactions: iOS 는 밝기 +4%, Android 는 M3 리플.
+      surface = t.isGlass
+          ? _PressBrightness(onTap: onTap!, child: surface)
+          : Material(
+              color: Colors.transparent,
+              borderRadius: r,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(onTap: onTap, borderRadius: r, child: surface),
+            );
     }
 
     return surface;
+  }
+}
+
+/// 누르는 동안 밝아지는 면. iOS 크롬 전용.
+///
+/// 리플은 M3 표현이라 유리 위에 얹으면 안 맞는다. 명세가 그래서 두 플랫폼에
+/// 다른 피드백을 준다.
+///
+/// 지속 시간은 명세에 없다. 칩은 90ms 라고 적혀 있지만 카드는 비어 있어서
+/// 누른 즉시 반영하고 뗄 때 되돌린다.
+class _PressBrightness extends StatefulWidget {
+  const _PressBrightness({required this.onTap, required this.child});
+
+  final VoidCallback onTap;
+  final Widget child;
+
+  /// `filter: brightness(1.04)` 와 같다.
+  static const double amount = 1.04;
+
+  static const ColorFilter filter = ColorFilter.matrix(<double>[
+    amount, 0, 0, 0, 0, //
+    0, amount, 0, 0, 0, //
+    0, 0, amount, 0, 0, //
+    0, 0, 0, 1, 0, //
+  ]);
+
+  @override
+  State<_PressBrightness> createState() => _PressBrightnessState();
+}
+
+class _PressBrightnessState extends State<_PressBrightness> {
+  bool _pressed = false;
+
+  void _set(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _set(true),
+        onTapUp: (_) => _set(false),
+        onTapCancel: () => _set(false),
+        child: _pressed
+            ? ColorFiltered(
+                colorFilter: _PressBrightness.filter,
+                child: widget.child,
+              )
+            : widget.child,
+      ),
+    );
   }
 }
 
