@@ -164,7 +164,14 @@ class TpShell extends StatelessWidget {
                       horizontal: 16,
                       vertical: 11,
                     ),
-                    child: Text(title!, style: type.appBarTitle),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        const _AppMark(width: 13, height: 19),
+                        const SizedBox(width: 8),
+                        Text(title!, style: type.appBarTitle),
+                      ],
+                    ),
                   ),
                   const Spacer(),
                   // 뒤로 버튼과 좌우 균형을 맞춘다.
@@ -248,6 +255,11 @@ class TpShell extends StatelessWidget {
                             onPressed: onBack,
                             tooltip: K.back.tr(),
                             icon: const Icon(Icons.arrow_back),
+                          )
+                        else
+                          const Padding(
+                            padding: EdgeInsets.only(left: 12),
+                            child: _AppMark(width: 16, height: 22),
                           ),
                       ],
                     ),
@@ -409,4 +421,27 @@ class _AndroidTabBar extends StatelessWidget {
       }).toList(),
     );
   }
+}
+
+/// 헤더의 앱 마크.
+///
+/// 명세 Assets 표가 크기를 못박았다 — iOS 13×19, Android 16×22.
+/// 장식이라 스크린 리더에서는 뺀다. 제목이 바로 옆에 있다.
+class _AppMark extends StatelessWidget {
+  const _AppMark({required this.width, required this.height});
+
+  static const String asset = 'assets/logo/NBlogo_black.png';
+
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => ExcludeSemantics(
+    child: Image.asset(
+      asset,
+      width: width,
+      height: height,
+      fit: BoxFit.contain,
+    ),
+  );
 }
