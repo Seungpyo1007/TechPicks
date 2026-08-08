@@ -39,13 +39,31 @@ abstract class AuthService {
 /// Apple 과 Facebook 은 아직 붙이지 않았다. v1 에도 없었고 각각 별도 설정이
 /// 필요하다. 누르면 null 을 돌려 화면이 안내를 띄운다.
 class FirebaseAuthService implements AuthService {
-  FirebaseAuthService({fb.FirebaseAuth? auth})
-    : _auth = auth ?? fb.FirebaseAuth.instance;
+  FirebaseAuthService({fb.FirebaseAuth? auth}) : _given = auth;
 
-  final fb.FirebaseAuth _auth;
+  final fb.FirebaseAuth? _given;
+
+  /// Firebase 가 초기화되지 않았으면 `FirebaseAuth.instance` 자체가 던진다.
+  ///
+  /// 생성자에서 잡으면 프로바이더를 읽는 순간 앱이 죽는다. main.dart 가
+  /// 초기화 실패를 삼키는 것과 짝이 맞아야 해서 여기서도 null 로 떨어뜨린다.
+  fb.FirebaseAuth? get _auth {
+    if (_given != null) return _given;
+    try {
+      return fb.FirebaseAuth.instance;
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
-  TpUser? get current => _map(_auth.currentUser);
+  TpUser? get current {
+    try {
+      return _map(_auth?.currentUser);
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   Future<TpUser?> signIn(
@@ -53,14 +71,16 @@ class FirebaseAuthService implements AuthService {
     String? email,
     String? password,
   }) async {
+    final auth = _auth;
+    if (auth == null) return null;
     try {
       return switch (method) {
-        AuthMethod.anonymous => _map((await _auth.signInAnonymously()).user),
+        AuthMethod.anonymous => _map((await auth.signInAnonymously()).user),
         AuthMethod.email =>
           email == null || password == null
               ? null
               : _map(
-                  (await _auth.signInWithEmailAndPassword(
+                  (await auth.signInWithEmailAndPassword(
                     email: email,
                     password: password,
                   )).user,
@@ -68,7 +88,9 @@ class FirebaseAuthService implements AuthService {
         // 아직 미연결.
         AuthMethod.google || AuthMethod.apple || AuthMethod.facebook => null,
       };
-    } on fb.FirebaseAuthException {
+    } catch (_) {
+      // FirebaseAuthException 만 잡으면 설정이 없는 빌드에서 새어 나간다.
+      // 화면은 어느 쪽이든 "연결되지 않았다"로 떨어진다.
       return null;
     }
   }
@@ -78,19 +100,27 @@ class FirebaseAuthService implements AuthService {
     required String email,
     required String password,
   }) async {
+    final auth = _auth;
+    if (auth == null) return null;
     try {
-      final cred = await _auth.createUserWithEmailAndPassword(
+      final cred = await auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       return _map(cred.user);
-    } on fb.FirebaseAuthException {
+    } catch (_) {
       return null;
     }
   }
 
   @override
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    try {
+      await _auth?.signOut();
+    } catch (_) {
+      // 이미 로그아웃 상태거나 Firebase 가 없다. 어느 쪽이든 할 일이 없다.
+    }
+  }
 
   static TpUser? _map(fb.User? u) => u == null
       ? null
