@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_vertexai/firebase_vertexai.dart';
 
 import '../../domain/model/ask_answer.dart';
@@ -7,6 +8,7 @@ import '../dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
 import '../../domain/model/tp_weights.dart';
+import '../../shared/copy_keys.dart';
 
 /// AI 상담.
 ///
@@ -173,23 +175,28 @@ class LocalAskService implements AskService {
       pick: best.name,
       pickSlug: best.slug,
       reason: budget == null
-          ? 'Highest index in the catalogue on your current weights.'
-          : 'Best index under \$$budget on your current weights.',
+          ? K.askLocalTop.tr()
+          : K.askLocalBudget.tr(args: <String>[DeviceSpecs.formatPrice(budget)]),
+      // 표 라벨은 비교·상세와 같은 걸 쓴다. 여기만 영어로 남으면 한국어에서
+      // 한 화면 안에 두 언어가 섞인다.
       rows: <AskRow>[
         AskRow(
-          label: 'TP Index',
+          label: K.tpIndex.tr(),
           value:
               TpIndex.of(best.score, weights)?.toString() ?? DeviceSpecs.empty,
         ),
-        AskRow(label: 'Price', value: DeviceSpecs.formatPrice(best.msrpUsd)),
         AskRow(
-          label: 'Battery',
+          label: K.spec(SpecKind.price).tr(),
+          value: DeviceSpecs.formatPrice(best.msrpUsd),
+        ),
+        AskRow(
+          label: K.spec(SpecKind.battery).tr(),
           value: best.batteryMah == null
               ? DeviceSpecs.empty
               : '${best.batteryMah}mAh',
         ),
         AskRow(
-          label: 'Camera',
+          label: K.spec(SpecKind.camera).tr(),
           value: best.score?.camera?.round().toString() ?? DeviceSpecs.empty,
         ),
       ],

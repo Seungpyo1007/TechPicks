@@ -11,6 +11,8 @@
   "anonFailed": "Could not start a session. Try again.",
   "askFailed": "Could not answer that one. Try again in a moment.",
   "askHint": "Ask anything",
+  "askLocalBudget": "Best index under {} on your current weights.",
+  "askLocalTop": "Highest index in the catalogue on your current weights.",
   "askPlaceholder": "Budget, and what matters most",
   "askSuggest1": "Best camera under $1,000",
   "askSuggest2": "Longest battery life",
