@@ -14,6 +14,36 @@ Widget _host(TpChrome chrome, Widget child) => MaterialApp(
     );
 
 void main() {
+  group('앱 마크', () {
+    testWidgets('iOS 헤더는 13×19', (tester) async {
+      await tester.pumpWidget(
+        _host(TpChrome.ios, const TpShell(title: '랭킹', child: SizedBox())),
+      );
+      final img = tester.widget<Image>(find.byType(Image));
+      expect(img.width, 13);
+      expect(img.height, 19);
+    });
+
+    testWidgets('Android 헤더는 16×22', (tester) async {
+      await tester.pumpWidget(
+        _host(TpChrome.android, const TpShell(title: '랭킹', child: SizedBox())),
+      );
+      final img = tester.widget<Image>(find.byType(Image));
+      expect(img.width, 16);
+      expect(img.height, 22);
+    });
+
+    testWidgets('뒤로 버튼이 있으면 Android 는 마크를 접는다', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          TpChrome.android,
+          TpShell(title: '상세', onBack: () {}, child: const SizedBox()),
+        ),
+      );
+      expect(find.byType(Image), findsNothing);
+    });
+  });
+
   group('테마', () {
     test('크롬은 플랫폼에서 정해진다', () {
       expect(TpChrome.forPlatform(TargetPlatform.iOS), TpChrome.ios);
