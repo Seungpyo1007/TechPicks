@@ -40,11 +40,54 @@ class GeminiAskService implements AskService {
       final res = await _resolved.generateContent(<Content>[Content.text(prompt)]);
       final text = res.text;
       if (text == null) return null;
-      return AskAnswer.tryParse(text);
+      final parsed = AskAnswer.tryParse(text);
+      if (parsed == null) return null;
+      return resolveInCatalog(parsed, catalog);
     } catch (_) {
       // 화면이 실패 말풍선을 띄운다. 원문 예외를 사용자에게 보이지 않는다.
       return null;
     }
+  }
+
+  /// 고른 기기를 카탈로그에서 찾는다. 없으면 답을 버린다.
+  ///
+  /// 프롬프트가 "목록 안에서만 고르라"고 하지만 모델은 지킬 때도 있고 아닐
+  /// 때도 있다. 지키지 않은 답을 그대로 띄우면 slug 가 상세 화면에서
+  /// 404 로 떨어지고, 사용자는 앱이 아는 기기인 줄 알고 눌렀다가 실패를 본다.
+  ///
+  /// slug 가 맞으면 그걸 쓰고, 없거나 틀렸으면 이름으로 한 번 더 찾는다.
+  /// 둘 다 실패하면 null 이라 화면이 실패 말풍선을 띄운다.
+  static AskAnswer? resolveInCatalog(
+    AskAnswer answer,
+    List<Smartphone> catalog,
+  ) {
+    Smartphone? bySlug;
+    for (final d in catalog) {
+      if (d.slug == answer.pickSlug) {
+        bySlug = d;
+        break;
+      }
+    }
+
+    final picked = bySlug ?? _byName(answer.pick, catalog);
+    if (picked == null) return null;
+
+    return AskAnswer(
+      // 표시 이름은 카탈로그 쪽을 쓴다. 상세 화면 제목과 어긋나면 안 된다.
+      pick: picked.name,
+      reason: answer.reason,
+      rows: answer.rows,
+      pickSlug: picked.slug,
+    );
+  }
+
+  static Smartphone? _byName(String name, List<Smartphone> catalog) {
+    final needle = name.trim().toLowerCase();
+    if (needle.isEmpty) return null;
+    for (final d in catalog) {
+      if (d.name.trim().toLowerCase() == needle) return d;
+    }
+    return null;
   }
 
   /// 카탈로그를 컨텍스트로 넣고 응답 형태를 못박는다.
