@@ -119,11 +119,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ],
 
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          // 글자 크기를 키우면 한 줄에 안 들어간다. Row 면 넘치고, Wrap 이면
+          // 링크가 아래로 내려간다.
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 4,
             children: <Widget>[
               Text(K.noAccount.tr(), style: type.secondary),
-              const SizedBox(width: 6),
               TpTapTarget(
                 onTap: widget.onSignUp,
                 child: Text(

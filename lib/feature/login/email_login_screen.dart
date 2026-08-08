@@ -162,14 +162,17 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
           ),
 
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          // 로그인 화면과 같은 이유로 Wrap.
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 6,
+            runSpacing: 4,
             children: <Widget>[
               Text(
                 (_signingUp ? K.haveAccount : K.noAccount).tr(),
                 style: type.secondary,
               ),
-              const SizedBox(width: 6),
               TpTapTarget(
                 onTap: () => setState(() {
                   _signingUp = !_signingUp;

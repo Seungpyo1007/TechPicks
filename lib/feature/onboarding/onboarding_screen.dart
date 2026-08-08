@@ -83,7 +83,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               itemCount: K.onboarding.length,
               itemBuilder: (context, i) {
                 final pane = K.onboarding[i];
-                return Padding(
+                // 글자 크기를 키우면 한 화면에 안 들어간다. 잘리는 대신
+                // 스크롤되게 둔다.
+                return SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
