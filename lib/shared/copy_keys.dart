@@ -76,6 +76,8 @@ abstract final class K {
   static const String chatSeed = 'chatSeed';
   static const String askHint = 'askHint';
   static const String askFailed = 'askFailed';
+  static const String askLocalTop = 'askLocalTop';
+  static const String askLocalBudget = 'askLocalBudget';
   static const List<String> askSuggestions = <String>[
     'askSuggest1',
     'askSuggest2',

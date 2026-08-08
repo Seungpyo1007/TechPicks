@@ -1,10 +1,16 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:techpicks/domain/model/device_specs.dart';
+import 'package:techpicks/shared/copy_keys.dart';
+
+import '../support/harness.dart';
 import 'package:techpicks/data/dto/score.dart';
 import 'package:techpicks/data/dto/smartphone.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/domain/model/ask_answer.dart';
 
-Smartphone _phone(String slug, {int? usd, double? perf, int? mah}) => Smartphone(
+Smartphone _phone(String slug, {int? usd, double? perf, int? mah}) =>
+    Smartphone(
       slug: slug,
       name: slug,
       msrpUsd: usd,
@@ -19,6 +25,9 @@ Smartphone _phone(String slug, {int? usd, double? perf, int? mah}) => Smartphone
     );
 
 void main() {
+  // 오프라인 답변이 번역 파일을 읽는다.
+  setUp(initLocalization);
+
   group('AskAnswer.tryParse', () {
     test('깨끗한 JSON', () {
       final a = AskAnswer.tryParse(
@@ -83,17 +92,17 @@ Hope that helps.
       final a = await const LocalAskService().ask('뭐가 좋아?', catalog);
       expect(a!.pickSlug, 'flagship');
       expect(a.rows.map((r) => r.label), <String>[
-        'TP Index',
-        'Price',
-        'Battery',
-        'Camera',
+        K.tpIndex.tr(),
+        K.spec(SpecKind.price).tr(),
+        K.spec(SpecKind.battery).tr(),
+        K.spec(SpecKind.camera).tr(),
       ]);
     });
 
     test('예산을 말하면 그 안에서 고른다', () async {
       final a = await const LocalAskService().ask('\$1,000 이하로', catalog);
       expect(a!.pickSlug, 'mid');
-      expect(a.reason, contains('1000'));
+      expect(a.reason, contains(r'$1,000'));
     });
 
     test('예산 안에 아무것도 없으면 전체에서 고른다', () async {
@@ -116,11 +125,9 @@ Hope that helps.
     });
 
     test('프롬프트에 카탈로그와 응답 형태가 들어간다', () {
-      final prompt = GeminiAskService.buildPrompt(
-        '카메라 좋은 거',
-        <Smartphone>[_phone('galaxy-s25', usd: 799, perf: 88)],
-        const LocalAskService().weights,
-      );
+      final prompt = GeminiAskService.buildPrompt('카메라 좋은 거', <Smartphone>[
+        _phone('galaxy-s25', usd: 799, perf: 88),
+      ], const LocalAskService().weights);
 
       expect(prompt, contains('galaxy-s25'));
       expect(prompt, contains('JSON only'));

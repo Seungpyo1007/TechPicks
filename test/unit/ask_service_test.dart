@@ -1,4 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:techpicks/domain/model/device_specs.dart';
+import 'package:techpicks/shared/copy_keys.dart';
+
+import '../support/harness.dart';
 import 'package:techpicks/data/dto/smartphone.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/domain/model/ask_answer.dart';
@@ -21,6 +26,9 @@ AskAnswer _answer({String? slug, String pick = 'Galaxy S25 Ultra'}) =>
     );
 
 void main() {
+  // 오프라인 답변이 번역 파일을 읽는다.
+  setUp(initLocalization);
+
   group('카탈로그 대조', () {
     test('slug 가 맞으면 그대로 통과한다', () {
       final r = GeminiAskService.resolveInCatalog(
@@ -112,10 +120,10 @@ void main() {
     test('명세대로 네 줄을 돌려준다', () async {
       final answer = await service.ask('뭐가 좋아?', _catalog);
       expect(answer!.rows.map((r) => r.label), <String>[
-        'TP Index',
-        'Price',
-        'Battery',
-        'Camera',
+        K.tpIndex.tr(),
+        K.spec(SpecKind.price).tr(),
+        K.spec(SpecKind.battery).tr(),
+        K.spec(SpecKind.camera).tr(),
       ]);
     });
   });
