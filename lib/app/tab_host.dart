@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -47,18 +49,18 @@ class _TabHostState extends ConsumerState<TabHost> {
 
   void _select(TpTab tab) => setState(() => _tab = tab);
 
-  Future<void> _push(Widget screen) => Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => screen),
-      );
+  Future<void> _push(Widget screen) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute<void>(builder: (_) => screen));
 
   void _openDevice(String slug) => _push(
-        DetailScreen(
-          slug: slug,
-          onBack: () => Navigator.of(context).pop(),
-          onCompare: _compareWith,
-          onView3D: (s) => _openViewer(s),
-        ),
-      );
+    DetailScreen(
+      slug: slug,
+      onBack: () => Navigator.of(context).pop(),
+      onCompare: _compareWith,
+      onView3D: (s) => _openViewer(s),
+    ),
+  );
 
   /// 상세에서 넘어오면 A 슬롯에 그 기기를 넣고 비교 탭으로 간다.
   void _compareWith(String slug) {
@@ -68,7 +70,8 @@ class _TabHostState extends ConsumerState<TabHost> {
   }
 
   void _openViewer(String slug) {
-    final name = ref
+    final name =
+        ref
             .read(catalogProvider)
             .value
             ?.smartphones
@@ -76,10 +79,9 @@ class _TabHostState extends ConsumerState<TabHost> {
             .firstOrNull
             ?.name ??
         slug;
-    _push(ViewerScreen(
-      deviceName: name,
-      onBack: () => Navigator.of(context).pop(),
-    ));
+    _push(
+      ViewerScreen(deviceName: name, onBack: () => Navigator.of(context).pop()),
+    );
   }
 
   void _openPicker(CompareSide side) {
@@ -87,15 +89,34 @@ class _TabHostState extends ConsumerState<TabHost> {
     _push(PickerScreen(onDone: () => Navigator.of(context).pop()));
   }
 
+  /// 비교 중인 두 기기를 그대로 상담으로 넘긴다.
+  ///
+  /// 한쪽이라도 비어 있으면 물어볼 게 없으니 탭만 바꾼다.
+  void _askAboutCompared() {
+    _select(TpTab.ask);
+
+    final slots = ref.read(compareProvider);
+    final catalog = ref.read(catalogProvider).value;
+    if (catalog == null || slots.a == null || slots.b == null) return;
+
+    String? nameOf(String slug) =>
+        catalog.smartphones.where((d) => d.slug == slug).firstOrNull?.name;
+
+    final a = nameOf(slots.a!);
+    final b = nameOf(slots.b!);
+    if (a == null || b == null) return;
+    unawaited(ref.read(askProvider.notifier).askAbout(a, b));
+  }
+
   void _openScan() => _push(
-        ScanScreen(
-          onBack: () => Navigator.of(context).pop(),
-          onOpenDevice: (slug) {
-            Navigator.of(context).pop();
-            _openDevice(slug);
-          },
-        ),
-      );
+    ScanScreen(
+      onBack: () => Navigator.of(context).pop(),
+      onOpenDevice: (slug) {
+        Navigator.of(context).pop();
+        _openDevice(slug);
+      },
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -119,12 +140,9 @@ class _TabHostState extends ConsumerState<TabHost> {
         CompareScreen(
           onTabSelected: _select,
           onPick: _openPicker,
-          onAskWhy: () => _select(TpTab.ask),
+          onAskWhy: _askAboutCompared,
         ),
-        AskScreen(
-          onTabSelected: _select,
-          onDeviceTap: _openDevice,
-        ),
+        AskScreen(onTabSelected: _select, onDeviceTap: _openDevice),
         YouScreen(
           onTabSelected: _select,
           name: ref.watch(currentUserProvider)?.name,
