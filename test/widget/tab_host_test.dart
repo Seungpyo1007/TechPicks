@@ -59,6 +59,7 @@ Future<void> _pump(
 
 void main() {
   group('이번 주 변동', _moversRoundTrip);
+  group('비교에서 상담으로', _askFromCompare);
 
   setUp(initLocalization);
 
@@ -238,5 +239,48 @@ void _moversRoundTrip() {
       'galaxy-s25-ultra',
     ]);
     expect(container.read(moversProvider), isNotEmpty);
+  });
+}
+
+/// 비교 화면의 "왜?".
+void _askFromCompare() {
+  testWidgets('비교 중인 두 기기를 상담이 물어본다', (tester) async {
+    await initLocalization();
+    final container = await pumpScreen(
+      tester,
+      const TabHost(initialTab: TpTab.compare),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(K.askWhy.tr()));
+    await tester.pumpAndSettle();
+
+    final messages = container.read(askProvider);
+    // 씨앗 인사 + 질문 + 답.
+    expect(messages.length, 3);
+    expect(messages[1].text, 'Galaxy S25 Ultra or iPhone 16 Pro Max?');
+    expect(messages[2].answer, isNotNull);
+  });
+
+  testWidgets('비교할 게 없으면 물어볼 버튼도 없다', (tester) async {
+    await initLocalization();
+    final container = await pumpScreen(
+      tester,
+      const TabHost(initialTab: TpTab.compare),
+      catalogAsset: missingCatalogAsset,
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.askWhy.tr()), findsNothing);
+    expect(container.read(askProvider).length, 1);
+    expect(tester.takeException(), isNull);
   });
 }

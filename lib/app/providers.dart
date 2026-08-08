@@ -433,13 +433,11 @@ class AskNotifier extends Notifier<List<AskMessage>> {
     ];
   }
 
-  /// 비교 화면에서 넘어올 때 두 기기를 미리 넣어준다.
-  void seedWithDevices(String a, String b) {
-    state = <AskMessage>[
-      ...state,
-      AskMessage.user('$a or $b?'),
-    ];
-  }
+  /// 비교 화면의 "왜?" 에서 넘어올 때 두 기기를 물어봐 준다.
+  ///
+  /// 질문만 올려두면 답 없는 말풍선이 남는다. [send] 를 그대로 태워서
+  /// 사용자가 직접 친 것과 같은 흐름으로 만든다.
+  Future<void> askAbout(String a, String b) => send('$a or $b?');
 }
 
 final askProvider =
