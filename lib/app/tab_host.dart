@@ -33,6 +33,18 @@ class TabHost extends ConsumerStatefulWidget {
 class _TabHostState extends ConsumerState<TabHost> {
   late TpTab _tab = widget.initialTab;
 
+  @override
+  void initState() {
+    super.initState();
+    // 지금 순위를 다음 실행의 비교 대상으로 남긴다. 이게 없으면 스냅샷이
+    // 영영 비어 있고 홈의 "이번 주 변동"이 한 번도 안 뜬다.
+    ref.listenManual(
+      rankSnapshotSlugsProvider,
+      (_, next) => ref.read(rankSnapshotProvider.notifier).saveOnce(next),
+      fireImmediately: true,
+    );
+  }
+
   void _select(TpTab tab) => setState(() => _tab = tab);
 
   Future<void> _push(Widget screen) => Navigator.of(context).push(

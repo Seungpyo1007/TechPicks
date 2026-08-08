@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -24,15 +23,17 @@ class _NoAuth implements AuthService {
   TpUser? get current => null;
 
   @override
-  Future<TpUser?> signIn(AuthMethod m, {String? email, String? password}) async =>
-      null;
+  Future<TpUser?> signIn(
+    AuthMethod m, {
+    String? email,
+    String? password,
+  }) async => null;
 
   @override
   Future<TpUser?> signUp({
     required String email,
     required String password,
-  }) async =>
-      null;
+  }) async => null;
 
   @override
   Future<void> signOut() async {}
@@ -40,7 +41,10 @@ class _NoAuth implements AuthService {
 
 ProviderContainer? _container;
 
-Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) async {
+Future<void> _pump(
+  WidgetTester tester, {
+  TpChrome chrome = TpChrome.ios,
+}) async {
   _container = await pumpScreen(
     tester,
     const TabHost(),
@@ -54,6 +58,8 @@ Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) async 
 }
 
 void main() {
+  group('이번 주 변동', _moversRoundTrip);
+
   setUp(initLocalization);
 
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
@@ -155,5 +161,82 @@ void main() {
     await tester.tap(find.text('Ask why'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Give me a budget'), findsOneWidget);
+  });
+}
+
+/// 홈의 "이번 주 변동".
+///
+/// 변동은 지난 실행의 순위와 비교해서 나온다. 앱이 지금 순위를 남기지 않으면
+/// 스냅샷이 영영 비어 있고 섹션이 한 번도 안 뜬다.
+void _moversRoundTrip() {
+  testWidgets('앱을 켜면 지금 순위를 다음 실행용으로 남긴다', (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await initLocalization();
+
+    await pumpScreen(
+      tester,
+      const TabHost(),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList('rank_snapshot_slugs');
+    expect(saved, isNotNull);
+    expect(saved, isNotEmpty);
+    // 카탈로그 10종이 전부 들어간다.
+    expect(saved!.length, 10);
+    expect(saved.first, 'galaxy-s25-ultra');
+  });
+
+  testWidgets('지난 순위가 다르면 변동이 잡힌다', (tester) async {
+    // 지난 실행에서는 iPhone 이 1위였다고 둔다.
+    await initLocalization();
+    // initLocalization 이 prefs 목을 비운다. 그 뒤에 심어야 한다.
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'rank_snapshot_slugs': <String>['iphone-16-pro-max', 'galaxy-s25-ultra'],
+    });
+
+    final container = await pumpScreen(
+      tester,
+      const TabHost(),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    final movers = container.read(moversProvider);
+    expect(movers, isNotEmpty);
+    expect(find.text(K.movers.tr()), findsOneWidget);
+  });
+
+  testWidgets('스냅샷을 남겨도 이번 실행의 변동은 그대로다', (tester) async {
+    // 남기면서 state 까지 덮으면 변동이 항상 0 이 된다.
+    await initLocalization();
+    // initLocalization 이 prefs 목을 비운다. 그 뒤에 심어야 한다.
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'rank_snapshot_slugs': <String>['oneplus-13r', 'galaxy-s25-ultra'],
+    });
+
+    final container = await pumpScreen(
+      tester,
+      const TabHost(),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    expect(container.read(rankSnapshotProvider), <String>[
+      'oneplus-13r',
+      'galaxy-s25-ultra',
+    ]);
+    expect(container.read(moversProvider), isNotEmpty);
   });
 }

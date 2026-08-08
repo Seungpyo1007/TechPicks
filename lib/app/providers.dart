@@ -304,10 +304,25 @@ class RankSnapshotNotifier extends Notifier<List<String>> {
     state = prefs.getStringList(_prefsKey) ?? const <String>[];
   }
 
+  bool _saved = false;
+
   /// 지금 순위를 다음 실행의 비교 대상으로 남긴다.
+  ///
+  /// state 는 건드리지 않는다. 이번 실행의 Movers 는 복원해둔 지난 순위와
+  /// 비교해야 하는데, 여기서 state 까지 덮으면 변동이 항상 0 이 된다.
   Future<void> save(List<String> slugs) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_prefsKey, slugs);
+  }
+
+  /// 실행당 한 번만 남긴다.
+  ///
+  /// 카탈로그가 늦게 오거나 화면을 오갈 때 여러 번 불릴 수 있는데, 두 번째
+  /// 부터는 쓸 이유가 없다.
+  Future<void> saveOnce(List<String> slugs) async {
+    if (_saved || slugs.isEmpty) return;
+    _saved = true;
+    await save(slugs);
   }
 }
 
@@ -316,17 +331,28 @@ final rankSnapshotProvider =
   RankSnapshotNotifier.new,
 );
 
+/// 기본 가중치 기준 TP Index 순위.
+///
+/// 변동은 이 기준이다. 사용자가 슬라이더를 만질 때마다 "이번 주 변동"이
+/// 바뀌면 그건 시간 변화가 아니라 취향 변화다.
+final indexRankingProvider = Provider<List<RankedDevice>>((ref) {
+  final catalog = ref.watch(catalogProvider).value;
+  if (catalog == null) return const <RankedDevice>[];
+  return Ranking.of(catalog.smartphones, RankAxis.tpIndex);
+});
+
+/// 다음 실행에 남길 순위. 스냅샷과 Movers 가 같은 목록을 봐야 한다.
+final rankSnapshotSlugsProvider = Provider<List<String>>((ref) =>
+    ref.watch(indexRankingProvider).map((r) => r.device.slug).toList(
+          growable: false,
+        ));
+
 /// 이번 주 변동. 저장된 순위가 없으면 빈 목록이라 섹션이 통째로 빠진다.
 final moversProvider = Provider<List<Mover>>((ref) {
-  final catalog = ref.watch(catalogProvider).value;
-  if (catalog == null) return const <Mover>[];
-
-  // 변동은 기본 가중치 기준이다. 사용자가 슬라이더를 만질 때마다 "이번 주
-  // 변동"이 바뀌면 그건 시간 변화가 아니라 취향 변화다.
-  final ranked = Ranking.of(catalog.smartphones, RankAxis.tpIndex);
   return Movers.between(
     previous: ref.watch(rankSnapshotProvider),
-    current: ranked
+    current: ref
+        .watch(indexRankingProvider)
         .map((r) => (slug: r.device.slug, name: r.device.name))
         .toList(growable: false),
   );
