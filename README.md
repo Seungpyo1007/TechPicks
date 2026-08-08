@@ -1,45 +1,61 @@
 # TechPicks
 
-TechPicks는 사용자가 원하는 전자기기를 쉽게 찾고, 성능을 비교하며, AI 챗봇을 통해 맞춤형 추천을 받을 수 있도록 돕는 Flutter 기반 애플리케이션입니다.
+기기를 고를 때 숫자 하나로 답을 주는 앱. 성능·카메라·화면·배터리·가성비에
+매긴 점수를 **사용자가 정한 비중**으로 합쳐 TP Index 를 낸다. 같은 기기라도
+카메라를 중요하게 보는 사람과 배터리를 중요하게 보는 사람의 점수가 다르다.
 
-## 주요 기능
+Flutter 로 만들고 iOS·Android 를 함께 지원한다.
 
-- **전자기기 정보 제공**: CPU, 노트북, 스마트폰 등 다양한 전자기기의 상세 정보를 확인할 수 있습니다.
-- **성능 비교**: 여러 제품의 성능을 한눈에 비교하여 합리적인 선택을 돕습니다.
-- **AI 챗봇 상담**: AI 챗봇과의 대화를 통해 사용자에게 맞는 제품을 추천받거나 궁금증을 해결할 수 있습니다.
-- **사용자 맞춤 설정**: 사용자 프로필을 통해 관심 있는 제품군을 설정하고, 앱 테마 등을 변경할 수 있습니다.
-- **3D 모델 뷰어 (지원 예정)**: 제품의 3D 모델을 통해 더욱 자세한 외형 정보를 확인할 수 있습니다.
-- **OCR 스캔 (지원 예정)**: 카메라로 제품 모델명을 스캔하여 빠르게 정보를 검색할 수 있습니다.
+## 화면
 
-## 대상 사용자
+| 화면 | 하는 일 |
+|---|---|
+| 홈 | 관심 목록에서 지금의 결론 하나, 그 근거, 이번 주 순위 변동 |
+| 랭킹 | 폰·프로세서를 지수·배터리·카메라·가성비·가격 축으로 세운다 |
+| 비교 | 두 기기를 한 표에 놓고 줄마다 이긴 쪽을 표시한다 |
+| 상세 | 스펙 표와 다섯 축 점수, 관심 목록 담기, 3D 보기 |
+| 상담 | 예산과 중요한 조건을 말하면 기기 하나와 4줄 표로 답한다 |
+| 내 정보 | 가중치 슬라이더. 움직이면 앱 전체 지수가 다시 계산된다 |
+| 스캔 | 뒷면 모델명을 읽어 카탈로그와 맞춘다 |
 
-- 새로운 전자기기 구매를 고려하고 있는 모든 분
-- 다양한 전자기기 정보를 한 곳에서 얻고 싶은 분
-- 어떤 제품이 자신에게 맞는지 전문가의 도움이 필요한 분
+## 데이터
 
-## 다운로드
+기기 정보는 [TechAPI](https://github.com/GetTechAPI/TechAPI) 를 쓴다 (CC-BY-SA 4.0).
 
-최신 버전을 다운로드하려면 [릴리스 페이지](https://github.com/Seungpyo1007/TechPicks/releases/tag/v1.0.1beta)를 방문하세요.
+목록 인덱스에는 점수가 없고 전체 목록은 19MB 라 앱에서 그대로 못 쓴다. 그래서
+빌드 시점에 큐레이션한 기기만 받아 애셋으로 굽는다.
 
-## 사용 기술
+```
+dart tool/build_catalog.dart      # assets/catalog/v1.json 을 다시 만든다
+dart tool/smoke_techapi.dart      # 원격 왕복 확인
+```
 
-- Flutter 프레임워크를 사용하여 iOS와 Android에서 모두 사용 가능한 크로스 플랫폼 앱으로 개발되었습니다.
+## 디자인
 
-## 시작하기
+`docs/DESIGN_HANDOFF.md` 가 확정 명세다. 토큰·지오메트리·EN/KO 카피가 전부
+거기 있고, 코드는 그 값을 그대로 따른다. 명세와 다르게 간 곳은 이유를 코드
+주석에 남겼다 — 색 세 군데가 WCAG AA 에 못 미쳐 최소로 조정한 것이 전부다.
 
-이 프로젝트는 Flutter 애플리케이션의 시작점입니다.
+두 플랫폼의 크롬이 다르다. iOS 는 반투명 유리에 블러를, Android M3 는 불투명한
+톤 단계를 쓴다. 화면 코드는 플랫폼 분기를 갖지 않고 토큰만 갈아 끼운다.
 
-Flutter 프로젝트를 처음 사용하는 경우 다음 리소스를 참조하세요.
+재구축 경위와 남은 일은 `docs/REBUILD_PLAN.md` 에 있다.
 
-- [Lab: 첫 Flutter 앱 작성하기](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: 유용한 Flutter 샘플](https://docs.flutter.dev/cookbook)
+## 개발
 
-Flutter 개발 시작에 대한 도움말은 튜토리얼, 샘플, 모바일 개발 지침 및 전체 API 참조를 제공하는 [온라인 설명서](https://docs.flutter.dev/)를 참조하세요.
+```
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs   # freezed / json
+flutter run
+```
 
-## 추후 계획
+```
+flutter analyze
+flutter test
+```
 
-- **TechPicks API**: 더욱 풍부하고 실시간적인 데이터 제공을 위해 TechPicks 전용 API 개발 및 통합을 계획 중입니다.
+Firebase 설정이 없어도 앱은 뜬다. 로그인만 안 되고 랭킹·비교·상담은 다 된다.
 
 ## 라이선스
 
-이 프로젝트는 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+[Apache License 2.0](LICENSE). 기기 데이터는 TechAPI 의 CC-BY-SA 4.0 을 따른다.
