@@ -63,12 +63,14 @@ class WeightsNotifier extends Notifier<TpWeights> {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted) return;
     final raw = prefs.getString(_prefsKey);
     if (raw == null) return;
     try {
       state = TpWeights.fromJson(jsonDecode(raw) as Map<String, dynamic>);
-    } on FormatException {
-      // 저장값이 깨졌으면 기본값을 그대로 둔다.
+    } catch (_) {
+      // 저장값이 깨졌으면 기본값을 그대로 둔다. FormatException 만 잡으면
+      // 배열이나 타입이 다른 필드가 들어왔을 때 TypeError 로 새어 나간다.
     }
   }
 
@@ -175,6 +177,7 @@ class ShortlistNotifier extends Notifier<List<String>> {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted) return;
     final saved = prefs.getStringList(_prefsKey);
     if (saved != null && saved.isNotEmpty) state = saved;
   }
@@ -297,6 +300,7 @@ class RankSnapshotNotifier extends Notifier<List<String>> {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted) return;
     state = prefs.getStringList(_prefsKey) ?? const <String>[];
   }
 
@@ -460,6 +464,7 @@ class OnboardingNotifier extends Notifier<bool> {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted) return;
     state = prefs.getBool(_prefsKey) ?? false;
   }
 
