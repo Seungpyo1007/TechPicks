@@ -63,6 +63,7 @@ void main() {
   group('비교에서 상담으로', _askFromCompare);
   group('비교 열 고르기', _pickerSlots);
   group('밀려 올라오는 화면', _pushedScreens);
+  group('시스템 뒤로 가기', _systemBack);
 
   setUp(initLocalization);
 
@@ -406,5 +407,53 @@ void _pushedScreens() {
     // 명세의 back stack 은 한 단계다 — 랭킹으로 돌아온다.
     expect(find.byType(DetailScreen), findsNothing);
     expect(find.text(K.rankNote.tr()), findsOneWidget);
+  });
+}
+
+/// 시스템 뒤로 가기.
+void _systemBack() {
+  Future<bool> back(WidgetTester tester) async {
+    final popped = await tester.binding.handlePopRoute().then<bool>(
+      (_) => true,
+    );
+    await tester.pumpAndSettle();
+    return popped;
+  }
+
+  testWidgets('다른 탭에서 뒤로 가면 홈으로 온다', (tester) async {
+    await initLocalization();
+    await pumpScreen(
+      tester,
+      const TabHost(initialTab: TpTab.rank),
+      size: const Size(1200, 3200),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    expect(find.text(K.rankNote.tr()), findsOneWidget);
+
+    await back(tester);
+
+    expect(find.text(K.rankNote.tr()), findsNothing);
+    expect(find.text(K.homeTitle.tr()), findsWidgets);
+  });
+
+  testWidgets('홈에서 뒤로 가면 앱이 닫힌다', (tester) async {
+    await initLocalization();
+    await pumpScreen(
+      tester,
+      const TabHost(),
+      size: const Size(1200, 3200),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+
+    final scope =
+        tester.widgetList(find.byWidgetPredicate((w) => w is PopScope)).first
+            as PopScope;
+    expect(scope.canPop, isTrue);
   });
 }
