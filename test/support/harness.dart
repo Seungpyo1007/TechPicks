@@ -38,6 +38,10 @@ class FileBundle extends CachingAssetBundle {
 ///
 /// `.tr()` 은 전역 Localization 인스턴스를 보므로 여기서 직접 올려두면
 /// 위젯 없이도 동작한다.
+///
+/// 위젯을 올려서 앱 전체를 띄우는 테스트도 시도해 봤는데, `pumpAndSettle` 이
+/// 끝나지 않고 10분 타임아웃까지 간다. 그래서 앱 루트는 [TechPicksRoot] 만
+/// 떼어 검사한다 (test/widget/startup_test.dart).
 Future<void> initLocalization({
   Locale locale = const Locale('en', 'US'),
 }) async {
