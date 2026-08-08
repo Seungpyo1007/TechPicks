@@ -396,13 +396,15 @@ class AskNotifier extends Notifier<List<AskMessage>> {
       answer = null;
     }
 
+    _busy = false;
+    // 답이 오는 동안 화면을 떠났을 수 있다.
+    if (!ref.mounted) return;
     state = <AskMessage>[
       ...state,
       answer == null
           ? AskMessage.ai(K.askFailed.tr(), failed: true)
           : AskMessage.ai(answer.pick, answer: answer),
     ];
-    _busy = false;
   }
 
   /// 비교 화면에서 넘어올 때 두 기기를 미리 넣어준다.
@@ -431,7 +433,7 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
     final user = await ref
         .read(authServiceProvider)
         .signIn(method, email: email, password: password);
-    if (user != null) state = user;
+    if (user != null && ref.mounted) state = user;
     return user != null;
   }
 
@@ -439,12 +441,13 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
     final user = await ref
         .read(authServiceProvider)
         .signUp(email: email, password: password);
-    if (user != null) state = user;
+    if (user != null && ref.mounted) state = user;
     return user != null;
   }
 
   Future<void> signOut() async {
     await ref.read(authServiceProvider).signOut();
+    if (!ref.mounted) return;
     state = null;
   }
 }
@@ -493,6 +496,7 @@ class NotificationsNotifier extends Notifier<bool> {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted) return;
     state = prefs.getBool(_prefsKey) ?? true;
   }
 
