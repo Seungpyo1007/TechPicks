@@ -348,6 +348,12 @@ v1 화면 26개와 의존성 11개 삭제
 | shortlist 지우기 | 스와이프만 있고 길게 누르기가 없었다 |
 | 헤더 앱 마크 | 빠져 있었다 |
 | 상담 답 | 모델이 카탈로그 밖의 기기를 골라도 그대로 띄웠다 |
+| 오프라인 상담 | 근거 문장과 표 라벨이 영어로 박혀 있었다 |
+| Firebase 없는 빌드 | 인증이 FirebaseAuthException 만 걸러서 그대로 터졌다 |
+| 손님으로 쓰기 | 선택이 위젯 상태라 켤 때마다 로그인 화면을 다시 봤다 |
+| 시스템 뒤로 가기 | 다른 탭에서 누르면 앱이 그냥 꺼졌다 |
+| 앱 버전 | pubspec 은 1.0.0 인데 화면은 2.0.0 이라고 말했다 |
+| 가중치 저장 | 슬라이더를 끌 때마다 SharedPreferences 에 백 번 가까이 썼다 |
 
 접근성 쪽은 따로 적어둔다. 맨 `GestureDetector` 는 시맨틱 트리에 탭 액션을
 만들지 않아서 기존 `labeledTapTargetGuideline` 검사를 통째로 빠져나갔다.
@@ -394,7 +400,7 @@ v1 화면 26개와 의존성 11개 삭제
 ### 확인 방법
 
 ```
-flutter test        408건
+flutter test        438건 · 라인 커버리지 90.9%
 flutter analyze     이슈 0
 dart tool/smoke_techapi.dart   원격 왕복
 ```
