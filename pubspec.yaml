@@ -40,6 +40,11 @@ dev_dependencies:
   riverpod: ^3.4.2
 
 flutter:
+  # Flutter 3.44 는 Swift Package Manager 를 기본으로 켠다. firebase_core 3.6.0
+  # 은 SPM 배치를 아직 못 따라와서 Package.swift 가 firebase_sdk_version.rb 를
+  # 못 찾고 iOS 빌드가 통째로 실패한다. CocoaPods 로 돌린다.
+  config:
+    enable-swift-package-manager: false
 
   uses-material-design: true
 
