@@ -1,102 +1,102 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-    <dict>
-        <key>CFBundleDevelopmentRegion</key>
-        <string>$(DEVELOPMENT_LANGUAGE)</string>
-        <key>CFBundleDisplayName</key>
-        <string>Techpicks</string>
-        <key>CFBundleExecutable</key>
-        <string>$(EXECUTABLE_NAME)</string>
-        <key>CFBundleIdentifier</key>
-        <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-        <key>CFBundleInfoDictionaryVersion</key>
-        <string>6.0</string>
-        <key>CFBundleName</key>
-        <string>techpicks</string>
-        <key>CFBundlePackageType</key>
-        <string>APPL</string>
-        <key>CFBundleShortVersionString</key>
-        <string>$(FLUTTER_BUILD_NAME)</string>
-        <key>CFBundleSignature</key>
-        <string>????</string>
-        <key>CFBundleVersion</key>
-        <string>$(FLUTTER_BUILD_NUMBER)</string>
-        <key>LSRequiresIPhoneOS</key>
-        <true/>
-        <key>UILaunchStoryboardName</key>
-        <string>LaunchScreen</string>
-        <key>UIMainStoryboardFile</key>
-        <string>Main</string>
-
-        <key>UISupportedInterfaceOrientations</key>
-        <array>
-            <string>UIInterfaceOrientationPortrait</string>
-            <string>UIInterfaceOrientationLandscapeLeft</string>
-            <string>UIInterfaceOrientationLandscapeRight</string>
-        </array>
-        <key>UISupportedInterfaceOrientations~ipad</key>
-        <array>
-            <string>UIInterfaceOrientationPortrait</string>
-            <string>UIInterfaceOrientationPortraitUpsideDown</string>
-            <string>UIInterfaceOrientationLandscapeLeft</string>
-            <string>UIInterfaceOrientationLandscapeRight</string>
-        </array>
-        <key>CADisableMinimumFrameDurationOnPhone</key>
-        <true/>
-        <key>UIApplicationSupportsIndirectInputEvents</key>
-        <true/>
-        <key>UIStatusBarHidden</key>
-        <false/>
-        <key>CFBundleAllowMixedLocalizations</key>
-        <true/>
-
-        <!-- 위치 권한 설명 추가 -->
-        <key>NSLocationWhenInUseUsageDescription</key>
-        <string>이 앱은 사용자의 위치에 접근하기 위해 권한이 필요합니다.</string>
-
-        <!-- HTTP 요청 허용 설정 -->
-        <key>NSAppTransportSecurity</key>
-        <dict>
-            <key>NSAllowsArbitraryLoads</key>
-            <true/>
-        </dict>
-
-        <!-- Google Sign-In 설정 추가 -->
-        <key>GIDClientID</key>
-        <string>746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq.apps.googleusercontent.com</string>
-
-        <key>CFBundleURLTypes</key>
-        <array>
-            <dict>
-                <key>CFBundleURLSchemes</key>
-                <array>
-                    <string>com.googleusercontent.apps.746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq</string>
-                </array>
-            </dict>
-        </array>
-
-        <!-- Image Picker 및 카메라 권한 설명 추가 -->
-        <key>NSPhotoLibraryUsageDescription</key>
-        <string>이 앱은 사진 라이브러리에서 이미지를 선택하기 위해 권한이 필요합니다.</string>
-        <key>NSCameraUsageDescription</key>
-        <string>이 앱은 카메라를 사용하여 사진을 찍기 위해 권한이 필요합니다.</string>
-        <key>NSMicrophoneUsageDescription</key>
-        <string>이 앱은 오디오 녹음을 위해 마이크 권한이 필요합니다.</string>
-
-        <!-- 파일 접근 권한 설명 추가 -->
-        <key>NSPhotoLibraryAddUsageDescription</key>
-        <string>이 앱은 사진을 저장하기 위해 사용자의 사진 라이브러리에 접근할 수 있습니다.</string>
-
-        <!-- 카메라 권한 설정 -->
-        <key>NSCameraUsageDescription</key>
-        <string>Camera permission is required to capture photos for analysis.</string>
-        <key>NSPhotoLibraryUsageDescription</key>
-        <string>Photo library permission is required to access photos for analysis.</string>
-
-
-        <!-- 앱 외부에서 파일 열기 허용 -->
-        <key>LSSupportsOpeningDocumentsInPlace</key>
-        <true/>
-    </dict>
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleAllowMixedLocalizations</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Techpicks</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>techpicks</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq.apps.googleusercontent.com</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera permission is required to capture photos for analysis.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>이 앱은 사용자의 위치에 접근하기 위해 권한이 필요합니다.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>이 앱은 오디오 녹음을 위해 마이크 권한이 필요합니다.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>이 앱은 사진을 저장하기 위해 사용자의 사진 라이브러리에 접근할 수 있습니다.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo library permission is required to access photos for analysis.</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+		<key>UISceneConfigurations</key>
+		<dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneConfigurationName</key>
+					<string>flutter</string>
+					<key>UISceneDelegateClassName</key>
+					<string>FlutterSceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
+		</dict>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UIStatusBarHidden</key>
+	<false/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+</dict>
 </plist>
