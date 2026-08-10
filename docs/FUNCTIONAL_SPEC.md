@@ -362,6 +362,46 @@ TP Index = Σ(축 점수 × 축 가중치) / Σ(값이 있는 축의 가중치)
 
 ---
 
+## 11.5 관측
+
+두 가지를 앱 밖으로 내보낸다. **Firebase 가 없으면 둘 다 조용히 아무것도 안 한다.**
+
+### 삼킨 실패 (Crashlytics)
+
+§11 의 규칙대로 이 앱은 예외를 삼킨다. 삼키는 동작은 그대로 두되 non-fatal 로
+기록한다. 안 그러면 프로덕션에서 어떤 실패가 얼마나 나는지 안 보인다.
+
+기록하는 자리와 이유표:
+
+| 이유 | 어디서 |
+|---|---|
+| `auth.instance` / `auth.current` | Firebase 미초기화 |
+| `auth.signIn.<method>` / `auth.signUp` / `auth.signOut` | 인증 왕복 |
+| `catalog.load` | 카탈로그 애셋 |
+| `ask.gemini` / `ask.send` | 모델 호출 |
+| `weights.restore` | 저장값이 깨짐 |
+| `deviceInfo.read` | 플러그인 부재 |
+
+프레임워크가 잡은 예외와 그 밖에서 새어 나온 예외는 fatal 로 보낸다.
+
+### 제품 가설 (Analytics)
+
+**"지수는 사용자가 정한 비중"이 이 앱의 전제인데 검증된 적이 없다.**
+사람들이 슬라이더를 안 만지면 그냥 고정 점수 랭킹 앱이다.
+
+| 이벤트 | 담는 것 |
+|---|---|
+| `weight_changed` | 축 이름, 0–100 정수 |
+| `weights_reset` | — |
+| `shortlist_changed` | 담았는지, 목록 크기 |
+| `compared` | 두 slug |
+| `asked` | 질문 **길이**와 답을 얻었는지 |
+| `rank_axis_changed` | 축 이름 |
+
+**질문 원문은 안 보낸다.** 개인정보일 수 있다. 기기 식별자도 안 보낸다.
+
+---
+
 ## 12. 아직 없는 것
 
 | 항목 | 막고 있는 것 |

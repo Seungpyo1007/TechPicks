@@ -1,3 +1,4 @@
+import '../../core/error_reporter.dart';
 import 'dart:convert';
 
 import 'package:flutter/services.dart' show AssetBundle, rootBundle;
@@ -41,7 +42,8 @@ class CatalogRepository {
       return Ok(catalog);
     } on Failure catch (f) {
       return Err(f);
-    } catch (e) {
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'catalog.load');
       return Err(ParseFailure('카탈로그 애셋을 읽지 못했다: $assetPath', cause: e));
     }
   }

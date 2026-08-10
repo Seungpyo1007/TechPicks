@@ -1,3 +1,4 @@
+import '../../core/error_reporter.dart';
 import 'dart:io' show Platform;
 
 import 'package:device_info_plus/device_info_plus.dart';
@@ -41,8 +42,9 @@ class PlatformDeviceInfoService implements DeviceInfoService {
         // name 쪽인데 사용자가 바꿀 수 있어 모델명 우선.
         return ThisDevice(name: info.utsname.machine, brand: 'Apple');
       }
-    } catch (_) {
+    } catch (e, s) {
       // 플러그인이 없는 환경(테스트·데스크톱)에서는 그냥 없는 것으로 둔다.
+      TpErrors.record(e, s, reason: 'deviceInfo.read');
     }
     return null;
   }

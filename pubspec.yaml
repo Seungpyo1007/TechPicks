@@ -25,6 +25,8 @@ dependencies:
   flutter_riverpod: ^3.4.2
   device_info_plus: ^13.2.0
   animations: ^2.2.0
+  firebase_crashlytics: ^5.2.7
+  firebase_analytics: ^12.4.6
 
 
 
