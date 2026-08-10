@@ -2,7 +2,8 @@ import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
-import 'package:techpicks/app/theme/page_transitions.dart';
+import 'package:animations/animations.dart'
+    show SharedAxisPageTransitionsBuilder;
 
 import '../support/harness.dart';
 
@@ -26,16 +27,18 @@ void main() {
       );
       expect(
         builderFor(TpChrome.android, platform),
-        isA<SharedAxisXPageTransitionsBuilder>(),
+        isA<SharedAxisPageTransitionsBuilder>(),
         reason: '$platform',
       );
     }
   });
 
-  test('shared axis X 는 300ms 다', () {
+  test('shared axis 는 flutter.dev 의 공식 구현을 쓴다', () {
+    // 직접 그렸다가 바꿨다. 곡선과 지속 시간은 패키지가 M3 정의대로 들고 있다.
     expect(
-      const SharedAxisXPageTransitionsBuilder().transitionDuration,
-      const Duration(milliseconds: 300),
+      builderFor(TpChrome.android, TargetPlatform.android).runtimeType
+          .toString(),
+      contains('SharedAxis'),
     );
   });
 
@@ -59,9 +62,15 @@ void main() {
     // 전환 중간. 아직 제자리가 아니고 아직 불투명하지도 않다.
     await tester.pump(const Duration(milliseconds: 150));
 
-    final opacity = tester.widgetList<Opacity>(find.byType(Opacity));
-    expect(opacity, isNotEmpty);
-    expect(opacity.any((o) => o.opacity > 0 && o.opacity < 1), isTrue);
+    // 공식 구현은 FadeTransition 을 쓴다. 전환 중이라 아직 불투명하지 않다.
+    final fades = tester
+        .widgetList<FadeTransition>(find.byType(FadeTransition))
+        .toList();
+    expect(fades, isNotEmpty);
+    expect(
+      fades.any((f) => f.opacity.value > 0 && f.opacity.value < 1),
+      isTrue,
+    );
 
     await tester.pumpAndSettle();
     expect(find.text('다음'), findsOneWidget);
@@ -85,8 +94,10 @@ void main() {
     await tester.tap(find.text('밀기'));
     await tester.pumpAndSettle();
 
-    for (final o in tester.widgetList<Opacity>(find.byType(Opacity))) {
-      expect(o.opacity, 1);
+    for (final f in tester.widgetList<FadeTransition>(
+      find.byType(FadeTransition),
+    )) {
+      expect(f.opacity.value, 1);
     }
   });
 }

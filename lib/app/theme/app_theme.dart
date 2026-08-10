@@ -1,8 +1,10 @@
+import 'package:animations/animations.dart'
+    show SharedAxisPageTransitionsBuilder, SharedAxisTransitionType;
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import 'page_transitions.dart';
+
 import 'tp_tokens.dart';
 import 'tp_typography.dart';
 
@@ -55,6 +57,10 @@ abstract final class AppTheme {
       // 명세 Interactions: iOS 는 오른쪽에서 밀려 들어오고(가장자리 스와이프
       // 포함), Android 는 shared axis X.
       //
+      // shared axis 는 flutter.dev 의 animations 패키지가 M3 정의 그대로 낸다.
+      // 직접 그렸다가 공식 구현으로 바꿨다 — 곡선과 지속 시간을 우리가 다시
+      // 맞출 이유가 없다.
+      //
       // 모든 TargetPlatform 에 같은 걸 넣는다. PageTransitionsTheme 은
       // Theme.platform 으로 고르는데, 그러면 전환이 호스트 OS 를 따라가고
       // 크롬 선택과 어긋난다.
@@ -63,7 +69,9 @@ abstract final class AppTheme {
           for (final p in TargetPlatform.values)
             p: chrome == TpChrome.ios
                 ? const CupertinoPageTransitionsBuilder()
-                : const SharedAxisXPageTransitionsBuilder(),
+                : const SharedAxisPageTransitionsBuilder(
+                    transitionType: SharedAxisTransitionType.horizontal,
+                  ),
         },
       ),
       textTheme: TextTheme(
