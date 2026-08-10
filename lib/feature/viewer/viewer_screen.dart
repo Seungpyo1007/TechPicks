@@ -59,7 +59,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: ViewerScreen.partKeys.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
                       itemBuilder: (context, i) {
                         final on = _highlighted == i;
                         return Semantics(

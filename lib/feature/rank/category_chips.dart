@@ -19,7 +19,7 @@ class CategoryChips extends ConsumerWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: RankCategory.values.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final category = RankCategory.values[i];
           // Laptops 화면(명세 §6)이 아직 없다. 누르면 빈 화면이 뜨는 것보다

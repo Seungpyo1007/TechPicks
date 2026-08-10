@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:firebase_vertexai/firebase_vertexai.dart';
+import 'package:firebase_ai/firebase_ai.dart';
 
 import '../../domain/model/ask_answer.dart';
 import '../dto/smartphone.dart';
@@ -18,19 +18,21 @@ abstract class AskService {
   Future<AskAnswer?> ask(String question, List<Smartphone> catalog);
 }
 
-/// Firebase Vertex AI 를 쓰는 구현.
+/// Firebase AI Logic 을 쓰는 구현.
 class GeminiAskService implements AskService {
   GeminiAskService({GenerativeModel? model, this.weights = TpWeights.defaults})
     : _model = model;
 
   /// v1 은 'gemini-flash-experimental' 을 넣었는데 그런 모델 ID 는 없다.
-  static const String modelId = 'gemini-2.0-flash';
+  ///
+  /// 2.x 계열은 2026-10 에 내려간다. 현행 권장은 3.6-flash 다.
+  static const String modelId = 'gemini-3.6-flash';
 
   final TpWeights weights;
   GenerativeModel? _model;
 
   GenerativeModel get _resolved =>
-      _model ??= FirebaseVertexAI.instance.generativeModel(
+      _model ??= FirebaseAI.googleAI().generativeModel(
         model: modelId,
         generationConfig: GenerationConfig(
           responseMimeType: 'application/json',
