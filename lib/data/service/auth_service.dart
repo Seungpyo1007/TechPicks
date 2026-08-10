@@ -1,3 +1,4 @@
+import '../../core/error_reporter.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 
 /// 로그인한 사람.
@@ -51,7 +52,8 @@ class FirebaseAuthService implements AuthService {
     if (_given != null) return _given;
     try {
       return fb.FirebaseAuth.instance;
-    } catch (_) {
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'auth.instance');
       return null;
     }
   }
@@ -60,7 +62,8 @@ class FirebaseAuthService implements AuthService {
   TpUser? get current {
     try {
       return _map(_auth?.currentUser);
-    } catch (_) {
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'auth.current');
       return null;
     }
   }
@@ -88,9 +91,10 @@ class FirebaseAuthService implements AuthService {
         // 아직 미연결.
         AuthMethod.google || AuthMethod.apple || AuthMethod.facebook => null,
       };
-    } catch (_) {
+    } catch (e, s) {
       // FirebaseAuthException 만 잡으면 설정이 없는 빌드에서 새어 나간다.
       // 화면은 어느 쪽이든 "연결되지 않았다"로 떨어진다.
+      TpErrors.record(e, s, reason: 'auth.signIn.$method');
       return null;
     }
   }
@@ -108,7 +112,8 @@ class FirebaseAuthService implements AuthService {
         password: password,
       );
       return _map(cred.user);
-    } catch (_) {
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'auth.signUp');
       return null;
     }
   }
@@ -117,8 +122,9 @@ class FirebaseAuthService implements AuthService {
   Future<void> signOut() async {
     try {
       await _auth?.signOut();
-    } catch (_) {
+    } catch (e, s) {
       // 이미 로그아웃 상태거나 Firebase 가 없다. 어느 쪽이든 할 일이 없다.
+      TpErrors.record(e, s, reason: 'auth.signOut');
     }
   }
 

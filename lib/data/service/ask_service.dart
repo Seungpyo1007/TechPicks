@@ -1,3 +1,4 @@
+import '../../core/error_reporter.dart';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -51,8 +52,9 @@ class GeminiAskService implements AskService {
       final parsed = AskAnswer.tryParse(text);
       if (parsed == null) return null;
       return resolveInCatalog(parsed, catalog);
-    } catch (_) {
+    } catch (e, s) {
       // 화면이 실패 말풍선을 띄운다. 원문 예외를 사용자에게 보이지 않는다.
+      TpErrors.record(e, s, reason: 'ask.gemini');
       return null;
     }
   }

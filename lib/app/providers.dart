@@ -5,6 +5,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/analytics.dart';
+import '../core/error_reporter.dart';
 import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
@@ -71,9 +73,10 @@ class WeightsNotifier extends Notifier<TpWeights> {
     if (raw == null) return;
     try {
       state = TpWeights.fromJson(jsonDecode(raw) as Map<String, dynamic>);
-    } catch (_) {
+    } catch (e, st) {
       // 저장값이 깨졌으면 기본값을 그대로 둔다. FormatException 만 잡으면
       // 배열이나 타입이 다른 필드가 들어왔을 때 TypeError 로 새어 나간다.
+      TpErrors.record(e, st, reason: 'weights.restore');
     }
   }
 
@@ -105,15 +108,21 @@ class WeightsNotifier extends Notifier<TpWeights> {
   }
 
   /// 축 하나만 바꾼다. 슬라이더가 이걸 부른다.
-  void setAxis(TpAxisKind kind, double value) => set(switch (kind) {
-    TpAxisKind.performance => state.copyWith(performance: value),
-    TpAxisKind.camera => state.copyWith(camera: value),
-    TpAxisKind.display => state.copyWith(display: value),
-    TpAxisKind.battery => state.copyWith(battery: value),
-    TpAxisKind.value => state.copyWith(value: value),
-  });
+  void setAxis(TpAxisKind kind, double value) {
+    TpAnalytics.weightChanged(kind.name, value);
+    set(switch (kind) {
+      TpAxisKind.performance => state.copyWith(performance: value),
+      TpAxisKind.camera => state.copyWith(camera: value),
+      TpAxisKind.display => state.copyWith(display: value),
+      TpAxisKind.battery => state.copyWith(battery: value),
+      TpAxisKind.value => state.copyWith(value: value),
+    });
+  }
 
-  void reset() => set(TpWeights.defaults);
+  void reset() {
+    TpAnalytics.weightsReset();
+    set(TpWeights.defaults);
+  }
 }
 
 final weightsProvider = NotifierProvider<WeightsNotifier, TpWeights>(
@@ -125,7 +134,10 @@ class RankAxisNotifier extends Notifier<RankAxis> {
   @override
   RankAxis build() => RankAxis.tpIndex;
 
-  void set(RankAxis axis) => state = axis;
+  void set(RankAxis axis) {
+    TpAnalytics.rankAxisChanged(axis.name);
+    state = axis;
+  }
 }
 
 final rankAxisProvider = NotifierProvider<RankAxisNotifier, RankAxis>(
@@ -210,9 +222,11 @@ class ShortlistNotifier extends Notifier<List<String>> {
   bool contains(String slug) => state.contains(slug);
 
   void toggle(String slug) {
-    state = state.contains(slug)
-        ? <String>[...state.where((s) => s != slug)]
-        : <String>[...state, slug];
+    final added = !state.contains(slug);
+    state = added
+        ? <String>[...state, slug]
+        : <String>[...state.where((s) => s != slug)];
+    TpAnalytics.shortlistChanged(added: added, size: state.length);
     unawaited(_persist());
   }
 
@@ -448,11 +462,13 @@ class AskNotifier extends Notifier<List<AskMessage>> {
       answer = await ref
           .read(askServiceProvider)
           .ask(text, catalog.smartphones);
-    } catch (_) {
+    } catch (e, st) {
+      TpErrors.record(e, st, reason: 'ask.send');
       answer = null;
     }
 
     _busy = false;
+    TpAnalytics.asked(length: text.length, answered: answer != null);
     // 답이 오는 동안 화면을 떠났을 수 있다.
     if (!ref.mounted) return;
     state = <AskMessage>[
