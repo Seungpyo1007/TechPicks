@@ -39,8 +39,8 @@ dart tool/smoke_techapi.dart      # 원격 왕복 확인
 두 플랫폼의 크롬이 다르다. iOS 는 반투명 유리에 블러를, Android M3 는 불투명한
 톤 단계를 쓴다. 화면 코드는 플랫폼 분기를 갖지 않고 토큰만 갈아 끼운다.
 
-앱이 실제로 무엇을 하는지는 `docs/FUNCTIONAL_SPEC.md`, 재구축 경위와 남은 일은
-`docs/REBUILD_PLAN.md` 에 있다.
+앱이 실제로 무엇을 하는지는 `docs/FUNCTIONAL_SPEC.md`, 패키지 선택은
+`docs/DEPENDENCIES.md`, 재구축 경위와 남은 일은 `docs/REBUILD_PLAN.md` 에 있다.
 
 ## 개발
 
