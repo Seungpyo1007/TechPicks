@@ -9,6 +9,12 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    # Swift Package Manager 로 옮기면서 Firebase 패키지 소스가 여기 체크아웃된다.
+    # 그 안에 Dart 테스트가 들어 있어 분석기가 남의 코드를 700건 넘게 문다.
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
