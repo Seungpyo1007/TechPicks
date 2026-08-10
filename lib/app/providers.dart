@@ -42,7 +42,7 @@ final catalogProvider = FutureProvider<Catalog>(
   // 앱에 같이 실린 파일이라 재시도해도 결과가 달라지지 않는다. Riverpod 3 의
   // 기본 재시도를 켜두면 실패한 뒤에도 상태가 계속 `AsyncLoading` 이라
   // 화면이 영원히 로딩으로 보인다.
-  retry: (_, __) => null,
+  retry: (_, _) => null,
 );
 
 /// 사용자 가중치.
@@ -241,7 +241,7 @@ final deviceProvider = FutureProvider.family<Smartphone, String>(
   },
   // 조용히 재시도하면 상태가 계속 `AsyncLoading` 이라 화면이 뼈대만 보인다.
   // 실패는 실패로 보여주고, 다시 받는 건 에러 카드의 버튼이 할 일이다.
-  retry: (_, __) => null,
+  retry: (_, _) => null,
 );
 
 /// 비교 화면의 두 슬롯.
