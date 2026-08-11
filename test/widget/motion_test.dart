@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:techpicks/app/providers.dart';
+import 'package:techpicks/feature/home/home_screen.dart';
+import 'package:techpicks/shared/copy_keys.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/app/theme/tp_motion.dart';
@@ -191,6 +196,8 @@ void main() {
     });
   });
 
+  group('홈 상태 변화', _homeMotion);
+
   group('스캔 라인', () {
     testWidgets('평소에는 계속 돈다', (tester) async {
       await pumpScreenNoSettle(
@@ -214,5 +221,45 @@ void main() {
 
       expect(tester.hasRunningAnimations, isFalse);
     });
+  });
+}
+
+/// 홈의 상태 변화.
+void _homeMotion() {
+  testWidgets('빈 상태에서 결론 카드로 갈 때 겹쳐서 넘어간다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+
+    final container = await pumpScreen(tester, const HomeScreen());
+    expect(find.text(K.emptyShortlist.tr()), findsOneWidget);
+
+    container.read(shortlistProvider.notifier).toggle('galaxy-s25-ultra');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+
+    // 전환 중에는 둘 다 트리에 있다. 하드컷이면 하나만 있다.
+    expect(find.byType(AnimatedSwitcher), findsWidgets);
+    expect(find.byType(FadeTransition), findsWidgets);
+
+    await tester.pumpAndSettle();
+    expect(find.text(K.emptyShortlist.tr()), findsNothing);
+    expect(find.text(K.verdict.tr().toUpperCase()), findsOneWidget);
+  });
+
+  testWidgets('관심 목록 행이 접히며 사라진다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
+    });
+
+    final container = await pumpScreen(tester, const HomeScreen());
+    final before = tester.getSize(find.byType(AnimatedSize).first).height;
+    expect(before, greaterThan(0));
+
+    container.read(shortlistProvider.notifier).remove('iphone-16-pro-max');
+    await tester.pumpAndSettle();
+
+    expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
+    expect(tester.takeException(), isNull);
   });
 }
