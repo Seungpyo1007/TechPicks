@@ -11,6 +11,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/processor.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../rank/category_chips.dart';
 
@@ -213,7 +214,7 @@ class _ProcessorRow extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 7),
-            _Track(fraction: entry.fraction),
+            TpBar(height: 3, radius: 2, fraction: entry.fraction),
           ],
         ),
       ),
@@ -221,31 +222,6 @@ class _ProcessorRow extends StatelessWidget {
   }
 }
 
-class _Track extends StatelessWidget {
-  const _Track({required this.fraction});
-
-  final double fraction;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(2),
-      child: Container(
-        height: 3,
-        color: t.track,
-        alignment: Alignment.centerLeft,
-        child: FractionallySizedBox(
-          widthFactor: fraction,
-          child: DecoratedBox(
-            decoration: BoxDecoration(gradient: t.barFill),
-            child: const SizedBox(height: 3),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _RowSkeletons extends StatelessWidget {
   const _RowSkeletons();
