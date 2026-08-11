@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
 import '../../app/shell/tp_tab.dart';
+import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
@@ -45,6 +46,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.tp;
     final type = context.tpText;
+    final motion = context.motion;
     final shortlist = ref.watch(shortlistDevicesProvider);
     final verdict = ref.watch(verdictProvider);
     final movers = ref.watch(moversProvider);
@@ -67,14 +69,22 @@ class HomeScreen extends ConsumerWidget {
           Text(_subtitle(shortlist.length), style: type.secondary),
           const SizedBox(height: 16),
 
-          if (verdict == null)
-            _EmptyShortlist(onAdd: onAdd)
-          else
-            _VerdictCard(
-              device: verdict,
-              onCompareAll: onCompareAll,
-              onAskWhy: onAskWhy,
-            ),
+          // 첫 기기를 담는 순간이 이 앱에서 가장 중요한 상태 변화다.
+          // 하드컷으로 갈리면 담긴 걸 놓친다.
+          AnimatedSwitcher(
+            duration: motion.contentSwap.duration,
+            switchInCurve: motion.contentSwap.curve,
+            switchOutCurve: motion.contentSwap.curve,
+            child: verdict == null
+                ? _EmptyShortlist(key: const ValueKey<String>('empty'),
+                    onAdd: onAdd)
+                : _VerdictCard(
+                    key: ValueKey<String>(verdict.slug),
+                    device: verdict,
+                    onCompareAll: onCompareAll,
+                    onAskWhy: onAskWhy,
+                  ),
+          ),
 
           if (shortlist.isNotEmpty) ...<Widget>[
             const SizedBox(height: 22),
@@ -85,11 +95,17 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             for (final d in shortlist)
-              _ShortlistRow(
-                device: d,
-                onTap: onDeviceTap == null ? null : () => onDeviceTap!(d.slug),
-                onRemove: () =>
-                    ref.read(shortlistProvider.notifier).remove(d.slug),
+              // 지우면 즉시 사라지고 아래가 점프했다. 높이가 같이 줄어든다.
+              _ListSlot(
+                key: ValueKey<String>('slot-${d.slug}'),
+                child: _ShortlistRow(
+                  device: d,
+                  onTap: onDeviceTap == null
+                      ? null
+                      : () => onDeviceTap!(d.slug),
+                  onRemove: () =>
+                      ref.read(shortlistProvider.notifier).remove(d.slug),
+                ),
               ),
           ],
 
@@ -113,7 +129,12 @@ class HomeScreen extends ConsumerWidget {
 
 /// 결론 카드. 홈의 주인공이다.
 class _VerdictCard extends ConsumerWidget {
-  const _VerdictCard({required this.device, this.onCompareAll, this.onAskWhy});
+  const _VerdictCard({
+    super.key,
+    required this.device,
+    this.onCompareAll,
+    this.onAskWhy,
+  });
 
   final Smartphone device;
   final VoidCallback? onCompareAll;
@@ -213,7 +234,7 @@ class _VerdictCard extends ConsumerWidget {
 }
 
 class _EmptyShortlist extends StatelessWidget {
-  const _EmptyShortlist({this.onAdd});
+  const _EmptyShortlist({super.key, this.onAdd});
 
   final VoidCallback? onAdd;
 
@@ -451,6 +472,27 @@ class _CardButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 목록에 들어오고 나가는 한 칸.
+///
+/// 처음 붙을 때는 그냥 나타난다 — 화면을 열 때 전부 한꺼번에 커지면 산만하다.
+/// 사라질 때만 높이가 줄어들며 접힌다.
+class _ListSlot extends StatelessWidget {
+  const _ListSlot({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final move = context.motion.listItem;
+    return AnimatedSize(
+      duration: move.duration,
+      curve: move.curve,
+      alignment: Alignment.topCenter,
+      child: child,
     );
   }
 }
