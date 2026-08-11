@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 
 /// 카드·시트·크롬이 공통으로 쓰는 면.
@@ -135,12 +136,17 @@ class _PressBrightness extends StatefulWidget {
   /// `filter: brightness(1.04)` 와 같다.
   static const double amount = 1.04;
 
-  static const ColorFilter filter = ColorFilter.matrix(<double>[
-    amount, 0, 0, 0, 0, //
-    0, amount, 0, 0, 0, //
-    0, 0, amount, 0, 0, //
-    0, 0, 0, 1, 0, //
-  ]);
+  /// 눌린 정도 [t] (0–1) 만큼 밝힌다. 칩은 90ms 로 줄어드는데 카드만 밝기가
+  /// 하드 스냅이라 어긋났다.
+  static ColorFilter filterAt(double t) {
+    final v = 1 + (amount - 1) * t;
+    return ColorFilter.matrix(<double>[
+      v, 0, 0, 0, 0, //
+      0, v, 0, 0, 0, //
+      0, 0, v, 0, 0, //
+      0, 0, 0, 1, 0, //
+    ]);
+  }
 
   @override
   State<_PressBrightness> createState() => _PressBrightnessState();
@@ -155,6 +161,7 @@ class _PressBrightnessState extends State<_PressBrightness> {
 
   @override
   Widget build(BuildContext context) {
+    final move = context.motion.press;
     return Semantics(
       button: true,
       child: GestureDetector(
@@ -164,12 +171,18 @@ class _PressBrightnessState extends State<_PressBrightness> {
         onTapDown: (_) => _set(true),
         onTapUp: (_) => _set(false),
         onTapCancel: () => _set(false),
-        child: _pressed
-            ? ColorFiltered(
-                colorFilter: _PressBrightness.filter,
-                child: widget.child,
-              )
-            : widget.child,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(end: _pressed ? 1 : 0),
+          duration: move.duration,
+          curve: move.curve,
+          child: widget.child,
+          builder: (context, t, child) => t == 0
+              ? child!
+              : ColorFiltered(
+                  colorFilter: _PressBrightness.filterAt(t),
+                  child: child,
+                ),
+        ),
       ),
     );
   }

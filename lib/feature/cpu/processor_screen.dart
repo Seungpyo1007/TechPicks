@@ -29,6 +29,7 @@ class ProcessorScreen extends ConsumerWidget {
     final segment = ref.watch(processorSegmentProvider);
     final ranked = ref.watch(rankedProcessorsProvider);
     final catalog = ref.watch(catalogProvider);
+    final motion = context.motion;
 
     return TpShell(
       title: K.cpuTitle.tr(),
@@ -45,15 +46,25 @@ class ProcessorScreen extends ConsumerWidget {
                 ref.read(processorSegmentProvider.notifier).set(s),
           ),
           const SizedBox(height: 16),
-          if (catalog is AsyncLoading)
-            const _RowSkeletons()
-          else if (ranked.isEmpty)
-            TpSurface(
-              padding: const EdgeInsets.all(20),
-              child: Text(K.noDevices.tr(), style: context.tpText.body),
-            )
-          else
-            for (final r in ranked) _ProcessorRow(entry: r),
+          AnimatedSwitcher(
+            duration: motion.contentSwap.duration,
+            switchInCurve: motion.contentSwap.curve,
+            switchOutCurve: motion.contentSwap.curve,
+            child: catalog is AsyncLoading
+                ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
+                : ranked.isEmpty
+                ? TpSurface(
+                    key: const ValueKey<String>('empty'),
+                    padding: const EdgeInsets.all(20),
+                    child: Text(K.noDevices.tr(), style: context.tpText.body),
+                  )
+                : Column(
+                    key: ValueKey<String>('rows-${segment.name}'),
+                    children: <Widget>[
+                      for (final r in ranked) _ProcessorRow(entry: r),
+                    ],
+                  ),
+          ),
           const SizedBox(height: 18),
           Text(K.cpuNote.tr(), style: context.tpText.caption),
         ],
@@ -224,7 +235,7 @@ class _ProcessorRow extends StatelessWidget {
 
 
 class _RowSkeletons extends StatelessWidget {
-  const _RowSkeletons();
+  const _RowSkeletons({super.key});
 
   @override
   Widget build(BuildContext context) {
