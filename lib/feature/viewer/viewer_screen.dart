@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/shell/tp_shell.dart';
+import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
@@ -68,7 +69,11 @@ class _ViewerScreenState extends State<ViewerScreen> {
                           child: GestureDetector(
                             onTap: () =>
                                 setState(() => _highlighted = on ? null : i),
-                            child: Container(
+                            // 다크 인수 화면이라 TpChip 의 밝은 팔레트를 못
+                            // 쓴다. 대신 같은 전환 시간을 쓴다.
+                            child: AnimatedContainer(
+                              duration: context.motion.selection.duration,
+                              curve: context.motion.selection.curve,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 14,
                                 vertical: 9,

@@ -44,6 +44,7 @@ class RankScreen extends ConsumerWidget {
     final ranked = ref.watch(rankedPhonesProvider);
     // 실패했을 때도 스켈레톤을 계속 돌리면 영원히 로딩처럼 보인다.
     final catalog = ref.watch(catalogProvider);
+    final motion = context.motion;
     final loading = catalog is AsyncLoading && !catalog.hasError;
 
     return TpShell(
@@ -65,10 +66,20 @@ class RankScreen extends ConsumerWidget {
                 ref.read(rankAxisProvider.notifier).set(RankAxis.values[i]),
           ),
           const SizedBox(height: 16),
-          if (loading)
-            const _RowSkeletons()
-          else
-            _RankList(ranked: ranked, axis: axis, onDeviceTap: onDeviceTap),
+          // 스켈레톤에서 목록으로 하드컷이면 화면이 튄다.
+          AnimatedSwitcher(
+            duration: motion.contentSwap.duration,
+            switchInCurve: motion.contentSwap.curve,
+            switchOutCurve: motion.contentSwap.curve,
+            child: loading
+                ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
+                : _RankList(
+                    key: const ValueKey<String>('list'),
+                    ranked: ranked,
+                    axis: axis,
+                    onDeviceTap: onDeviceTap,
+                  ),
+          ),
           if (onScan != null && context.tp.isGlass) ...<Widget>[
             const SizedBox(height: 16),
             _ScanInlineButton(onTap: onScan!),
@@ -126,7 +137,12 @@ class _ChipRow extends StatelessWidget {
 /// 애니메이션이 없어서 행 높이를 고정하고 [Stack] + [AnimatedPositioned] 로
 /// 자리를 옮긴다. 키는 slug 라 같은 기기가 같은 위젯을 유지한다.
 class _RankList extends StatelessWidget {
-  const _RankList({required this.ranked, required this.axis, this.onDeviceTap});
+  const _RankList({
+    super.key,
+    required this.ranked,
+    required this.axis,
+    this.onDeviceTap,
+  });
 
   static const double rowHeight = 62;
 
@@ -264,7 +280,7 @@ class _RankRow extends StatelessWidget {
 /// 로딩 중에는 카드 반지름 그대로의 뼈대를 보여준다. 명세가 가운데 스피너를
 /// 금지한다 — v1 이 빈 화면에 `CircularProgressIndicator` 를 띄웠다.
 class _RowSkeletons extends StatelessWidget {
-  const _RowSkeletons();
+  const _RowSkeletons({super.key});
 
   @override
   Widget build(BuildContext context) {

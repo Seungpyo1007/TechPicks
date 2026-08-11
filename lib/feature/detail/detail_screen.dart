@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
+import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
@@ -37,18 +38,34 @@ class DetailScreen extends ConsumerWidget {
 
     return TpShell(
       onBack: onBack,
-      child: device.when(
-        loading: () => const _DetailSkeleton(),
-        error: (e, _) => _DetailError(message: '$e'),
-        data: (d) =>
-            _DetailBody(device: d, onCompare: onCompare, onView3D: onView3D),
+      child: AnimatedSwitcher(
+        duration: context.motion.contentSwap.duration,
+        switchInCurve: context.motion.contentSwap.curve,
+        switchOutCurve: context.motion.contentSwap.curve,
+        child: device.when(
+          loading: () =>
+              const _DetailSkeleton(key: ValueKey<String>('skeleton')),
+          error: (e, _) =>
+              _DetailError(key: const ValueKey<String>('error'), message: '$e'),
+          data: (d) => _DetailBody(
+            key: ValueKey<String>(d.slug),
+            device: d,
+            onCompare: onCompare,
+            onView3D: onView3D,
+          ),
+        ),
       ),
     );
   }
 }
 
 class _DetailBody extends ConsumerWidget {
-  const _DetailBody({required this.device, this.onCompare, this.onView3D});
+  const _DetailBody({
+    super.key,
+    required this.device,
+    this.onCompare,
+    this.onView3D,
+  });
 
   final Smartphone device;
   final ValueChanged<String>? onCompare;
@@ -240,12 +257,17 @@ class _PrimaryButton extends StatelessWidget {
     final radius = BorderRadius.circular(
       t.isGlass ? TpTokens.rControl : t.rCard,
     );
+    final move = context.motion.selection;
 
     return Semantics(
       button: true,
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
+        // 담기를 누르면 채움색·라벨·그림자가 한꺼번에 즉시 바뀌어서 저장됐다는
+        // 느낌이 없었다.
+        child: AnimatedContainer(
+          duration: move.duration,
+          curve: move.curve,
           height: 52,
           alignment: Alignment.center,
           decoration: BoxDecoration(
@@ -267,7 +289,7 @@ class _PrimaryButton extends StatelessWidget {
 }
 
 class _DetailSkeleton extends StatelessWidget {
-  const _DetailSkeleton();
+  const _DetailSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +314,7 @@ class _DetailSkeleton extends StatelessWidget {
 }
 
 class _DetailError extends StatelessWidget {
-  const _DetailError({required this.message});
+  const _DetailError({super.key, required this.message});
 
   final String message;
 

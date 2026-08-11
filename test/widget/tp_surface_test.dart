@@ -30,11 +30,13 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.text('카드')),
     );
+    // 밝기가 트윈된다. 시작 프레임은 아직 0 이라 필터가 없다.
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 45));
     expect(find.byType(ColorFiltered), findsOneWidget);
 
     await gesture.up();
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(find.byType(ColorFiltered), findsNothing);
   });
 
