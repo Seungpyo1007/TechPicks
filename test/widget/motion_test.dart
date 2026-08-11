@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/app/theme/tp_motion.dart';
 import 'package:techpicks/feature/scan/scan_screen.dart';
+import 'package:techpicks/shared/widgets/tp_bar.dart';
 
 import '../support/harness.dart';
 
@@ -143,6 +144,50 @@ void main() {
         disableAnimations: true,
       );
       expect(m.reorder.curve, const Cubic(.2, .8, .2, 1));
+    });
+  });
+
+  group('진행 막대', () {
+    /// 지금 그려진 채움 비율.
+    double filled(WidgetTester tester) => tester
+        .widget<FractionallySizedBox>(find.byType(FractionallySizedBox))
+        .widthFactor!;
+
+    Widget bar(double fraction) =>
+        Center(child: SizedBox(width: 200, child: TpBar(fraction: fraction)));
+
+    Future<void> pumpBar(WidgetTester tester, double fraction,
+        {bool reduce = false}) =>
+        pumpScreen(tester, bar(fraction), disableAnimations: reduce);
+
+    testWidgets('값이 바뀌면 중간 프레임을 거친다', (tester) async {
+      await pumpBar(tester, 0.2);
+      expect(filled(tester), closeTo(0.2, 0.001));
+
+      // settle 하면 다 끝난 뒤라 중간을 못 본다. 한 프레임만 돌린다.
+      await pumpScreenNoSettle(tester, bar(0.9));
+      await tester.pump(const Duration(milliseconds: 80));
+
+      // 아직 도착하지 않았다. 예전에는 여기서 이미 0.9 였다.
+      final mid = filled(tester);
+      expect(mid, greaterThan(0.2));
+      expect(mid, lessThan(0.9));
+
+      await tester.pumpAndSettle();
+      expect(filled(tester), closeTo(0.9, 0.001));
+    });
+
+    testWidgets('동작을 줄이면 즉시 간다', (tester) async {
+      await pumpBar(tester, 0.2, reduce: true);
+      await pumpScreenNoSettle(tester, bar(0.9), disableAnimations: true);
+      await tester.pump();
+      expect(filled(tester), closeTo(0.9, 0.001));
+    });
+
+    testWidgets('범위를 벗어난 값은 자른다', (tester) async {
+      await pumpBar(tester, 1.7);
+      await tester.pumpAndSettle();
+      expect(filled(tester), 1.0);
     });
   });
 

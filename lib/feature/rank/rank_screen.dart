@@ -11,6 +11,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/ranking.dart';
+import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_chip.dart';
 import 'category_chips.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -250,7 +251,7 @@ class _RankRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 7),
-              _Track(fraction: entry.fraction),
+              TpBar(height: 3, radius: 2, fraction: entry.fraction),
             ],
           ),
         ),
@@ -259,32 +260,6 @@ class _RankRow extends StatelessWidget {
   }
 }
 
-/// 3px 진행 트랙. 명세의 두께 그대로.
-class _Track extends StatelessWidget {
-  const _Track({required this.fraction});
-
-  final double fraction;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(2),
-      child: Container(
-        height: 3,
-        color: t.track,
-        alignment: Alignment.centerLeft,
-        child: FractionallySizedBox(
-          widthFactor: fraction,
-          child: DecoratedBox(
-            decoration: BoxDecoration(gradient: t.barFill),
-            child: const SizedBox(height: 3),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// 로딩 중에는 카드 반지름 그대로의 뼈대를 보여준다. 명세가 가운데 스피너를
 /// 금지한다 — v1 이 빈 화면에 `CircularProgressIndicator` 를 띄웠다.

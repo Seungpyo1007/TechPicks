@@ -1,3 +1,4 @@
+import 'tp_bar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -68,38 +69,12 @@ class TpScoreStrip extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 5),
-                  _Segment(fraction: axis.fraction),
+                  TpBar(height: 6, radius: 3, fraction: axis.fraction),
                 ],
               ),
             ),
           ),
       ],
-    );
-  }
-}
-
-class _Segment extends StatelessWidget {
-  const _Segment({required this.fraction});
-
-  final double fraction;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(3),
-      child: Container(
-        height: 6,
-        color: t.track,
-        alignment: Alignment.centerLeft,
-        child: FractionallySizedBox(
-          widthFactor: fraction,
-          child: DecoratedBox(
-            decoration: BoxDecoration(gradient: t.barFill),
-            child: const SizedBox(height: 6),
-          ),
-        ),
-      ),
     );
   }
 }
