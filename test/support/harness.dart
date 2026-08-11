@@ -65,6 +65,7 @@ Future<ProviderContainer> pumpScreen(
   Size size = const Size(1200, 3000),
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
+  bool disableAnimations = false,
 }) async {
   await _pump(
     tester,
@@ -74,6 +75,7 @@ Future<ProviderContainer> pumpScreen(
     size: size,
     catalogAsset: catalogAsset,
     textScale: textScale,
+    disableAnimations: disableAnimations,
   );
   await tester.pumpAndSettle();
   return ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
@@ -88,6 +90,7 @@ Future<void> pumpScreenNoSettle(
   Size size = const Size(1200, 3000),
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
+  bool disableAnimations = false,
 }) async {
   await _pump(
     tester,
@@ -97,6 +100,7 @@ Future<void> pumpScreenNoSettle(
     size: size,
     catalogAsset: catalogAsset,
     textScale: textScale,
+    disableAnimations: disableAnimations,
   );
   await tester.pump();
 }
@@ -115,6 +119,7 @@ Future<void> _pump(
   required Size size,
   required String catalogAsset,
   required double textScale,
+  required bool disableAnimations,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -135,9 +140,10 @@ Future<void> _pump(
       child: MaterialApp(
         theme: AppTheme.of(chrome),
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+            disableAnimations: disableAnimations,
+          ),
           child: child!,
         ),
         home: screen,

@@ -1,3 +1,4 @@
+import '../../app/theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,10 +53,11 @@ class _AskScreenState extends ConsumerState<AskScreen> {
     _input.clear();
     await ref.read(askProvider.notifier).send(text);
     if (!mounted || !_scroll.hasClients) return;
+    final motion = context.motion;
     await _scroll.animateTo(
       _scroll.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOut,
+      duration: motion.contentSwap.duration,
+      curve: motion.contentSwap.curve,
     );
   }
 

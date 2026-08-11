@@ -1,3 +1,4 @@
+import '../theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -327,6 +328,7 @@ class _IosTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final motion = context.motion;
     return Row(
       children: TpTab.values.map((TpTab t) {
         final active = t == current;
@@ -341,8 +343,8 @@ class _IosTabBar extends StatelessWidget {
               onTap: onSelected == null ? null : () => onSelected!(t),
               child: Center(
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
+                  duration: motion.selection.duration,
+                  curve: motion.selection.curve,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 6,

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 
+import 'tp_motion.dart';
 import 'tp_tokens.dart';
 import 'tp_typography.dart';
 
@@ -31,6 +32,9 @@ abstract final class AppTheme {
   static ThemeData of(TpChrome chrome) {
     final tokens = chrome == TpChrome.ios ? TpTokens.ios() : TpTokens.android();
     final type = TpTypography.of(tokens);
+    final motion = chrome == TpChrome.ios
+        ? TpMotion.ios()
+        : TpMotion.android();
 
     final scheme =
         ColorScheme.fromSeed(
@@ -83,7 +87,7 @@ abstract final class AppTheme {
         bodySmall: type.secondary,
         labelSmall: type.caption,
       ),
-      extensions: <ThemeExtension<dynamic>>[tokens, type],
+      extensions: <ThemeExtension<dynamic>>[tokens, type, motion],
     );
   }
 }

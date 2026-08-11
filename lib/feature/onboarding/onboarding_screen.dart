@@ -1,3 +1,4 @@
+import '../../app/theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -110,7 +111,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             children: <Widget>[
               for (var i = 0; i < K.onboarding.length; i++)
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
+                  duration: context.motion.selection.duration,
+                  curve: context.motion.selection.curve,
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   width: i == _index ? 18 : 6,
                   height: 6,

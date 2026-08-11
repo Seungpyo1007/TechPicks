@@ -1,3 +1,4 @@
+import '../../app/theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,10 +42,24 @@ class ScanScreen extends ConsumerStatefulWidget {
 
 class _ScanScreenState extends ConsumerState<ScanScreen>
     with SingleTickerProviderStateMixin {
+  /// 명세 §11: 위에서 아래로 1.6초, 무한 반복.
   late final AnimationController _line = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1600),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 동작 줄이기가 켜져 있으면 반복하지 않는다. 프레임을 계속 태울 이유가
+    // 없고, 반복 자체가 줄이려는 그 동작이다. 라인은 가운데 멈춘다.
+    if (context.motion.isReduced) {
+      if (_line.isAnimating) _line.stop();
+      _line.value = 0.5;
+    } else if (!_line.isAnimating) {
+      _line.repeat(reverse: true);
+    }
+  }
 
   @override
   void dispose() {
@@ -215,11 +230,12 @@ class _ResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = context.tpText;
+    final motion = context.motion;
 
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 1, end: 0),
-      duration: const Duration(milliseconds: 240),
-      curve: const Cubic(.2, .8, .2, 1),
+      duration: motion.reveal.duration,
+      curve: motion.reveal.curve,
       builder: (context, t, child) =>
           FractionalTranslation(translation: Offset(0, t), child: child),
       child: Container(

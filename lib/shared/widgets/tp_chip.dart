@@ -1,3 +1,4 @@
+import '../../app/theme/tp_motion.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/theme/tp_tokens.dart';
@@ -30,6 +31,7 @@ class _TpChipState extends State<TpChip> {
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
+    final motion = context.motion;
     final enabled = widget.onTap != null;
 
     return Semantics(
@@ -45,10 +47,11 @@ class _TpChipState extends State<TpChip> {
         onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
         child: AnimatedScale(
           scale: _pressed ? 0.97 : 1,
-          duration: const Duration(milliseconds: 90),
+          duration: motion.press.duration,
+          curve: motion.press.curve,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
+            duration: motion.selection.duration,
+            curve: motion.selection.curve,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             decoration: BoxDecoration(
               color: widget.selected ? TpTokens.blue : t.chipBg,

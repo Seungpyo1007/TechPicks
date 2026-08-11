@@ -1,3 +1,4 @@
+import '../../app/theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -122,8 +123,8 @@ class _SegmentedCell extends StatelessWidget {
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
+          duration: context.motion.selection.duration,
+          curve: context.motion.selection.curve,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: selected ? TpTokens.blue : Colors.transparent,

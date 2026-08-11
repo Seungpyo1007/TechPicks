@@ -1,3 +1,4 @@
+import '../../app/theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -141,6 +142,7 @@ class _RankList extends StatelessWidget {
       );
     }
 
+    final motion = context.motion;
     return SizedBox(
       height: ranked.length * rowHeight,
       child: Stack(
@@ -148,8 +150,8 @@ class _RankList extends StatelessWidget {
           for (final r in ranked)
             AnimatedPositioned(
               key: ValueKey<String>(r.device.slug),
-              duration: const Duration(milliseconds: 220),
-              curve: const Cubic(.2, .8, .2, 1),
+              duration: motion.reorder.duration,
+              curve: motion.reorder.curve,
               top: (r.position - 1) * rowHeight,
               left: 0,
               right: 0,
