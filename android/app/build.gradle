@@ -8,6 +8,17 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// 릴리스 서명 키. 저장소에 안 들어간다 (.gitignore).
+//
+// 이 파일이 없으면 아래에서 디버그 키로 떨어진다. 그래야 키스토어가 없는
+// 사람도 `flutter run --release` 를 돌릴 수 있다. **스토어에 올릴 빌드는
+// 반드시 이 파일이 있어야 한다** — 디버그 키로 서명된 것은 Play 가 거부한다.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
 android {
     namespace = "com.techpicks.app"
     compileSdk = flutter.compileSdkVersion
@@ -37,11 +48,25 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties["storeFile"])
+                storePassword = keystoreProperties["storePassword"]
+                keyAlias = keystoreProperties["keyAlias"]
+                keyPassword = keystoreProperties["keyPassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // key.properties 가 있으면 그 키로, 없으면 디버그 키로 서명한다.
+            // 디버그 키로 나간 것은 Play 에 못 올린다 — 올리기 전에
+            // `android/key.properties` 가 있는지 확인할 것.
+            signingConfig = keystorePropertiesFile.exists()
+                ? signingConfigs.release
+                : signingConfigs.debug
         }
     }
 }

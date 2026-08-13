@@ -68,7 +68,7 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 | `techpicks.com` 도메인 | 사용자 — 구매 예정 |
 | Apple Developer 에서 Sign in with Apple 켜기 | 사용자 — 계정 작업 |
 | Firebase 콘솔에서 Google·Apple 공급자 켜기, Android SHA-1 등록 | 사용자 — 콘솔 |
-| Android 릴리스 서명, 개인정보 처리방침 URL | 사용자 — 계정 작업 |
+| Android 릴리스 키스토어(`android/key.properties`), 개인정보 처리방침 URL | 사용자 |
 | 노트북 점수, 제품 사진, 원화 가격, 다크 토큰 | TechAPI / 디자인 |
 
 패키지 이름은 스토어에 한 번 올리면 못 바꾼다. 지금 값이 최종이다.
