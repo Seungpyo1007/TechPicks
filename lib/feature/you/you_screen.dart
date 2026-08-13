@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,8 @@ import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../app/locale_controller.dart';
+import '../../core/error_reporter.dart';
+import '../../data/service/link_opener.dart';
 import '../../shared/copy_keys.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
@@ -152,10 +156,28 @@ class YouScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          Text(versionLine, style: type.caption),
+          // 푸터 문구는 명세 §13 의 확정 카피다. 글자는 그대로 두고 누르면
+          // Apache-2.0 본문이 열리게만 한다.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TpTapTarget(
+              link: true,
+              minSize: 44,
+              onTap: () => unawaited(_openLicense(ref)),
+              child: Text(versionLine, style: type.caption),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _openLicense(WidgetRef ref) async {
+    try {
+      await ref.read(linkOpenerProvider).open(TpUrls.appLicense);
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'link.open');
+    }
   }
 }
 

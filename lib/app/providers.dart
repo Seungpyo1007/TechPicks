@@ -17,6 +17,7 @@ import '../data/service/auth_service.dart';
 import '../data/service/connectivity_service.dart';
 import '../data/service/deep_link_service.dart';
 import '../data/service/device_info_service.dart';
+import '../data/service/link_opener.dart';
 import '../data/service/share_service.dart';
 import '../data/service/shortlist_sync_service.dart';
 import '../domain/model/ask_answer.dart';
@@ -681,6 +682,11 @@ final thisDeviceMatchProvider = Provider<ScanMatch?>((ref) {
 /// 시스템 공유 시트.
 final shareServiceProvider = Provider<ShareService>(
   (ref) => const SharePlusService(),
+);
+
+/// 밖으로 나가는 링크. 출처·라이선스 표기가 실제로 열려야 한다.
+final linkOpenerProvider = Provider<LinkOpener>(
+  (ref) => const UrlLauncherOpener(),
 );
 
 /// 밖에서 들어온 링크의 출처.

@@ -58,9 +58,12 @@ List<String> _unlabeledTapTargets(WidgetTester tester) {
     final tappable = data.hasAction(SemanticsAction.tap);
     if (tappable) {
       // 입력창도 탭 액션을 갖는다. 그쪽은 버튼이 아니라 텍스트 필드로 읽혀야
-      // 맞다.
+      // 맞다. 앱 밖으로 나가는 것은 링크로 읽혀야 맞다 — 스크린 리더가
+      // 버튼과 링크를 다르게 알린다.
       final actionable =
-          data.flagsCollection.isButton || data.flagsCollection.isTextField;
+          data.flagsCollection.isButton ||
+          data.flagsCollection.isTextField ||
+          data.flagsCollection.isLink;
       if (!actionable) {
         bad.add('버튼 아님: "${data.label}"');
       } else if (data.label.trim().isEmpty) {
