@@ -4,10 +4,11 @@
 
 ## 지금 상태
 
-브랜치 `feat/design-handoff`, 워킹 트리 깨끗, 미푸시 커밋 81개.
+브랜치 `feat/design-handoff`, 워킹 트리 깨끗, 미푸시 커밋 83개.
 사용자가 모아뒀다 직접 푸시하는 방식이다. **푸시·PR·머지·CI 는 시키기 전까지 하지 않는다.**
 
-`flutter analyze` 이슈 0, `flutter test` 549건 통과(골든 24장 포함).
+`flutter analyze` 이슈 0, `flutter test` 552건 통과(골든 24장 포함).
+iOS·Android 디버그 빌드 둘 다 통과한다.
 iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기는 못 해봤다 — 연결된 기기도, 코드사인 인증서도 없다.
 
 명세 8단계(`DESIGN_HANDOFF.md` 의 Suggested build order)는 전부 끝났다.
@@ -28,6 +29,7 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 | `b675cf7` | 로그인 시 관심 목록 동기화 (문서 단위 LWW) |
 | `89ce171` | `PrivacyInfo.xcprivacy` (Xcode Resources 단계까지) |
 | `27fb6a1` | 출처·라이선스 표기를 실제 링크로 |
+| `78f8d4f` | Google·Apple 로그인, Facebook 제거, 취소와 실패 분리 |
 
 ## 손대기 전에 알아야 할 것
 
@@ -64,7 +66,9 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 | Firestore 보안 규칙 (`users/{uid}` 는 본인만) | 사용자 — 콘솔 |
 | 실기기 테스트 (기기 연결 + Xcode 로그인) | 사용자 |
 | `techpicks.com` 도메인 | 사용자 — 구매 예정 |
-| Apple 로그인, Android 릴리스 서명, 개인정보 처리방침 URL | 사용자 — 계정 작업 |
+| Apple Developer 에서 Sign in with Apple 켜기 | 사용자 — 계정 작업 |
+| Firebase 콘솔에서 Google·Apple 공급자 켜기, Android SHA-1 등록 | 사용자 — 콘솔 |
+| Android 릴리스 서명, 개인정보 처리방침 URL | 사용자 — 계정 작업 |
 | 노트북 점수, 제품 사진, 원화 가격, 다크 토큰 | TechAPI / 디자인 |
 
 패키지 이름은 스토어에 한 번 올리면 못 바꾼다. 지금 값이 최종이다.
@@ -77,7 +81,7 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 
 ## 다음에 할 만한 것
 
-`ROADMAP.md` §2 가 작업 큐다. **P3 와 P1.7·P1.9 는 끝났다.** 코드로 혼자 진전시킬 수
+`ROADMAP.md` §2 가 작업 큐다. **P1·P3 의 코드는 다 끝났다.** 코드로 혼자 진전시킬 수
 있는 것은 남아 있지 않다. P1 과 P3.2·P3.5 의 콘솔 값이 다음 차례다.
 
 P3.2·P3.5 는 코드가 다 들어갔지만 **콘솔 값이 없으면 안 도는 상태**다.

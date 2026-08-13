@@ -119,11 +119,16 @@ P3 을 붙이면서 여섯 개가 더 들어왔다.
 | `firebase_remote_config` 6.5.6 | 카탈로그 주소·버전 | `RemoteConfigCatalogFeed` |
 | `path_provider` 2.x | 받아둔 카탈로그 파일 | `FileCatalogStore` |
 | `cloud_firestore` 6.8.0 | 관심 목록 동기화 | `FirestoreShortlistSync` |
+| `url_launcher` 6.3.2 | 출처·라이선스 링크 | `LinkOpener` |
+| `google_sign_in` 7.2.0 | Google 로그인 | `FirebaseAuthService` |
+| `sign_in_with_apple` 8.1.0 | Apple 로그인 | `FirebaseAuthService` |
+| `crypto` | Apple nonce 해시 | `AppleNonce` |
 
 전부 인터페이스 뒤에 있다. 화면과 테스트는 플러그인을 안 본다.
 
-`url_launcher` 는 `share_plus` 가 전이로 끌고 왔다. P1.9(라이선스 링크)를
-붙일 때 직접 선언하면 된다.
+`google_sign_in` 7 은 API 가 바뀌었다 — `GoogleSignIn.instance.initialize()`
+뒤에 `authenticate()` 를 부르고, 취소도 예외로 온다. 예전 `signIn()` 예제를
+그대로 옮기면 안 된다.
 
 ### 1.6 `easy_localization` — 지켜본다
 
