@@ -43,6 +43,9 @@ dart tool/smoke_techapi.dart      # 원격 왕복 확인
 `docs/DEPENDENCIES.md`, 앞으로 넣을 만한 것은 `docs/PLUGIN_RESEARCH.md`,
 재구축 경위와 남은 일은 `docs/REBUILD_PLAN.md` 에 있다.
 
+이어서 작업한다면 `docs/HANDOFF.md` 부터 읽는다. 지금 어디까지 됐고 무엇이
+누구를 기다리는지가 거기 있다.
+
 ## 개발
 
 ```
