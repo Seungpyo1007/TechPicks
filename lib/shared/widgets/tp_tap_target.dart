@@ -12,6 +12,7 @@ class TpTapTarget extends StatelessWidget {
     required this.onTap,
     this.label,
     this.minSize = 48,
+    this.link = false,
   });
 
   final Widget child;
@@ -22,10 +23,14 @@ class TpTapTarget extends StatelessWidget {
 
   final double minSize;
 
+  /// 앱 밖으로 나가는가. 스크린 리더가 버튼과 링크를 다르게 읽는다.
+  final bool link;
+
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      button: true,
+      button: !link,
+      link: link,
       label: label,
       child: GestureDetector(
         onTap: onTap,

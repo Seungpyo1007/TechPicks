@@ -12,6 +12,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../core/analytics.dart';
 import '../../core/error_reporter.dart';
 import '../../core/failure.dart';
+import '../../data/service/link_opener.dart';
 import '../../shared/copy_keys.dart';
 import '../share/share_text.dart';
 import '../../data/dto/smartphone.dart';
@@ -20,6 +21,7 @@ import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_score_strip.dart';
 import '../../shared/widgets/tp_surface.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 
 /// 기기 상세.
 ///
@@ -211,12 +213,19 @@ class _DetailBody extends ConsumerWidget {
 
         if (device.sourceUrls.isNotEmpty) ...<Widget>[
           const SizedBox(height: 20),
-          // CC-BY-SA 4.0 상 출처 표기는 선택이 아니다.
-          Text(K.dataSource.tr(), style: type.caption),
+          // CC-BY-SA 4.0 상 출처 표기는 선택이 아니고, 표기만으로도 모자란다.
+          // 라이선스 본문과 원본에 닿을 수 있어야 한다.
+          _LinkLine(
+            label: K.dataSource.tr(),
+            url: TpUrls.license,
+            style: type.caption,
+          ),
           for (final url in device.sourceUrls)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(url, style: type.caption, maxLines: 1),
+            _LinkLine(
+              label: url,
+              url: Uri.tryParse(url),
+              style: type.caption,
+              topPadding: 2,
             ),
         ],
       ],
@@ -347,6 +356,54 @@ class _DetailSkeleton extends StatelessWidget {
           ),
       ],
     );
+  }
+}
+
+/// 눌러서 여는 한 줄.
+///
+/// 밑줄이나 색을 넣지 않는다. 명세에 이 자리의 링크 스타일이 없고, 캡션
+/// 크기의 흐린 글자에 파란색을 얹으면 본문보다 눈에 띈다. 대신 히트 영역을
+/// 넓히고 스크린 리더에는 링크라고 알린다.
+class _LinkLine extends ConsumerWidget {
+  const _LinkLine({
+    required this.label,
+    required this.url,
+    required this.style,
+    this.topPadding = 0,
+  });
+
+  final String label;
+  final Uri? url;
+  final TextStyle style;
+  final double topPadding;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final text = Padding(
+      padding: EdgeInsets.only(top: topPadding),
+      child: Text(label, style: style, maxLines: 1),
+    );
+    final target = url;
+    if (target == null) return text;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TpTapTarget(
+        link: true,
+        minSize: 44,
+        onTap: () => unawaited(_open(ref, target)),
+        child: text,
+      ),
+    );
+  }
+
+  Future<void> _open(WidgetRef ref, Uri url) async {
+    try {
+      await ref.read(linkOpenerProvider).open(url);
+    } catch (e, s) {
+      // 열 앱이 없는 기기도 있다. 화면은 그대로 둔다.
+      TpErrors.record(e, s, reason: 'link.open');
+    }
   }
 }
 
