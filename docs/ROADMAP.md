@@ -115,8 +115,8 @@ for the iOS platform, but this target supports 13.0
 
 | # | 무엇 | 막고 있는 것 |
 |---|---|---|
-| P1.1 | `sign_in_with_apple` | **심사 지침 4.8.** Google 을 제공하면 필수 |
-| P1.2 | Facebook 버튼 — 붙이거나 뺀다 | 제품 판단 |
+| ✅ P1.1 | `google_sign_in` + `sign_in_with_apple` | **심사 지침 4.8.** Google 을 제공하면 필수 |
+| ✅ P1.2 | Facebook 버튼 — **뺐다** | 제품 판단 |
 | ✅ P1.3 | `applicationId` / 번들 ID → `com.techpicks.app` | Play 가 `com.example.*` 를 거부했다 |
 | P1.4 | Android 릴리스 서명 (지금 디버그 키) | `build.gradle` 에 TODO 로 남아 있다 |
 | P1.5 | `google-services.json` 교체 (`oauth_client: []`) | Firebase 콘솔 |
@@ -127,12 +127,23 @@ for the iOS platform, but this target supports 13.0
 
 P1.3–P1.6 은 코드가 아니라 **계정·콘솔 작업**이다. 우리가 못 한다.
 
-P1.7·P1.9 는 코드만으로 끝나서 넣었다. 남은 코드 작업은 P1.1(Apple 로그인)
-하나인데, Apple Developer 에서 기능을 켜야 실제로 돌아간다. P1.2(Facebook)는
-제품 판단이다.
+**P1 의 코드는 다 끝났다.** 남은 것은 콘솔·계정 작업뿐이다.
 
-**Google 로그인도 아직 안 붙어 있다.** `FirebaseAuthService` 가 google·apple·
-facebook 셋 다 null 을 돌려준다. 지금 실제로 되는 것은 이메일과 익명뿐이다.
+Google·Apple 로그인은 붙였지만 **설정 없이는 안 돈다.**
+
+| 무엇 | 어디서 |
+|---|---|
+| `oauth_client` 가 채워진 `google-services.json` | Firebase 콘솔 (Android SHA-1 등록 포함) |
+| `GoogleService-Info.plist` | Firebase 콘솔 |
+| App ID 에 Sign in with Apple 켜기 | Apple Developer |
+| Firebase 콘솔에서 Google·Apple 로그인 공급자 켜기 | Firebase 콘솔 |
+
+`ios/Runner/Runner.entitlements` 는 넣어뒀다. Apple Developer 에서 기능을
+안 켜면 **실기기 서명이 실패한다** — 시뮬레이터는 서명을 안 해서 그대로 뜬다.
+
+Facebook 은 뺐다. 개발자 계정과 앱 심사가 따로 필요한데 그걸 치를 만큼 쓰일
+거라고 볼 근거가 없었다. 나중에 붙이려면 버튼·번역 키·로고를 되살리면 된다
+(`78f8d4f` 참고).
 
 ### P1.5 — v1 잔재 정리 (한 시간, 지금 가능)
 
@@ -297,6 +308,8 @@ P1 을 실행 순서로 편 것이다.
   ✅ P3.5 Firestore 동기화   완료 — 로그인 후 확인 필요
   ✅ P1.7 개인정보 매니페스트 완료 — 번들에 들어간 것까지 확인
   ✅ P1.9 출처·라이선스 링크  완료
+  ✅ P1.1 Google·Apple 로그인 완료 — 콘솔 설정 대기
+  ✅ P1.2 Facebook            뺐다
 
 콘솔 작업이 들어오면 ────────────────────────────────
   P1  출시 요건            2–3일    ← 스토어 제출 가능
