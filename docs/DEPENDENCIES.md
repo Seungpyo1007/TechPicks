@@ -107,6 +107,24 @@ iOS 빌드가 통과하는지 확인한다.** 통과하면 우회를 지운다.
 
 `dio` 5.11.0, `flutter_riverpod` 3.4.2, `freezed` 3.2.5 는 이미 최신이다.
 
+### 1.5b 나중에 들어온 것
+
+P3 을 붙이면서 여섯 개가 더 들어왔다.
+
+| 패키지 | 무엇에 | 어디서 쓰나 |
+|---|---|---|
+| `share_plus` 13.3.0 | 공유 시트 | `ShareService` |
+| `app_links` 7.2.1 | `techpicks://` 수신 | `DeepLinkService` |
+| `connectivity_plus` 7.3.1 | 오프라인 안내 | `ConnectivityService` |
+| `firebase_remote_config` 6.5.6 | 카탈로그 주소·버전 | `RemoteConfigCatalogFeed` |
+| `path_provider` 2.x | 받아둔 카탈로그 파일 | `FileCatalogStore` |
+| `cloud_firestore` 6.8.0 | 관심 목록 동기화 | `FirestoreShortlistSync` |
+
+전부 인터페이스 뒤에 있다. 화면과 테스트는 플러그인을 안 본다.
+
+`url_launcher` 는 `share_plus` 가 전이로 끌고 왔다. P1.9(라이선스 링크)를
+붙일 때 직접 선언하면 된다.
+
 ### 1.6 `easy_localization` — 지켜본다
 
 | | |
