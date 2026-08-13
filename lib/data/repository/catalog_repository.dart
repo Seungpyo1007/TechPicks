@@ -1,5 +1,7 @@
-import '../../core/error_reporter.dart';
+import 'dart:async' show unawaited;
 import 'dart:convert';
+
+import '../../core/error_reporter.dart';
 
 import 'package:flutter/services.dart' show AssetBundle, rootBundle;
 
@@ -8,6 +10,7 @@ import '../../core/result.dart';
 import '../dto/cpu.dart';
 import '../dto/smartphone.dart';
 import '../dto/soc.dart';
+import 'catalog_source.dart';
 
 /// 앱에 같이 실리는 큐레이션 카탈로그.
 ///
@@ -18,33 +21,106 @@ import '../dto/soc.dart';
 ///
 /// 상세 화면처럼 기기 하나만 필요한 곳은 카탈로그를 거치지 않고
 /// `TechApiRepository` 로 직접 받는다. 카탈로그에 없는 기기도 열려야 한다.
+///
+/// **애셋이 끝이 아니다.** [store] 와 [feed] 를 주면 내려받은 카탈로그를 먼저
+/// 읽고, 뒤에서 새 버전을 받아 다음 실행에 쓴다. 명세가 요구한 "스토어 배포
+/// 없이 점수 갱신"이 그 경로다. 둘 다 없으면 지금까지대로 애셋만 읽는다.
 class CatalogRepository {
-  CatalogRepository({AssetBundle? bundle, this.assetPath = _defaultAsset})
-    : _bundle = bundle ?? rootBundle;
+  CatalogRepository({
+    AssetBundle? bundle,
+    this.assetPath = _defaultAsset,
+    CatalogStore? store,
+    CatalogFeed? feed,
+  }) : _bundle = bundle ?? rootBundle,
+       _store = store,
+       _feed = feed;
 
   static const String _defaultAsset = 'assets/catalog/v1.json';
 
   final AssetBundle _bundle;
   final String assetPath;
+  final CatalogStore? _store;
+  final CatalogFeed? _feed;
 
   Catalog? _cache;
 
-  /// 한 번 읽고 캐시한다. 애셋이라 갱신될 일이 없다.
+  /// 한 번 읽고 캐시한다.
+  ///
+  /// 받아둔 파일이 애셋보다 **새로울 때만** 그걸 쓴다. 앱을 업데이트하면
+  /// 애셋 쪽이 더 새로울 수 있고, 그때 옛날 다운로드가 이기면 안 된다.
   Future<Result<Catalog>> load() async {
     final cached = _cache;
     if (cached != null) return Ok(cached);
 
+    final asset = await _fromAsset();
+    final stored = await _fromStore();
+    final fromAsset = asset.fold((c) => c, (_) => null);
+
+    final chosen =
+        (stored != null &&
+            (fromAsset == null || stored.version > fromAsset.version))
+        ? stored
+        : fromAsset;
+
+    // 애셋도 못 읽고 받아둔 것도 없다. 원래 실패를 그대로 돌려준다.
+    if (chosen == null) return asset;
+
+    _cache = chosen;
+    unawaited(_refresh(chosen.version));
+    return Ok(chosen);
+  }
+
+  Future<Result<Catalog>> _fromAsset() async {
     try {
       final raw = await _bundle.loadString(assetPath);
       final json = jsonDecode(raw) as Map<String, dynamic>;
-      final catalog = Catalog.fromJson(json);
-      _cache = catalog;
-      return Ok(catalog);
+      return Ok(Catalog.fromJson(json));
     } on Failure catch (f) {
       return Err(f);
     } catch (e, s) {
       TpErrors.record(e, s, reason: 'catalog.load');
       return Err(ParseFailure('카탈로그 애셋을 읽지 못했다: $assetPath', cause: e));
+    }
+  }
+
+  /// 받아둔 파일. 없거나 깨졌으면 null 이고, 그때는 애셋으로 떨어진다.
+  Future<Catalog?> _fromStore() async {
+    final store = _store;
+    if (store == null) return null;
+    try {
+      final raw = await store.read();
+      if (raw == null) return null;
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      return Catalog.fromJson(json);
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'catalog.stored');
+      return null;
+    }
+  }
+
+  /// 새 카탈로그를 받아 파일에 쓴다. **이번 실행에는 안 쓴다.**
+  ///
+  /// 보고 있는 화면에서 순위가 갑자기 뒤집히는 것보다 다음에 켤 때 바뀌는
+  /// 편이 낫다. 첫 프레임을 네트워크에 걸지 않는 효과도 같이 온다.
+  Future<void> _refresh(int current) async {
+    final feed = _feed;
+    final store = _store;
+    if (feed == null || store == null) return;
+
+    try {
+      final latest = await feed.latest();
+      if (latest == null || latest.version <= current) return;
+
+      final body = await feed.fetch(latest.url);
+      if (body == null) return;
+
+      // 깨진 것을 저장하면 다음 실행이 그걸 읽는다. Catalog.fromJson 은
+      // 관대해서 던지지 않고 빈 목록을 주므로 여기서 직접 본다.
+      if (Catalog.fromJson(body).smartphones.isEmpty) return;
+
+      await store.write(encodeCatalog(body));
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'catalog.refresh');
     }
   }
 }
