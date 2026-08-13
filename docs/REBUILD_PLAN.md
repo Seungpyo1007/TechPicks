@@ -383,7 +383,8 @@ v1 화면 26개와 의존성 11개 삭제
 - **`google-services.json`** — `oauth_client` 가 비어 Google 로그인이 안 된다.
   Firebase 콘솔의 실제 파일이 필요하다.
 - **iOS/macOS 빌드** — CocoaPods 미설치, `ios/Runner/GoogleService-Info.plist` 없음.
-- **릴리스 서명·applicationId** — `com.example.techpicks` 는 스토어가 거부한다.
+- **릴리스 서명** — Android 가 아직 디버그 키로 서명한다.
+  패키지 이름은 `com.techpicks.app` 으로 바꿨다.
 - **Firestore/Storage 보안 규칙** — v1.0.1beta 가 공개돼 있고 실제 프로젝트를 문다.
 - **카메라·OCR** — 스캔 화면은 인식 결과를 받아 맞추는 부분까지만 있다.
 - **Laptops 화면 (명세 §6)** — TechAPI `laptops` 는 1,951종인데 점수가 하나도

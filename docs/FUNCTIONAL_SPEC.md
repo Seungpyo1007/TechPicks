@@ -414,7 +414,7 @@ TP Index = Σ(축 점수 × 축 가중치) / Σ(값이 있는 축의 가중치)
 | 제품 사진 | TechAPI 의 `image_url` 이 10/10 채워져 있지만 **저장소가 없어 404** 다 (`GetTechAPI/images` 레포 자체가 없음) |
 | 3D 모델 | 명세도 "Not supplied". 네이티브 렌더러는 Flutter master 채널이 필요해 못 쓴다 |
 | Google 로그인 | `google-services.json` 의 `oauth_client` 가 비어 있다 |
-| 스토어 배포 | `com.example.techpicks` 는 거부된다 |
+| 스토어 배포 | 릴리스 서명이 디버그 키다. 패키지는 `com.techpicks.app` 으로 바꿨다 |
 
 ---
 
