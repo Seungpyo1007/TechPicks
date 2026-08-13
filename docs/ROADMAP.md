@@ -118,7 +118,7 @@ for the iOS platform, but this target supports 13.0
 | ✅ P1.1 | `google_sign_in` + `sign_in_with_apple` | **심사 지침 4.8.** Google 을 제공하면 필수 |
 | ✅ P1.2 | Facebook 버튼 — **뺐다** | 제품 판단 |
 | ✅ P1.3 | `applicationId` / 번들 ID → `com.techpicks.app` | Play 가 `com.example.*` 를 거부했다 |
-| P1.4 | Android 릴리스 서명 (지금 디버그 키) | `build.gradle` 에 TODO 로 남아 있다 |
+| ✅ P1.4 | Android 릴리스 서명 배선 | 키스토어는 사용자 것 |
 | P1.5 | `google-services.json` 교체 (`oauth_client: []`) | Firebase 콘솔 |
 | P1.6 | `GoogleService-Info.plist` (지금 없음) | Firebase 콘솔 |
 | ✅ P1.7 | `ios/Runner/PrivacyInfo.xcprivacy` 작성 | 앱 자체 매니페스트가 없다 |
@@ -128,6 +128,29 @@ for the iOS platform, but this target supports 13.0
 P1.3–P1.6 은 코드가 아니라 **계정·콘솔 작업**이다. 우리가 못 한다.
 
 **P1 의 코드는 다 끝났다.** 남은 것은 콘솔·계정 작업뿐이다.
+
+#### 릴리스 서명은 키스토어만 꽂으면 된다
+
+`android/key.properties` 가 있으면 그 키로 서명하고, 없으면 지금처럼 디버그
+키로 떨어진다. 키스토어가 없는 사람도 `flutter run --release` 가 되게 하려는
+것이다. **디버그 키로 서명된 것은 Play 가 거부한다** — 올리기 전에 파일이
+있는지 확인할 것.
+
+```bash
+keytool -genkeypair -v -keystore ~/techpicks-upload.jks -storetype PKCS12 \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+```properties
+# android/key.properties — .gitignore 대상이다
+storeFile=/Users/<이름>/techpicks-upload.jks
+storePassword=...
+keyAlias=upload
+keyPassword=...
+```
+
+던져 만든 키로 실제 서명이 붙는 것까지 확인했다 (`apksigner verify` 로 DN 확인).
+**키스토어를 잃어버리면 그 앱은 다시 못 올린다.** 백업할 것.
 
 Google·Apple 로그인은 붙였지만 **설정 없이는 안 돈다.**
 
@@ -310,6 +333,7 @@ P1 을 실행 순서로 편 것이다.
   ✅ P1.9 출처·라이선스 링크  완료
   ✅ P1.1 Google·Apple 로그인 완료 — 콘솔 설정 대기
   ✅ P1.2 Facebook            뺐다
+  ✅ P1.4 릴리스 서명 배선     완료 — 키스토어 대기
 
 콘솔 작업이 들어오면 ────────────────────────────────
   P1  출시 요건            2–3일    ← 스토어 제출 가능
