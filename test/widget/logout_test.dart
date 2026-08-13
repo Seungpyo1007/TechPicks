@@ -35,6 +35,12 @@ class _StubAuth implements AuthService {
   }) async => null;
 
   @override
+  Future<bool> sendPasswordReset(String email) async => false;
+
+  @override
+  Future<TpUser?> updateName(String name) async => null;
+
+  @override
   Future<void> signOut() async {
     signOuts++;
     _current = null;
@@ -58,6 +64,12 @@ class _HangingAuth implements AuthService {
     required String email,
     required String password,
   }) async => null;
+
+  @override
+  Future<bool> sendPasswordReset(String email) async => false;
+
+  @override
+  Future<TpUser?> updateName(String name) async => null;
 
   @override
   Future<void> signOut() => Completer<void>().future;

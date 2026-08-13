@@ -103,6 +103,10 @@ abstract final class K {
   static const String notifications = 'notifications';
   static const String currency = 'currency';
   static const String changePassword = 'changePw';
+  static const String pwResetSent = 'pwResetSent';
+  static const String pwResetFailed = 'pwResetFailed';
+  static const String nameLabel = 'nameLabel';
+  static const String save = 'save';
   static const String logout = 'logout';
   static const String version = 'version';
   static const String on = 'on';

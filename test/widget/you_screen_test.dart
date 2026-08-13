@@ -139,12 +139,21 @@ void main() {
       'Dark mode',
       'Notifications',
       'Currency',
-      'Change password',
       'Log out',
     ]) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
     expect(find.text(YouScreen.versionLine), findsOneWidget);
+  });
+
+  testWidgets('비밀번호 줄은 메일 주소가 있을 때만 나온다', (tester) async {
+    // 재설정 메일을 보낼 곳이 없으면 줄을 보여줄 이유도 없다. 익명과
+    // 소셜 로그인이 그렇다.
+    await _pump(tester);
+    expect(find.text('Change password'), findsNothing);
+
+    await _pump(tester, name: '홍길동', email: 'a@b.com');
+    expect(find.text('Change password'), findsOneWidget);
   });
 
   testWidgets('로그인 전에는 계정 없이 쓰는 상태로 보인다', (tester) async {

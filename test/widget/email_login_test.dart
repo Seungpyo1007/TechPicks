@@ -41,6 +41,12 @@ class _StubAuth implements AuthService {
   }
 
   @override
+  Future<bool> sendPasswordReset(String email) async => false;
+
+  @override
+  Future<TpUser?> updateName(String name) async => null;
+
+  @override
   Future<void> signOut() async => _current = null;
 }
 

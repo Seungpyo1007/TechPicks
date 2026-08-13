@@ -556,6 +556,21 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
     return user != null;
   }
 
+  /// 비밀번호 재설정 메일. 로그인한 사람의 주소로만 보낸다.
+  Future<bool> sendPasswordReset() async {
+    final email = state?.email;
+    if (email == null || email.isEmpty) return false;
+    return ref.read(authServiceProvider).sendPasswordReset(email);
+  }
+
+  /// 표시 이름을 바꾼다.
+  Future<bool> updateName(String name) async {
+    final user = await ref.read(authServiceProvider).updateName(name.trim());
+    if (user == null) return false;
+    if (ref.mounted) state = user;
+    return true;
+  }
+
   Future<void> signOut() async {
     // 화면을 먼저 되돌린다.
     //

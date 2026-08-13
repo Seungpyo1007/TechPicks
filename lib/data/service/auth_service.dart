@@ -53,6 +53,14 @@ abstract class AuthService {
   /// 이메일 가입. 성공하면 그대로 로그인된 상태다.
   Future<TpUser?> signUp({required String email, required String password});
 
+  /// 비밀번호 재설정 메일. 지금 비밀번호를 안 물어보는 표준 방식이다.
+  ///
+  /// 메일 주소가 없는 계정(익명)에는 보낼 곳이 없다.
+  Future<bool> sendPasswordReset(String email);
+
+  /// 표시 이름을 바꾼다. 성공하면 바뀐 사용자를 돌려준다.
+  Future<TpUser?> updateName(String name);
+
   Future<void> signOut();
 }
 
@@ -148,6 +156,35 @@ class FirebaseAuthService implements AuthService {
       return _map(cred.user);
     } catch (e, s) {
       TpErrors.record(e, s, reason: 'auth.signUp');
+      return null;
+    }
+  }
+
+  @override
+  Future<bool> sendPasswordReset(String email) async {
+    final auth = _auth;
+    if (auth == null) return false;
+    try {
+      await auth.sendPasswordResetEmail(email: email);
+      return true;
+    } catch (e, s) {
+      // 없는 계정이어도 Firebase 는 알려주지 않는 설정이 있다. 어느 쪽이든
+      // 화면은 "보냈다"와 "못 보냈다" 둘로만 갈린다.
+      TpErrors.record(e, s, reason: 'auth.passwordReset');
+      return false;
+    }
+  }
+
+  @override
+  Future<TpUser?> updateName(String name) async {
+    final user = _auth?.currentUser;
+    if (user == null) return null;
+    try {
+      await user.updateDisplayName(name);
+      await user.reload();
+      return _map(_auth?.currentUser);
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'auth.updateName');
       return null;
     }
   }

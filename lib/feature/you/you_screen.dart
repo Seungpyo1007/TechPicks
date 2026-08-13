@@ -24,7 +24,7 @@ import '../../shared/widgets/tp_tap_target.dart';
 /// 하나로 합친다.
 ///
 /// 카피는 아직 하드코딩이다.
-class YouScreen extends ConsumerWidget {
+class YouScreen extends ConsumerStatefulWidget {
   const YouScreen({
     super.key,
     this.onTabSelected,
@@ -56,7 +56,31 @@ class YouScreen extends ConsumerWidget {
   static const String versionLine = 'TechPicks version $version · Apache-2.0';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<YouScreen> createState() => _YouScreenState();
+}
+
+class _YouScreenState extends ConsumerState<YouScreen> {
+  /// 계정 카드 아래 한 줄. 재설정 메일을 보냈다거나 못 보냈다는 안내다.
+  ///
+  /// SnackBar 를 쓸 수 없다. 이 앱은 Scaffold 를 안 쓰고 TpShell 이 크롬을
+  /// 직접 그린다. 로그인 화면도 같은 방식으로 오류를 본문에 붙인다.
+  String? _notice;
+
+  /// 이름 입력칸. 다이얼로그가 닫히는 애니메이션 중에도 살아 있어야 한다 —
+  /// 닫자마자 버리면 사라지는 프레임에서 이미 버린 컨트롤러를 읽는다.
+  final TextEditingController _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  String? get name => widget.name;
+  String? get email => widget.email;
+
+  @override
+  Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
     final weights = ref.watch(weightsProvider);
@@ -66,7 +90,7 @@ class YouScreen extends ConsumerWidget {
     return TpShell(
       title: t.isGlass ? null : K.you.tr(),
       tab: TpTab.you,
-      onTabSelected: onTabSelected,
+      onTabSelected: widget.onTabSelected,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: <Widget>[
@@ -75,10 +99,14 @@ class YouScreen extends ConsumerWidget {
             const SizedBox(height: 12),
           ],
 
-          _ProfileHeader(name: name, email: email, onEdit: onEditProfile),
+          _ProfileHeader(
+            name: name,
+            email: email,
+            onEdit: widget.onEditProfile ?? _editName,
+          ),
           const SizedBox(height: 22),
 
-          _YourDevice(onTap: onDeviceTap),
+          _YourDevice(onTap: widget.onDeviceTap),
           const SizedBox(height: 22),
 
           Text(K.priorities.tr().toUpperCase(), style: type.eyebrow),
@@ -146,14 +174,26 @@ class YouScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               children: <Widget>[
+                // 비밀번호가 없는 계정(익명·소셜)에는 보낼 곳이 없다.
+                if (email != null && email!.isNotEmpty)
+                  _SettingRow(
+                    label: K.changePassword.tr(),
+                    onTap:
+                        widget.onChangePassword ??
+                        () => unawaited(_resetPassword()),
+                  ),
                 _SettingRow(
-                  label: K.changePassword.tr(),
-                  onTap: onChangePassword,
+                  label: K.logout.tr(),
+                  onTap: widget.onLogout,
+                  last: true,
                 ),
-                _SettingRow(label: K.logout.tr(), onTap: onLogout, last: true),
               ],
             ),
           ),
+          if (_notice != null) ...<Widget>[
+            const SizedBox(height: 8),
+            Text(_notice!, style: type.caption),
+          ],
           const SizedBox(height: 20),
 
           // 푸터 문구는 명세 §13 의 확정 카피다. 글자는 그대로 두고 누르면
@@ -163,8 +203,8 @@ class YouScreen extends ConsumerWidget {
             child: TpTapTarget(
               link: true,
               minSize: 44,
-              onTap: () => unawaited(_openLicense(ref)),
-              child: Text(versionLine, style: type.caption),
+              onTap: () => unawaited(_openLicense()),
+              child: Text(YouScreen.versionLine, style: type.caption),
             ),
           ),
         ],
@@ -172,7 +212,63 @@ class YouScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openLicense(WidgetRef ref) async {
+  /// 비밀번호 재설정 메일을 보낸다.
+  ///
+  /// 지금 비밀번호를 묻지 않는다. 그건 별도 화면과 재인증이 필요한데, 메일
+  /// 한 통이면 Firebase 가 그걸 다 해준다.
+  Future<void> _resetPassword() async {
+    final sent = await ref
+        .read(currentUserProvider.notifier)
+        .sendPasswordReset();
+    if (!mounted) return;
+
+    setState(() {
+      _notice = sent
+          ? K.pwResetSent.tr(args: <String>[email ?? ''])
+          : K.pwResetFailed.tr();
+    });
+  }
+
+  /// 표시 이름만 바꾼다.
+  ///
+  /// v1 의 EditProfileScreen 은 화면 하나를 통째로 썼는데 바꿀 수 있는 게
+  /// 이름뿐이다. 시트 하나로 충분하다.
+  Future<void> _editName() async {
+    _name.text = name ?? '';
+    final next = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(K.editProfile.tr()),
+        content: TextField(
+          controller: _name,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(labelText: K.nameLabel.tr()),
+          onSubmitted: (v) => Navigator.of(context).pop(v),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(K.cancel.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(_name.text),
+            child: Text(K.save.tr()),
+          ),
+        ],
+      ),
+    );
+
+    final trimmed = next?.trim() ?? '';
+    if (trimmed.isEmpty || trimmed == name) return;
+
+    final ok = await ref.read(currentUserProvider.notifier).updateName(trimmed);
+    if (!mounted || ok) return;
+
+    setState(() => _notice = K.authFailed.tr());
+  }
+
+  Future<void> _openLicense() async {
     try {
       await ref.read(linkOpenerProvider).open(TpUrls.appLicense);
     } catch (e, s) {
