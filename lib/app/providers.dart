@@ -13,6 +13,7 @@ import '../data/repository/catalog_repository.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../data/service/ask_service.dart';
 import '../data/service/auth_service.dart';
+import '../data/service/connectivity_service.dart';
 import '../data/service/deep_link_service.dart';
 import '../data/service/device_info_service.dart';
 import '../data/service/share_service.dart';
@@ -714,3 +715,22 @@ final pendingLinkProvider =
     NotifierProvider<PendingLinkNotifier, TpLinkTarget?>(
       PendingLinkNotifier.new,
     );
+
+/// 연결 상태.
+final connectivityServiceProvider = Provider<ConnectivityService>(
+  (ref) => ConnectivityPlusService(),
+);
+
+/// 지금 끊겨 있는가.
+///
+/// 실패 화면이 이걸 보고 문구를 고른다. 못 읽으면(플러그인 없음, 권한 없음)
+/// 값이 안 오고, 그때는 지금까지대로 일반 실패로 보여준다.
+final offlineProvider = StreamProvider<bool>(
+  (ref) async* {
+    final service = ref.watch(connectivityServiceProvider);
+    yield await service.offline();
+    yield* service.changes();
+  },
+  // 못 읽는 환경에서 조용히 재시도하면 계속 깨어난다. 한 번 실패면 그만.
+  retry: (_, _) => null,
+);
