@@ -4,10 +4,10 @@
 
 ## 지금 상태
 
-브랜치 `feat/design-handoff`, 워킹 트리 깨끗, 미푸시 커밋 74개.
+브랜치 `feat/design-handoff`, 워킹 트리 깨끗, 미푸시 커밋 79개.
 사용자가 모아뒀다 직접 푸시하는 방식이다. **푸시·PR·머지·CI 는 시키기 전까지 하지 않는다.**
 
-`flutter analyze` 이슈 0, `flutter test` 497건 통과(골든 24장 포함).
+`flutter analyze` 이슈 0, `flutter test` 542건 통과(골든 24장 포함).
 iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기는 못 해봤다 — 연결된 기기도, 코드사인 인증서도 없다.
 
 명세 8단계(`DESIGN_HANDOFF.md` 의 Suggested build order)는 전부 끝났다.
@@ -22,6 +22,10 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 | `e87cedb` `7d465b6` `085b477` `bf6e6a9` | 모션 토큰(`TpMotion`), 동작 줄이기, 진행 막대 통합, 화면 모션 |
 | `6e1f06d` | 패키지 이름 `com.example.techpicks` → `com.techpicks.app` |
 | `cc9b197` | 골든 테스트 — 화면 11종 × 두 크롬 + 공용 위젯 한 장 |
+| `454cd12` | 공유 + 딥링크(`techpicks://`), TpShell 헤더 오른쪽 슬롯 |
+| `55c0df5` | 오프라인이면 실패 문구를 바꾼다 |
+| `93c6323` | Remote Config 로 카탈로그 갱신 (주소만 내려받는다) |
+| `b675cf7` | 로그인 시 관심 목록 동기화 (문서 단위 LWW) |
 
 ## 손대기 전에 알아야 할 것
 
@@ -41,6 +45,11 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 바뀐 그림이 의도한 것인지 눈으로 확인한다.** 아무 기계에서나 `--update-goldens`
 를 돌리면 기준선이 그 기계 것으로 덮인다.
 
+**딥링크는 시뮬레이터에서 확인했다.** 앱이 꺼진 상태와 떠 있는 상태 둘 다
+연다. 확인할 때는 `xcrun simctl openurl booted "techpicks://device/galaxy-s25"`
+를 쓰고, 처음 한 번은 iOS 가 "'Techpicks'에서 열겠습니까?"를 묻는다 — 그걸
+취소하면 링크가 앱까지 안 온다.
+
 **탭 전환에 모션을 넣지 않는다.** 명세 Interactions 표가 `Instant; no cross-fade`
 로 못박았다. 한 번 계획에 넣었다가 뺐다.
 
@@ -49,6 +58,8 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 | 무엇 | 누가 |
 |---|---|
 | Firebase 앱 재등록 (`com.techpicks.app`), `GoogleService-Info.plist` | 사용자 — 콘솔 |
+| Remote Config `catalog_url`·`catalog_version`, 카탈로그 JSON 호스팅 | 사용자 — 콘솔 |
+| Firestore 보안 규칙 (`users/{uid}` 는 본인만) | 사용자 — 콘솔 |
 | 실기기 테스트 (기기 연결 + Xcode 로그인) | 사용자 |
 | `techpicks.com` 도메인 | 사용자 — 구매 예정 |
 | Apple 로그인, Android 릴리스 서명, 개인정보 처리방침 URL | 사용자 — 계정 작업 |
@@ -64,11 +75,12 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 
 ## 다음에 할 만한 것
 
-`ROADMAP.md` §2 가 작업 큐다. P1.3(패키지 이름)은 완료 표시돼 있다.
-P1 의 나머지는 전부 콘솔·계정 작업이라 사용자를 기다린다.
-코드로 진전시킬 수 있는 건 P3 — 공유+딥링크, Remote Config 로 카탈로그 전달.
-둘 다 제품 결정이 먼저다: 공유 문구와 URI 스킴, 카탈로그를 통째로 보낼지
-URL 만 보낼지.
+`ROADMAP.md` §2 가 작업 큐다. **P3 는 전부 끝났다.** 코드로 혼자 진전시킬 수
+있는 것은 남아 있지 않다. P1 과 P3.2·P3.5 의 콘솔 값이 다음 차례다.
+
+P3.2·P3.5 는 코드가 다 들어갔지만 **콘솔 값이 없으면 안 도는 상태**다.
+Remote Config 가 비어 있으면 애셋만 쓰고, Firestore 가 막혀 있으면 로컬만
+쓴다 — 둘 다 조용히 지금까지대로 동작한다.
 
 `riverpod_lint` 은 못 넣는다. `custom_lint` 과 `json_serializable` 이 요구하는
 analyzer 버전이 겹치지 않는다. §2 에 표가 있다.
