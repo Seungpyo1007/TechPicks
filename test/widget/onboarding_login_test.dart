@@ -66,6 +66,28 @@ Future<void> _pump(
   );
 }
 
+/// 사용자가 시트를 닫은 경우.
+class _CancelingAuth implements AuthService {
+  @override
+  TpUser? get current => null;
+
+  @override
+  Future<TpUser?> signIn(
+    AuthMethod method, {
+    String? email,
+    String? password,
+  }) async => throw const AuthCanceled();
+
+  @override
+  Future<TpUser?> signUp({
+    required String email,
+    required String password,
+  }) async => null;
+
+  @override
+  Future<void> signOut() async {}
+}
+
 void main() {
   setUp(initLocalization);
 
@@ -128,7 +150,7 @@ void main() {
   });
 
   group('로그인', () {
-    testWidgets('버튼 다섯 개가 명세 순서로', (tester) async {
+    testWidgets('버튼 네 개가 명세 순서로', (tester) async {
       await _pump(tester, const LoginScreen(), auth: _StubAuth());
 
       expect(find.text('Welcome to\nTechPicks'), findsOneWidget);
@@ -137,6 +159,20 @@ void main() {
       }
       expect(find.text('No account yet?'), findsOneWidget);
       expect(find.text('Sign up'), findsOneWidget);
+      // Facebook 은 뺐다.
+      expect(find.textContaining('Facebook'), findsNothing);
+    });
+
+    testWidgets('취소는 실패가 아니다', (tester) async {
+      // 스스로 시트를 닫은 사람에게 "연결되지 않았습니다"를 보여주면
+      // 앱이 고장 난 것처럼 읽힌다.
+      await _pump(tester, const LoginScreen(), auth: _CancelingAuth());
+
+      await tester.tap(find.text('Continue with Apple'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('not connected yet'), findsNothing);
+      expect(_container!.read(currentUserProvider), isNull);
     });
 
     testWidgets('계정 없이 둘러보기는 익명 로그인', (tester) async {

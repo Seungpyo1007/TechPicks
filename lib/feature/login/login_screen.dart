@@ -49,11 +49,6 @@ class LoginScreen extends ConsumerStatefulWidget {
           key: K.loginApple,
           asset: 'assets/logo/apple_logo.png',
         ),
-        (
-          method: AuthMethod.facebook,
-          key: K.loginFacebook,
-          asset: 'assets/logo/facebook_logo.png',
-        ),
         (method: AuthMethod.email, key: K.loginEmail, asset: null),
         (method: AuthMethod.anonymous, key: K.loginAnon, asset: null),
       ];
@@ -70,10 +65,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       widget.onEmail!();
       return;
     }
-    final ok = await ref.read(currentUserProvider.notifier).signIn(method);
+    final outcome = await ref.read(currentUserProvider.notifier).signIn(method);
     if (!mounted) return;
-    if (ok) {
+    if (outcome == SignInOutcome.ok) {
       widget.onSignedIn?.call();
+      return;
+    }
+    // 스스로 닫은 사람에게 실패를 보여주지 않는다.
+    if (outcome == SignInOutcome.canceled) {
+      setState(() => _error = null);
       return;
     }
     // 계정 없이 둘러보기는 익명 로그인이 실패해도 들어가야 한다. 명세가
@@ -89,7 +89,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   static String _messageFor(AuthMethod method) => switch (method) {
     AuthMethod.google => K.notConnected.tr(args: const <String>['Google']),
     AuthMethod.apple => K.notConnected.tr(args: const <String>['Apple']),
-    AuthMethod.facebook => K.notConnected.tr(args: const <String>['Facebook']),
     AuthMethod.email => K.emailNeeded.tr(),
     AuthMethod.anonymous => K.anonFailed.tr(),
   };

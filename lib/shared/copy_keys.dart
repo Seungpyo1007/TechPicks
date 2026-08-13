@@ -130,7 +130,6 @@ abstract final class K {
   static const String anonFailed = 'anonFailed';
   static const String loginGoogle = 'lGoogle';
   static const String loginApple = 'lApple';
-  static const String loginFacebook = 'lFacebook';
   static const String loginEmail = 'lEmail';
   static const String loginAnon = 'lAnon';
   static const String noAccount = 'noAccount';
