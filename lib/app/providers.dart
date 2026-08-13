@@ -10,6 +10,7 @@ import '../core/error_reporter.dart';
 import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
+import '../data/repository/catalog_source.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../data/service/ask_service.dart';
 import '../data/service/auth_service.dart';
@@ -30,9 +31,15 @@ import '../feature/share/tp_link.dart';
 import '../shared/copy_keys.dart';
 import 'locale_controller.dart';
 
-/// 앱에 실린 큐레이션 카탈로그. 랭킹·홈·비교가 여기서 목록을 받는다.
+/// 카탈로그. 애셋으로 시작하고, 받아둔 것이 있으면 그걸 먼저 읽는다.
+///
+/// Remote Config 에 `catalog_url` 이 비어 있는 동안은 애셋만 쓴다 — 지금까지와
+/// 똑같이 동작한다.
 final catalogRepositoryProvider = Provider<CatalogRepository>(
-  (ref) => CatalogRepository(),
+  (ref) => CatalogRepository(
+    store: const FileCatalogStore(),
+    feed: RemoteConfigCatalogFeed(),
+  ),
 );
 
 /// TechAPI 원격. 카탈로그에 없는 기기를 상세로 열 때 쓴다.
