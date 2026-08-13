@@ -27,6 +27,8 @@ dependencies:
   animations: ^2.2.0
   firebase_crashlytics: ^5.2.7
   firebase_analytics: ^12.4.6
+  share_plus: ^13.3.0
+  app_links: ^7.2.1
 
 
 

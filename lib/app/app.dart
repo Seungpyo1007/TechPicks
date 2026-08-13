@@ -58,6 +58,14 @@ class TechPicksRoot extends ConsumerStatefulWidget {
 }
 
 class _RootState extends ConsumerState<TechPicksRoot> {
+  @override
+  void initState() {
+    super.initState();
+    // 딥링크는 온보딩·로그인 중에도 들어온다. 여기서 구독을 열어두지 않으면
+    // 탭이 뜨기 전에 온 링크를 아무도 안 듣는다. 여는 것은 TabHost 가 한다.
+    ref.listenManual(pendingLinkProvider, (_, _) {});
+  }
+
   void _openEmail({bool signUp = false}) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(

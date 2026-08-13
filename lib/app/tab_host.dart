@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/analytics.dart';
 import '../domain/model/device_specs.dart';
 import '../feature/ask/ask_screen.dart';
 import '../feature/compare/compare_screen.dart';
@@ -11,6 +12,7 @@ import '../feature/detail/detail_screen.dart';
 import '../feature/home/home_screen.dart';
 import '../feature/rank/rank_tab.dart';
 import '../feature/scan/scan_screen.dart';
+import '../feature/share/tp_link.dart';
 import '../feature/viewer/viewer_screen.dart';
 import '../feature/you/you_screen.dart';
 import 'providers.dart';
@@ -45,6 +47,39 @@ class _TabHostState extends ConsumerState<TabHost> {
       (_, next) => ref.read(rankSnapshotProvider.notifier).saveOnce(next),
       fireImmediately: true,
     );
+
+    // 딥링크. 온보딩·로그인 중에 들어온 것도 여기서 처음 열린다.
+    //
+    // 프레임 뒤로 미룬다. initState 에는 아직 Navigator 가 없고, 링크가
+    // 상세를 밀어 올리려면 그게 필요하다.
+    ref.listenManual(pendingLinkProvider, (_, next) {
+      if (next == null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openLink();
+      });
+    }, fireImmediately: true);
+  }
+
+  void _openLink() {
+    switch (ref.read(pendingLinkProvider.notifier).take()) {
+      case DeviceTarget(:final slug):
+        TpAnalytics.linkOpened('device');
+        _openDevice(slug);
+      case CompareTarget(:final a, :final b):
+        TpAnalytics.linkOpened('compare');
+        _openCompare(a, b);
+      case null:
+        break;
+    }
+  }
+
+  /// 링크로 들어온 비교. 두 슬롯을 채우고 비교 탭으로 간다.
+  void _openCompare(String a, String b) {
+    final compare = ref.read(compareProvider.notifier);
+    compare.pick(CompareSide.a, a);
+    compare.pick(CompareSide.b, b);
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    _select(TpTab.compare);
   }
 
   void _select(TpTab tab) => setState(() => _tab = tab);

@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,9 @@ import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../core/analytics.dart';
+import '../../core/error_reporter.dart';
+import '../share/share_text.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/spec_labels.dart';
 import '../../data/dto/smartphone.dart';
@@ -76,8 +81,10 @@ class HomeScreen extends ConsumerWidget {
             switchInCurve: motion.contentSwap.curve,
             switchOutCurve: motion.contentSwap.curve,
             child: verdict == null
-                ? _EmptyShortlist(key: const ValueKey<String>('empty'),
-                    onAdd: onAdd)
+                ? _EmptyShortlist(
+                    key: const ValueKey<String>('empty'),
+                    onAdd: onAdd,
+                  )
                 : _VerdictCard(
                     key: ValueKey<String>(verdict.slug),
                     device: verdict,
@@ -147,13 +154,29 @@ class _VerdictCard extends ConsumerWidget {
     final weights = ref.watch(weightsProvider);
     final index = TpIndex.of(device.score, weights);
 
+    final reason = _reason(device, index);
+
     return TpSurface(
       strong: true,
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(K.verdict.tr().toUpperCase(), style: type.eyebrow),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(K.verdict.tr().toUpperCase(), style: type.eyebrow),
+              ),
+              // 명세에 공유 UI 가 없다. 결론 카드가 그대로 공유 문구라서
+              // 눈에 띄되 Compare all·Ask why 를 밀어내지 않는 자리에 둔다.
+              TpTapTarget(
+                onTap: () => unawaited(_share(ref, index, reason)),
+                label: K.share.tr(),
+                minSize: 44,
+                child: const Icon(Icons.share, size: 20),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Text(
             device.name,
@@ -189,7 +212,7 @@ class _VerdictCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(_reason(device, index), style: type.body),
+          Text(reason, style: type.body),
           const SizedBox(height: 14),
           TpScoreStrip(axes: TpIndex.axes(device.score)),
           const SizedBox(height: 4),
@@ -215,6 +238,26 @@ class _VerdictCard extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// 결론을 그대로 보낸다. 화면에 있는 세 줄이 그대로 문구가 된다.
+  Future<void> _share(WidgetRef ref, int? index, String reason) async {
+    TpAnalytics.shared('verdict');
+    try {
+      await ref
+          .read(shareServiceProvider)
+          .shareText(
+            ShareText.verdict(
+              name: device.name,
+              index: index,
+              reason: reason,
+              slug: device.slug,
+            ),
+            subject: ShareText.subject(device.name),
+          );
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'share.verdict');
+    }
   }
 
   /// 한 문장짜리 근거. 가장 높은 축을 짚어준다.

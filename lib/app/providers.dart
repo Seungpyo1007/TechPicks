@@ -13,7 +13,9 @@ import '../data/repository/catalog_repository.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../data/service/ask_service.dart';
 import '../data/service/auth_service.dart';
+import '../data/service/deep_link_service.dart';
 import '../data/service/device_info_service.dart';
+import '../data/service/share_service.dart';
 import '../domain/model/ask_answer.dart';
 import '../domain/model/device_specs.dart';
 import '../domain/model/movers.dart';
@@ -23,6 +25,7 @@ import '../domain/model/processor.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_weights.dart';
 import '../feature/rank/rank_category.dart';
+import '../feature/share/tp_link.dart';
 import '../shared/copy_keys.dart';
 import 'locale_controller.dart';
 
@@ -647,3 +650,67 @@ final thisDeviceMatchProvider = Provider<ScanMatch?>((ref) {
   if (device == null || catalog == null) return null;
   return ScanMatcher.match(device.searchable, catalog.smartphones);
 });
+
+/// 시스템 공유 시트.
+final shareServiceProvider = Provider<ShareService>(
+  (ref) => const SharePlusService(),
+);
+
+/// 밖에서 들어온 링크의 출처.
+final deepLinkServiceProvider = Provider<DeepLinkService>(
+  (ref) => AppLinksService(),
+);
+
+/// 아직 안 연 딥링크.
+///
+/// 링크는 온보딩·로그인 중에도 들어온다. 그때는 열 화면이 없으므로 여기
+/// 들고 있다가 [TabHost] 가 뜰 때 넘긴다.
+class PendingLinkNotifier extends Notifier<TpLinkTarget?> {
+  StreamSubscription<Uri>? _sub;
+  Uri? _last;
+
+  @override
+  TpLinkTarget? build() {
+    unawaited(_watch());
+    ref.onDispose(() => unawaited(_sub?.cancel()));
+    return null;
+  }
+
+  Future<void> _watch() async {
+    final service = ref.read(deepLinkServiceProvider);
+    try {
+      final first = await service.initial();
+      if (!ref.mounted) return;
+      if (first != null) _offer(first);
+      _sub = service.stream().listen(
+        _offer,
+        onError: (Object e, StackTrace s) =>
+            TpErrors.record(e, s, reason: 'deeplink.stream'),
+      );
+    } catch (e, s) {
+      // 플러그인이 없는 환경(테스트·데스크톱)에서도 앱은 떠야 한다.
+      TpErrors.record(e, s, reason: 'deeplink.watch');
+    }
+  }
+
+  /// 초기 링크가 스트림으로 한 번 더 오는 플랫폼이 있다. 같은 URI 가 연달아
+  /// 오면 화면이 두 번 밀려 올라간다.
+  void _offer(Uri uri) {
+    if (uri == _last) return;
+    _last = uri;
+    final target = TpLink.parse(uri);
+    if (target != null) state = target;
+  }
+
+  /// 한 번만 연다. 읽은 쪽이 비우는 책임을 갖는다.
+  TpLinkTarget? take() {
+    final target = state;
+    state = null;
+    return target;
+  }
+}
+
+final pendingLinkProvider =
+    NotifierProvider<PendingLinkNotifier, TpLinkTarget?>(
+      PendingLinkNotifier.new,
+    );

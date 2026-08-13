@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +9,10 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../core/analytics.dart';
+import '../../core/error_reporter.dart';
 import '../../shared/copy_keys.dart';
+import '../share/share_text.dart';
 import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
@@ -36,8 +41,18 @@ class DetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final device = ref.watch(deviceProvider(slug));
 
+    // 아직 안 왔거나 실패한 기기는 공유할 게 없다.
+    final loaded = device.value;
+
     return TpShell(
       onBack: onBack,
+      trailing: loaded == null
+          ? null
+          : TpShellAction(
+              icon: Icons.share,
+              label: K.share.tr(),
+              onTap: () => unawaited(_share(ref, loaded)),
+            ),
       child: AnimatedSwitcher(
         duration: context.motion.contentSwap.duration,
         switchInCurve: context.motion.contentSwap.curve,
@@ -56,6 +71,27 @@ class DetailScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// 화면이 이미 말하고 있는 것을 그대로 보낸다 — 이름, 지수, 링크.
+  Future<void> _share(WidgetRef ref, Smartphone device) async {
+    final index = TpIndex.of(device.score, ref.read(weightsProvider));
+    TpAnalytics.shared('device');
+    try {
+      await ref
+          .read(shareServiceProvider)
+          .shareText(
+            ShareText.device(
+              name: device.name,
+              index: index,
+              slug: device.slug,
+            ),
+            subject: ShareText.subject(device.name),
+          );
+    } catch (e, s) {
+      // 시트를 못 띄운 것으로 화면이 죽지 않는다.
+      TpErrors.record(e, s, reason: 'share.device');
+    }
   }
 }
 
