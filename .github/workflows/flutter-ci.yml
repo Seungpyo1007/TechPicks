@@ -98,7 +98,7 @@ jobs:
               {
                 "client_info": {
                   "mobilesdk_app_id": "1:746932050988:android:38c726866fc4693a8e8589",
-                  "android_client_info": { "package_name": "com.example.techpicks" }
+                  "android_client_info": { "package_name": "com.techpicks.app" }
                 },
                 "oauth_client": [],
                 "api_key": [ { "current_key": "AIzaSyCvUWkpyXTAkDNcv1F7o2z-QDRK-u_00f4" } ],

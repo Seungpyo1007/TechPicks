@@ -117,7 +117,7 @@ for the iOS platform, but this target supports 13.0
 |---|---|---|
 | P1.1 | `sign_in_with_apple` | **심사 지침 4.8.** Google 을 제공하면 필수 |
 | P1.2 | Facebook 버튼 — 붙이거나 뺀다 | 제품 판단 |
-| P1.3 | `applicationId` / 번들 ID 를 `com.example.techpicks` 에서 바꾼다 | 스토어가 거부한다 |
+| ✅ P1.3 | `applicationId` / 번들 ID → `com.techpicks.app` | Play 가 `com.example.*` 를 거부했다 |
 | P1.4 | Android 릴리스 서명 (지금 디버그 키) | `build.gradle` 에 TODO 로 남아 있다 |
 | P1.5 | `google-services.json` 교체 (`oauth_client: []`) | Firebase 콘솔 |
 | P1.6 | `GoogleService-Info.plist` (지금 없음) | Firebase 콘솔 |
