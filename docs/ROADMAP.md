@@ -121,11 +121,18 @@ for the iOS platform, but this target supports 13.0
 | P1.4 | Android 릴리스 서명 (지금 디버그 키) | `build.gradle` 에 TODO 로 남아 있다 |
 | P1.5 | `google-services.json` 교체 (`oauth_client: []`) | Firebase 콘솔 |
 | P1.6 | `GoogleService-Info.plist` (지금 없음) | Firebase 콘솔 |
-| P1.7 | `ios/Runner/PrivacyInfo.xcprivacy` 작성 | 앱 자체 매니페스트가 없다 |
+| ✅ P1.7 | `ios/Runner/PrivacyInfo.xcprivacy` 작성 | 앱 자체 매니페스트가 없다 |
 | P1.8 | 개인정보 처리방침 URL, 지원 URL | 스토어 등록 항목 |
-| P1.9 | `url_launcher` — CC-BY-SA 표기가 링크가 아니다 | 라이선스 의무 |
+| ✅ P1.9 | `url_launcher` — CC-BY-SA 표기가 링크가 아니다 | 라이선스 의무 |
 
 P1.3–P1.6 은 코드가 아니라 **계정·콘솔 작업**이다. 우리가 못 한다.
+
+P1.7·P1.9 는 코드만으로 끝나서 넣었다. 남은 코드 작업은 P1.1(Apple 로그인)
+하나인데, Apple Developer 에서 기능을 켜야 실제로 돌아간다. P1.2(Facebook)는
+제품 판단이다.
+
+**Google 로그인도 아직 안 붙어 있다.** `FirebaseAuthService` 가 google·apple·
+facebook 셋 다 null 을 돌려준다. 지금 실제로 되는 것은 이메일과 익명뿐이다.
 
 ### P1.5 — v1 잔재 정리 (한 시간, 지금 가능)
 
@@ -288,6 +295,8 @@ P1 을 실행 순서로 편 것이다.
   ✅ P3.2 Remote Config      완료 — 콘솔 값 대기
   ✅ P3.3 오프라인 안내      완료
   ✅ P3.5 Firestore 동기화   완료 — 로그인 후 확인 필요
+  ✅ P1.7 개인정보 매니페스트 완료 — 번들에 들어간 것까지 확인
+  ✅ P1.9 출처·라이선스 링크  완료
 
 콘솔 작업이 들어오면 ────────────────────────────────
   P1  출시 요건            2–3일    ← 스토어 제출 가능
