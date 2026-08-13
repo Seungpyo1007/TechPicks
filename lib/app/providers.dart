@@ -18,6 +18,7 @@ import '../data/service/connectivity_service.dart';
 import '../data/service/deep_link_service.dart';
 import '../data/service/device_info_service.dart';
 import '../data/service/share_service.dart';
+import '../data/service/shortlist_sync_service.dart';
 import '../domain/model/ask_answer.dart';
 import '../domain/model/device_specs.dart';
 import '../domain/model/movers.dart';
@@ -212,6 +213,9 @@ final rankedProcessorsProvider = Provider<List<RankedProcessor>>((ref) {
 class ShortlistNotifier extends Notifier<List<String>> {
   static const String _prefsKey = 'shortlist_slugs';
 
+  /// 마지막으로 고친 시각. 계정에 올라간 것과 어느 쪽이 새로운지 가린다.
+  static const String _stampKey = 'shortlist_updated_at';
+
   @override
   List<String> build() {
     unawaited(_restore());
@@ -228,6 +232,21 @@ class ShortlistNotifier extends Notifier<List<String>> {
   Future<void> _persist() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_prefsKey, state);
+    await prefs.setInt(_stampKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /// 이 기기에서 마지막으로 고친 시각. 한 번도 안 건드렸으면 null.
+  Future<DateTime?> lastChanged() async {
+    final millis = (await SharedPreferences.getInstance()).getInt(_stampKey);
+    return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
+  }
+
+  /// 계정에 올라가 있던 것을 그대로 받아 쓴다. 시각도 그쪽 것을 남긴다.
+  Future<void> adopt(List<String> slugs, DateTime at) async {
+    state = List<String>.unmodifiable(slugs);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_prefsKey, slugs);
+    await prefs.setInt(_stampKey, at.millisecondsSinceEpoch);
   }
 
   bool contains(String slug) => state.contains(slug);
@@ -740,4 +759,78 @@ final offlineProvider = StreamProvider<bool>(
   },
   // 못 읽는 환경에서 조용히 재시도하면 계속 깨어난다. 한 번 실패면 그만.
   retry: (_, _) => null,
+);
+
+/// 관심 목록을 계정에 올리고 내리는 곳.
+final shortlistSyncServiceProvider = Provider<ShortlistSyncService>(
+  (ref) => FirestoreShortlistSync(),
+);
+
+/// 로그인한 사람의 관심 목록을 기기 사이에서 맞춘다.
+///
+/// **계정 없이 쓰는 사람은 이 경로를 안 탄다.** 익명 로그인도 마찬가지다 —
+/// 익명 uid 는 설치마다 다르라 올려봐야 다시 못 찾는다.
+///
+/// 합집합으로 병합하지 않는다. 그러면 한 기기에서 지운 것이 다른 기기에서
+/// 되살아난다. 문서 하나를 통째로 놓고 **마지막에 고친 쪽이 이긴다.**
+class ShortlistSync extends Notifier<void> {
+  /// 병합이 끝난 계정. 끝나기 전에 올리면 원격을 낡은 것으로 덮는다.
+  final Set<String> _merged = <String>{};
+
+  @override
+  void build() {
+    ref.listen(currentUserProvider, (previous, next) {
+      if (next == null || next.isAnonymous) return;
+      if (next.uid == previous?.uid) return;
+      unawaited(_merge(next.uid));
+    }, fireImmediately: true);
+
+    ref.listen(shortlistProvider, (previous, next) {
+      // 첫 값은 저장값을 복원한 것이다. 사람이 고친 게 아니다.
+      if (previous == null) return;
+      final user = ref.read(currentUserProvider);
+      if (user == null || user.isAnonymous) return;
+      if (!_merged.contains(user.uid)) return;
+      unawaited(_push(user.uid, next));
+    });
+  }
+
+  Future<void> _merge(String uid) async {
+    final service = ref.read(shortlistSyncServiceProvider);
+    final shortlist = ref.read(shortlistProvider.notifier);
+    try {
+      final remote = await service.read(uid);
+      final localAt = await shortlist.lastChanged();
+      if (!ref.mounted) return;
+
+      if (remote != null &&
+          (localAt == null || remote.updatedAt.isAfter(localAt))) {
+        await shortlist.adopt(remote.slugs, remote.updatedAt);
+      } else {
+        await service.write(
+          uid,
+          ref.read(shortlistProvider),
+          localAt ?? DateTime.now(),
+        );
+      }
+      _merged.add(uid);
+    } catch (e, s) {
+      // 못 맞춰도 로컬은 그대로 돈다. 다음 로그인에 다시 시도한다.
+      TpErrors.record(e, s, reason: 'shortlist.merge');
+    }
+  }
+
+  Future<void> _push(String uid, List<String> slugs) async {
+    try {
+      await ref
+          .read(shortlistSyncServiceProvider)
+          .write(uid, slugs, DateTime.now());
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'shortlist.push');
+    }
+  }
+}
+
+final shortlistSyncProvider = NotifierProvider<ShortlistSync, void>(
+  ShortlistSync.new,
 );

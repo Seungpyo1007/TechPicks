@@ -64,6 +64,10 @@ class _RootState extends ConsumerState<TechPicksRoot> {
     // 딥링크는 온보딩·로그인 중에도 들어온다. 여기서 구독을 열어두지 않으면
     // 탭이 뜨기 전에 온 링크를 아무도 안 듣는다. 여는 것은 TabHost 가 한다.
     ref.listenManual(pendingLinkProvider, (_, _) {});
+
+    // 관심 목록 동기화. 로그인하는 순간 맞춰야 하므로 로그인 화면보다 위에서
+    // 살아 있어야 한다.
+    ref.listenManual(shortlistSyncProvider, (_, _) {});
   }
 
   void _openEmail({bool signUp = false}) {
