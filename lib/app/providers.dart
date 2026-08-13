@@ -531,16 +531,21 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
   @override
   TpUser? build() => ref.watch(authServiceProvider).current;
 
-  Future<bool> signIn(
+  Future<SignInOutcome> signIn(
     AuthMethod method, {
     String? email,
     String? password,
   }) async {
-    final user = await ref
-        .read(authServiceProvider)
-        .signIn(method, email: email, password: password);
+    final TpUser? user;
+    try {
+      user = await ref
+          .read(authServiceProvider)
+          .signIn(method, email: email, password: password);
+    } on AuthCanceled {
+      return SignInOutcome.canceled;
+    }
     if (user != null && ref.mounted) state = user;
-    return user != null;
+    return user == null ? SignInOutcome.failed : SignInOutcome.ok;
   }
 
   Future<bool> signUp(String email, String password) async {

@@ -84,13 +84,15 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
     });
 
     final notifier = ref.read(currentUserProvider.notifier);
+    // 이메일은 우리 화면에서 받으므로 취소가 없다. 성공 여부만 본다.
     final ok = _signingUp
         ? await notifier.signUp(email, password)
         : await notifier.signIn(
-            AuthMethod.email,
-            email: email,
-            password: password,
-          );
+                AuthMethod.email,
+                email: email,
+                password: password,
+              ) ==
+              SignInOutcome.ok;
 
     if (!mounted) return;
     if (ok) {
