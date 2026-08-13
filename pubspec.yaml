@@ -29,6 +29,7 @@ dependencies:
   firebase_analytics: ^12.4.6
   share_plus: ^13.3.0
   app_links: ^7.2.1
+  connectivity_plus: ^7.3.1
 
 
 

@@ -11,6 +11,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../core/analytics.dart';
 import '../../core/error_reporter.dart';
+import '../../core/failure.dart';
 import '../../shared/copy_keys.dart';
 import '../share/share_text.dart';
 import '../../data/dto/smartphone.dart';
@@ -61,7 +62,7 @@ class DetailScreen extends ConsumerWidget {
           loading: () =>
               const _DetailSkeleton(key: ValueKey<String>('skeleton')),
           error: (e, _) =>
-              _DetailError(key: const ValueKey<String>('error'), message: '$e'),
+              _DetailError(key: const ValueKey<String>('error'), error: e),
           data: (d) => _DetailBody(
             key: ValueKey<String>(d.slug),
             device: d,
@@ -349,23 +350,42 @@ class _DetailSkeleton extends StatelessWidget {
   }
 }
 
-class _DetailError extends StatelessWidget {
-  const _DetailError({super.key, required this.message});
+/// 기기를 못 불러왔다.
+///
+/// 카탈로그에 있는 기기는 애셋에서 오므로 여기까지 오지 않는다. 여기 오는
+/// 것은 전부 TechAPI 를 타는 기기다 — 그래서 인터넷이 끊긴 경우가 실제로
+/// 흔하다. 그 경우를 "불러오지 못했습니다"로 뭉뚱그리면 사용자는 앱이 고장
+/// 난 줄 안다.
+class _DetailError extends ConsumerWidget {
+  const _DetailError({super.key, required this.error});
 
-  final String message;
+  final Object error;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final type = context.tpText;
+
+    // 연결 상태를 못 읽으면 지금까지대로 일반 실패다.
+    final offline = ref.watch(offlineProvider).value ?? false;
+    final unreachable = offline && error is NetworkFailure;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text(K.loadFailed.tr(), style: type.cardTitle),
+            Text(
+              unreachable ? K.offlineTitle.tr() : K.loadFailed.tr(),
+              style: type.cardTitle,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 6),
-            Text(message, style: type.caption, textAlign: TextAlign.center),
+            Text(
+              unreachable ? K.offlineBody.tr() : '$error',
+              style: type.caption,
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

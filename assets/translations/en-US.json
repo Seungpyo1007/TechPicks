@@ -88,6 +88,8 @@
   "notConnected": "{} sign-in is not connected yet.",
   "notifications": "Notifications",
   "off": "Off",
+  "offlineBody": "This device isn't in the catalogue, so it needs a connection. Reconnect and open it again.",
+  "offlineTitle": "You're offline",
   "on": "On",
   "onb1": "Every spec.\nOne number.",
   "onb1b": "TechPicks scores every device on performance, camera, display, battery and value — and always shows the parts behind the score.",
