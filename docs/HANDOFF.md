@@ -4,10 +4,10 @@
 
 ## 지금 상태
 
-브랜치 `feat/design-handoff`, 워킹 트리 깨끗, 미푸시 커밋 83개.
+브랜치 `feat/design-handoff`, 워킹 트리 깨끗, 미푸시 커밋 87개.
 사용자가 모아뒀다 직접 푸시하는 방식이다. **푸시·PR·머지·CI 는 시키기 전까지 하지 않는다.**
 
-`flutter analyze` 이슈 0, `flutter test` 552건 통과(골든 24장 포함).
+`flutter analyze` 이슈 0, `flutter test` 565건 통과(골든 24장 포함).
 iOS·Android 디버그 빌드 둘 다 통과한다.
 iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기는 못 해봤다 — 연결된 기기도, 코드사인 인증서도 없다.
 
@@ -30,6 +30,8 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 | `89ce171` | `PrivacyInfo.xcprivacy` (Xcode Resources 단계까지) |
 | `27fb6a1` | 출처·라이선스 표기를 실제 링크로 |
 | `78f8d4f` | Google·Apple 로그인, Facebook 제거, 취소와 실패 분리 |
+| `de458b9` | 릴리스 서명을 `android/key.properties` 로 받는다 |
+| `6a42707` | 비밀번호 재설정 메일, 이름 바꾸기 |
 
 ## 손대기 전에 알아야 할 것
 
@@ -42,6 +44,9 @@ iOS 시뮬레이터와 Android 에뮬레이터 둘 다에서 뜬다. 실기기�
 
 `/tmp` 의 `.bak` 파일들에 의존하지 말 것. 해당 변경은 커밋됐거나 gitignore
 대상이고, `/tmp` 는 어차피 비워진다.
+
+**SnackBar 를 쓰지 말 것.** 이 앱은 Scaffold 가 없다 — TpShell 이 크롬을
+직접 그린다. 안내는 로그인·내 정보처럼 본문에 한 줄로 붙인다.
 
 **골든을 고치기 전에 그림부터 본다.** `test/golden/goldens/` 의 PNG 24장이
 기준선이고 macOS 에서만 맞춘다. 화면을 손대면 여기가 깨지는 게 정상이다.
