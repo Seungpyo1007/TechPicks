@@ -32,6 +32,14 @@
 				<string>com.googleusercontent.apps.746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.techpicks.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>techpicks</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>

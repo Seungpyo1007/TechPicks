@@ -64,4 +64,15 @@ abstract final class TpAnalytics {
   /// 랭킹 축을 바꿨다. 다섯 축이 다 쓰이는지 본다.
   static void rankAxisChanged(String axis) =>
       _sink.log('rank_axis_changed', <String, Object>{'axis': axis});
+
+  /// 남에게 보냈다. [kind] 는 `verdict` 아니면 `device`.
+  ///
+  /// 공유는 명세에 없던 것을 우리가 넣은 것이다. 결론을 보내는지 기기를
+  /// 보내는지가 다르면 다음에 붙일 자리도 달라진다.
+  static void shared(String kind) =>
+      _sink.log('shared', <String, Object>{'kind': kind});
+
+  /// 링크를 눌러 들어왔다. 공유가 실제로 사람을 데려오는지 본다.
+  static void linkOpened(String kind) =>
+      _sink.log('link_opened', <String, Object>{'kind': kind});
 }

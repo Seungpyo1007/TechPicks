@@ -72,6 +72,11 @@ abstract final class K {
   static const String dataSource = 'dataSource';
   static const String loadFailed = 'loadFailed';
 
+  // 공유
+  static const String share = 'share';
+  static const String shareDevice = 'shareDevice';
+  static const String shareSubject = 'shareSubject';
+
   // 상담
   static const String chatSeed = 'chatSeed';
   static const String askHint = 'askHint';

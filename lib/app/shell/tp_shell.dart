@@ -21,6 +21,21 @@ enum TpChromeMode {
   takeover,
 }
 
+/// 헤더 오른쪽 버튼.
+///
+/// 크롬마다 다르게 그린다 — iOS 는 뒤로 버튼과 같은 유리 알약, Android 는
+/// 앱 바 액션. 화면은 무엇을 누르면 무엇이 되는지만 넘긴다.
+class TpShellAction {
+  const TpShellAction({required this.icon, required this.label, this.onTap});
+
+  final IconData icon;
+
+  /// 스크린 리더가 읽을 이름. 아이콘만 있는 버튼이라 없으면 안 된다.
+  final String label;
+
+  final VoidCallback? onTap;
+}
+
 /// 두 플랫폼 크롬을 한 위젯에서 처리한다.
 ///
 /// 지오메트리는 `docs/DESIGN_HANDOFF.md` — Chrome geometry 표를 따른다.
@@ -37,6 +52,7 @@ class TpShell extends StatelessWidget {
     this.mode = TpChromeMode.full,
     this.onBack,
     this.onTabSelected,
+    this.trailing,
     this.floatingAction,
     this.extraBottomInset = 0,
   });
@@ -52,6 +68,9 @@ class TpShell extends StatelessWidget {
   final TpChromeMode mode;
   final VoidCallback? onBack;
   final ValueChanged<TpTab>? onTabSelected;
+
+  /// 헤더 오른쪽 버튼. 지금은 상세의 공유가 유일하다.
+  final TpShellAction? trailing;
 
   /// Android 확장 FAB. iOS 는 콘텐츠 안 인라인 버튼을 쓰므로 무시한다.
   final Widget? floatingAction;
@@ -133,7 +152,7 @@ class TpShell extends StatelessWidget {
             ),
           ),
 
-        if (showChrome && (onBack != null || title != null))
+        if (showChrome && (onBack != null || title != null || trailing != null))
           Positioned(
             top: safe.top,
             left: 12,
@@ -155,7 +174,13 @@ class TpShell extends StatelessWidget {
                         child: Icon(Icons.chevron_left, size: 24),
                       ),
                     ),
-                  ),
+                  )
+                // 오른쪽에만 버튼이 있으면 제목이 왼쪽으로 밀린다.
+                else if (trailing != null && title != null)
+                  const SizedBox(width: 48),
+                // 제목이 없는 화면(상세)은 밀어줄 것이 없어 오른쪽 버튼이
+                // 왼쪽에 붙는다.
+                if (title == null && trailing != null) const Spacer(),
                 if (title != null) ...<Widget>[
                   const Spacer(),
                   TpSurface(
@@ -175,9 +200,24 @@ class TpShell extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  // 뒤로 버튼과 좌우 균형을 맞춘다.
-                  if (onBack != null) const SizedBox(width: 48),
                 ],
+                if (trailing != null)
+                  TpTapTarget(
+                    onTap: trailing!.onTap,
+                    label: trailing!.label,
+                    child: TpSurface(
+                      strong: true,
+                      radius: TpTokens.rControl,
+                      child: SizedBox(
+                        width: 42,
+                        height: 42,
+                        child: Icon(trailing!.icon, size: 22),
+                      ),
+                    ),
+                  )
+                // 뒤로 버튼과 좌우 균형을 맞춘다.
+                else if (onBack != null && title != null)
+                  const SizedBox(width: 48),
               ],
             ),
           ),
@@ -262,6 +302,15 @@ class TpShell extends StatelessWidget {
                             padding: EdgeInsets.only(left: 12),
                             child: _AppMark(width: 16, height: 22),
                           ),
+                        if (trailing != null) ...<Widget>[
+                          const Spacer(),
+                          IconButton(
+                            onPressed: trailing!.onTap,
+                            tooltip: trailing!.label,
+                            icon: Icon(trailing!.icon),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
                       ],
                     ),
                   ),

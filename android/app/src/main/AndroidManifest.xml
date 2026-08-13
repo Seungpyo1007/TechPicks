@@ -31,6 +31,14 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- 공유 링크. techpicks://device/<slug>, techpicks://compare/<a>/<b> -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="techpicks" />
+            </intent-filter>
         </activity>
 
         <!-- 플러그인 및 다른 설정을 위한 메타데이터 -->
