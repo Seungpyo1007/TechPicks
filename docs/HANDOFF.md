@@ -1,0 +1,85 @@
+# 인계
+
+2026-08-13 기준. 이어받는 사람이 먼저 읽을 것.
+
+## 지금 상태
+
+브랜치 `feat/design-handoff`, 워킹 트리 깨끗, 미푸시 커밋 73개.
+사용자가 모아뒀다 직접 푸시하는 방식이다. **푸시·PR·머지·CI 는 시키기 전까지 하지 않는다.**
+
+`flutter analyze` 이슈 0, `flutter test` 473건 통과. iOS 시뮬레이터와 Android
+에뮬레이터 둘 다에서 뜬다. 실기기는 못 해봤다 — 연결된 기기도, 코드사인 인증서도 없다.
+
+명세 8단계(`DESIGN_HANDOFF.md` 의 Suggested build order)는 전부 끝났다.
+
+## 최근에 한 일
+
+| 커밋 | 무엇 |
+|---|---|
+| `6fc95c6` | Firebase 4.x/6.x, `firebase_vertexai` → `firebase_ai`, iOS SPM 전환(배포 타깃 15.0) |
+| `732c250` | 안 쓰는 위치·사진 권한 선언 제거 |
+| `af11ca8` | Crashlytics 로 삼킨 실패 11군데, Analytics 로 제품 가설 |
+| `e87cedb` `7d465b6` `085b477` `bf6e6a9` | 모션 토큰(`TpMotion`), 동작 줄이기, 진행 막대 통합, 화면 모션 |
+| `6e1f06d` | 패키지 이름 `com.example.techpicks` → `com.techpicks.app` |
+
+## 손대기 전에 알아야 할 것
+
+**`android/app/google-services.json` 은 로컬에서 손본 상태다.** 이 파일은
+`.gitignore` 대상이라 git 에 안 보인다. 패키지 이름을 바꾸고 Android 빌드를
+통과시키려고 `package_name` 만 `com.techpicks.app` 으로 맞춰뒀고, `appId` 는
+여전히 옛 패키지 것이다. 그래서 빌드는 되지만 Firebase 가 이 앱을 못 알아본다 —
+로그인이 안 되는 건 정상이다. 초기화 실패는 삼키므로 나머지 화면은 다 돈다.
+콘솔에서 새 파일을 받으면 통째로 갈아 끼운다.
+
+`/tmp` 의 `.bak` 파일들에 의존하지 말 것. 해당 변경은 커밋됐거나 gitignore
+대상이고, `/tmp` 는 어차피 비워진다.
+
+**탭 전환에 모션을 넣지 않는다.** 명세 Interactions 표가 `Instant; no cross-fade`
+로 못박았다. 한 번 계획에 넣었다가 뺐다.
+
+## 기다리는 것
+
+| 무엇 | 누가 |
+|---|---|
+| Firebase 앱 재등록 (`com.techpicks.app`), `GoogleService-Info.plist` | 사용자 — 콘솔 |
+| 실기기 테스트 (기기 연결 + Xcode 로그인) | 사용자 |
+| `techpicks.com` 도메인 | 사용자 — 구매 예정 |
+| Apple 로그인, Android 릴리스 서명, 개인정보 처리방침 URL | 사용자 — 계정 작업 |
+| 노트북 점수, 제품 사진, 원화 가격, 다크 토큰 | TechAPI / 디자인 |
+
+패키지 이름은 스토어에 한 번 올리면 못 바꾼다. 지금 값이 최종이다.
+
+## 기한
+
+10월에 Firebase 가 CocoaPods 발행을 멈추고 Gemini 2.5 계열이 종료된다.
+둘 다 `6fc95c6` 으로 대응이 끝났다. Play 의 API 36 요건도 이미 충족.
+표는 `ROADMAP.md` §1.
+
+## 다음에 할 만한 것
+
+`ROADMAP.md` §2 가 작업 큐다. P1.3(패키지 이름)은 완료 표시돼 있다.
+P1 의 나머지는 전부 콘솔·계정 작업이라 사용자를 기다린다.
+코드로 진전시킬 수 있는 건 P3 — 공유+딥링크, Remote Config 로 카탈로그 전달,
+골든 테스트.
+
+`riverpod_lint` 은 못 넣는다. `custom_lint` 과 `json_serializable` 이 요구하는
+analyzer 버전이 겹치지 않는다. §2 에 표가 있다.
+
+## 문서
+
+| 파일 | 내용 |
+|---|---|
+| `DESIGN_HANDOFF.md` | 확정 명세. 값이 적혀 있으면 그대로 따른다 |
+| `FUNCTIONAL_SPEC.md` | 앱이 무엇을 하는가 |
+| `DEPENDENCIES.md` | 지금 쓰는 패키지 |
+| `PLUGIN_RESEARCH.md` | 넣을 만한 패키지 30종 |
+| `ROADMAP.md` | 언제 무엇을 — 작업 큐 |
+| `REBUILD_PLAN.md` | 재구축 경위 |
+
+## 작업 규칙
+
+- 커밋은 conventional commits, `Co-Authored-By` 트레일러 없음
+- 브랜치는 머지 후에도 지우지 않는다
+- CI 는 사용자가 "앱 다 만들었다"고 할 때까지 돌리지 않는다. 로컬 `flutter test` /
+  `analyze` 결과는 보고하되 검증이라고 부르지 않는다
+- 글은 분량을 변경 크기에 맞춘다. 논증하거나 마무리 문장을 붙이지 않는다
