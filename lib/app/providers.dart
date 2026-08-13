@@ -557,9 +557,13 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
   }
 
   Future<void> signOut() async {
-    await ref.read(authServiceProvider).signOut();
-    if (!ref.mounted) return;
+    // 화면을 먼저 되돌린다.
+    //
+    // Firebase 를 기다렸다가 비우면, 그쪽이 안 돌아오는 설정에서 로그아웃을
+    // 눌러도 아무 일이 안 일어난다. 시뮬레이터에서 실제로 그랬다. 누른 대로
+    // 나가는 것이 먼저다 — 실패하면 다음 실행에 세션이 복원될 뿐이다.
     state = null;
+    await ref.read(authServiceProvider).signOut();
   }
 }
 
