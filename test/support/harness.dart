@@ -138,6 +138,8 @@ Future<void> _pump(
         ...overrides,
       ],
       child: MaterialApp(
+        // 골든에 빨간 DEBUG 리본이 같이 구워진다.
+        debugShowCheckedModeBanner: false,
         theme: AppTheme.of(chrome),
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
