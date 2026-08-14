@@ -149,7 +149,7 @@ void main() {
 
     // 랭킹 목록이 길어져 스캔 버튼이 화면 아래로 밀렸다.
     await tester.scrollUntilVisible(
-      find.text('Scan a device'),
+      find.text('Find a device by name'),
       400,
       scrollable: find
           .descendant(
@@ -158,7 +158,7 @@ void main() {
           )
           .first,
     );
-    await tester.tap(find.text('Scan a device'));
+    await tester.tap(find.text('Find a device by name'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -172,8 +172,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // iOS 인라인 버튼은 없고 FAB 라벨만 있다.
-    expect(find.text('Scan a device'), findsNothing);
-    expect(find.text('Scan'), findsOneWidget);
+    expect(find.text('Find a device by name'), findsNothing);
+    expect(find.text('Find device'), findsOneWidget);
   });
 
   testWidgets('홈의 Ask why 가 상담 탭으로 간다', (tester) async {

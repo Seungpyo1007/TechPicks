@@ -1,25 +1,29 @@
-import '../../app/theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
+import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../domain/model/scan_match.dart';
 import '../../domain/model/tp_index.dart';
 
-/// 스캔.
+/// 이름으로 기기 찾기.
 ///
-/// 카메라와 OCR 은 아직 붙어 있지 않다. google_ml_kit 은 코드에서 쓰인 적이
-/// 없어 의존성 정리 때 걷어냈고, 다시 넣는 건 실제로 인식이 필요한 시점이
-/// 맞다. 지금은 [recognizedText] 로 읽힌 글자를 바깥에서 넣어주면 화면이
-/// 카탈로그에 맞춰 결과를 띄운다.
+/// 명세 §11 은 카메라로 뒷면 모델명을 읽는 화면이다. 카메라도 OCR 도 붙어
+/// 있지 않아 실기기에서는 검은 화면에 조준틀만 돌았다 — 안 되는 기능을
+/// 되는 것처럼 보여주는 화면이었다. 그래서 읽는 대신 **받아 적게** 했다.
 ///
-/// 뒷면 인식 자체는 ScanMatcher 가 하고 테스트도 그쪽에 있다.
+/// 맞추는 일은 그대로 [ScanMatcher] 가 한다. 카메라가 붙는 날 [recognizedText]
+/// 로 읽은 글자를 넣어주면 이 화면이 그대로 결과를 띄운다.
+///
+/// 받는 것은 **모델 번호가 아니라 기기 이름**이다. 카탈로그에 `SM-S931B` 같은
+/// 코드가 없어서 그걸로는 영영 못 찾는다 — 안내 문구도 그렇게 적었다.
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({
     super.key,
@@ -31,195 +35,122 @@ class ScanScreen extends ConsumerStatefulWidget {
   final VoidCallback? onBack;
   final ValueChanged<String>? onOpenDevice;
 
-  /// OCR 이 읽은 글자. null 이면 대기 상태로 남는다.
+  /// 미리 채워둘 글자. 카메라가 붙으면 OCR 결과가 여기로 들어온다.
   final String? recognizedText;
-
-  static const Color background = Color(0xFF0B0D10);
 
   @override
   ConsumerState<ScanScreen> createState() => _ScanScreenState();
 }
 
-class _ScanScreenState extends ConsumerState<ScanScreen>
-    with SingleTickerProviderStateMixin {
-  /// 명세 §11: 위에서 아래로 1.6초, 무한 반복.
-  late final AnimationController _line = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1600),
+class _ScanScreenState extends ConsumerState<ScanScreen> {
+  late final TextEditingController _text = TextEditingController(
+    text: widget.recognizedText ?? '',
   );
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // 동작 줄이기가 켜져 있으면 반복하지 않는다. 프레임을 계속 태울 이유가
-    // 없고, 반복 자체가 줄이려는 그 동작이다. 라인은 가운데 멈춘다.
-    if (context.motion.isReduced) {
-      if (_line.isAnimating) _line.stop();
-      _line.value = 0.5;
-    } else if (!_line.isAnimating) {
-      _line.repeat(reverse: true);
-    }
-  }
-
-  @override
   void dispose() {
-    _line.dispose();
+    _text.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = context.tp;
     final type = context.tpText;
     final catalog = ref.watch(catalogProvider).value;
     final weights = ref.watch(weightsProvider);
 
-    final match = widget.recognizedText == null || catalog == null
+    final query = _text.text.trim();
+    final match = query.isEmpty || catalog == null
         ? null
-        : ScanMatcher.match(widget.recognizedText!, catalog.smartphones);
+        : ScanMatcher.match(query, catalog.smartphones);
 
     return TpShell(
-      mode: TpChromeMode.takeover,
-      child: ColoredBox(
-        color: ScanScreen.background,
-        child: Stack(
-          children: <Widget>[
-            Positioned.fill(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  SizedBox(
-                    width: 260,
-                    height: 160,
-                    child: _Viewfinder(progress: _line),
+      mode: TpChromeMode.plain,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(K.scanTitle.tr(), style: type.largeTitle),
+                ),
+                TpTapTarget(
+                  onTap: widget.onBack,
+                  label: K.back.tr(),
+                  child: Text(
+                    K.cancel.tr(),
+                    style: type.body.copyWith(color: TpTokens.blueText),
                   ),
-                  const SizedBox(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      (match == null ? K.scanHintIdle : K.scanHintDone).tr(),
-                      textAlign: TextAlign.center,
-                      style: type.secondary.copyWith(color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: t.inputBg,
+                borderRadius: BorderRadius.circular(TpTokens.rControl),
+                boxShadow: t.inputShadow,
+              ),
+              child: Semantics(
+                label: K.scanFieldLabel.tr(),
+                child: TextField(
+                  controller: _text,
+                  autofocus: true,
+                  onChanged: (_) => setState(() {}),
+                  textInputAction: TextInputAction.search,
+                  textCapitalization: TextCapitalization.words,
+                  style: type.body,
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: InputBorder.none,
+                    icon: Icon(Icons.search, size: 20, color: t.dim),
+                    hint: ExcludeSemantics(
+                      child: Text(
+                        K.scanFieldHint.tr(),
+                        style: type.body.copyWith(color: t.dim),
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            // 상태 바 아래로 콘텐츠가 올라오므로 헤더를 직접 그린다.
-            Positioned(
-              top: MediaQuery.viewPaddingOf(context).top + 8,
-              left: 8,
-              right: 16,
-              child: Row(
-                children: <Widget>[
-                  TpTapTarget(
-                    onTap: widget.onBack,
-                    label: K.back.tr(),
-                    child: const Icon(
-                      Icons.chevron_left,
-                      color: Colors.white,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Text(
-                    K.scanTitle.tr(),
-                    style: type.cardTitle.copyWith(color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-
-            if (match != null)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: MediaQuery.viewPaddingOf(context).bottom + 16,
-                child: _ResultCard(
-                  name: match.device.name,
-                  index: TpIndex.of(match.device.score, weights),
-                  onOpen: widget.onOpenDevice == null
-                      ? null
-                      : () => widget.onOpenDevice!(match.device.slug),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 모서리 네 개와 위아래로 오가는 스캔 선.
-class _Viewfinder extends StatelessWidget {
-  const _Viewfinder({required this.progress});
-
-  final Animation<double> progress;
-
-  static const double _bracket = 26;
-  static const double _stroke = 3;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        for (final corner in _corners)
-          Align(
-            alignment: corner,
-            child: _Corner(corner: corner),
-          ),
-        AnimatedBuilder(
-          animation: progress,
-          builder: (context, _) => Align(
-            alignment: Alignment(0, progress.value * 2 - 1),
-            child: Container(
-              height: 2,
-              margin: const EdgeInsets.symmetric(horizontal: 6),
-              color: TpTokens.blue,
             ),
           ),
-        ),
-      ],
-    );
-  }
 
-  static const List<Alignment> _corners = <Alignment>[
-    Alignment.topLeft,
-    Alignment.topRight,
-    Alignment.bottomLeft,
-    Alignment.bottomRight,
-  ];
-}
-
-class _Corner extends StatelessWidget {
-  const _Corner({required this.corner});
-
-  final Alignment corner;
-
-  @override
-  Widget build(BuildContext context) {
-    final top = corner.y < 0;
-    final left = corner.x < 0;
-    const side = BorderSide(color: TpTokens.blue, width: _Viewfinder._stroke);
-
-    return SizedBox(
-      width: _Viewfinder._bracket,
-      height: _Viewfinder._bracket,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(
-            top: top ? side : BorderSide.none,
-            bottom: top ? BorderSide.none : side,
-            left: left ? side : BorderSide.none,
-            right: left ? BorderSide.none : side,
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: switch ((query.isEmpty, match)) {
+                (true, _) => Text(K.scanHintIdle.tr(), style: type.secondary),
+                (false, null) => Text(
+                  K.scanNoMatch.tr(),
+                  style: type.secondary,
+                ),
+                (false, final m?) => _ResultCard(
+                  name: m.device.name,
+                  index: TpIndex.of(m.device.score, weights),
+                  onOpen: widget.onOpenDevice == null
+                      ? null
+                      : () => widget.onOpenDevice!(m.device.slug),
+                ),
+              },
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-/// 아래에서 올라오는 결과 카드.
+/// 찾은 기기 한 대.
 class _ResultCard extends StatelessWidget {
   const _ResultCard({required this.name, required this.index, this.onOpen});
 
@@ -236,64 +167,65 @@ class _ResultCard extends StatelessWidget {
       tween: Tween<double>(begin: 1, end: 0),
       duration: motion.reveal.duration,
       curve: motion.reveal.curve,
-      builder: (context, t, child) =>
-          FractionalTranslation(translation: Offset(0, t), child: child),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(context.tp.rCard),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(K.detected.tr().toUpperCase(), style: type.eyebrow),
-            const SizedBox(height: 6),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    name,
-                    style: type.cardTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  index?.toString() ?? '—',
-                  maxLines: 1,
-                  softWrap: false,
-                  style: type.cardTitle.copyWith(fontSize: 24),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Semantics(
-              button: true,
-              child: GestureDetector(
-                onTap: onOpen,
-                child: Container(
-                  height: 46,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: TpTokens.blue,
-                    borderRadius: BorderRadius.circular(
-                      context.tp.isGlass
-                          ? TpTokens.rControl
-                          : context.tp.rInner,
+      builder: (context, v, child) =>
+          FractionalTranslation(translation: Offset(0, v * 0.1), child: child),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: TpSurface(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(K.detected.tr().toUpperCase(), style: type.eyebrow),
+              const SizedBox(height: 6),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: type.cardTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  child: Text(
-                    K.openDevice.tr(),
-                    style: type.body.copyWith(
-                      color: Colors.white,
-                      fontWeight: context.tp.boldWeight,
+                  Text(
+                    index?.toString() ?? '—',
+                    maxLines: 1,
+                    softWrap: false,
+                    style: type.cardTitle.copyWith(fontSize: 24),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(K.scanHintDone.tr(), style: type.caption),
+              const SizedBox(height: 12),
+              Semantics(
+                button: true,
+                child: GestureDetector(
+                  onTap: onOpen,
+                  child: Container(
+                    height: 46,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: TpTokens.blue,
+                      borderRadius: BorderRadius.circular(
+                        context.tp.isGlass
+                            ? TpTokens.rControl
+                            : context.tp.rInner,
+                      ),
+                    ),
+                    child: Text(
+                      K.openDevice.tr(),
+                      style: type.body.copyWith(
+                        color: Colors.white,
+                        fontWeight: context.tp.boldWeight,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

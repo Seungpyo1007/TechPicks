@@ -26,35 +26,48 @@ Future<void> _pump(
 void main() {
   setUp(initLocalization);
 
-  group('스캔', () {
-    testWidgets('대기 중에는 안내만', (tester) async {
+  group('기기 찾기', () {
+    testWidgets('빈 칸이면 안내만', (tester) async {
       await _pump(tester, const ScanScreen());
 
-      expect(find.text('Scan'), findsOneWidget);
+      expect(find.text('Find your device'), findsOneWidget);
       expect(find.text(K.scanHintIdle.tr()), findsOneWidget);
-      expect(find.text('DETECTED'), findsNothing);
+      expect(find.text('MATCH'), findsNothing);
     });
 
-    testWidgets('인식되면 결과 카드가 뜬다', (tester) async {
-      await _pump(
-        tester,
-        const ScanScreen(recognizedText: 'SAMSUNG Galaxy S25 Ultra'),
-      );
+    testWidgets('적으면 결과 카드가 뜬다', (tester) async {
+      await _pump(tester, const ScanScreen());
 
-      expect(find.text('DETECTED'), findsOneWidget);
+      await tester.enterText(
+        find.byType(TextField),
+        'SAMSUNG Galaxy S25 Ultra',
+      );
+      await tester.pump();
+
+      expect(find.text('MATCH'), findsOneWidget);
       expect(find.text('Galaxy S25 Ultra'), findsOneWidget);
       expect(find.text('Open device'), findsOneWidget);
       expect(find.text(K.scanHintDone.tr()), findsOneWidget);
     });
 
-    testWidgets('못 맞추면 대기 상태 그대로', (tester) async {
+    testWidgets('못 맞추면 못 찾았다고 말한다', (tester) async {
+      await _pump(tester, const ScanScreen());
+
+      await tester.enterText(find.byType(TextField), 'FCC ID A3LSMS931U');
+      await tester.pump();
+
+      expect(find.text('MATCH'), findsNothing);
+      expect(find.text(K.scanNoMatch.tr()), findsOneWidget);
+    });
+
+    // 카메라가 붙는 날 OCR 결과가 이 자리로 들어온다.
+    testWidgets('미리 채워둔 글자도 그대로 맞춘다', (tester) async {
       await _pump(
         tester,
-        const ScanScreen(recognizedText: 'FCC ID A3LSMS931U'),
+        const ScanScreen(recognizedText: 'SAMSUNG Galaxy S25 Ultra'),
       );
 
-      expect(find.text('DETECTED'), findsNothing);
-      expect(find.text(K.scanHintIdle.tr()), findsOneWidget);
+      expect(find.text('Galaxy S25 Ultra'), findsOneWidget);
     });
 
     testWidgets('Open device 가 slug 를 넘긴다', (tester) async {
