@@ -123,6 +123,7 @@ P3 을 붙이면서 여섯 개가 더 들어왔다.
 | `google_sign_in` 7.2.0 | Google 로그인 | `FirebaseAuthService` |
 | `sign_in_with_apple` 8.1.0 | Apple 로그인 | `FirebaseAuthService` |
 | `crypto` | Apple nonce 해시 | `AppleNonce` |
+| `flutter_localizations` | 테스트 하네스의 로케일 델리게이트 | `test/support/harness.dart` |
 
 전부 인터페이스 뒤에 있다. 화면과 테스트는 플러그인을 안 본다.
 
