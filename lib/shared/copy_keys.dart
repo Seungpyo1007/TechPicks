@@ -62,6 +62,7 @@ abstract final class K {
   static const String back = 'back';
   static const String send = 'send';
   static const String chooseTwo = 'chooseTwo';
+  static const String searchHint = 'searchHint';
   static const String tapToChange = 'tapToChange';
 
   // 상세
