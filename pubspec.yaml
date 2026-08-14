@@ -75,7 +75,8 @@ flutter_icons:
   remove_alpha_ios: true
 
 flutter_native_splash:
-  color: "#ffffff" # 배경색
+  # 앱 배경 그라디언트의 첫 색. 흰 화면에서 파란 화면으로 튀지 않는다.
+  color: "#EEF3FA"
   image: assets/logo/logo.png
   android: true
   ios: true

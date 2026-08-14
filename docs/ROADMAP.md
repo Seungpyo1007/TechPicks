@@ -127,6 +127,19 @@ for the iOS platform, but this target supports 13.0
 
 P1.3–P1.6 은 코드가 아니라 **계정·콘솔 작업**이다. 우리가 못 한다.
 
+Firebase 쪽은 실기 로그로 확인했다 (2026-08-15, 시뮬레이터):
+
+```
+[FirebaseCore][I-COR000008] The project's Bundle ID is inconsistent ...
+you may change your app's bundle identifier to 'com.example.techpicks'.
+```
+
+`lib/firebase_options.dart` 의 `iosBundleId` 가 아직 `com.example.techpicks`
+다. 앱은 그래도 뜨지만 **Google 로그인은 이 상태로 안 된다** — OAuth 클라이언트가
+옛 번들 ID 에 묶여 있다. 콘솔에서 `com.techpicks.app` 로 iOS 앱을 등록하고
+`flutterfire configure` 를 다시 돌리면 이 파일과 `GoogleService-Info.plist` 가
+한 번에 맞는다.
+
 **P1 의 코드는 다 끝났다.** 남은 것은 콘솔·계정 작업뿐이다.
 
 #### 릴리스 서명은 키스토어만 꽂으면 된다
@@ -340,17 +353,26 @@ P1 을 실행 순서로 편 것이다.
 - [ ] 개인정보 처리방침 게시, URL 확보
 
 **코드**
-- [ ] `sign_in_with_apple` 붙이기
-- [ ] Facebook 붙이거나 버튼 빼기
-- [ ] `ios/Runner/PrivacyInfo.xcprivacy` 작성
-- [ ] 안 쓰는 권한 선언 제거 (위치, 사진)
-- [ ] `url_launcher` 로 라이선스·정책 링크
-- [ ] `applicationId` / `PRODUCT_BUNDLE_IDENTIFIER` 교체
-- [ ] 릴리스 서명 설정
+- [x] `sign_in_with_apple` 붙이기
+- [x] Facebook 붙이거나 버튼 빼기
+- [x] `ios/Runner/PrivacyInfo.xcprivacy` 작성
+- [x] 안 쓰는 권한 선언 제거 (위치, 사진, 마이크, 카메라)
+- [x] `url_launcher` 로 라이선스·정책 링크
+- [x] `applicationId` / `PRODUCT_BUNDLE_IDENTIFIER` 교체
+- [x] 릴리스 서명 설정
+
+**iOS 마감** (`1812483`)
+- [x] 앱 아이콘 알파 제거 — App Store Connect 가 반려하는 항목이다
+- [x] 아이폰 전용 · 세로 고정 — 아이패드 레이아웃은 만든 적이 없다
+- [x] `ITSAppUsesNonExemptEncryption=false` — 업로드마다 묻지 않게
+- [x] `NSAllowsArbitraryLoads` 제거 — 부르는 곳이 전부 HTTPS
+- [x] 표시 이름 `Techpicks` → `TechPicks`, `CFBundleLocalizations` 추가
+- [x] 스캔 화면을 이름으로 찾기로 — 안 되는 기능을 되는 척하지 않는다
 
 **확인**
-- [ ] `flutter build ipa` / `flutter build appbundle` 통과
-- [ ] 실기기에서 로그인 4종 동작
+- [x] `flutter build ios --release --no-codesign` 통과 (50.2MB)
+- [ ] `flutter build ipa` / `flutter build appbundle` 통과 — 서명 필요
+- [ ] 실기기에서 로그인 3종 동작
 - [ ] Play 데이터 안전 · App Privacy 문항 작성
 
 ---
@@ -390,6 +412,7 @@ P1 을 실행 순서로 편 것이다.
   ✅ P1.1 Google·Apple 로그인 완료 — 콘솔 설정 대기
   ✅ P1.2 Facebook            뺐다
   ✅ P1.4 릴리스 서명 배선     완료 — 키스토어 대기
+  ✅ iOS 마감 정리            완료 (1812483) — 아이콘·권한·기기군·스캔
 
 콘솔 작업이 들어오면 ────────────────────────────────
   P1  출시 요건            2–3일    ← 스토어 제출 가능
