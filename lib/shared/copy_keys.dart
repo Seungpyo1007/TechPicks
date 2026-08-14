@@ -70,6 +70,8 @@ abstract final class K {
   static const String compareButton = 'compareB';
   static const String view3d = 'view3d';
   static const String dataSource = 'dataSource';
+  static const String brandFounded = 'brandFounded';
+  static const String brandSite = 'brandSite';
   static const String loadFailed = 'loadFailed';
   static const String offlineTitle = 'offlineTitle';
   static const String offlineBody = 'offlineBody';

@@ -16,6 +16,7 @@ import 'package:techpicks/data/service/auth_service.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
+import 'package:techpicks/feature/rank/rank_screen.dart';
 import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
 
@@ -106,7 +107,7 @@ void main() {
 
     await tester.tap(find.text(K.tab(TpTab.rank).tr()));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Galaxy S25 Ultra'));
+    await tester.tap(find.text(readRanking().first.device.name));
     await tester.pumpAndSettle();
 
     expect(find.byType(DetailScreen), findsOneWidget);
@@ -133,7 +134,7 @@ void main() {
 
     await tester.tap(find.text(K.tab(TpTab.compare).tr()));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Galaxy S25 Ultra'));
+    await tester.tap(find.text(readCatalog().smartphones[0].name));
     await tester.pumpAndSettle();
 
     expect(find.byType(PickerScreen), findsOneWidget);
@@ -145,6 +146,18 @@ void main() {
 
     await tester.tap(find.text(K.tab(TpTab.rank).tr()));
     await tester.pumpAndSettle();
+
+    // 랭킹 목록이 길어져 스캔 버튼이 화면 아래로 밀렸다.
+    await tester.scrollUntilVisible(
+      find.text('Scan a device'),
+      400,
+      scrollable: find
+          .descendant(
+            of: find.byType(RankScreen),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(find.text('Scan a device'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -198,9 +211,9 @@ void _moversRoundTrip() {
     final saved = prefs.getStringList('rank_snapshot_slugs');
     expect(saved, isNotNull);
     expect(saved, isNotEmpty);
-    // 카탈로그 10종이 전부 들어간다.
-    expect(saved!.length, 10);
-    expect(saved.first, 'galaxy-s25-ultra');
+    // 카탈로그가 전부 들어간다. 이번 주 변동은 화면 상한과 무관하게 센다.
+    expect(saved!.length, readCatalog().smartphones.length);
+    expect(saved.first, readRanking().first.device.slug);
   });
 
   testWidgets('지난 순위가 다르면 변동이 잡힌다', (tester) async {
@@ -272,7 +285,8 @@ void _askFromCompare() {
     final messages = container.read(askProvider);
     // 씨앗 인사 + 질문 + 답.
     expect(messages.length, 3);
-    expect(messages[1].text, 'Galaxy S25 Ultra or iPhone 16 Pro Max?');
+    final phones = readCatalog().smartphones;
+    expect(messages[1].text, '${phones[0].name} or ${phones[1].name}?');
     expect(messages[2].answer, isNotNull);
   });
 
@@ -306,7 +320,16 @@ void _pickerSlots() {
     await tester.pumpAndSettle();
     expect(find.byType(PickerScreen), findsOneWidget);
 
-    await tester.tap(find.text(pickName).first);
+    // 카탈로그가 154종이라 픽커 목록은 가상화된다. 안 보이면 못 누른다.
+    final target = find.text(pickName);
+    if (target.evaluate().isEmpty) {
+      await tester.scrollUntilVisible(
+        target,
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+    }
+    await tester.tap(target.first);
     await tester.pumpAndSettle();
   }
 
@@ -322,11 +345,12 @@ void _pickerSlots() {
       ],
     );
 
-    expect(container.read(compareProvider).a, 'galaxy-s25-ultra');
-    await pick(tester, 'Galaxy S25 Ultra', 'Pixel 9 Pro XL');
+    final phones = readCatalog().smartphones;
+    expect(container.read(compareProvider).a, phones[0].slug);
+    await pick(tester, phones[0].name, 'Pixel 9 Pro XL');
 
     expect(container.read(compareProvider).a, 'pixel-9-pro-xl');
-    expect(container.read(compareProvider).b, 'iphone-16-pro-max');
+    expect(container.read(compareProvider).b, phones[1].slug);
   });
 
   testWidgets('오른쪽 머리를 누르면 B 에 쓴다', (tester) async {
@@ -341,9 +365,10 @@ void _pickerSlots() {
       ],
     );
 
-    await pick(tester, 'iPhone 16 Pro Max', 'OnePlus 13');
+    final phones = readCatalog().smartphones;
+    await pick(tester, phones[1].name, 'OnePlus 13');
 
-    expect(container.read(compareProvider).a, 'galaxy-s25-ultra');
+    expect(container.read(compareProvider).a, phones[0].slug);
     expect(container.read(compareProvider).b, 'oneplus-13');
   });
 }
@@ -355,14 +380,16 @@ void _pushedScreens() {
     await pumpScreen(
       tester,
       const TabHost(initialTab: TpTab.rank),
-      size: const Size(1200, 3200),
+      // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
+      // 화면을 그만큼 키워야 한다.
+      size: const Size(1200, 4400),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),
       ],
     );
 
-    await tester.tap(find.text('Galaxy S25 Ultra').first);
+    await tester.tap(find.text(readRanking().first.device.name).first);
     await tester.pumpAndSettle();
     await tester.tap(find.text(K.view3d.tr()));
     await tester.pump();
@@ -370,7 +397,7 @@ void _pushedScreens() {
 
     expect(find.byType(ViewerScreen), findsOneWidget);
     // 뷰어 머리에는 기기 이름이 붙는다.
-    expect(find.text('Galaxy S25 Ultra'), findsWidgets);
+    expect(find.text(readRanking().first.device.name), findsWidgets);
   });
 
   testWidgets('스캔 결과에서 상세로 넘어간다', (tester) async {
@@ -378,7 +405,9 @@ void _pushedScreens() {
     await pumpScreen(
       tester,
       const TabHost(initialTab: TpTab.rank),
-      size: const Size(1200, 3200),
+      // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
+      // 화면을 그만큼 키워야 한다.
+      size: const Size(1200, 4400),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -396,14 +425,16 @@ void _pushedScreens() {
     await pumpScreen(
       tester,
       const TabHost(initialTab: TpTab.rank),
-      size: const Size(1200, 3200),
+      // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
+      // 화면을 그만큼 키워야 한다.
+      size: const Size(1200, 4400),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),
       ],
     );
 
-    await tester.tap(find.text('Galaxy S25 Ultra').first);
+    await tester.tap(find.text(readRanking().first.device.name).first);
     await tester.pumpAndSettle();
     expect(find.byType(DetailScreen), findsOneWidget);
 
@@ -431,7 +462,9 @@ void _systemBack() {
     await pumpScreen(
       tester,
       const TabHost(initialTab: TpTab.rank),
-      size: const Size(1200, 3200),
+      // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
+      // 화면을 그만큼 키워야 한다.
+      size: const Size(1200, 4400),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),

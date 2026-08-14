@@ -32,8 +32,9 @@ void main() {
 
     // 빈 화면으로 시작하지 않는다.
     expect(find.text('Choose two devices to compare.'), findsNothing);
-    expect(find.text('Galaxy S25 Ultra'), findsOneWidget);
-    expect(find.text('iPhone 16 Pro Max'), findsOneWidget);
+    final phones = readCatalog().smartphones;
+    expect(find.text(phones[0].name), findsOneWidget);
+    expect(find.text(phones[1].name), findsOneWidget);
   });
 
   testWidgets('열 줄을 모두 보여준다', (tester) async {
@@ -58,11 +59,11 @@ void main() {
     CompareSide? picked;
     await _pump(tester, CompareScreen(onPick: (s) => picked = s));
 
-    await tester.tap(find.text('Galaxy S25 Ultra'));
+    await tester.tap(find.text(readCatalog().smartphones[0].name));
     await tester.pumpAndSettle();
     expect(picked, CompareSide.a);
 
-    await tester.tap(find.text('iPhone 16 Pro Max'));
+    await tester.tap(find.text(readCatalog().smartphones[1].name));
     await tester.pumpAndSettle();
     expect(picked, CompareSide.b);
   });
@@ -79,14 +80,18 @@ void main() {
 
     expect(container.read(compareProvider).b, 'oneplus-13');
     // A 슬롯은 그대로여야 한다.
-    expect(container.read(compareProvider).a, 'galaxy-s25-ultra');
+    expect(container.read(compareProvider).a, readCatalog().smartphones[0].slug);
   });
 
   testWidgets('picker 는 지수와 가격을 같이 보여준다', (tester) async {
     await _pump(tester, const PickerScreen());
     expect(find.text('Choose a device'), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
-    expect(find.text(r'$599'), findsOneWidget);
+    // 목록 첫 기기의 가격이 통화 형태로 붙는다.
+    expect(
+      find.text(DeviceSpecs.formatPrice(readCatalog().smartphones.first.msrpUsd)),
+      findsWidgets,
+    );
   });
 
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {

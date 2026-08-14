@@ -19,10 +19,11 @@ void main() {
     await _pump(tester);
 
     expect(find.text('Rankings'), findsOneWidget);
-    // 1위 행이 있고, 카탈로그 10종이 모두 자리를 갖는다.
+    // 1위 행이 있고, 화면 상한까지만 그린다. 카탈로그는 그보다 크다.
     expect(find.text('1'), findsOneWidget);
-    expect(find.text('10'), findsOneWidget);
-    expect(find.text('11'), findsNothing);
+    expect(find.text('${RankScreen.maxRows}'), findsOneWidget);
+    expect(find.text('${RankScreen.maxRows + 1}'), findsNothing);
+    expect(readCatalog().smartphones.length, greaterThan(RankScreen.maxRows));
   });
 
   testWidgets('축 칩이 다섯 개 다 나온다', (tester) async {
@@ -58,9 +59,14 @@ void main() {
 
     await tester.tap(find.widgetWithText(TpChip, 'Price'));
     await tester.pumpAndSettle();
-    // 카탈로그 최저가가 599 달러다.
-    expect(find.text(r'$599'), findsOneWidget);
-    expect(find.text(r'$1,999'), findsOneWidget);
+
+    // 가격 축은 통화 기호와 천 단위 구분이 붙는다. 값은 카탈로그에서 가져온다 —
+    // 같은 값을 가진 기기가 여럿이라 개수는 세지 않는다.
+    final cheapest = readCatalog().smartphones
+        .map((d) => d.msrpUsd?.toDouble())
+        .whereType<double>()
+        .reduce((a, b) => a < b ? a : b);
+    expect(find.text(formatAxisValue(RankAxis.price, cheapest)), findsWidgets);
   });
 
   testWidgets('빈 값은 대시로 그린다', (tester) async {

@@ -33,7 +33,7 @@ void main() {
     expect(result.isOk, isTrue, reason: '${result.failureOrNull}');
     final catalog = result.valueOrNull!;
 
-    expect(catalog.version, 1);
+    expect(catalog.version, greaterThanOrEqualTo(2));
     // CC-BY-SA 4.0 귀속 표기에 쓸 출처 문자열이 반드시 있어야 한다.
     expect(catalog.source, contains('TechAPI'));
     expect(catalog.smartphones, isNotEmpty);
@@ -48,6 +48,8 @@ void main() {
     // 명세 §5 가 세그먼트당 5행이다. 모자라면 화면이 빈다.
     expect(catalog.socs.length, greaterThanOrEqualTo(5));
     expect(catalog.cpus.length, greaterThanOrEqualTo(5));
+    // 브랜드 설명은 상세 화면이 쓴다.
+    expect(catalog.brands, isNotEmpty);
 
     for (final soc in catalog.socs) {
       expect(soc.score?.overall, isNotNull, reason: soc.slug);

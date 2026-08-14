@@ -68,10 +68,16 @@ void main() {
     final handle = tester.ensureSemantics();
     await pumpScreen(tester, const ProcessorScreen());
 
+    // 1위가 무엇인지는 카탈로그가 정한다. 문장 형태만 본다.
+    final top = ProcessorRanking.of(
+      readCatalog().socs.map(Processor.fromSoc).toList(growable: false),
+    ).first;
     expect(
       semanticsLabels(tester),
       contains(
-        K.a11yProcessorRow.tr(args: <String>['1', 'Snapdragon 8 Elite', '97']),
+        K.a11yProcessorRow.tr(
+          args: <String>['1', top.processor.name, '${top.processor.index}'],
+        ),
       ),
     );
     handle.dispose();

@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:easy_localization/src/localization.dart';
 import 'package:easy_localization/src/translations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/repository/catalog_repository.dart';
+import 'package:techpicks/domain/model/ranking.dart';
+import 'package:techpicks/domain/model/tp_weights.dart';
 
 /// 애셋을 파일에서 그대로 읽는 번들.
 ///
@@ -66,6 +69,7 @@ Future<ProviderContainer> pumpScreen(
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
   bool disableAnimations = false,
+  Locale? locale,
 }) async {
   await _pump(
     tester,
@@ -76,6 +80,7 @@ Future<ProviderContainer> pumpScreen(
     catalogAsset: catalogAsset,
     textScale: textScale,
     disableAnimations: disableAnimations,
+    locale: locale,
   );
   await tester.pumpAndSettle();
   return ProviderScope.containerOf(tester.element(find.byType(MaterialApp)));
@@ -108,6 +113,20 @@ Future<void> pumpScreenNoSettle(
 /// 구워둔 실제 카탈로그.
 const String defaultCatalogAsset = 'assets/catalog/v1.json';
 
+/// 애셋 카탈로그를 그대로 읽는다.
+///
+/// 기대값을 데이터에서 끌어오려고 둔다. 카탈로그는 `tool/build_catalog.dart`
+/// 를 다시 돌릴 때마다 바뀌므로, 특정 기기 이름을 테스트에 박아두면 다음
+/// 갱신에서 전부 깨진다.
+Catalog readCatalog() => Catalog.fromJson(
+  jsonDecode(File(defaultCatalogAsset).readAsStringSync())
+      as Map<String, dynamic>,
+);
+
+/// 기본 가중치로 매긴 순위. 랭킹 화면이 보여주는 것과 같은 순서다.
+List<RankedDevice> readRanking() =>
+    Ranking.of(readCatalog().smartphones, RankAxis.tpIndex, TpWeights.defaults);
+
 /// 없는 경로. 애셋이 빠졌거나 깨진 빌드를 흉내낸다.
 const String missingCatalogAsset = 'assets/catalog/없는파일.json';
 
@@ -120,6 +139,9 @@ Future<void> _pump(
   required String catalogAsset,
   required double textScale,
   required bool disableAnimations,
+  // `.tr()` 은 전역 Localization 을 보지만, 위젯이 Localizations.localeOf 로
+  // 언어를 고를 때는 MaterialApp 쪽도 맞춰줘야 한다.
+  Locale? locale,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -140,6 +162,9 @@ Future<void> _pump(
       child: MaterialApp(
         // 골든에 빨간 DEBUG 리본이 같이 구워진다.
         debugShowCheckedModeBanner: false,
+        locale: locale,
+        supportedLocales: const <Locale>[Locale('en', 'US'), Locale('ko', 'KR')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: AppTheme.of(chrome),
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(

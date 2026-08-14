@@ -31,6 +31,16 @@ class RankScreen extends ConsumerWidget {
     this.onScan,
   });
 
+  /// 화면에 그리는 최대 행 수.
+  ///
+  /// 목록은 `Stack` + `AnimatedPositioned` 라 **모든 행을 한 번에 만든다**.
+  /// 순위가 바뀌면 행마다 있는 막대가 동시에 트윈되는데, 카탈로그가 154종이
+  /// 되면서 가중치 슬라이더 한 번에 애니메이션이 백 개 넘게 돈다.
+  ///
+  /// 카탈로그 전체는 비교·픽커·상세·이번 주 변동이 그대로 다 쓴다. 상한은
+  /// 이 화면에만 있다.
+  static const int maxRows = 50;
+
   final ValueChanged<TpTab>? onTabSelected;
   final ValueChanged<String>? onDeviceTap;
 
@@ -75,7 +85,7 @@ class RankScreen extends ConsumerWidget {
                 ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
                 : _RankList(
                     key: const ValueKey<String>('list'),
-                    ranked: ranked,
+                    ranked: ranked.take(maxRows).toList(growable: false),
                     axis: axis,
                     onDeviceTap: onDeviceTap,
                   ),
