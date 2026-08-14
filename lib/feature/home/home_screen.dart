@@ -20,6 +20,7 @@ import '../../domain/model/device_specs.dart';
 import '../../domain/model/movers.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/widgets/tp_score_strip.dart';
+import '../../shared/widgets/tp_faded_line.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 
@@ -383,7 +384,7 @@ class _ShortlistRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     // 스펙 줄은 길어지면 오른쪽으로 흐려지며 잘린다.
-                    _FadedSpecLine(
+                    TpFadedLine(
                       text: <String>[
                         DeviceSpecs.formatPrice(device.msrpUsd),
                         if (device.soc?.name != null) device.soc!.name,
@@ -394,37 +395,6 @@ class _ShortlistRow extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 오른쪽 끝이 배경으로 사라지는 한 줄.
-class _FadedSpecLine extends StatelessWidget {
-  const _FadedSpecLine({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final type = context.tpText;
-    return SizedBox(
-      height: 18,
-      child: ShaderMask(
-        shaderCallback: (rect) => const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: <Color>[Colors.black, Colors.black, Colors.transparent],
-          stops: <double>[0, 0.85, 1],
-        ).createShader(rect),
-        blendMode: BlendMode.dstIn,
-        child: Text(
-          text,
-          style: type.caption,
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.clip,
         ),
       ),
     );

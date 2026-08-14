@@ -123,7 +123,10 @@ class TpShell extends StatelessWidget {
     };
     final tabBottom = safe.bottom + _iosTabGap;
     final bottomInset = takeover
-        ? safe.bottom
+        // 인수 화면은 위아래로 화면을 통째로 쓴다. 여기서 안전 영역을 비우면
+        // 어두운 화면 아래로 밝은 배경이 띠처럼 남는다. 스캔·뷰어는 자기
+        // 컨트롤에 안전 영역을 직접 더한다.
+        ? 0.0
         : (tab != null ? tabBottom + _iosTabHeight + 16 : safe.bottom + 24) +
               extraBottomInset;
 
@@ -267,7 +270,7 @@ class TpShell extends StatelessWidget {
       TpChromeMode.takeover => 0.0,
     };
     final bottomInset = takeover
-        ? safe.bottom
+        ? 0.0
         : (tab != null
                   ? _androidTabHeight + safe.bottom + 12
                   : safe.bottom + 24) +
