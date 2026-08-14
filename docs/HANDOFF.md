@@ -107,9 +107,22 @@ iPhone 17 Pro(iOS 27) 에서 화면을 하나씩 돌려 보고 고친 것:
 | 상세 출처 줄 | 링크인데 본문과 같은 회색 | `9567713` |
 | 비교 선택 | 84, 84, 85 — 카탈로그 순서(원점수)와 화면의 지수가 어긋남 | `297c520` |
 | 내 정보 | 계정이 없는데 "프로필 수정"과 "로그아웃" | `297c520` |
+| 로그인 | 마크가 없는 이메일 버튼만 라벨이 왼쪽으로 튀어나옴 | `6cd5493` |
+| 이메일 로그인 | 빈 칸으로 눌러도 "이메일 주소 형식이 아닙니다" | `6cd5493` |
 
-아직 안 본 것: 홈의 이번 주 변동(직전 스냅샷이 있어야 나온다), 이메일 로그인,
-Android 크롬 실물(에뮬레이터 없이 `main.dart` 에서 강제로 한 번 봤다).
+**이번 주 변동은 실제로는 안 뜬다.** 카탈로그가 고정이라 지난 실행의 순위와
+이번 순위가 같다. 데이터가 바뀌어야(애셋 재생성·Remote Config) 뜬다. 눈으로
+보려면 앱을 끈 뒤 스냅샷을 손으로 심는다 — 컨테이너 안 plist 를 시뮬레이터
+쪽 `defaults` 로 써야 한다. 파일을 직접 고치면 cfprefsd 캐시가 덮어쓴다.
+
+```
+C=$(xcrun simctl get_app_container <udid> com.techpicks.app data)
+xcrun simctl spawn <udid> defaults write "$C/Library/Preferences/com.techpicks.app" \
+  flutter.rank_snapshot_slugs -array iphone-16-pro-max galaxy-s25-ultra pixel-10-pro
+```
+
+아직 안 본 것: Android 크롬 실물(에뮬레이터 없이 `main.dart` 에서 강제로 한 번
+봤다).
 
 ## 다음에 할 만한 것
 
