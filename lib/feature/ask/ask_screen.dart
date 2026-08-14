@@ -63,21 +63,20 @@ class _AskScreenState extends ConsumerState<AskScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tp;
     final messages = ref.watch(askProvider);
 
     return TpShell(
       title: K.tabAsk.tr(),
       tab: TpTab.ask,
       onTabSelected: widget.onTabSelected,
-      // 입력 바와 제안 칩이 탭 바 위에 얹힌다. 명세의 iOS 190 / Android 172
-      // 에서 셸이 이미 잡아둔 탭 바 높이를 뺀 만큼만 더한다.
-      extraBottomInset: t.isGlass ? 102 : 82,
       child: Stack(
         children: <Widget>[
           ListView.builder(
             controller: _scroll,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            // 입력 바는 이 영역 바닥에 붙는다. 그만큼 아래를 비워둬야 마지막
+            // 말풍선이 그 뒤로 숨지 않는다. 셸에 여백을 더하면 입력 바가
+            // 탭 바에서 그만큼 떠서 빈 공간이 생긴다.
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8 + _Composer.height),
             itemCount: messages.length,
             itemBuilder: (context, i) => _Bubble(
               message: messages[i],
@@ -215,6 +214,9 @@ class _AnswerRow extends StatelessWidget {
 
 class _Composer extends StatelessWidget {
   const _Composer({required this.controller, required this.onSend});
+
+  /// 제안 칩 38 + 사이 10 + 입력 48 + 위아래 여백.
+  static const double height = 110;
 
   final TextEditingController controller;
   final ValueChanged<String> onSend;
