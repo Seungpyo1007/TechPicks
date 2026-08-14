@@ -416,7 +416,7 @@ class _BrandCard extends ConsumerWidget {
               _LinkLine(
                 label: K.brandSite.tr(),
                 url: Uri.tryParse(brand.website!),
-                style: type.caption.copyWith(color: TpTokens.blueText),
+                style: type.caption,
               ),
             ],
           ],
@@ -446,11 +446,19 @@ class _LinkLine extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final target = url;
+    // 눌리는 줄은 링크 색으로 둔다. 출처 줄이 본문과 같은 회색이던 때는
+    // 눌리는 줄인지 알 방법이 없었다.
     final text = Padding(
       padding: EdgeInsets.only(top: topPadding),
-      child: Text(label, style: style, maxLines: 1),
+      child: Text(
+        label,
+        style: target == null
+            ? style
+            : style.copyWith(color: TpTokens.blueText),
+        maxLines: 1,
+      ),
     );
-    final target = url;
     if (target == null) return text;
 
     return Align(
