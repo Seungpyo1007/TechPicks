@@ -62,17 +62,21 @@ void main() {
       expect(stub.opened, <Uri>[TpUrls.license]);
     });
 
-    testWidgets('출처 URL 을 누르면 그 주소가 열린다', (tester) async {
+    testWidgets('출처는 도메인만 보여주고 원문으로 연다', (tester) async {
+      // 원문 주소는 한 줄을 다 먹는다. 귀속에 필요한 건 링크가 사는 것이다.
       final stub = await _pump(tester, const DetailScreen(slug: 'galaxy-s25'));
 
-      final url = tester
-          .widgetList<Text>(find.byType(Text))
-          .map((t) => t.data ?? '')
-          .firstWhere((s) => s.startsWith('http'));
-      await tester.tap(find.text(url));
+      final source = readCatalog().smartphones
+          .firstWhere((d) => d.slug == 'galaxy-s25')
+          .sourceUrls
+          .first;
+      final host = Uri.parse(source).host;
+
+      expect(find.text(source), findsNothing);
+      await tester.tap(find.text(host).first);
       await tester.pumpAndSettle();
 
-      expect(stub.opened, <Uri>[Uri.parse(url)]);
+      expect(stub.opened, <Uri>[Uri.parse(source)]);
     });
 
     testWidgets('두 크롬 다 열린다', (tester) async {

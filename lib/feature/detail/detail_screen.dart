@@ -224,7 +224,11 @@ class _DetailBody extends ConsumerWidget {
           ),
           for (final url in device.sourceUrls)
             _LinkLine(
-              label: url,
+              // 원문 주소는 한 줄을 다 먹는다. 보이는 건 도메인만, 열리는
+              // 것은 원문 그대로 — 귀속에 필요한 건 링크가 살아 있는 것이다.
+              label: Uri.tryParse(url)?.host.isNotEmpty ?? false
+                  ? Uri.parse(url).host
+                  : url,
               url: Uri.tryParse(url),
               style: type.caption,
               topPadding: 2,

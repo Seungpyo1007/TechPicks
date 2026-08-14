@@ -45,6 +45,7 @@ abstract final class K {
   static const String laptops = 'laptops';
   static const String rankBy = 'rankBy';
   static const String rankNote = 'rankNote';
+  static const String rankCapped = 'rankCapped';
   static const String scanCta = 'scanCta';
   static const String scanShort = 'scanShort';
   static const String noDevices = 'noDevices';

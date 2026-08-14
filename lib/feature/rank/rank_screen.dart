@@ -90,6 +90,17 @@ class RankScreen extends ConsumerWidget {
                     onDeviceTap: onDeviceTap,
                   ),
           ),
+          // 잘린 것을 말해준다. 랭킹이 조용히 끊기면 가격순으로 봤을 때
+          // 제일 싼 기기가 왜 없는지 알 방법이 없다.
+          if (ranked.length > maxRows) ...<Widget>[
+            const SizedBox(height: 12),
+            Text(
+              K.rankCapped.tr(
+                args: <String>['$maxRows', '${ranked.length - maxRows}'],
+              ),
+              style: context.tpText.caption,
+            ),
+          ],
           if (onScan != null && context.tp.isGlass) ...<Widget>[
             const SizedBox(height: 16),
             _ScanInlineButton(onTap: onScan!),
