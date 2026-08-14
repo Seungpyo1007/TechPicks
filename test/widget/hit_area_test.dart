@@ -65,7 +65,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // 화면 좌표로 누른다. find.text 로 누르면 위젯이 화면 밖이어도 통과한다.
-      final logout = tester.getRect(find.text(K.logout.tr()));
+      // 계정 없이 띄운 화면이라 마지막 줄은 "로그인"이다.
+      final logout = tester.getRect(find.text(K.signIn.tr()));
       expect(
         logout.bottom,
         lessThan(frame.height),

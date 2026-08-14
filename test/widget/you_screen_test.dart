@@ -139,7 +139,8 @@ void main() {
       'Dark mode',
       'Notifications',
       'Currency',
-      'Log out',
+      // 계정이 없으면 마지막 줄은 로그인이다.
+      'Sign in',
     ]) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
@@ -160,6 +161,14 @@ void main() {
     await _pump(tester);
     expect(find.text('Browsing without an account'), findsOneWidget);
     expect(find.text('?'), findsOneWidget);
+    // 고칠 프로필이 없다. 열어 봐야 저장이 조용히 실패한다.
+    expect(find.text('Edit profile'), findsNothing);
+  });
+
+  testWidgets('계정이 있으면 프로필 수정이 나온다', (tester) async {
+    await _pump(tester, name: '홍길동', email: 'a@b.com');
+    expect(find.text('Edit profile'), findsOneWidget);
+    expect(find.text('Log out'), findsOneWidget);
   });
 
   testWidgets('이름이 있으면 이니셜을 만든다', (tester) async {

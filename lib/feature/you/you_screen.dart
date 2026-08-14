@@ -86,6 +86,8 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     final weights = ref.watch(weightsProvider);
     final locale = ref.watch(localeControllerProvider);
     final notifications = ref.watch(notificationsProvider);
+    // 헤더가 "로그인 없이 사용 중"이라고 적는 것과 같은 조건이다.
+    final hasAccount = name != null || (email?.isNotEmpty ?? false);
 
     return TpShell(
       title: t.isGlass ? null : K.you.tr(),
@@ -102,7 +104,9 @@ class _YouScreenState extends ConsumerState<YouScreen> {
           _ProfileHeader(
             name: name,
             email: email,
-            onEdit: widget.onEditProfile ?? _editName,
+            // 계정이 없으면 고칠 프로필도 없다. 손님에게 이름 바꾸기 시트를
+            // 열어 주면 저장이 조용히 실패한다.
+            onEdit: hasAccount ? widget.onEditProfile ?? _editName : null,
           ),
           const SizedBox(height: 22),
 
@@ -183,7 +187,9 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                         () => unawaited(_resetPassword()),
                   ),
                 _SettingRow(
-                  label: K.logout.tr(),
+                  // 손님에게 "로그아웃"은 나갈 곳이 없다는 뜻으로 읽힌다.
+                  // 누르면 로그인 화면으로 가니 그렇게 적는다.
+                  label: (hasAccount ? K.logout : K.signIn).tr(),
                   onTap: widget.onLogout,
                   last: true,
                 ),
@@ -463,14 +469,16 @@ class _ProfileHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-              const SizedBox(height: 4),
-              TpTapTarget(
-                onTap: onEdit,
-                child: Text(
-                  K.editProfile.tr(),
-                  style: type.caption.copyWith(color: TpTokens.blueText),
+              if (onEdit != null) ...<Widget>[
+                const SizedBox(height: 4),
+                TpTapTarget(
+                  onTap: onEdit,
+                  child: Text(
+                    K.editProfile.tr(),
+                    style: type.caption.copyWith(color: TpTokens.blueText),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

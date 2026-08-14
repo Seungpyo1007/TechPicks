@@ -103,7 +103,8 @@ void main() {
     await tester.tap(find.text(K.tabYou.tr()));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(K.logout.tr()));
+    // 익명 계정에는 이름도 메일도 없다. 그 줄은 "로그인"으로 적힌다.
+    await tester.tap(find.text(K.signIn.tr()));
     await tester.pumpAndSettle();
 
     expect(auth.signOuts, 1);
@@ -128,7 +129,8 @@ void main() {
 
     await tester.tap(find.text(K.tabYou.tr()));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(K.logout.tr()));
+    // 익명 계정에는 이름도 메일도 없다. 그 줄은 "로그인"으로 적힌다.
+    await tester.tap(find.text(K.signIn.tr()));
     await tester.pumpAndSettle();
 
     expect(find.byType(LoginScreen), findsOneWidget);
