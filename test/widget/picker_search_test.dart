@@ -6,6 +6,7 @@ import 'package:techpicks/data/dto/brand.dart';
 import 'package:techpicks/data/dto/smartphone.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
+import 'package:techpicks/shared/widgets/tp_surface.dart';
 
 import '../support/harness.dart';
 
@@ -55,7 +56,11 @@ void main() {
   });
 
   testWidgets('치는 대로 목록이 줄어든다', (tester) async {
-    await pumpScreen(tester, const PickerScreen(), size: const Size(1200, 2400));
+    await pumpScreen(
+      tester,
+      const PickerScreen(),
+      size: const Size(1200, 2400),
+    );
 
     final all = readCatalog().smartphones;
     final target = all.firstWhere((d) => d.name.contains('Galaxy S25'));
@@ -71,7 +76,11 @@ void main() {
   });
 
   testWidgets('결과가 없으면 없다고 말한다', (tester) async {
-    await pumpScreen(tester, const PickerScreen(), size: const Size(1200, 2400));
+    await pumpScreen(
+      tester,
+      const PickerScreen(),
+      size: const Size(1200, 2400),
+    );
 
     await tester.enterText(find.byType(TextField), '없는기기이름');
     await tester.pumpAndSettle();
@@ -80,7 +89,11 @@ void main() {
   });
 
   testWidgets('지우면 다시 전부 나온다', (tester) async {
-    await pumpScreen(tester, const PickerScreen(), size: const Size(1200, 2400));
+    await pumpScreen(
+      tester,
+      const PickerScreen(),
+      size: const Size(1200, 2400),
+    );
 
     await tester.enterText(find.byType(TextField), 'galaxy');
     await tester.pumpAndSettle();
@@ -102,5 +115,50 @@ void main() {
       );
       expect(find.text(K.searchHint.tr()), findsOneWidget, reason: chrome.name);
     }
+  });
+
+  // 카탈로그 순서는 원점수 순이라 지수와 어긋난다. 목록에 84, 84, 85 가
+  // 잇달아 나오면 고장 난 것처럼 보인다 — 시뮬레이터에서 그랬다.
+  testWidgets('보이는 숫자 순으로 내려간다', (tester) async {
+    await pumpScreen(
+      tester,
+      const PickerScreen(),
+      size: const Size(1200, 2400),
+    );
+
+    final ranked = readRanking();
+    final shown = tester
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byType(TpSurface),
+            matching: find.byType(Text),
+          ),
+        )
+        .map((t) => t.data)
+        .whereType<String>()
+        .toList(growable: false);
+
+    // 화면에 그려진 이름만 본다 — 목록은 게으르게 만들어진다.
+    final names = <String>[
+      for (final r in ranked)
+        if (shown.contains(r.device.name)) r.device.name,
+    ];
+    final drawnInOrder = <String>[
+      for (final s in shown)
+        if (names.contains(s)) s,
+    ];
+
+    expect(drawnInOrder, names);
+  });
+
+  // 키보드가 올라오면 목록도 그만큼 위로 물러나야 한다.
+  testWidgets('키보드만큼 아래를 비운다', (tester) async {
+    tester.view.viewInsets = const FakeViewPadding(bottom: 336);
+    addTearDown(tester.view.reset);
+
+    await pumpScreen(tester, const PickerScreen(), size: const Size(402, 874));
+
+    final list = tester.widget<ListView>(find.byType(ListView));
+    expect(list.padding, const EdgeInsets.fromLTRB(16, 0, 16, 360));
   });
 }

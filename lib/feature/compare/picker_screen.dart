@@ -9,6 +9,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
+import '../../domain/model/ranking.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
@@ -62,10 +63,20 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
     final t = context.tp;
     final catalog = ref.watch(catalogProvider).value;
     final weights = ref.watch(weightsProvider);
-    final devices = PickerScreen.filter(
-      catalog?.smartphones ?? const <Smartphone>[],
-      _query.text,
-    );
+    // 카탈로그 순서는 TechAPI 원점수 순이라 화면에 찍히는 지수와 어긋난다.
+    // 84, 84, 85 가 잇달아 나오면 목록이 고장 난 것처럼 보인다. 랭킹 화면과
+    // 같은 정렬을 쓴다.
+    final devices = <Smartphone>[
+      for (final r in Ranking.of(
+        PickerScreen.filter(
+          catalog?.smartphones ?? const <Smartphone>[],
+          _query.text,
+        ),
+        RankAxis.tpIndex,
+        weights,
+      ))
+        r.device,
+    ];
 
     return TpShell(
       mode: TpChromeMode.plain,
@@ -138,7 +149,14 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
                     child: Text(K.noDevices.tr(), style: type.secondary),
                   )
                 : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    // 키보드가 올라오면 그만큼 더 비운다. 안 그러면 마지막
+                    // 기기들이 키보드 뒤에 깔려 못 고른다.
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      0,
+                      16,
+                      24 + MediaQuery.viewInsetsOf(context).bottom,
+                    ),
                     itemCount: devices.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (context, i) {

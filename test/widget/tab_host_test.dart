@@ -321,6 +321,7 @@ void _pickerSlots() {
     expect(find.byType(PickerScreen), findsOneWidget);
 
     // 카탈로그가 154종이라 픽커 목록은 가상화된다. 안 보이면 못 누른다.
+    // 만들어져 있어도 화면 밖이면 탭이 빗나가므로 한 번 더 끌어온다.
     final target = find.text(pickName);
     if (target.evaluate().isEmpty) {
       await tester.scrollUntilVisible(
@@ -329,6 +330,8 @@ void _pickerSlots() {
         scrollable: find.byType(Scrollable).last,
       );
     }
+    await tester.ensureVisible(target.first);
+    await tester.pumpAndSettle();
     await tester.tap(target.first);
     await tester.pumpAndSettle();
   }
