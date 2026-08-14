@@ -124,6 +124,31 @@ xcrun simctl spawn <udid> defaults write "$C/Library/Preferences/com.techpicks.a
 아직 안 본 것: Android 크롬 실물(에뮬레이터 없이 `main.dart` 에서 강제로 한 번
 봤다).
 
+## iOS 를 먼저 낸다
+
+2026-08-15 에 iOS 쪽만 훑어 마감했다. 코드로 할 수 있는 건 다 했고, 남은
+셋은 사용자 계정이 있어야 한다.
+
+| 남은 것 | 왜 우리가 못 하나 |
+|---|---|
+| Firebase 에 `com.techpicks.app` 로 iOS 앱 등록 → `flutterfire configure` | 콘솔 로그인 |
+| Apple Developer 에서 Sign in with Apple 켜기 | 유료 계정 |
+| 개인정보 처리방침 URL | 게시할 곳 |
+
+**Google 로그인은 지금 상태로 안 된다.** `firebase_options.dart` 의
+`iosBundleId` 가 `com.example.techpicks` 라 OAuth 클라이언트가 안 맞는다.
+실행하면 Firebase 가 로그로 그렇게 말한다 (`I-COR000008`). 앱은 뜬다.
+
+명세와 다르게 간 것 하나: **스캔(§11)이 카메라가 아니라 이름 입력이다.**
+카메라도 OCR 도 붙은 적이 없어 실기기에서는 검은 화면에 조준틀만 돌았다.
+`ScanMatcher` 는 그대로 쓰고, 카메라가 붙는 날 `ScanScreen.recognizedText` 로
+읽은 글자를 넣어주면 같은 화면이 결과를 띄운다. 카탈로그에 `SM-S931B` 같은
+모델 코드가 없어 받는 것은 **기기 이름**이다.
+
+아이콘은 `tool/icons/ios_1024.png` 에서 굽는다 — `assets/logo/logo.png` 의
+둥근 모서리를 그라디언트로 메운 네모난 원본이다. 알파가 있으면 App Store
+Connect 가 반려한다.
+
 ## 다음에 할 만한 것
 
 `ROADMAP.md` §2 가 작업 큐다. **P1·P3 의 코드는 다 끝났다.** 코드로 혼자 진전시킬 수
