@@ -112,6 +112,7 @@
   "pwResetFailed": "Could not send the reset link.",
   "pwResetSent": "Password reset link sent to {}.",
   "rankBy": "Rank by",
+  "rankCapped": "Showing the top {}. The other {} are in Compare.",
   "rankNote": "Ranked in-app from the TechPicks dataset — no webview, no handoff.",
   "rankTitle": "Rankings",
   "reset": "Reset",

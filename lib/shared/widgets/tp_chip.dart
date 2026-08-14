@@ -62,7 +62,13 @@ class _TpChipState extends State<TpChip> {
               style: type.body.copyWith(
                 fontSize: 13.5,
                 fontWeight: t.boldWeight,
-                color: widget.selected ? Colors.white : TpTokens.ink,
+                // 못 누르는 칩은 그렇게 보여야 한다. 랭킹의 Laptops 가
+                // 데이터가 없어 꺼져 있는데 켜진 것과 똑같이 생겼었다.
+                color: widget.selected
+                    ? Colors.white
+                    : enabled
+                    ? TpTokens.ink
+                    : t.dim,
               ),
             ),
           ),

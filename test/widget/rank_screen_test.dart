@@ -7,6 +7,8 @@ import '../support/harness.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/ranking.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
+import 'package:techpicks/app/theme/tp_tokens.dart';
+import 'package:techpicks/feature/rank/category_chips.dart';
 import 'package:techpicks/shared/widgets/tp_chip.dart';
 
 Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) =>
@@ -24,6 +26,20 @@ void main() {
     expect(find.text('${RankScreen.maxRows}'), findsOneWidget);
     expect(find.text('${RankScreen.maxRows + 1}'), findsNothing);
     expect(readCatalog().smartphones.length, greaterThan(RankScreen.maxRows));
+  });
+
+  testWidgets('잘린 것을 말해준다', (tester) async {
+    // 상한 없이 조용히 끊으면 가격순에서 제일 싼 기기가 왜 없는지 모른다.
+    // 안내는 목록 아래라 화면이 그만큼 길어야 그려진다.
+    await pumpScreen(tester, const RankScreen(), size: const Size(1200, 4400));
+
+    final rest = readCatalog().smartphones.length - RankScreen.maxRows;
+    expect(
+      find.text(
+        K.rankCapped.tr(args: <String>['${RankScreen.maxRows}', '$rest']),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('축 칩이 다섯 개 다 나온다', (tester) async {
@@ -67,6 +83,28 @@ void main() {
         .whereType<double>()
         .reduce((a, b) => a < b ? a : b);
     expect(find.text(formatAxisValue(RankAxis.price, cheapest)), findsWidgets);
+  });
+
+  testWidgets('노트북 칩은 꺼져 있고 그렇게 보인다', (tester) async {
+    // 데이터가 없어 못 누른다. 켜진 것과 똑같이 생기면 눌러보고 만다.
+    await _pump(tester);
+
+    final chips = tester.widgetList<TpChip>(
+      find.descendant(
+        of: find.byType(CategoryChips),
+        matching: find.byType(TpChip),
+      ),
+    );
+    final laptops = chips.firstWhere((c) => c.label == 'Laptops');
+    expect(laptops.onTap, isNull);
+
+    final label = tester.widget<Text>(
+      find.descendant(
+        of: find.widgetWithText(TpChip, 'Laptops'),
+        matching: find.byType(Text),
+      ),
+    );
+    expect(label.style?.color, isNot(TpTokens.ink));
   });
 
   testWidgets('빈 값은 대시로 그린다', (tester) async {
