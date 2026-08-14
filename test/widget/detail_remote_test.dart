@@ -72,11 +72,11 @@ void main() {
 
   testWidgets('없으면 원격에서 받아 그린다', (tester) async {
     final api = _FakeApi(
-      Ok(const Smartphone(slug: 'pixel-10-pro', name: 'Pixel 10 Pro')),
+      Ok(const Smartphone(slug: '카탈로그에-없는-기기', name: 'Pixel 10 Pro')),
     );
     await pumpScreen(
       tester,
-      const DetailScreen(slug: 'pixel-10-pro'),
+      const DetailScreen(slug: '카탈로그에-없는-기기'),
       size: const Size(1200, 3200),
       overrides: <Override>[techApiRepositoryProvider.overrideWithValue(api)],
     );
@@ -87,11 +87,11 @@ void main() {
 
   testWidgets('원격도 없으면 못 불러왔다고 알린다', (tester) async {
     final api = _FakeApi(
-      Err(const NotFoundFailure('smartphones', 'pixel-10-pro')),
+      Err(const NotFoundFailure('smartphones', '카탈로그에-없는-기기')),
     );
     await pumpScreen(
       tester,
-      const DetailScreen(slug: 'pixel-10-pro'),
+      const DetailScreen(slug: '카탈로그에-없는-기기'),
       size: const Size(1200, 3200),
       overrides: <Override>[techApiRepositoryProvider.overrideWithValue(api)],
     );

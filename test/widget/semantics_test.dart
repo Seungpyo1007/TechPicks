@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
+import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
 import '../support/harness.dart';
@@ -19,11 +20,8 @@ void main() {
     final handle = tester.ensureSemantics();
     await pumpScreen(tester, const RankScreen());
 
-    // 1위는 galaxy-s25-ultra, 지수 79.
-    expect(
-      semanticsLabels(tester),
-      contains(K.a11yRankRow.tr(args: <String>['1', 'Galaxy S25 Ultra', '77'])),
-    );
+    // 1위가 무엇인지는 카탈로그가 정한다. 읽히는 문장의 모양만 본다.
+    expect(semanticsLabels(tester), contains(_topRankSentence()));
     handle.dispose();
   });
 
@@ -67,16 +65,31 @@ void main() {
     );
 
     // 승패는 색으로만 표시된다. 색을 못 보면 알 수 없다.
-    // 기본 두 기기는 galaxy-s25-ultra(1299) 와 iphone-16-pro-max(1199).
+    // 기본 두 기기는 카탈로그 앞의 둘이고, 가격은 싼 쪽이 이긴다.
+    final phones = readCatalog().smartphones;
+    final a = phones[0];
+    final b = phones[1];
+    final cheaper = (a.msrpUsd ?? 0) <= (b.msrpUsd ?? 0) ? a : b;
+    final dearer = identical(cheaper, a) ? b : a;
+
     final labels = semanticsLabels(tester);
     expect(
       labels,
-      contains(K.a11yWinner.tr(args: <String>['iPhone 16 Pro Max', r'$1,199'])),
+      contains(
+        K.a11yWinner.tr(
+          args: <String>[
+            cheaper.name,
+            DeviceSpecs.formatPrice(cheaper.msrpUsd),
+          ],
+        ),
+      ),
     );
     expect(
       labels,
       contains(
-        K.a11yCompareCell.tr(args: <String>['Galaxy S25 Ultra', r'$1,299']),
+        K.a11yCompareCell.tr(
+          args: <String>[dearer.name, DeviceSpecs.formatPrice(dearer.msrpUsd)],
+        ),
       ),
     );
     handle.dispose();
@@ -87,10 +100,15 @@ void main() {
     final handle = tester.ensureSemantics();
     await pumpScreen(tester, const RankScreen());
 
-    expect(
-      semanticsLabels(tester),
-      contains(K.a11yRankRow.tr(args: <String>['1', 'Galaxy S25 Ultra', '77'])),
-    );
+    expect(semanticsLabels(tester), contains(_topRankSentence()));
     handle.dispose();
   });
+}
+
+/// 랭킹 1위 행이 읽히는 문장.
+String _topRankSentence() {
+  final top = readRanking().first;
+  return K.a11yRankRow.tr(
+    args: <String>['1', top.device.name, '${top.index}'],
+  );
 }

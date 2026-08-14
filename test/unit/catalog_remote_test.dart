@@ -86,7 +86,7 @@ void main() {
     final result = await _repo(store: store, feed: _FakeFeed()).load();
 
     final catalog = result.fold((c) => c, (f) => throw f);
-    expect(catalog.smartphones, hasLength(10));
+    expect(catalog.smartphones, hasLength(readCatalog().smartphones.length));
   });
 
   test('받아둔 것이 애셋보다 새로우면 그걸 쓴다', () async {
@@ -104,7 +104,7 @@ void main() {
     final result = await _repo(store: store, feed: _FakeFeed()).load();
 
     final catalog = result.fold((c) => c, (f) => throw f);
-    expect(catalog.smartphones, hasLength(10));
+    expect(catalog.smartphones, hasLength(readCatalog().smartphones.length));
   });
 
   test('받아둔 것이 깨졌으면 애셋으로 떨어진다', () async {
@@ -112,7 +112,7 @@ void main() {
     final result = await _repo(store: store, feed: _FakeFeed()).load();
 
     final catalog = result.fold((c) => c, (f) => throw f);
-    expect(catalog.smartphones, hasLength(10));
+    expect(catalog.smartphones, hasLength(readCatalog().smartphones.length));
   });
 
   test('원격 버전이 높으면 받아서 저장한다', () async {
@@ -163,7 +163,7 @@ void main() {
     final result = await _repo(store: store, feed: feed).load();
     await Future<void>.delayed(Duration.zero);
 
-    expect(result.fold((c) => c.smartphones, (f) => throw f), hasLength(10));
+    expect(result.fold((c) => c.smartphones, (f) => throw f), hasLength(readCatalog().smartphones.length));
     expect(feed.fetches, 0);
   });
 
@@ -171,7 +171,7 @@ void main() {
     final result = await _repo(store: _FakeStore(), feed: _BrokenFeed()).load();
     await Future<void>.delayed(Duration.zero);
 
-    expect(result.fold((c) => c.smartphones, (f) => throw f), hasLength(10));
+    expect(result.fold((c) => c.smartphones, (f) => throw f), hasLength(readCatalog().smartphones.length));
   });
 
   test('저장소가 죽어도 화면은 카탈로그를 받는다', () async {
@@ -181,7 +181,7 @@ void main() {
     ).load();
     await Future<void>.delayed(Duration.zero);
 
-    expect(result.fold((c) => c.smartphones, (f) => throw f), hasLength(10));
+    expect(result.fold((c) => c.smartphones, (f) => throw f), hasLength(readCatalog().smartphones.length));
   });
 
   test('애셋이 없어도 받아둔 것이 있으면 그걸 쓴다', () async {

@@ -211,6 +211,8 @@ class _DetailBody extends ConsumerWidget {
           onTap: onView3D == null ? null : () => onView3D!(device.slug),
         ),
 
+        _BrandCard(slug: device.brand?.slug),
+
         if (device.sourceUrls.isNotEmpty) ...<Widget>[
           const SizedBox(height: 20),
           // CC-BY-SA 4.0 상 출처 표기는 선택이 아니고, 표기만으로도 모자란다.
@@ -355,6 +357,67 @@ class _DetailSkeleton extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// 만든 회사 한 조각.
+///
+/// 기기에 임베드된 brand 는 이름뿐이라 국가·설립연도·설명은 카탈로그의
+/// `brands` 에서 찾아온다. 못 찾으면 아무것도 안 그린다 — 옛 카탈로그를
+/// 받아둔 기기에는 이 목록이 없다.
+class _BrandCard extends ConsumerWidget {
+  const _BrandCard({required this.slug});
+
+  final String? slug;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final brand = ref.watch(catalogProvider).value?.brand(slug);
+    if (brand == null) return const SizedBox.shrink();
+
+    final type = context.tpText;
+    // `context.locale` 은 EasyLocalization 위젯을 요구한다. 테스트는 그걸
+    // 안 올리므로(하네스 주석 참고) Flutter 가 늘 깔아주는 쪽을 본다.
+    final ko = Localizations.maybeLocaleOf(context)?.languageCode == 'ko';
+    final description = ko
+        ? (brand.descriptionKo ?? brand.descriptionEn)
+        : (brand.descriptionEn ?? brand.descriptionKo);
+
+    final meta = <String>[
+      if (brand.country != null) brand.country!,
+      if (brand.foundedYear != null)
+        K.brandFounded.tr(args: <String>['${brand.foundedYear}']),
+    ].join(' · ');
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: TpSurface(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(child: Text(brand.name, style: type.cardTitle)),
+                if (meta.isNotEmpty) Text(meta, style: type.caption),
+              ],
+            ),
+            if (description != null && description.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 6),
+              Text(description, style: type.secondary),
+            ],
+            if (brand.website != null) ...<Widget>[
+              const SizedBox(height: 2),
+              _LinkLine(
+                label: K.brandSite.tr(),
+                url: Uri.tryParse(brand.website!),
+                style: type.caption.copyWith(color: TpTokens.blueText),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

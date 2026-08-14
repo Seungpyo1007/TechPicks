@@ -7,6 +7,7 @@ import 'package:flutter/services.dart' show AssetBundle, rootBundle;
 
 import '../../core/failure.dart';
 import '../../core/result.dart';
+import '../dto/brand.dart';
 import '../dto/cpu.dart';
 import '../dto/smartphone.dart';
 import '../dto/soc.dart';
@@ -133,6 +134,7 @@ class Catalog {
     required this.smartphones,
     required this.cpus,
     required this.socs,
+    this.brands = const <Brand>[],
   });
 
   final int version;
@@ -143,6 +145,18 @@ class Catalog {
   final List<Smartphone> smartphones;
   final List<Cpu> cpus;
   final List<Soc> socs;
+
+  /// 실린 기기가 참조하는 제조사. 기기에 임베드된 brand 는 이름뿐이라
+  /// 국가·설립연도·설명은 여기에만 있다.
+  ///
+  /// 기본값이 빈 목록인 이유는 받아둔 옛 카탈로그 때문이다. `brands` 가 없던
+  /// 시절 파일을 읽어도 화면이 죽으면 안 된다.
+  final List<Brand> brands;
+
+  /// 슬러그로 찾는다. 상세 화면이 기기마다 한 번씩 부른다.
+  Brand? brand(String? slug) => slug == null
+      ? null
+      : brands.where((b) => b.slug == slug).firstOrNull;
 
   factory Catalog.fromJson(Map<String, dynamic> json) {
     List<T> parse<T>(String key, T Function(Map<String, dynamic>) from) {
@@ -160,6 +174,7 @@ class Catalog {
       smartphones: parse('smartphones', Smartphone.fromJson),
       cpus: parse('cpus', Cpu.fromJson),
       socs: parse('socs', Soc.fromJson),
+      brands: parse('brands', Brand.fromJson),
     );
   }
 }

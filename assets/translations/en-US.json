@@ -28,6 +28,8 @@
   "axPrice": "Price",
   "axVal": "Value",
   "back": "Back",
+  "brandFounded": "Founded {}",
+  "brandSite": "Website",
   "cancel": "Cancel",
   "changePw": "Change password",
   "chatSeed": "Give me a budget and the one thing you care about most. I will answer with a table.",

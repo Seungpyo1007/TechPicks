@@ -10,6 +10,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # easy_localization 이 전이로 끌고 오지만, 테스트 하네스가 직접 델리게이트를
+  # 꽂아야 해서 명시한다.
+  flutter_localizations:
+    sdk: flutter
 
 
 
