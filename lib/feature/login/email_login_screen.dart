@@ -69,6 +69,12 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
     final email = _email.text.trim();
     final password = _password.text;
 
+    // 빈 칸에 "형식이 아닙니다"는 고장 난 것처럼 읽힌다. 안 채운 것과
+    // 잘못 채운 것을 나눠 말한다.
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _error = K.emailNeeded.tr());
+      return;
+    }
     if (!EmailLoginScreen.looksLikeEmail(email)) {
       setState(() => _error = K.emailInvalid.tr());
       return;

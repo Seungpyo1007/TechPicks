@@ -361,9 +361,16 @@ class RankSnapshotNotifier extends Notifier<List<String>> {
 
   @override
   List<String> build() {
-    unawaited(_restore());
+    // 리스너가 잠깐 없어도 살려 둔다. TabHost 가 initState 에서 read 로
+    // 먼저 만드는데, 그때 버려졌다가 다시 만들어지면 복원이 저장 뒤로
+    // 밀려 이번 실행의 변동이 항상 0 이 된다.
+    ref.keepAlive();
+    _restored = _restore();
     return const <String>[];
   }
+
+  /// 복원이 끝났는지. 저장은 이걸 기다린다.
+  late Future<void> _restored;
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
@@ -378,6 +385,8 @@ class RankSnapshotNotifier extends Notifier<List<String>> {
   /// state 는 건드리지 않는다. 이번 실행의 Movers 는 복원해둔 지난 순위와
   /// 비교해야 하는데, 여기서 state 까지 덮으면 변동이 항상 0 이 된다.
   Future<void> save(List<String> slugs) async {
+    // 복원보다 먼저 쓰면 지난 순위를 지우고 그걸 읽는다.
+    await _restored;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_prefsKey, slugs);
   }
