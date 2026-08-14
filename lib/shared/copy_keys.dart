@@ -157,6 +157,9 @@ abstract final class K {
   static const String scanTitle = 'scanTitle';
   static const String scanHintIdle = 'scanHintIdle';
   static const String scanHintDone = 'scanHintDone';
+  static const String scanFieldLabel = 'scanFieldLabel';
+  static const String scanFieldHint = 'scanFieldHint';
+  static const String scanNoMatch = 'scanNoMatch';
   static const String detected = 'detected';
   static const String openDevice = 'open';
   static const String viewerNote = 'viewerNote';

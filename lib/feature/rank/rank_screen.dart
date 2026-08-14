@@ -364,13 +364,17 @@ class _ScanFab extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(Icons.qr_code_scanner, color: Colors.white, size: 20),
+              const Icon(Icons.search, color: Colors.white, size: 20),
               const SizedBox(width: 10),
-              Text(
-                K.scanShort.tr(),
-                style: type.body.copyWith(
-                  color: Colors.white,
-                  fontWeight: t.boldWeight,
+              Flexible(
+                child: Text(
+                  K.scanShort.tr(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: type.body.copyWith(
+                    color: Colors.white,
+                    fontWeight: t.boldWeight,
+                  ),
                 ),
               ),
             ],
@@ -405,11 +409,16 @@ class _ScanInlineButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Icon(Icons.qr_code_scanner, size: 18),
+              const Icon(Icons.search, size: 18),
               const SizedBox(width: 8),
-              Text(
-                K.scanCta.tr(),
-                style: type.body.copyWith(fontWeight: t.boldWeight),
+              // 라벨이 길어지거나 글자 크기 설정이 크면 Row 가 넘친다.
+              Flexible(
+                child: Text(
+                  K.scanCta.tr(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: type.body.copyWith(fontWeight: t.boldWeight),
+                ),
               ),
             ],
           ),

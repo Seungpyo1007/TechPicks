@@ -68,6 +68,11 @@ flutter_icons:
   android: true
   ios: true
   image_path: "assets/logo/logo2.png"
+  # iOS 는 모서리를 시스템이 깎는다. 그래서 네모난 원본을 따로 둔다 —
+  # assets/logo/logo.png 의 둥근 모서리를 그라디언트로 메운 것이다.
+  # App Store Connect 는 알파 채널이 있는 아이콘을 반려한다.
+  image_path_ios: "tool/icons/ios_1024.png"
+  remove_alpha_ios: true
 
 flutter_native_splash:
   color: "#ffffff" # 배경색
