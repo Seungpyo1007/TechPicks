@@ -85,6 +85,19 @@ void main() {
     });
   });
 
+  // 빈 칸에 "형식이 아닙니다"는 고장 난 것처럼 읽힌다.
+  testWidgets('빈 칸은 채우라고 말한다', (tester) async {
+    final auth = _StubAuth();
+    await _pump(tester, auth);
+
+    await tester.tap(find.text(K.signIn.tr()));
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.emailNeeded.tr()), findsOneWidget);
+    expect(find.text(K.emailInvalid.tr()), findsNothing);
+    expect(auth.calls, isEmpty);
+  });
+
   testWidgets('잘못된 이메일은 서버까지 가지 않는다', (tester) async {
     final auth = _StubAuth();
     await _pump(tester, auth);

@@ -152,6 +152,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
 /// 52px 높이, 라벨 왼쪽 정렬, 제공자 마크가 왼쪽에.
 class _AuthButton extends StatelessWidget {
+  static const double _markWidth = 20;
+  static const double _markGap = 14;
+
   const _AuthButton({
     required this.label,
     required this.filled,
@@ -196,7 +199,11 @@ class _AuthButton extends StatelessWidget {
               if (asset != null) ...<Widget>[
                 Image.asset(asset!, width: 20, height: 20),
                 const SizedBox(width: 14),
-              ],
+              ]
+              // 마크가 없는 버튼도 라벨은 같은 선에서 시작한다. 이메일 줄만
+              // 왼쪽으로 튀어나와 넉 장의 왼쪽 끝이 들쭉날쭉했다.
+              else if (!plain)
+                const SizedBox(width: _markWidth + _markGap),
               // 라벨이 남은 폭을 넘으면 Row 가 넘친다. 명세가 버튼 높이를 52 로
               // 고정해서 두 줄로 늘릴 수 없다.
               Flexible(

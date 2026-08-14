@@ -175,6 +175,21 @@ void main() {
       expect(find.textContaining('Facebook'), findsNothing);
     });
 
+    // 명세는 "left-aligned labels with the provider mark at the left" 다.
+    // 마크가 없는 이메일 줄만 왼쪽으로 튀어나와 있었다.
+    testWidgets('라벨 왼쪽 끝이 한 선에 선다', (tester) async {
+      await _pump(tester, const LoginScreen(), auth: _StubAuth());
+
+      final lefts = <double>[
+        for (final b in LoginScreen.buttons)
+          if (b.method != AuthMethod.anonymous)
+            tester.getTopLeft(find.text(b.key.tr())).dx,
+      ];
+
+      expect(lefts.length, greaterThan(1));
+      expect(lefts.toSet(), hasLength(1));
+    });
+
     testWidgets('취소는 실패가 아니다', (tester) async {
       // 스스로 시트를 닫은 사람에게 "연결되지 않았습니다"를 보여주면
       // 앱이 고장 난 것처럼 읽힌다.
