@@ -84,6 +84,13 @@ class TpShell extends StatelessWidget {
   static const double _iosContentTop = 60;
 
   static const double _androidTabHeight = 78;
+
+  /// FAB 가 가리는 만큼 콘텐츠 아래를 더 비운다.
+  ///
+  /// 명세 Chrome geometry 의 Android content padding-bottom 이 그렇게 적혀
+  /// 있다 — 90(보통) / 164(FAB 있음). 이걸 안 빼면 목록 끝의 문구가 FAB
+  /// 뒤에 영영 숨는다.
+  static const double _androidFabInset = 74;
   static const double _androidAppBar = 64;
   static const double _androidLargeTitle = 88;
 
@@ -264,7 +271,8 @@ class TpShell extends StatelessWidget {
         : (tab != null
                   ? _androidTabHeight + safe.bottom + 12
                   : safe.bottom + 24) +
-              extraBottomInset;
+              extraBottomInset +
+              (floatingAction != null ? _androidFabInset : 0);
 
     return Stack(
       children: <Widget>[
