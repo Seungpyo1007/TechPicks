@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
-import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../copy_keys.dart';
+import 'tp_button.dart';
 
 /// 못 읽었다고 말하고, 다시 시도할 자리를 준다.
 ///
@@ -25,7 +25,6 @@ class TpErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tp;
     final type = context.tpText;
 
     return Center(
@@ -39,32 +38,11 @@ class TpErrorState extends StatelessWidget {
             Text(body, style: type.caption, textAlign: TextAlign.center),
             if (onRetry != null) ...<Widget>[
               const SizedBox(height: 16),
-              Semantics(
-                button: true,
-                child: GestureDetector(
-                  // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다.
-                  behavior: HitTestBehavior.opaque,
-                  onTap: onRetry,
-                  child: Container(
-                    height: 46,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: TpTokens.blue,
-                      borderRadius: BorderRadius.circular(
-                        t.isGlass ? TpTokens.rControl : t.rInner,
-                      ),
-                      boxShadow: t.buttonShadow,
-                    ),
-                    child: Text(
-                      K.retry.tr(),
-                      style: type.body.copyWith(
-                        color: Colors.white,
-                        fontWeight: t.boldWeight,
-                      ),
-                    ),
-                  ),
-                ),
+              TpButton(
+                label: K.retry.tr(),
+                height: 46,
+                expand: false,
+                onTap: onRetry,
               ),
             ],
           ],

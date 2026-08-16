@@ -9,6 +9,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../data/service/auth_service.dart';
+import '../../shared/widgets/tp_button.dart';
 
 /// 로그인.
 ///
@@ -109,12 +110,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 28),
 
           for (final b in LoginScreen.buttons) ...<Widget>[
-            _AuthButton(
+            TpButton(
               label: b.key.tr(),
-              asset: b.asset,
               // 이메일만 파란 채움. 익명은 텍스트 버튼.
-              filled: b.method == AuthMethod.email,
-              plain: b.method == AuthMethod.anonymous,
+              kind: switch (b.method) {
+                AuthMethod.email => TpButtonKind.primary,
+                AuthMethod.anonymous => TpButtonKind.plain,
+                _ => TpButtonKind.secondary,
+              },
+              alignStart: b.method != AuthMethod.anonymous,
+              // 마크가 없는 버튼도 라벨은 같은 선에서 시작한다. 이메일 줄만
+              // 왼쪽으로 튀어나와 넉 장의 왼쪽 끝이 들쭉날쭉했다.
+              icon: b.method == AuthMethod.anonymous
+                  ? null
+                  : b.asset == null
+                  ? const SizedBox(width: 20)
+                  : Image.asset(b.asset!, width: 20, height: 20),
               onTap: () => _tap(b.method),
             ),
             const SizedBox(height: 12),
@@ -145,87 +156,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// 52px 높이, 라벨 왼쪽 정렬, 제공자 마크가 왼쪽에.
-class _AuthButton extends StatelessWidget {
-  static const double _markWidth = 20;
-  static const double _markGap = 14;
-
-  const _AuthButton({
-    required this.label,
-    required this.filled,
-    required this.plain,
-    this.asset,
-    this.onTap,
-  });
-
-  final String label;
-  final String? asset;
-  final bool filled;
-  final bool plain;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    final type = context.tpText;
-    final radius = BorderRadius.circular(
-      t.isGlass ? TpTokens.rControl : t.rCard,
-    );
-
-    return Semantics(
-      button: true,
-      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-      // 버튼이 글자 글리프 위에서만 눌린다.
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          decoration: BoxDecoration(
-            color: plain
-                ? Colors.transparent
-                : (filled ? TpTokens.blue : t.chipBg),
-            borderRadius: radius,
-            boxShadow: filled ? t.buttonShadow : null,
-          ),
-          child: Row(
-            mainAxisAlignment: plain
-                ? MainAxisAlignment.center
-                : MainAxisAlignment.start,
-            children: <Widget>[
-              if (asset != null) ...<Widget>[
-                Image.asset(asset!, width: 20, height: 20),
-                const SizedBox(width: 14),
-              ]
-              // 마크가 없는 버튼도 라벨은 같은 선에서 시작한다. 이메일 줄만
-              // 왼쪽으로 튀어나와 넉 장의 왼쪽 끝이 들쭉날쭉했다.
-              else if (!plain)
-                const SizedBox(width: _markWidth + _markGap),
-              // 라벨이 남은 폭을 넘으면 Row 가 넘친다. 명세가 버튼 높이를 52 로
-              // 고정해서 두 줄로 늘릴 수 없다.
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: plain ? TextAlign.center : TextAlign.start,
-                  style: type.body.copyWith(
-                    fontWeight: t.boldWeight,
-                    color: filled
-                        ? Colors.white
-                        : (plain ? TpTokens.blueText : TpTokens.ink),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

@@ -12,6 +12,7 @@ import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../domain/model/scan_match.dart';
 import '../../domain/model/tp_index.dart';
+import '../../shared/widgets/tp_button.dart';
 
 /// 이름으로 기기 찾기.
 ///
@@ -197,34 +198,7 @@ class _ResultCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(K.scanHintDone.tr(), style: type.caption),
               const SizedBox(height: 12),
-              Semantics(
-                button: true,
-                // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-                // 버튼이 글자 글리프 위에서만 눌린다.
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: onOpen,
-                  child: Container(
-                    height: 46,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: TpTokens.blue,
-                      borderRadius: BorderRadius.circular(
-                        context.tp.isGlass
-                            ? TpTokens.rControl
-                            : context.tp.rInner,
-                      ),
-                    ),
-                    child: Text(
-                      K.openDevice.tr(),
-                      style: type.body.copyWith(
-                        color: Colors.white,
-                        fontWeight: context.tp.boldWeight,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              TpButton(label: K.openDevice.tr(), height: 46, onTap: onOpen),
             ],
           ),
         ),

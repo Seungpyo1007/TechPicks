@@ -24,6 +24,7 @@ import '../../shared/widgets/tp_faded_line.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../shared/widgets/tp_error_state.dart';
+import '../../shared/widgets/tp_button.dart';
 
 /// 홈.
 ///
@@ -228,17 +229,18 @@ class _VerdictCard extends ConsumerWidget {
           Row(
             children: <Widget>[
               Expanded(
-                child: _CardButton(
+                child: TpButton(
                   label: K.compareAll.tr(),
-                  filled: true,
+                  height: 46,
                   onTap: onCompareAll,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: _CardButton(
+                child: TpButton(
                   label: K.askWhy.tr(),
-                  filled: false,
+                  kind: TpButtonKind.secondary,
+                  height: 46,
                   onTap: onAskWhy,
                 ),
               ),
@@ -303,11 +305,7 @@ class _EmptyShortlist extends StatelessWidget {
           const SizedBox(height: 6),
           Text(K.emptyShortlistBody.tr(), style: type.secondary),
           const SizedBox(height: 14),
-          _CardButton(
-            label: K.emptyShortlistCta.tr(),
-            filled: true,
-            onTap: onAdd,
-          ),
+          TpButton(label: K.emptyShortlistCta.tr(), height: 46, onTap: onAdd),
         ],
       ),
     );
@@ -458,54 +456,6 @@ class _MoverRow extends StatelessWidget {
   }
 }
 
-class _CardButton extends StatelessWidget {
-  const _CardButton({required this.label, required this.filled, this.onTap});
-
-  final String label;
-  final bool filled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    final type = context.tpText;
-
-    return Semantics(
-      button: true,
-      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-      // 버튼이 글자 글리프 위에서만 눌린다.
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          height: 46,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: filled ? TpTokens.blue : t.chipBg,
-            borderRadius: BorderRadius.circular(
-              t.isGlass ? TpTokens.rControl : t.rInner,
-            ),
-            boxShadow: filled ? t.buttonShadow : null,
-          ),
-          child: Text(
-            label,
-            maxLines: 1,
-            softWrap: false,
-            style: type.body.copyWith(
-              fontWeight: t.boldWeight,
-              color: filled ? Colors.white : TpTokens.ink,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 목록에 들어오고 나가는 한 칸.
-///
-/// 처음 붙을 때는 그냥 나타난다 — 화면을 열 때 전부 한꺼번에 커지면 산만하다.
-/// 사라질 때만 높이가 줄어들며 접힌다.
 class _ListSlot extends StatelessWidget {
   const _ListSlot({super.key, required this.child});
 

@@ -16,6 +16,7 @@ import '../../shared/widgets/tp_chip.dart';
 import 'category_chips.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_error_state.dart';
+import '../../shared/widgets/tp_button.dart';
 
 /// 랭킹. v1 의 `RankingCPU/Phone/Laptop.dart` 웹뷰 세 개를 대체한다.
 ///
@@ -344,52 +345,20 @@ String formatAxisValue(RankAxis axis, double? value) {
 }
 
 /// Android 확장 FAB.
+/// Android 확장 FAB. 랭킹에서 기기 찾기로 간다.
 class _ScanFab extends StatelessWidget {
   const _ScanFab({required this.onTap});
 
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    final type = context.tpText;
-    return Semantics(
-      button: true,
-      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-      // 버튼이 글자 글리프 위에서만 눌린다.
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          height: 56,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(
-            color: TpTokens.blue,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: TpTokens.fabShadow,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(Icons.search, color: Colors.white, size: 20),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  K.scanShort.tr(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: type.body.copyWith(
-                    color: Colors.white,
-                    fontWeight: t.boldWeight,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => TpButton(
+    label: K.scanShort.tr(),
+    height: 56,
+    expand: false,
+    icon: const Icon(Icons.search, color: Colors.white, size: 20),
+    onTap: onTap,
+  );
 }
 
 /// iOS 는 FAB 가 없다. 콘텐츠 안에 버튼으로 둔다.
@@ -399,41 +368,10 @@ class _ScanInlineButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    final type = context.tpText;
-    return Semantics(
-      button: true,
-      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-      // 버튼이 글자 글리프 위에서만 눌린다.
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          height: 52,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: t.chipBg,
-            borderRadius: BorderRadius.circular(TpTokens.rControl),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              const Icon(Icons.search, size: 18),
-              const SizedBox(width: 8),
-              // 라벨이 길어지거나 글자 크기 설정이 크면 Row 가 넘친다.
-              Flexible(
-                child: Text(
-                  K.scanCta.tr(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: type.body.copyWith(fontWeight: t.boldWeight),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => TpButton(
+    label: K.scanCta.tr(),
+    kind: TpButtonKind.secondary,
+    icon: const Icon(Icons.search, size: 18),
+    onTap: onTap,
+  );
 }

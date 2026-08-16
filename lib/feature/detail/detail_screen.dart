@@ -23,6 +23,7 @@ import '../../shared/widgets/tp_score_strip.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../shared/widgets/tp_error_state.dart';
+import '../../shared/widgets/tp_button.dart';
 
 /// 기기 상세.
 ///
@@ -197,21 +198,22 @@ class _DetailBody extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
 
-        _PrimaryButton(
+        TpButton(
           label: (shortlisted ? K.inShortlist : K.addShortlist).tr(),
-          filled: !shortlisted,
+          // 담기면 채움이 풀린다. 이미 담긴 것을 또 권하지 않는다.
+          kind: shortlisted ? TpButtonKind.secondary : TpButtonKind.primary,
           onTap: () => ref.read(shortlistProvider.notifier).toggle(device.slug),
         ),
         const SizedBox(height: 10),
-        _PrimaryButton(
+        TpButton(
           label: K.compareButton.tr(),
-          filled: false,
+          kind: TpButtonKind.secondary,
           onTap: onCompare == null ? null : () => onCompare!(device.slug),
         ),
         const SizedBox(height: 10),
-        _PrimaryButton(
+        TpButton(
           label: K.view3d.tr(),
-          filled: false,
+          kind: TpButtonKind.secondary,
           onTap: onView3D == null ? null : () => onView3D!(device.slug),
         ),
 
@@ -294,54 +296,6 @@ class _SpecRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PrimaryButton extends StatelessWidget {
-  const _PrimaryButton({required this.label, required this.filled, this.onTap});
-
-  final String label;
-  final bool filled;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    final type = context.tpText;
-    final radius = BorderRadius.circular(
-      t.isGlass ? TpTokens.rControl : t.rCard,
-    );
-    final move = context.motion.selection;
-
-    return Semantics(
-      button: true,
-      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-      // 버튼이 글자 글리프 위에서만 눌린다.
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        // 담기를 누르면 채움색·라벨·그림자가 한꺼번에 즉시 바뀌어서 저장됐다는
-        // 느낌이 없었다.
-        child: AnimatedContainer(
-          duration: move.duration,
-          curve: move.curve,
-          height: 52,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: filled ? TpTokens.blue : t.chipBg,
-            borderRadius: radius,
-            boxShadow: filled ? t.buttonShadow : null,
-          ),
-          child: Text(
-            label,
-            style: type.body.copyWith(
-              fontWeight: t.boldWeight,
-              color: filled ? Colors.white : TpTokens.ink,
-            ),
-          ),
-        ),
       ),
     );
   }

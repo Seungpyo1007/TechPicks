@@ -9,6 +9,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/widgets/tp_button.dart';
 
 /// 온보딩 세 장.
 ///
@@ -125,32 +126,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 18, 24, 10),
-            child: Semantics(
-              button: true,
-              // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-              // 버튼이 글자 글리프 위에서만 눌린다.
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: _next,
-                child: Container(
-                  height: 52,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: TpTokens.blue,
-                    borderRadius: BorderRadius.circular(
-                      t.isGlass ? TpTokens.rControl : t.rCard,
-                    ),
-                    boxShadow: t.buttonShadow,
-                  ),
-                  child: Text(
-                    (last ? K.start : K.next).tr(),
-                    style: type.body.copyWith(
-                      color: Colors.white,
-                      fontWeight: t.boldWeight,
-                    ),
-                  ),
-                ),
-              ),
+            child: TpButton(
+              label: (last ? K.start : K.next).tr(),
+              onTap: _next,
             ),
           ),
         ],
