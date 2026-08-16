@@ -151,7 +151,7 @@
   "verdictReason": "Leads your shortlist, carried by {}.",
   "version": "version",
   "view3d": "View in 3D",
-  "viewerNote": "Drag to orbit, pinch to zoom. Models stream on demand and cache for offline viewing.",
+  "viewerNote": "Tap a part to highlight where it sits. Real 3D models are not in yet.",
   "viewerTitle": "3D viewer",
   "welcome": "Welcome to\nTechPicks",
   "welcomeSub": "Sign in to keep your shortlist across devices, or skip and start comparing now.",

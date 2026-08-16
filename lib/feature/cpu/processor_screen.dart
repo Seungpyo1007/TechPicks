@@ -88,7 +88,7 @@ class _Segmented extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tp;
     return Container(
-      height: 38,
+      height: 46,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: t.chipBg,

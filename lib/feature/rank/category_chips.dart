@@ -15,7 +15,7 @@ class CategoryChips extends ConsumerWidget {
     final current = ref.watch(rankCategoryProvider);
 
     return SizedBox(
-      height: 38,
+      height: 46,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: RankCategory.values.length,
