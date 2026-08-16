@@ -160,6 +160,9 @@ Connect 가 반려한다.
 | Analytics 가 bool 을 보내 어서션이 터졌다 | 실행 로그에 Crashlytics 리포트가 찍혔다 |
 | 보내기 버튼이 입력창과 같은 이름 | 코드에서 `K.send` 가 아무 데서도 안 쓰였다 |
 | 브랜드 표기가 섞여 있었다 | 랭킹에 `Vivo X300 Pro` 와 `vivo X200 Pro` 가 나란히 |
+| 같은 기기를 두 열에 놓을 수 있었다 | 픽커에서 반대쪽 기기를 고르면 모든 줄이 동점 |
+| 비교 첫 두 대가 지수 순이 아니었다 | 애셋 순서(원점수)로 채우고 있었다 |
+| 다크 모드에서 키보드만 어두웠다 | `UIUserInterfaceStyle` 이 없었다 |
 
 이름 표기는 `tool/build_catalog.dart` 의 `canonicalName` 이 정한다. 이미 구운
 애셋만 다시 맞추려면:
