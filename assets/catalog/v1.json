@@ -2753,7 +2753,7 @@
     {
       "slug": "oppo-find-x8-pro",
       "base_model_slug": null,
-      "name": "OPPO Find X8 Pro",
+      "name": "Oppo Find X8 Pro",
       "brand": {
         "id": 37,
         "slug": "oppo",
@@ -2862,7 +2862,7 @@
     {
       "slug": "vivo-x200-pro",
       "base_model_slug": null,
-      "name": "vivo X200 Pro",
+      "name": "Vivo X200 Pro",
       "brand": {
         "id": 52,
         "slug": "vivo",
@@ -2972,7 +2972,7 @@
     {
       "slug": "honor-magic-7-pro",
       "base_model_slug": null,
-      "name": "HONOR Magic7 Pro",
+      "name": "Honor Magic7 Pro",
       "brand": {
         "id": 24,
         "slug": "honor",
@@ -3081,7 +3081,7 @@
     {
       "slug": "realme-gt-7-pro",
       "base_model_slug": null,
-      "name": "realme GT 7 Pro",
+      "name": "Realme GT 7 Pro",
       "brand": {
         "id": 39,
         "slug": "realme",
@@ -3515,7 +3515,7 @@
     {
       "slug": "vivo-x200",
       "base_model_slug": null,
-      "name": "vivo X200",
+      "name": "Vivo X200",
       "brand": {
         "id": 52,
         "slug": "vivo",
@@ -3732,7 +3732,7 @@
     {
       "slug": "oppo-find-x7-ultra",
       "base_model_slug": null,
-      "name": "OPPO Find X7 Ultra",
+      "name": "Oppo Find X7 Ultra",
       "brand": {
         "id": 37,
         "slug": "oppo",
@@ -3951,7 +3951,7 @@
     {
       "slug": "vivo-x100-pro",
       "base_model_slug": null,
-      "name": "vivo X100 Pro",
+      "name": "Vivo X100 Pro",
       "brand": {
         "id": 52,
         "slug": "vivo",
@@ -4278,7 +4278,7 @@
     {
       "slug": "realme-gt-5-pro",
       "base_model_slug": null,
-      "name": "realme GT 5 Pro",
+      "name": "Realme GT 5 Pro",
       "brand": {
         "id": 39,
         "slug": "realme",
@@ -4387,7 +4387,7 @@
     {
       "slug": "vivo-x100",
       "base_model_slug": null,
-      "name": "vivo X100",
+      "name": "Vivo X100",
       "brand": {
         "id": 52,
         "slug": "vivo",
@@ -4495,7 +4495,7 @@
     {
       "slug": "honor-magic-6-pro",
       "base_model_slug": null,
-      "name": "HONOR Magic6 Pro",
+      "name": "Honor Magic6 Pro",
       "brand": {
         "id": 24,
         "slug": "honor",
@@ -5869,7 +5869,7 @@
     {
       "slug": "realme-gt-6",
       "base_model_slug": null,
-      "name": "realme GT 6",
+      "name": "Realme GT 6",
       "brand": {
         "id": 39,
         "slug": "realme",
@@ -6404,7 +6404,7 @@
     {
       "slug": "honor-200-pro",
       "base_model_slug": null,
-      "name": "HONOR 200 Pro",
+      "name": "Honor 200 Pro",
       "brand": {
         "id": 24,
         "slug": "honor",
@@ -7550,7 +7550,7 @@
     {
       "slug": "oppo-find-n3",
       "base_model_slug": null,
-      "name": "OPPO Find N3",
+      "name": "Oppo Find N3",
       "brand": {
         "id": 37,
         "slug": "oppo",
@@ -8732,7 +8732,7 @@
     {
       "slug": "vivo-v30-pro",
       "base_model_slug": null,
-      "name": "vivo V30 Pro",
+      "name": "Vivo V30 Pro",
       "brand": {
         "id": 52,
         "slug": "vivo",
@@ -10332,7 +10332,7 @@
     {
       "slug": "honor-x9b",
       "base_model_slug": null,
-      "name": "HONOR X9b",
+      "name": "Honor X9b",
       "brand": {
         "id": 24,
         "slug": "honor",
@@ -11173,7 +11173,7 @@
     {
       "slug": "oppo-reno-11-pro",
       "base_model_slug": null,
-      "name": "OPPO Reno 11 Pro",
+      "name": "Oppo Reno 11 Pro",
       "brand": {
         "id": 37,
         "slug": "oppo",
@@ -12120,7 +12120,7 @@
     {
       "slug": "realme-12-pro-plus",
       "base_model_slug": null,
-      "name": "realme 12 Pro+",
+      "name": "Realme 12 Pro+",
       "brand": {
         "id": 39,
         "slug": "realme",
@@ -13420,7 +13420,7 @@
     {
       "slug": "vivo-v29",
       "base_model_slug": null,
-      "name": "vivo V29",
+      "name": "Vivo V29",
       "brand": {
         "id": 52,
         "slug": "vivo",

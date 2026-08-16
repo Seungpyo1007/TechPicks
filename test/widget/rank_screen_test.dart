@@ -98,6 +98,19 @@ void main() {
     final laptops = chips.firstWhere((c) => c.label == 'Laptops');
     expect(laptops.onTap, isNull);
 
+    // 못 누르는 칩은 그렇게 보여야 한다. 켜진 칩과 같은 색이면 눌러 보고서야
+    // 안 된다는 걸 안다.
+    final off = tester.widget<Text>(
+      find.descendant(of: find.byWidget(laptops), matching: find.byType(Text)),
+    );
+    final on = tester.widget<Text>(
+      find.descendant(
+        of: find.byWidget(chips.firstWhere((c) => c.label == 'Processors')),
+        matching: find.byType(Text),
+      ),
+    );
+    expect(off.style!.color, isNot(on.style!.color));
+
     final label = tester.widget<Text>(
       find.descendant(
         of: find.widgetWithText(TpChip, 'Laptops'),

@@ -149,6 +149,29 @@ xcrun simctl spawn <udid> defaults write "$C/Library/Preferences/com.techpicks.a
 둥근 모서리를 그라디언트로 메운 네모난 원본이다. 알파가 있으면 App Store
 Connect 가 반려한다.
 
+## 두 번째로 훑어 찾은 것 (2026-08-16)
+
+로그를 켜 놓고 화면을 돌면서 잡았다. 화면만 봐서는 안 보이던 것들이다.
+
+| 무엇 | 어떻게 드러났나 |
+|---|---|
+| 상담이 모델을 한 번도 안 불렀다 | `askServiceProvider` 가 로컬 구현만 물고 있었다 |
+| "100만원 이하"를 100달러로 읽었다 | 칩을 눌렀더니 $99 짜리 Galaxy A05 를 추천했다 |
+| Analytics 가 bool 을 보내 어서션이 터졌다 | 실행 로그에 Crashlytics 리포트가 찍혔다 |
+| 보내기 버튼이 입력창과 같은 이름 | 코드에서 `K.send` 가 아무 데서도 안 쓰였다 |
+| 브랜드 표기가 섞여 있었다 | 랭킹에 `Vivo X300 Pro` 와 `vivo X200 Pro` 가 나란히 |
+
+이름 표기는 `tool/build_catalog.dart` 의 `canonicalName` 이 정한다. 이미 구운
+애셋만 다시 맞추려면:
+
+```bash
+dart run tool/normalize_names.dart
+```
+
+**상담은 App Check 를 켜야 모델을 쓴다.** 지금은 Gemini 가 거절당하고
+(`Firebase AI Logic has been deactivated`) 로컬 답이 대신 나간다. 화면은 같고
+답의 출처만 다르다 — ROADMAP §P1 에 로그 원문을 적었다.
+
 ## 다음에 할 만한 것
 
 `ROADMAP.md` §2 가 작업 큐다. **P1·P3 의 코드는 다 끝났다.** 코드로 혼자 진전시킬 수
