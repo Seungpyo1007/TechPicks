@@ -84,6 +84,7 @@ abstract final class K {
   // 상담
   static const String chatSeed = 'chatSeed';
   static const String askHint = 'askHint';
+  static const String askThinking = 'askThinking';
   static const String send = 'send';
   static const String askFailed = 'askFailed';
   static const String askLocalTop = 'askLocalTop';

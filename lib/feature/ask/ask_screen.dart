@@ -64,6 +64,10 @@ class _AskScreenState extends ConsumerState<AskScreen> {
   @override
   Widget build(BuildContext context) {
     final messages = ref.watch(askProvider);
+    final busy = ref.watch(askBusyProvider);
+    // 앱에 Scaffold 가 없어 아무도 키보드를 안 피한다. 입력 바가 화면 바닥에
+    // 붙어 있어서, 누르면 키보드가 입력 바와 제안 칩을 통째로 덮었다.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
 
     return TpShell(
       title: K.tabAsk.tr(),
@@ -76,21 +80,33 @@ class _AskScreenState extends ConsumerState<AskScreen> {
             // 입력 바는 이 영역 바닥에 붙는다. 그만큼 아래를 비워둬야 마지막
             // 말풍선이 그 뒤로 숨지 않는다. 셸에 여백을 더하면 입력 바가
             // 탭 바에서 그만큼 떠서 빈 공간이 생긴다.
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8 + _Composer.height),
-            itemCount: messages.length,
-            itemBuilder: (context, i) => _Bubble(
-              message: messages[i],
-              // 답이 도착한 걸 스크린 리더가 알려줘야 한다. 화면은 스크롤로
-              // 알리지만 그건 눈으로 보는 사람에게만 통한다.
-              announce: i == messages.length - 1 && !messages[i].isUser,
-              onDeviceTap: widget.onDeviceTap,
+            padding: EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              8 + _Composer.height + keyboard,
             ),
+            // 기다리는 동안 말풍선 하나를 더 놓는다. 아무 표시가 없으면
+            // 답이 오는 중인지 실패한 건지 알 수 없다.
+            itemCount: messages.length + (busy ? 1 : 0),
+            itemBuilder: (context, i) => i == messages.length
+                ? _Bubble(message: AskMessage.ai(K.askThinking.tr()))
+                : _Bubble(
+                    message: messages[i],
+                    // 답이 도착한 걸 스크린 리더가 알려줘야 한다. 화면은
+                    // 스크롤로 알리지만 그건 눈으로 보는 사람에게만 통한다.
+                    announce:
+                        !busy &&
+                        i == messages.length - 1 &&
+                        !messages[i].isUser,
+                    onDeviceTap: widget.onDeviceTap,
+                  ),
           ),
           Positioned(
             left: 0,
             right: 0,
-            bottom: 0,
-            child: _Composer(controller: _input, onSend: _send),
+            bottom: keyboard,
+            child: _Composer(controller: _input, onSend: _send, busy: busy),
           ),
         ],
       ),
@@ -213,13 +229,20 @@ class _AnswerRow extends StatelessWidget {
 }
 
 class _Composer extends StatelessWidget {
-  const _Composer({required this.controller, required this.onSend});
+  const _Composer({
+    required this.controller,
+    required this.onSend,
+    this.busy = false,
+  });
 
   /// 제안 칩 38 + 사이 10 + 입력 48 + 위아래 여백.
   static const double height = 110;
 
   final TextEditingController controller;
   final ValueChanged<String> onSend;
+
+  /// 답을 기다리는 중. 보내기를 잠근다 — 눌러도 버려질 뿐이었다.
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -288,7 +311,7 @@ class _Composer extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               TpTapTarget(
-                onTap: () => onSend(controller.text),
+                onTap: busy ? null : () => onSend(controller.text),
                 // 입력창과 같은 이름을 주면 스크린 리더가 버튼도
                 // "무엇이든 물어보세요"라고 읽는다.
                 label: K.send.tr(),
@@ -296,13 +319,14 @@ class _Composer extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: TpTokens.blue,
+                    // 잠긴 동안은 잠긴 것처럼 보여야 한다.
+                    color: busy ? t.chipBg : TpTokens.blue,
                     shape: BoxShape.circle,
-                    boxShadow: t.buttonShadow,
+                    boxShadow: busy ? null : t.buttonShadow,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_upward,
-                    color: Colors.white,
+                    color: busy ? t.dim : Colors.white,
                     size: 20,
                   ),
                 ),

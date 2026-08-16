@@ -36,8 +36,10 @@ void main() {
   test('shared axis 는 flutter.dev 의 공식 구현을 쓴다', () {
     // 직접 그렸다가 바꿨다. 곡선과 지속 시간은 패키지가 M3 정의대로 들고 있다.
     expect(
-      builderFor(TpChrome.android, TargetPlatform.android).runtimeType
-          .toString(),
+      builderFor(
+        TpChrome.android,
+        TargetPlatform.android,
+      ).runtimeType.toString(),
       contains('SharedAxis'),
     );
   });

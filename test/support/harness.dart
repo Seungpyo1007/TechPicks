@@ -163,7 +163,10 @@ Future<void> _pump(
         // 골든에 빨간 DEBUG 리본이 같이 구워진다.
         debugShowCheckedModeBanner: false,
         locale: locale,
-        supportedLocales: const <Locale>[Locale('en', 'US'), Locale('ko', 'KR')],
+        supportedLocales: const <Locale>[
+          Locale('en', 'US'),
+          Locale('ko', 'KR'),
+        ],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: AppTheme.of(chrome),
         builder: (context, child) => MediaQuery(
