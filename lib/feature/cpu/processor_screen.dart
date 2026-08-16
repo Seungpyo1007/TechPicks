@@ -14,6 +14,7 @@ import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../rank/category_chips.dart';
+import '../../shared/widgets/tp_error_state.dart';
 
 /// 프로세서 랭킹. 명세 §5 `cpu`.
 ///
@@ -50,8 +51,10 @@ class ProcessorScreen extends ConsumerWidget {
             duration: motion.contentSwap.duration,
             switchInCurve: motion.contentSwap.curve,
             switchOutCurve: motion.contentSwap.curve,
-            child: catalog is AsyncLoading
+            child: catalog is AsyncLoading && !catalog.hasError
                 ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
+                : catalog.hasError
+                ? const TpCatalogError(key: ValueKey<String>('error'))
                 : ranked.isEmpty
                 ? TpSurface(
                     key: const ValueKey<String>('empty'),

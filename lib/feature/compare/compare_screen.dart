@@ -13,6 +13,7 @@ import '../../domain/model/device_specs.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/widgets/tp_error_state.dart';
 
 /// 비교. 두 기기를 한 표에 놓고 줄마다 이긴 쪽을 칠한다.
 ///
@@ -76,7 +77,11 @@ class CompareScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 14),
-          if (pairs.isEmpty)
+          // 못 읽은 것과 안 고른 것은 다른 일이다. 카탈로그가 없으면 고를
+          // 수도 없으니 "두 대를 고르세요"는 막다른 안내가 된다.
+          if (ref.watch(catalogProvider).hasError)
+            const TpCatalogError()
+          else if (pairs.isEmpty)
             TpSurface(
               padding: const EdgeInsets.all(20),
               child: Text(K.chooseTwo.tr(), style: type.body),

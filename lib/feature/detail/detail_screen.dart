@@ -22,6 +22,7 @@ import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_score_strip.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/widgets/tp_error_state.dart';
 
 /// 기기 상세.
 ///
@@ -63,8 +64,11 @@ class DetailScreen extends ConsumerWidget {
         child: device.when(
           loading: () =>
               const _DetailSkeleton(key: ValueKey<String>('skeleton')),
-          error: (e, _) =>
-              _DetailError(key: const ValueKey<String>('error'), error: e),
+          error: (e, _) => _DetailError(
+            key: const ValueKey<String>('error'),
+            error: e,
+            slug: slug,
+          ),
           data: (d) => _DetailBody(
             key: ValueKey<String>(d.slug),
             device: d,
@@ -492,38 +496,25 @@ class _LinkLine extends ConsumerWidget {
 /// 흔하다. 그 경우를 "불러오지 못했습니다"로 뭉뚱그리면 사용자는 앱이 고장
 /// 난 줄 안다.
 class _DetailError extends ConsumerWidget {
-  const _DetailError({super.key, required this.error});
+  const _DetailError({super.key, required this.error, required this.slug});
 
   final Object error;
 
+  /// 다시 받을 대상.
+  final String slug;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final type = context.tpText;
-
     // 연결 상태를 못 읽으면 지금까지대로 일반 실패다.
     final offline = ref.watch(offlineProvider).value ?? false;
     final unreachable = offline && error is NetworkFailure;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              unreachable ? K.offlineTitle.tr() : K.loadFailed.tr(),
-              style: type.cardTitle,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              unreachable ? K.offlineBody.tr() : '$error',
-              style: type.caption,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    // 예외를 그대로 찍으면 "NotFoundFailure: smartphones/... 레코드를 찾을
+    // 수 없다" 가 화면에 뜬다 — 영어 사용자에게도 한국어로.
+    return TpErrorState(
+      title: unreachable ? K.offlineTitle.tr() : K.loadFailed.tr(),
+      body: unreachable ? K.offlineBody.tr() : K.loadFailedBody.tr(),
+      onRetry: unreachable ? null : () => ref.invalidate(deviceProvider(slug)),
     );
   }
 }
