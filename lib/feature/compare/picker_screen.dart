@@ -13,6 +13,7 @@ import '../../domain/model/ranking.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/widgets/tp_error_state.dart';
 
 /// 비교할 기기를 고르는 시트.
 ///
@@ -143,7 +144,9 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
           ),
 
           Expanded(
-            child: devices.isEmpty
+            child: ref.watch(catalogProvider).hasError
+                ? const TpCatalogError()
+                : devices.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                     child: Text(K.noDevices.tr(), style: type.secondary),

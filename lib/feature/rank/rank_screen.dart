@@ -15,6 +15,7 @@ import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_chip.dart';
 import 'category_chips.dart';
 import '../../shared/widgets/tp_surface.dart';
+import '../../shared/widgets/tp_error_state.dart';
 
 /// 랭킹. v1 의 `RankingCPU/Phone/Laptop.dart` 웹뷰 세 개를 대체한다.
 ///
@@ -83,6 +84,10 @@ class RankScreen extends ConsumerWidget {
             switchOutCurve: motion.contentSwap.curve,
             child: loading
                 ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
+                // 못 읽은 것을 "기기가 없다"로 그리면 사용자가 할 수 있는 게
+                // 없다. 다시 시도할 자리를 준다.
+                : catalog.hasError
+                ? const TpCatalogError(key: ValueKey<String>('error'))
                 : _RankList(
                     key: const ValueKey<String>('list'),
                     ranked: ranked.take(maxRows).toList(growable: false),

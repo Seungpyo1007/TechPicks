@@ -17,11 +17,13 @@ import '../support/harness.dart';
 /// 카탈로그 애셋이 없을 때.
 ///
 /// 애셋이 빠진 빌드, 파일 손상, 경로 오타 어느 쪽이든 화면이 죽으면 안 된다.
+/// 그렇다고 **빈 상태로 그리면 안 된다** — 담아둔 기기가 있는 사람에게도
+/// "관심 목록이 비었다"고 말하게 되고, 사용자가 할 수 있는 게 없다.
 
 void main() {
   setUp(initLocalization);
 
-  testWidgets('랭킹은 빈 목록을 보여준다', (tester) async {
+  testWidgets('랭킹은 못 읽었다고 알리고 다시 시도를 준다', (tester) async {
     await pumpScreen(
       tester,
       const RankScreen(),
@@ -30,40 +32,53 @@ void main() {
     // 실패는 비동기로 전파된다. 한 프레임 더 돌린다.
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text(K.noDevices.tr()), findsOneWidget);
+    expect(find.text(K.catalogFailedTitle.tr()), findsOneWidget);
+    expect(find.text(K.retry.tr()), findsOneWidget);
+    expect(find.text(K.noDevices.tr()), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('홈은 빈 shortlist 상태로 떨어진다', (tester) async {
+  testWidgets('홈은 빈 관심 목록이라고 말하지 않는다', (tester) async {
     await pumpScreen(
       tester,
       const HomeScreen(),
       catalogAsset: missingCatalogAsset,
     );
 
-    expect(find.text(K.emptyShortlist.tr()), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(K.catalogFailedTitle.tr()), findsOneWidget);
+    expect(find.text(K.emptyShortlist.tr()), findsNothing);
+    // 부제도 "아직 결정할 것이 없습니다"라고 말하면 안 된다.
+    expect(find.text(K.homeSubNone.tr()), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('비교는 고르라고 안내한다', (tester) async {
+  testWidgets('비교는 고르라고 안내하지 않는다 — 고를 것이 없다', (tester) async {
     await pumpScreen(
       tester,
       const CompareScreen(),
       catalogAsset: missingCatalogAsset,
     );
 
-    expect(find.text(K.chooseTwo.tr()), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text(K.catalogFailedTitle.tr()), findsOneWidget);
+    expect(find.text(K.chooseTwo.tr()), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('선택 시트는 빈 목록으로 뜬다', (tester) async {
+  testWidgets('선택 시트도 못 읽었다고 알린다', (tester) async {
     await pumpScreen(
       tester,
       const PickerScreen(),
       catalogAsset: missingCatalogAsset,
     );
 
+    await tester.pump(const Duration(milliseconds: 100));
+
     expect(find.text(K.choose.tr()), findsOneWidget);
+    expect(find.text(K.catalogFailedTitle.tr()), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

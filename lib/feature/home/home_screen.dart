@@ -23,6 +23,7 @@ import '../../shared/widgets/tp_score_strip.dart';
 import '../../shared/widgets/tp_faded_line.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/widgets/tp_error_state.dart';
 
 /// 홈.
 ///
@@ -72,8 +73,11 @@ class HomeScreen extends ConsumerWidget {
             Text(K.homeTitle.tr(), style: type.largeTitle),
             const SizedBox(height: 6),
           ],
-          Text(_subtitle(shortlist.length), style: type.secondary),
-          const SizedBox(height: 16),
+          // 목록을 못 읽었으면 "아직 결정할 것이 없습니다"도 거짓말이다.
+          if (!ref.watch(catalogProvider).hasError) ...<Widget>[
+            Text(_subtitle(shortlist.length), style: type.secondary),
+            const SizedBox(height: 16),
+          ],
 
           // 첫 기기를 담는 순간이 이 앱에서 가장 중요한 상태 변화다.
           // 하드컷으로 갈리면 담긴 걸 놓친다.
@@ -81,7 +85,11 @@ class HomeScreen extends ConsumerWidget {
             duration: motion.contentSwap.duration,
             switchInCurve: motion.contentSwap.curve,
             switchOutCurve: motion.contentSwap.curve,
-            child: verdict == null
+            child: ref.watch(catalogProvider).hasError
+                // 목록을 못 읽은 것을 "관심 목록이 비었다"로 그리면, 담아둔
+                // 기기가 있는 사람에게도 비었다고 말하게 된다.
+                ? const TpCatalogError(key: ValueKey<String>('error'))
+                : verdict == null
                 ? _EmptyShortlist(
                     key: const ValueKey<String>('empty'),
                     onAdd: onAdd,

@@ -73,6 +73,10 @@ abstract final class K {
   static const String brandFounded = 'brandFounded';
   static const String brandSite = 'brandSite';
   static const String loadFailed = 'loadFailed';
+  static const String loadFailedBody = 'loadFailedBody';
+  static const String catalogFailedTitle = 'catalogFailedTitle';
+  static const String catalogFailedBody = 'catalogFailedBody';
+  static const String retry = 'retry';
   static const String offlineTitle = 'offlineTitle';
   static const String offlineBody = 'offlineBody';
 

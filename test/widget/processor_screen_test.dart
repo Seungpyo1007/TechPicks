@@ -83,14 +83,17 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('애셋이 없으면 빈 목록을 알린다', (tester) async {
+  // 못 읽은 것과 목록이 빈 것은 다른 일이다.
+  testWidgets('애셋이 없으면 못 읽었다고 알린다', (tester) async {
     await pumpScreen(
       tester,
       const ProcessorScreen(),
       catalogAsset: missingCatalogAsset,
     );
+    await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.text(K.noDevices.tr()), findsOneWidget);
+    expect(find.text(K.catalogFailedTitle.tr()), findsOneWidget);
+    expect(find.text(K.noDevices.tr()), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

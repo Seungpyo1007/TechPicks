@@ -352,10 +352,21 @@ class CompareNotifier extends Notifier<CompareSlots> {
     // 카탈로그가 오면 지수 1·2위로 채운다. 빈 비교 화면부터 보여주는 것보다
     // 뭔가 비교하고 있는 상태로 시작하는 편이 낫다. 애셋 순서(원점수)로
     // 채우면 화면에 찍히는 지수와 어긋난 둘이 올라온다.
-    final ranked = ref.watch(indexRankingProvider);
-    if (ranked.length < 2) return const CompareSlots();
-    return CompareSlots(a: ranked[0].device.slug, b: ranked[1].device.slug);
+    //
+    // watch 로 읽으면 카탈로그가 도착할 때 이 노티파이어가 통째로 다시
+    // 만들어져 **그 사이에 고른 것이 지워진다.** 딥링크로 연 비교가 몇
+    // 프레임 뒤 기본값으로 덮였다. 그래서 읽기만 하고, 나중 도착은 아직
+    // 아무것도 안 골랐을 때만 채운다.
+    ref.listen(indexRankingProvider, (_, next) {
+      if (state.isComplete) return;
+      state = _defaults(next);
+    });
+    return _defaults(ref.read(indexRankingProvider));
   }
+
+  static CompareSlots _defaults(List<RankedDevice> ranked) => ranked.length < 2
+      ? const CompareSlots()
+      : CompareSlots(a: ranked[0].device.slug, b: ranked[1].device.slug);
 
   void pick(CompareSide side, String slug) {
     final other = side == CompareSide.a ? CompareSide.b : CompareSide.a;
