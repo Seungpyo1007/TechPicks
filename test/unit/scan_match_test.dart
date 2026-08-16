@@ -63,4 +63,35 @@ void main() {
       expect(ScanMatcher.threshold, 0.5);
     });
   });
+
+  group('낱말 단위로 센다', () {
+    // iOS 의 utsname.machine 은 `iPhone17,3` 이다. 부분 문자열로 세던 때는
+    // `iphone` 과 `17` 이 그 한 덩어리 안에서 잡혀 iPhone 17 이 1.0 으로
+    // 걸렸다 — 내 정보 화면이 iPhone 17 Pro 를 iPhone 17 이라고 했다.
+    test('모델 식별자는 아무것도 안 집는다', () {
+      const catalog = <Smartphone>[
+        Smartphone(slug: 'iphone-17', name: 'iPhone 17'),
+        Smartphone(slug: 'iphone-16', name: 'iPhone 16'),
+      ];
+
+      expect(ScanMatcher.match('Apple iPhone17,3', catalog), isNull);
+      expect(ScanMatcher.match('Apple iPhone16,2', catalog), isNull);
+    });
+
+    test('+ 가 붙은 이름과 안 붙은 이름을 가른다', () {
+      const catalog = <Smartphone>[
+        Smartphone(slug: 'galaxy-s25-plus', name: 'Galaxy S25+'),
+        Smartphone(slug: 'galaxy-s25', name: 'Galaxy S25'),
+      ];
+
+      expect(
+        ScanMatcher.match('Galaxy S25', catalog)?.device.slug,
+        'galaxy-s25',
+      );
+      expect(
+        ScanMatcher.match('Galaxy S25+', catalog)?.device.slug,
+        'galaxy-s25-plus',
+      );
+    });
+  });
 }

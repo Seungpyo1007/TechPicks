@@ -233,7 +233,6 @@ class _ProcessorRow extends StatelessWidget {
   }
 }
 
-
 class _RowSkeletons extends StatelessWidget {
   const _RowSkeletons({super.key});
 

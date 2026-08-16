@@ -313,7 +313,10 @@ class _PrimaryButton extends StatelessWidget {
 
     return Semantics(
       button: true,
+      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
+      // 버튼이 글자 글리프 위에서만 눌린다.
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         // 담기를 누르면 채움색·라벨·그림자가 한꺼번에 즉시 바뀌어서 저장됐다는
         // 느낌이 없었다.

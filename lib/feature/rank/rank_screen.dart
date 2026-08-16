@@ -297,7 +297,6 @@ class _RankRow extends StatelessWidget {
   }
 }
 
-
 /// 로딩 중에는 카드 반지름 그대로의 뼈대를 보여준다. 명세가 가운데 스피너를
 /// 금지한다 — v1 이 빈 화면에 `CircularProgressIndicator` 를 띄웠다.
 class _RowSkeletons extends StatelessWidget {
@@ -351,7 +350,10 @@ class _ScanFab extends StatelessWidget {
     final type = context.tpText;
     return Semantics(
       button: true,
+      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
+      // 버튼이 글자 글리프 위에서만 눌린다.
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Container(
           height: 56,
@@ -397,7 +399,10 @@ class _ScanInlineButton extends StatelessWidget {
     final type = context.tpText;
     return Semantics(
       button: true,
+      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
+      // 버튼이 글자 글리프 위에서만 눌린다.
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Container(
           height: 52,

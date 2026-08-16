@@ -63,9 +63,23 @@ final catalogProvider = FutureProvider<Catalog>(
 
 /// 사용자 가중치.
 ///
+/// 저장값 복원과 사람의 조작이 겹치면 사람이 이긴다.
+///
+/// 노티파이어들이 `build()` 에서 복원을 비동기로 시작한다. 그 사이에 사람이
+/// 먼저 고치면 늦게 도착한 저장값이 그걸 덮는다 — 방금 담은 기기가 화면에서도
+/// 디스크에서도 사라진다. 고치는 쪽은 [touch] 를 부르고, 복원은 [touched] 면
+/// 아무것도 안 한다.
+mixin RestoreGuard {
+  bool _touched = false;
+
+  bool get touched => _touched;
+
+  void touch() => _touched = true;
+}
+
 /// 화면 여러 곳이 이걸 읽는다. You 화면에서 슬라이더를 움직이면 랭킹·홈·상세의
 /// 지수가 한꺼번에 다시 계산되어야 하므로 앱 전역 상태다.
-class WeightsNotifier extends Notifier<TpWeights> {
+class WeightsNotifier extends Notifier<TpWeights> with RestoreGuard {
   static const String _prefsKey = 'tp_weights';
 
   @override
@@ -82,7 +96,7 @@ class WeightsNotifier extends Notifier<TpWeights> {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
-    if (!ref.mounted) return;
+    if (!ref.mounted || touched) return;
     final raw = prefs.getString(_prefsKey);
     if (raw == null) return;
     try {
@@ -112,6 +126,7 @@ class WeightsNotifier extends Notifier<TpWeights> {
   TpWeights? _unsaved;
 
   void set(TpWeights next) {
+    touch();
     state = next;
     _unsaved = next;
     _saveTimer?.cancel();
@@ -212,7 +227,7 @@ final rankedProcessorsProvider = Provider<List<RankedProcessor>>((ref) {
 ///
 /// 저장은 SharedPreferences 로 한다. 명세는 Firestore 도 후보로 적었지만,
 /// 로그인 없이도 쓸 수 있어야 하는 화면이라 로컬이 먼저다.
-class ShortlistNotifier extends Notifier<List<String>> {
+class ShortlistNotifier extends Notifier<List<String>> with RestoreGuard {
   static const String _prefsKey = 'shortlist_slugs';
 
   /// 마지막으로 고친 시각. 계정에 올라간 것과 어느 쪽이 새로운지 가린다.
@@ -220,20 +235,29 @@ class ShortlistNotifier extends Notifier<List<String>> {
 
   @override
   List<String> build() {
-    unawaited(_restore());
+    _restored = _restore();
     return const <String>[];
   }
 
+  /// 복원이 끝났는지. 로그인 병합이 이걸 기다린다 — 안 기다리면 빈 목록을
+  /// 계정에 올려 덮을 수 있다.
+  Future<void> _restored = Future<void>.value();
+
+  Future<void> get ready => _restored;
+
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
-    if (!ref.mounted) return;
+    if (!ref.mounted || touched) return;
     final saved = prefs.getStringList(_prefsKey);
     if (saved != null && saved.isNotEmpty) state = saved;
   }
 
   Future<void> _persist() async {
+    // 쓸 값을 await 앞에서 잡는다. 뒤에서 state 를 읽으면 그 사이에 끼어든
+    // 복원이 방금 담은 기기 대신 옛 목록을 디스크에 남긴다.
+    final slugs = state;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_prefsKey, state);
+    await prefs.setStringList(_prefsKey, slugs);
     await prefs.setInt(_stampKey, DateTime.now().millisecondsSinceEpoch);
   }
 
@@ -245,6 +269,7 @@ class ShortlistNotifier extends Notifier<List<String>> {
 
   /// 계정에 올라가 있던 것을 그대로 받아 쓴다. 시각도 그쪽 것을 남긴다.
   Future<void> adopt(List<String> slugs, DateTime at) async {
+    touch();
     state = List<String>.unmodifiable(slugs);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_prefsKey, slugs);
@@ -254,6 +279,7 @@ class ShortlistNotifier extends Notifier<List<String>> {
   bool contains(String slug) => state.contains(slug);
 
   void toggle(String slug) {
+    touch();
     final added = !state.contains(slug);
     state = added
         ? <String>[...state, slug]
@@ -263,6 +289,7 @@ class ShortlistNotifier extends Notifier<List<String>> {
   }
 
   void remove(String slug) {
+    touch();
     state = <String>[...state.where((s) => s != slug)];
     unawaited(_persist());
   }
@@ -624,7 +651,7 @@ final currentUserProvider = NotifierProvider<CurrentUserNotifier, TpUser?>(
 );
 
 /// 온보딩을 봤는지. v1 의 is_tutorial_completed 키를 그대로 쓴다.
-class OnboardingNotifier extends Notifier<bool?> {
+class OnboardingNotifier extends Notifier<bool?> with RestoreGuard {
   static const String _prefsKey = 'is_tutorial_completed';
 
   /// null 은 "아직 안 읽었다" 다.
@@ -639,11 +666,12 @@ class OnboardingNotifier extends Notifier<bool?> {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
-    if (!ref.mounted) return;
+    if (!ref.mounted || touched) return;
     state = prefs.getBool(_prefsKey) ?? false;
   }
 
   Future<void> complete() async {
+    touch();
     state = true;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefsKey, true);
@@ -659,7 +687,7 @@ final onboardingDoneProvider = NotifierProvider<OnboardingNotifier, bool?>(
 /// 이걸 안 남기면 `Browse without an account` 를 고른 사람이 앱을 켤 때마다
 /// 로그인 화면을 다시 본다. 관심 목록도 온보딩도 남는데 이것만 안 남을
 /// 이유가 없다.
-class GuestNotifier extends Notifier<bool> {
+class GuestNotifier extends Notifier<bool> with RestoreGuard {
   static const String _prefsKey = 'browsing_as_guest';
 
   @override
@@ -670,11 +698,12 @@ class GuestNotifier extends Notifier<bool> {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
-    if (!ref.mounted) return;
+    if (!ref.mounted || touched) return;
     state = prefs.getBool(_prefsKey) ?? false;
   }
 
   Future<void> stay() async {
+    touch();
     state = true;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefsKey, true);
@@ -682,6 +711,7 @@ class GuestNotifier extends Notifier<bool> {
 
   /// 로그아웃하면 다시 로그인 화면으로 보낸다.
   Future<void> clear() async {
+    touch();
     state = false;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefsKey);
@@ -694,7 +724,7 @@ final guestProvider = NotifierProvider<GuestNotifier, bool>(GuestNotifier.new);
 final localeControllerProvider = Provider<LocaleController?>((ref) => null);
 
 /// 알림 켬/끔. 아직 실제 푸시에 연결돼 있지 않고 설정만 기억한다.
-class NotificationsNotifier extends Notifier<bool> {
+class NotificationsNotifier extends Notifier<bool> with RestoreGuard {
   static const String _prefsKey = 'notifications_enabled';
 
   @override
@@ -705,11 +735,12 @@ class NotificationsNotifier extends Notifier<bool> {
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
-    if (!ref.mounted) return;
+    if (!ref.mounted || touched) return;
     state = prefs.getBool(_prefsKey) ?? true;
   }
 
   Future<void> set(bool value) async {
+    touch();
     state = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefsKey, value);
@@ -866,6 +897,8 @@ class ShortlistSync extends Notifier<void> {
     final service = ref.read(shortlistSyncServiceProvider);
     final shortlist = ref.read(shortlistProvider.notifier);
     try {
+      // 복원 전에 읽으면 빈 목록을 이 기기의 최신 상태로 착각해 계정을 덮는다.
+      await shortlist.ready;
       final remote = await service.read(uid);
       final localAt = await shortlist.lastChanged();
       if (!ref.mounted) return;

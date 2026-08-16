@@ -40,9 +40,14 @@ abstract final class ScanMatcher {
     final tokens = _tokens(device);
     if (tokens.isEmpty) return 0;
 
+    // 낱말 단위로 센다. 부분 문자열로 세면 iOS 의 모델 식별자 `iPhone17,3` 이
+    // `iphone17` 한 덩어리가 되는데 그 안에서 `iphone` 과 `17` 이 둘 다 잡혀
+    // **iPhone 17 이 확신 1.0 으로 걸렸다.** 실제로 내 정보 화면이 iPhone 17
+    // Pro 를 iPhone 17 이라고 말하고 있었다.
+    final words = haystack.split(' ').toSet();
     var hit = 0;
     for (final token in tokens) {
-      if (haystack.contains(token)) hit++;
+      if (words.contains(token)) hit++;
     }
     var score = hit / tokens.length;
 
@@ -65,8 +70,12 @@ abstract final class ScanMatcher {
   }
 
   /// 소문자로 낮추고 기호를 공백으로. OCR 이 하이픈이나 점을 흘리는 일이 많다.
+  ///
+  /// `+` 만 낱말로 남긴다. 기호째 지우면 `Galaxy S25+` 와 `Galaxy S25` 가 같은
+  /// 글자가 되어 어느 쪽을 집을지 카탈로그 순서가 정한다.
   static String _normalize(String s) => s
       .toLowerCase()
+      .replaceAll('+', ' plus ')
       .replaceAll(RegExp(r'[^a-z0-9가-힣]+'), ' ')
       .replaceAll(RegExp(r'\s+'), ' ')
       .trim();

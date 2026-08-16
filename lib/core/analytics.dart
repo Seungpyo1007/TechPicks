@@ -60,11 +60,10 @@ abstract final class TpAnalytics {
 
   /// 상담에 질문했다. **질문 원문은 보내지 않는다** — 개인정보일 수 있다.
   /// 길이와 답을 얻었는지만 본다.
-  static void asked({required int length, required bool answered}) =>
-      _sink.log('asked', <String, Object>{
-        'length': length,
-        'answered': answered ? 1 : 0,
-      });
+  static void asked({required int length, required bool answered}) => _sink.log(
+    'asked',
+    <String, Object>{'length': length, 'answered': answered ? 1 : 0},
+  );
 
   /// 랭킹 축을 바꿨다. 다섯 축이 다 쓰이는지 본다.
   static void rankAxisChanged(String axis) =>

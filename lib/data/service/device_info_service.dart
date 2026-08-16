@@ -40,6 +40,11 @@ class PlatformDeviceInfoService implements DeviceInfoService {
         final info = await _plugin.iosInfo;
         // iOS 는 utsname.machine 이 `iPhone16,2` 형태다. 사람이 읽는 이름은
         // name 쪽인데 사용자가 바꿀 수 있어 모델명 우선.
+        //
+        // 이 식별자는 카탈로그 이름과 안 맞는다. 맞추려면 식별자→제품명 표가
+        // 있어야 하는데 어디에도 없다. ScanMatcher 는 낱말 단위로 세므로
+        // 이걸로는 아무것도 안 걸리고, You 화면이 "카탈로그에 아직 없습니다"
+        // 로 떨어진다 — 안드로이드의 `SM-S931B` 와 같은 처지다.
         return ThisDevice(name: info.utsname.machine, brand: 'Apple');
       }
     } catch (e, s) {

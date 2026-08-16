@@ -127,7 +127,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             padding: const EdgeInsets.fromLTRB(24, 18, 24, 10),
             child: Semantics(
               button: true,
+              // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
+              // 버튼이 글자 글리프 위에서만 눌린다.
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: _next,
                 child: Container(
                   height: 52,
