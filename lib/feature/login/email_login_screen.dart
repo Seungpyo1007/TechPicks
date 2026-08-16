@@ -9,6 +9,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../data/service/auth_service.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/widgets/tp_button.dart';
 
 /// 이메일 로그인·가입.
 ///
@@ -155,34 +156,10 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
           ],
 
           const SizedBox(height: 20),
-          Semantics(
-            button: true,
-            // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-            // 버튼이 글자 글리프 위에서만 눌린다.
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _submit,
-              child: Container(
-                height: 52,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: TpTokens.blue,
-                  borderRadius: BorderRadius.circular(
-                    t.isGlass ? TpTokens.rControl : t.rCard,
-                  ),
-                  boxShadow: t.buttonShadow,
-                ),
-                child: Text(
-                  (_signingUp ? K.signup : K.signIn).tr(),
-                  style: type.body.copyWith(
-                    color: Colors.white,
-                    fontWeight: t.boldWeight,
-                  ),
-                ),
-              ),
-            ),
+          TpButton(
+            label: (_signingUp ? K.signup : K.signIn).tr(),
+            onTap: _submit,
           ),
-
           const SizedBox(height: 16),
           // 로그인 화면과 같은 이유로 Wrap.
           Wrap(

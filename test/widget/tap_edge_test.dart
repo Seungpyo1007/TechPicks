@@ -1,3 +1,5 @@
+import 'package:techpicks/shared/widgets/tp_tap_target.dart';
+import 'package:techpicks/shared/widgets/tp_button.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -125,4 +127,37 @@ void main() {
 
     expect(container.read(rankAxisProvider), RankAxis.battery);
   });
+
+  // 눌러도 아무 반응이 없으면 죽은 버튼처럼 보인다. 명세가 이름을 준 칩·카드
+  // 말고는 규칙이 없어 서른 곳 넘게 그대로 있었다.
+  testWidgets('버튼과 링크는 눌리는 동안 줄어든다', (tester) async {
+    await pumpScreen(tester, const OnboardingScreen());
+
+    final button = find.byType(TpButton).first;
+    expect(tester.widget<AnimatedScale>(_scaleOf(button)).scale, 1);
+
+    final press = await tester.startGesture(tester.getCenter(button));
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(tester.widget<AnimatedScale>(_scaleOf(button)).scale, lessThan(1));
+
+    await press.up();
+    await tester.pumpAndSettle();
+    expect(tester.widget<AnimatedScale>(_scaleOf(button)).scale, 1);
+  });
+
+  testWidgets('링크도 같은 박자로 반응한다', (tester) async {
+    await pumpScreen(tester, const OnboardingScreen());
+
+    final skip = find.byType(TpTapTarget).first;
+    final press = await tester.startGesture(tester.getCenter(skip));
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(tester.widget<AnimatedScale>(_scaleOf(skip)).scale, lessThan(1));
+
+    await press.up();
+    await tester.pumpAndSettle();
+  });
 }
+
+/// 그 컨트롤이 들고 있는 스케일 애니메이션.
+Finder _scaleOf(Finder control) =>
+    find.descendant(of: control, matching: find.byType(AnimatedScale)).first;
