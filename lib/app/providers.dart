@@ -312,15 +312,24 @@ class CompareSlots {
 class CompareNotifier extends Notifier<CompareSlots> {
   @override
   CompareSlots build() {
-    // 카탈로그가 오면 앞의 둘로 채운다. 빈 비교 화면부터 보여주는 것보다
-    // 뭔가 비교하고 있는 상태로 시작하는 편이 낫다.
-    final catalog = ref.watch(catalogProvider).value;
-    final phones = catalog?.smartphones ?? const <Smartphone>[];
-    if (phones.length < 2) return const CompareSlots();
-    return CompareSlots(a: phones[0].slug, b: phones[1].slug);
+    // 카탈로그가 오면 지수 1·2위로 채운다. 빈 비교 화면부터 보여주는 것보다
+    // 뭔가 비교하고 있는 상태로 시작하는 편이 낫다. 애셋 순서(원점수)로
+    // 채우면 화면에 찍히는 지수와 어긋난 둘이 올라온다.
+    final ranked = ref.watch(indexRankingProvider);
+    if (ranked.length < 2) return const CompareSlots();
+    return CompareSlots(a: ranked[0].device.slug, b: ranked[1].device.slug);
   }
 
-  void pick(CompareSide side, String slug) => state = state.write(side, slug);
+  void pick(CompareSide side, String slug) {
+    final other = side == CompareSide.a ? CompareSide.b : CompareSide.a;
+    // 같은 기기를 두 열에 놓으면 모든 줄이 같아 비교가 아니게 된다.
+    // 반대쪽에 있던 걸 다시 고른 것이므로 둘을 맞바꾼다.
+    if (state[other] == slug) {
+      state = CompareSlots(a: state.b, b: state.a);
+      return;
+    }
+    state = state.write(side, slug);
+  }
 }
 
 final compareProvider = NotifierProvider<CompareNotifier, CompareSlots>(
