@@ -12,6 +12,8 @@ import '../support/harness.dart';
 
 /// 이름과 비밀번호는 Firebase 가 처리한다. 여기서는 무엇을 시켰는지만 본다.
 class _StubAuth implements AuthService {
+  @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
   _StubAuth({this.succeeds = true, TpUser? user})
     : _current = user ?? const TpUser(uid: 'u1', email: 'a@b.com', name: '홍길동');
 

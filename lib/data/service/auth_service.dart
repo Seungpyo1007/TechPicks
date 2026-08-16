@@ -48,6 +48,13 @@ class AuthCanceled implements Exception {
 abstract class AuthService {
   TpUser? get current;
 
+  /// 로그인 상태가 바뀔 때마다 흘린다.
+  ///
+  /// [current] 만 읽으면 앱을 켠 그 순간의 값이 전부다. Firebase 는 저장된
+  /// 세션을 비동기로 복원하므로, 돌아온 사용자가 한 프레임 차이로 로그인
+  /// 화면을 보고 동기화도 안 붙는 일이 생긴다.
+  Stream<TpUser?> changes();
+
   Future<TpUser?> signIn(AuthMethod method, {String? email, String? password});
 
   /// 이메일 가입. 성공하면 그대로 로그인된 상태다.
@@ -187,6 +194,14 @@ class FirebaseAuthService implements AuthService {
       TpErrors.record(e, s, reason: 'auth.updateName');
       return null;
     }
+  }
+
+  @override
+  Stream<TpUser?> changes() {
+    final auth = _auth;
+    // Firebase 가 안 떴으면 바뀔 것도 없다.
+    if (auth == null) return const Stream<TpUser?>.empty();
+    return auth.userChanges().map(_map);
   }
 
   @override

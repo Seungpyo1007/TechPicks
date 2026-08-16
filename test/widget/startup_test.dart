@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +18,8 @@ import '../support/harness.dart';
 
 /// Firebase 가 없는 빌드. 모든 로그인이 실패한다.
 class _NoFirebase implements AuthService {
+  @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
   @override
   TpUser? get current => null;
 
@@ -62,6 +65,29 @@ class _RootHost extends StatelessWidget {
 
 void main() {
   setUp(initLocalization);
+
+  // current 만 읽던 때는 앱을 켠 그 순간의 값이 전부였다. Firebase 는 저장된
+  // 세션을 비동기로 복원하므로, 돌아온 사용자가 로그인 화면에 갇혔다.
+  testWidgets('늦게 복원된 세션도 로그인으로 친다', (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'is_tutorial_completed': true,
+    });
+    final auth = _LateSession();
+    final container = await pumpScreen(
+      tester,
+      const _RootHost(),
+      overrides: <Override>[authServiceProvider.overrideWithValue(auth)],
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+
+    auth.restore(const TpUser(uid: 'u1', email: 'a@b.com'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(currentUserProvider)?.uid, 'u1');
+    expect(find.byType(TabHost), findsOneWidget);
+  });
 
   group('손님으로 쓰기', _guest);
 
@@ -161,4 +187,39 @@ void _guest() {
 
     expect(find.byType(LoginScreen), findsOneWidget);
   });
+}
+
+/// 저장된 세션이 늦게 복원되는 Firebase.
+class _LateSession implements AuthService {
+  final _users = StreamController<TpUser?>.broadcast();
+
+  void restore(TpUser user) => _users.add(user);
+
+  @override
+  Stream<TpUser?> changes() => _users.stream;
+
+  @override
+  TpUser? get current => null;
+
+  @override
+  Future<TpUser?> signIn(
+    AuthMethod m, {
+    String? email,
+    String? password,
+  }) async => null;
+
+  @override
+  Future<TpUser?> signUp({
+    required String email,
+    required String password,
+  }) async => null;
+
+  @override
+  Future<bool> sendPasswordReset(String email) async => false;
+
+  @override
+  Future<TpUser?> updateName(String name) async => null;
+
+  @override
+  Future<void> signOut() async {}
 }

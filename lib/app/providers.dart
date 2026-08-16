@@ -132,13 +132,23 @@ class WeightsNotifier extends Notifier<TpWeights> with RestoreGuard {
     _saveTimer?.cancel();
     _saveTimer = Timer(saveDelay, () {
       _unsaved = null;
+      final axis = _pendingAxis;
+      _pendingAxis = null;
+      if (axis != null) {
+        TpAnalytics.weightChanged(axis.kind.name, axis.value);
+      }
       unawaited(_write(next));
     });
   }
 
+  /// 아직 안 보낸 축 변경. 손을 뗀 뒤 한 번만 보낸다.
+  ({TpAxisKind kind, double value})? _pendingAxis;
+
   /// 축 하나만 바꾼다. 슬라이더가 이걸 부른다.
   void setAxis(TpAxisKind kind, double value) {
-    TpAnalytics.weightChanged(kind.name, value);
+    // 슬라이더는 끄는 동안 픽셀마다 이걸 부른다. 그대로 보내면 한 번 끌 때
+    // 이벤트가 백 개 나가고, 사람이 고른 적 없는 중간값이 분포를 덮는다.
+    _pendingAxis = (kind: kind, value: value);
     set(switch (kind) {
       TpAxisKind.performance => state.copyWith(performance: value),
       TpAxisKind.camera => state.copyWith(camera: value),
@@ -349,6 +359,15 @@ class CompareNotifier extends Notifier<CompareSlots> {
 
   void pick(CompareSide side, String slug) {
     final other = side == CompareSide.a ? CompareSide.b : CompareSide.a;
+    // 비교가 실제로 쓰이는지 세는 유일한 자리다. 이벤트만 만들어 두고
+    // 아무 데서도 안 불러서 사용량이 영원히 0 으로 보고되고 있었다.
+    final counterpart = state[other];
+    if (counterpart != null && counterpart != slug) {
+      TpAnalytics.compared(
+        side == CompareSide.a ? slug : counterpart,
+        side == CompareSide.a ? counterpart : slug,
+      );
+    }
     // 같은 기기를 두 열에 놓으면 모든 줄이 같아 비교가 아니게 된다.
     // 반대쪽에 있던 걸 다시 고른 것이므로 둘을 맞바꾼다.
     if (state[other] == slug) {
@@ -609,7 +628,17 @@ final authServiceProvider = Provider<AuthService>(
 /// 지금 로그인한 사람. 로그인·로그아웃할 때 갱신한다.
 class CurrentUserNotifier extends Notifier<TpUser?> {
   @override
-  TpUser? build() => ref.watch(authServiceProvider).current;
+  TpUser? build() {
+    final auth = ref.watch(authServiceProvider);
+    // 켠 순간의 값만 읽으면, 저장된 세션이 늦게 복원되는 동안 로그인 화면이
+    // 뜨고 관심 목록 동기화도 안 붙는다. 다른 기기에서 로그아웃한 것도
+    // 다음 실행까지 모른다.
+    final sub = auth.changes().listen((user) {
+      if (ref.mounted) state = user;
+    });
+    ref.onDispose(sub.cancel);
+    return auth.current;
+  }
 
   Future<SignInOutcome> signIn(
     AuthMethod method, {

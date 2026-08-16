@@ -46,8 +46,18 @@ void main() {
     TpAnalytics.weightsReset();
   });
 
-  test('가중치를 바꾸면 축과 값이 남는다', () {
-    container().read(weightsProvider.notifier).setAxis(TpAxisKind.camera, 0.4);
+  // 슬라이더는 끄는 동안 픽셀마다 setAxis 를 부른다. 손을 뗀 뒤 한 번만
+  // 나가야 한다 — 그대로 보내면 사람이 고른 적 없는 중간값이 분포를 덮는다.
+  test('가중치는 손을 뗀 뒤 한 번만 남는다', () async {
+    final c = container();
+    for (final v in <double>[0.1, 0.2, 0.3, 0.4]) {
+      c.read(weightsProvider.notifier).setAxis(TpAxisKind.camera, v);
+    }
+    expect(sink.logs, isEmpty);
+
+    await Future<void>.delayed(
+      WeightsNotifier.saveDelay + const Duration(milliseconds: 40),
+    );
 
     final log = sink.logs.single;
     expect(log.event, 'weight_changed');

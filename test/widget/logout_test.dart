@@ -15,6 +15,8 @@ import 'package:techpicks/shared/copy_keys.dart';
 import '../support/harness.dart';
 
 class _StubAuth implements AuthService {
+  @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
   TpUser? _current = const TpUser(uid: 'u1', isAnonymous: true);
   int signOuts = 0;
 
@@ -49,6 +51,8 @@ class _StubAuth implements AuthService {
 
 /// signOut 이 영영 안 돌아오는 경우. 설정이 온전하지 않은 Firebase 가 그렇다.
 class _HangingAuth implements AuthService {
+  @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
   @override
   TpUser? get current => const TpUser(uid: 'u1', isAnonymous: true);
 
