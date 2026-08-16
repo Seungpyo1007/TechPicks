@@ -154,9 +154,8 @@ class Catalog {
   final List<Brand> brands;
 
   /// 슬러그로 찾는다. 상세 화면이 기기마다 한 번씩 부른다.
-  Brand? brand(String? slug) => slug == null
-      ? null
-      : brands.where((b) => b.slug == slug).firstOrNull;
+  Brand? brand(String? slug) =>
+      slug == null ? null : brands.where((b) => b.slug == slug).firstOrNull;
 
   factory Catalog.fromJson(Map<String, dynamic> json) {
     List<T> parse<T>(String key, T Function(Map<String, dynamic>) from) {

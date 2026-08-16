@@ -66,7 +66,10 @@ class _ViewerScreenState extends State<ViewerScreen> {
                         return Semantics(
                           button: true,
                           selected: on,
+                          // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
+                          // 버튼이 글자 글리프 위에서만 눌린다.
                           child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
                             onTap: () =>
                                 setState(() => _highlighted = on ? null : i),
                             // 다크 인수 화면이라 TpChip 의 밝은 팔레트를 못

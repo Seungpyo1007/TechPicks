@@ -38,7 +38,10 @@ class _TpChipState extends State<TpChip> {
       // 못 누르는 칩은 버튼이라고 하지 않는다.
       button: enabled,
       selected: widget.selected,
+      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
+      // 버튼이 글자 글리프 위에서만 눌린다.
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
         // 못 누르는 칩은 눌린 척도 하지 않는다. onTapDown 만 달아둬도
         // 시맨틱 트리에 탭 액션이 생겨 버튼처럼 읽힌다.

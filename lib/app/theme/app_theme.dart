@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-
 import 'tp_motion.dart';
 import 'tp_tokens.dart';
 import 'tp_typography.dart';
@@ -32,9 +31,7 @@ abstract final class AppTheme {
   static ThemeData of(TpChrome chrome) {
     final tokens = chrome == TpChrome.ios ? TpTokens.ios() : TpTokens.android();
     final type = TpTypography.of(tokens);
-    final motion = chrome == TpChrome.ios
-        ? TpMotion.ios()
-        : TpMotion.android();
+    final motion = chrome == TpChrome.ios ? TpMotion.ios() : TpMotion.android();
 
     final scheme =
         ColorScheme.fromSeed(

@@ -74,9 +74,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Row(
               children: <Widget>[
-                Expanded(
-                  child: Text(K.scanTitle.tr(), style: type.largeTitle),
-                ),
+                Expanded(child: Text(K.scanTitle.tr(), style: type.largeTitle)),
                 TpTapTarget(
                   onTap: widget.onBack,
                   label: K.back.tr(),
@@ -201,7 +199,10 @@ class _ResultCard extends StatelessWidget {
               const SizedBox(height: 12),
               Semantics(
                 button: true,
+                // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
+                // 버튼이 글자 글리프 위에서만 눌린다.
                 child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: onOpen,
                   child: Container(
                     height: 46,
