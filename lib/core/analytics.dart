@@ -6,6 +6,11 @@
 ///
 /// 재는 것은 그 가설과 그걸 둘러싼 행동뿐이다. 화면 조회 수 같은 건 안 센다.
 abstract class AnalyticsSink {
+  /// 값은 문자열 아니면 숫자다.
+  ///
+  /// Firebase Analytics 가 그 둘만 받는다. bool 을 넣었더니 어서션이 터져
+  /// Crashlytics 에 올라갔다 — 이벤트가 안 나갈 뿐 아니라 화면에 빨간 오류가
+  /// 났다. 그래서 여기 문서로 못 박고 아래에서는 0/1 로 보낸다.
   void log(String event, Map<String, Object> params);
 }
 
@@ -45,7 +50,7 @@ abstract final class TpAnalytics {
   /// 관심 목록에 담거나 뺐다.
   static void shortlistChanged({required bool added, required int size}) =>
       _sink.log('shortlist_changed', <String, Object>{
-        'added': added,
+        'added': added ? 1 : 0,
         'size': size,
       });
 
@@ -58,7 +63,7 @@ abstract final class TpAnalytics {
   static void asked({required int length, required bool answered}) =>
       _sink.log('asked', <String, Object>{
         'length': length,
-        'answered': answered,
+        'answered': answered ? 1 : 0,
       });
 
   /// 랭킹 축을 바꿨다. 다섯 축이 다 쓰이는지 본다.

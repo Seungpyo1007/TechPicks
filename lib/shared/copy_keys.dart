@@ -26,7 +26,6 @@ abstract final class K {
   static const String homeSubMany = 'homeSubMany';
   static const String verdictReason = 'verdictReason';
   static const String verdictNoData = 'verdictNoData';
-  static const String homeSub = 'homeSub';
   static const String verdict = 'verdict';
   static const String tpIndex = 'tpIndex';
   static const String shortlist = 'shortlist';
@@ -40,7 +39,6 @@ abstract final class K {
 
   // 랭킹
   static const String rankTitle = 'rankTitle';
-  static const String phones = 'phones';
   static const String cpus = 'cpus';
   static const String laptops = 'laptops';
   static const String rankBy = 'rankBy';
@@ -52,6 +50,7 @@ abstract final class K {
 
   // 프로세서
   static const String cpuTitle = 'cpuTitle';
+  static const String phones = 'phones';
   static const String cpuMobile = 'cpuMobile';
   static const String cpuLaptop = 'cpuLaptop';
   static const String cpuNote = 'cpuNote';
@@ -61,7 +60,6 @@ abstract final class K {
   static const String choose = 'choose';
   static const String cancel = 'cancel';
   static const String back = 'back';
-  static const String send = 'send';
   static const String chooseTwo = 'chooseTwo';
   static const String searchHint = 'searchHint';
   static const String tapToChange = 'tapToChange';
@@ -86,6 +84,7 @@ abstract final class K {
   // 상담
   static const String chatSeed = 'chatSeed';
   static const String askHint = 'askHint';
+  static const String send = 'send';
   static const String askFailed = 'askFailed';
   static const String askLocalTop = 'askLocalTop';
   static const String askLocalBudget = 'askLocalBudget';
@@ -112,7 +111,6 @@ abstract final class K {
   static const String nameLabel = 'nameLabel';
   static const String save = 'save';
   static const String logout = 'logout';
-  static const String version = 'version';
   static const String on = 'on';
   static const String off = 'off';
   static const String noAccountYet = 'noAccountYet';

@@ -102,6 +102,7 @@ const Map<String, String> _pending = <String, String>{
   'viewerTitle': '뷰어 헤더는 기기 이름을 쓴다. 어느 기기인지가 3D 뷰어라는 사실보다 쓸모 있다',
   'askPlaceholder': '입력창 힌트는 askHint 를 쓴다. 둘 다 T 에 있고 어느 쪽이 입력창인지 불명',
   'indexNote': 'TP Index 설명. 명세의 어느 화면 절에도 안 나온다',
+  'version': '설정의 버전 줄은 명세 §13 의 확정 문구를 통째로 쓴다',
   'welcomeSub': '로그인 부제. welcomeSubShort 도 T 에 있고 지금은 그쪽을 쓴다',
 };
 

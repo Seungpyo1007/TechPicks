@@ -289,7 +289,9 @@ class _Composer extends StatelessWidget {
               const SizedBox(width: 10),
               TpTapTarget(
                 onTap: () => onSend(controller.text),
-                label: K.askHint.tr(),
+                // 입력창과 같은 이름을 주면 스크린 리더가 버튼도
+                // "무엇이든 물어보세요"라고 읽는다.
+                label: K.send.tr(),
                 child: Container(
                   width: 48,
                   height: 48,
