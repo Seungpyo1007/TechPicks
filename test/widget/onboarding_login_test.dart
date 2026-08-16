@@ -14,6 +14,8 @@ import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 
 /// Firebase 를 띄우지 않는 가짜. 어떤 방법이 성공할지 테스트가 정한다.
 class _StubAuth implements AuthService {
+  @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
   _StubAuth({this.succeeds = const <AuthMethod>{AuthMethod.anonymous}});
 
   final Set<AuthMethod> succeeds;
@@ -74,6 +76,8 @@ Future<void> _pump(
 
 /// 사용자가 시트를 닫은 경우.
 class _CancelingAuth implements AuthService {
+  @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
   @override
   TpUser? get current => null;
 

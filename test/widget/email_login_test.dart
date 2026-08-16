@@ -11,6 +11,8 @@ import '../support/harness.dart';
 
 /// Firebase 를 띄우지 않는 가짜.
 class _StubAuth implements AuthService {
+  @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
   _StubAuth({this.signInOk = true, this.signUpOk = true});
 
   final bool signInOk;

@@ -22,6 +22,8 @@ import 'package:techpicks/feature/viewer/viewer_screen.dart';
 
 class _NoAuth implements AuthService {
   @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
+  @override
   TpUser? get current => null;
 
   @override

@@ -8,6 +8,8 @@ import 'package:techpicks/data/service/shortlist_sync_service.dart';
 
 /// 로그인을 테스트가 정한다.
 class _StubAuth implements AuthService {
+  @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
   TpUser? _current;
 
   @override

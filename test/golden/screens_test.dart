@@ -168,6 +168,8 @@ const _answer = AskAnswer(
 /// Firebase 를 띄우지 않는 가짜. 화면은 로그아웃 상태로만 그린다.
 class _StubAuth implements AuthService {
   @override
+  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
+  @override
   TpUser? get current => null;
 
   @override
