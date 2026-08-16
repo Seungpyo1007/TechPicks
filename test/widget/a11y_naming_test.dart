@@ -73,6 +73,21 @@ void main() {
     handle.dispose();
   });
 
+  // 보내기 버튼이 입력창과 같은 이름을 달고 있었다. 스크린 리더로는 둘이
+  // 구별되지 않는다.
+  testWidgets('보내기 버튼은 제 이름으로 읽힌다', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpScreen(tester, const AskScreen(), size: const Size(1200, 2400));
+
+    final buttons = _nodes(
+      tester,
+    ).where((d) => d.flagsCollection.isButton).map((d) => d.label);
+
+    expect(buttons, contains(K.send.tr()));
+    expect(buttons, isNot(contains(K.askHint.tr())));
+    handle.dispose();
+  });
+
   testWidgets('새로 온 답만 읽어준다', (tester) async {
     final handle = tester.ensureSemantics();
     await pumpScreen(

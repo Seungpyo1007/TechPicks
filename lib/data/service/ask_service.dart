@@ -1,5 +1,7 @@
-import '../../core/error_reporter.dart';
+import 'dart:async';
 import 'dart:convert';
+
+import '../../core/error_reporter.dart';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_ai/firebase_ai.dart';
@@ -40,13 +42,19 @@ class GeminiAskService implements AskService {
         ),
       );
 
+  /// 모델을 기다리는 한도.
+  ///
+  /// 안 돌아오는 호출 뒤에는 로컬 답이 기다린다. 사람을 무한정 세워 두느니
+  /// 몇 초 뒤에 카탈로그로 답하는 편이 낫다.
+  static const Duration timeout = Duration(seconds: 12);
+
   @override
   Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
     final prompt = buildPrompt(question, catalog, weights);
     try {
-      final res = await _resolved.generateContent(<Content>[
-        Content.text(prompt),
-      ]);
+      final res = await _resolved
+          .generateContent(<Content>[Content.text(prompt)])
+          .timeout(timeout);
       final text = res.text;
       if (text == null) return null;
       final parsed = AskAnswer.tryParse(text);
@@ -145,6 +153,25 @@ Question: $question
   }
 }
 
+/// 모델을 먼저 부르고, 못 부르면 다른 구현에 넘긴다.
+///
+/// Gemini 는 설정이 없거나 네트워크가 없거나 응답 형태가 깨지면 null 을
+/// 돌려준다. 그때 화면에 실패 말풍선만 띄우면 상담 탭이 통째로 쓸모없어진다 —
+/// 카탈로그만으로도 답할 수 있는 질문이 대부분이다.
+class FallbackAskService implements AskService {
+  const FallbackAskService(this.primary, this.fallback);
+
+  final AskService primary;
+  final AskService fallback;
+
+  @override
+  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
+    final answer = await primary.ask(question, catalog);
+    if (answer != null) return answer;
+    return fallback.ask(question, catalog);
+  }
+}
+
 /// 모델을 부르지 않고 카탈로그만으로 답하는 구현.
 ///
 /// 오프라인이거나 Firebase 설정이 없을 때 화면이 죽지 않게 한다. 예산과
@@ -158,7 +185,7 @@ class LocalAskService implements AskService {
   Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
     if (catalog.isEmpty) return null;
 
-    final budget = _budget(question);
+    final budget = budgetUsd(question);
     var pool = catalog;
     if (budget != null) {
       final affordable = catalog
@@ -209,10 +236,33 @@ class LocalAskService implements AskService {
     );
   }
 
-  /// `$900`, `900 dollars`, `900불` 같은 표현에서 숫자만 뽑는다.
-  static int? _budget(String question) {
-    final match = RegExp(r'(\d[\d,]{2,})').firstMatch(question);
-    if (match == null) return null;
-    return int.tryParse(match.group(1)!.replaceAll(',', ''));
+  /// 카탈로그 가격이 달러뿐이라 원화는 어림해서 바꾼다.
+  ///
+  /// P4 에서 원화 가격이 들어오면 이 상수도 이 변환도 없어진다.
+  static const int krwPerUsd = 1400;
+
+  /// 질문에서 예산을 달러로 뽑는다.
+  ///
+  /// `$900`, `900 dollars`, `900불` 은 그대로 달러다. 한국어로는 대부분
+  /// **만원**으로 쓴다 — "100만원 이하"를 100달러로 읽어 9만원짜리 폰을
+  /// 추천하던 버그가 있었다.
+  static int? budgetUsd(String question) {
+    // "100만원", "100만 원", "100만"
+    final man = RegExp(r'(\d[\d,]*)\s*만\s*원?').firstMatch(question);
+    if (man != null) {
+      final n = int.tryParse(man.group(1)!.replaceAll(',', ''));
+      if (n != null && n > 0) return (n * 10000 / krwPerUsd).round();
+    }
+
+    // "1,200,000원"
+    final won = RegExp(r'(\d[\d,]{2,})\s*원').firstMatch(question);
+    if (won != null) {
+      final n = int.tryParse(won.group(1)!.replaceAll(',', ''));
+      if (n != null && n > 0) return (n / krwPerUsd).round();
+    }
+
+    final usd = RegExp(r'(\d[\d,]{2,})').firstMatch(question);
+    if (usd == null) return null;
+    return int.tryParse(usd.group(1)!.replaceAll(',', ''));
   }
 }

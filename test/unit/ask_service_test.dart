@@ -105,6 +105,29 @@ void main() {
     });
   });
 
+  group('앞뒤로 물어보기', _fallback);
+
+  // "100만원 이하"를 100달러로 읽어 9만원짜리 폰을 추천하던 버그가 있었다.
+  group('예산 읽기', () {
+    test('달러는 그대로', () {
+      expect(LocalAskService.budgetUsd(r'$900 이하'), 900);
+      expect(LocalAskService.budgetUsd('Best camera under \$1,000'), 1000);
+    });
+
+    test('만원은 달러로 바꾼다', () {
+      expect(LocalAskService.budgetUsd('100만원 이하 카메라 좋은 것'), 714);
+      expect(LocalAskService.budgetUsd('70만 원'), 500);
+    });
+
+    test('원 단위도 읽는다', () {
+      expect(LocalAskService.budgetUsd('1,400,000원 이하'), 1000);
+    });
+
+    test('숫자가 없으면 없다', () {
+      expect(LocalAskService.budgetUsd('가벼운 거'), isNull);
+    });
+  });
+
   group('오프라인 답변', () {
     const service = LocalAskService();
 
@@ -126,5 +149,60 @@ void main() {
         K.spec(SpecKind.camera).tr(),
       ]);
     });
+  });
+}
+
+/// 모델을 못 부르면 로컬이 받는다.
+///
+/// 상담 탭이 오래 로컬만 쓰고 있었다. Gemini 를 앞에 두되, 설정이 없거나
+/// 네트워크가 없을 때 화면이 실패 말풍선만 띄우면 안 된다.
+class _NullAsk implements AskService {
+  int calls = 0;
+
+  @override
+  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
+    calls++;
+    return null;
+  }
+}
+
+class _FixedAsk implements AskService {
+  _FixedAsk(this.answer);
+
+  final AskAnswer answer;
+  int calls = 0;
+
+  @override
+  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
+    calls++;
+    return answer;
+  }
+}
+
+void _fallback() {
+  test('앞이 답하면 뒤는 안 부른다', () async {
+    final primary = _FixedAsk(_answer());
+    final fallback = _NullAsk();
+
+    final got = await FallbackAskService(
+      primary,
+      fallback,
+    ).ask('뭐가 좋아', _catalog);
+
+    expect(got?.pick, 'Galaxy S25 Ultra');
+    expect(fallback.calls, 0);
+  });
+
+  test('앞이 못 답하면 뒤가 받는다', () async {
+    final primary = _NullAsk();
+    final fallback = _FixedAsk(_answer(slug: 'iphone-16-pro-max'));
+
+    final got = await FallbackAskService(
+      primary,
+      fallback,
+    ).ask('뭐가 좋아', _catalog);
+
+    expect(got?.pickSlug, 'iphone-16-pro-max');
+    expect(primary.calls, 1);
   });
 }

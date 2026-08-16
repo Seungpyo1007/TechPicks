@@ -361,6 +361,21 @@ P1 을 실행 순서로 편 것이다.
 - [x] `applicationId` / `PRODUCT_BUNDLE_IDENTIFIER` 교체
 - [x] 릴리스 서명 설정
 
+#### 상담은 App Check 를 켜야 산다
+
+`askServiceProvider` 가 로컬 구현만 물고 있어 **모델을 한 번도 부르지 않았다.**
+Gemini 를 앞에 두고 실패하면 로컬이 받도록 바꿨더니 (`d0d24d9`) 실기에서
+이유가 찍혔다:
+
+```
+ask.gemini: Firebase AI Logic has been deactivated in this project.
+To resume using Firebase AI Logic, you must enforce Firebase App Check.
+```
+
+콘솔에서 App Check 를 켜고 앱에 `firebase_app_check` 를 붙여야 (iOS 는 App
+Attest/DeviceCheck) 모델 경로가 산다. 그 전까지 상담은 카탈로그만으로 답한다 —
+화면은 같고 답의 출처만 다르다.
+
 **iOS 마감** (`1812483`)
 - [x] 앱 아이콘 알파 제거 — App Store Connect 가 반려하는 항목이다
 - [x] 아이폰 전용 · 세로 고정 — 아이패드 레이아웃은 만든 적이 없다

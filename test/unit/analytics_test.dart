@@ -70,7 +70,7 @@ void main() {
     final logs = sink.logs
         .where((l) => l.event == 'shortlist_changed')
         .toList();
-    expect(logs.map((l) => l.params['added']), <bool>[true, true, false]);
+    expect(logs.map((l) => l.params['added']), <int>[1, 1, 0]);
     expect(logs.map((l) => l.params['size']), <int>[1, 2, 1]);
   });
 
@@ -80,6 +80,28 @@ void main() {
     final log = sink.logs.single;
     expect(log.event, 'rank_axis_changed');
     expect(log.params['axis'], 'battery');
+  });
+
+  // Firebase Analytics 는 문자열과 숫자만 받는다. bool 을 넣었더니 어서션이
+  // 터져 화면에 빨간 오류가 났다.
+  test('값은 문자열 아니면 숫자다', () {
+    final c = container();
+    c.read(shortlistProvider.notifier).toggle('galaxy-s25-ultra');
+    c.read(weightsProvider.notifier).setAxis(TpAxisKind.battery, 0.4);
+    c.read(rankAxisProvider.notifier).set(RankAxis.camera);
+    TpAnalytics.asked(length: 3, answered: false);
+    TpAnalytics.shared('device');
+    TpAnalytics.linkOpened('device');
+
+    for (final log in sink.logs) {
+      for (final entry in log.params.entries) {
+        expect(
+          entry.value is String || entry.value is num,
+          isTrue,
+          reason: '${log.event}.${entry.key} = ${entry.value}',
+        );
+      }
+    }
   });
 
   test('질문은 원문을 안 보낸다', () {

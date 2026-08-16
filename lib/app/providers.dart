@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -469,13 +470,31 @@ final shortlistDevicesProvider = Provider<List<Smartphone>>((ref) {
   ];
 });
 
-/// AI 상담. 기본은 로컬 구현이다.
+/// AI 상담.
 ///
-/// Gemini 로 바꾸려면 여기만 갈아끼운다. Firebase 설정이 없는 기기에서도
-/// 화면이 죽지 않아야 해서 기본값을 로컬로 뒀다.
-final askServiceProvider = Provider<AskService>(
-  (ref) => LocalAskService(weights: ref.watch(weightsProvider)),
-);
+/// Firebase 가 떠 있으면 Gemini 에게 먼저 묻고, 못 부르면 카탈로그만으로
+/// 답하는 로컬 구현이 받는다. 오래 로컬만 쓰다 보니 상담 탭이 모델을 한 번도
+/// 부르지 않는 상태였다 — 명세 §12 의 화면은 그대로인데 답이 가짜였다.
+final askServiceProvider = Provider<AskService>((ref) {
+  final local = LocalAskService(weights: ref.watch(weightsProvider));
+  if (!_firebaseReady) return local;
+  return FallbackAskService(
+    GeminiAskService(weights: ref.watch(weightsProvider)),
+    local,
+  );
+});
+
+/// Firebase 가 초기화됐는지.
+///
+/// 안 떠 있으면 `FirebaseAI` 를 만드는 순간 던진다. 위젯 테스트처럼 플러그인이
+/// 아예 없는 환경에서는 조회 자체가 던지므로 그것도 없는 것으로 본다.
+bool get _firebaseReady {
+  try {
+    return Firebase.apps.isNotEmpty;
+  } catch (_) {
+    return false;
+  }
+}
 
 /// 대화 내용.
 class AskNotifier extends Notifier<List<AskMessage>> {
