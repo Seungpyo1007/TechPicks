@@ -22,6 +22,13 @@ class TpTokens extends ThemeExtension<TpTokens> {
     required this.cardShadow,
     required this.buttonShadow,
     required this.hasSpecular,
+    required this.chromeFill,
+    required this.chromeFillRaised,
+    required this.chromeBlurSigma,
+    required this.chromeSaturation,
+    required this.chromeShadow,
+    required this.chromeShadowRaised,
+    required this.chromeEdge,
     required this.rCard,
     required this.rInner,
     required this.rIcon,
@@ -99,6 +106,30 @@ class TpTokens extends ThemeExtension<TpTokens> {
   /// 카드 위쪽 모서리의 1px 반사광. iOS 만 그린다.
   final bool hasSpecular;
 
+  // ── 크롬 유리 ────────────────────────────────────────────────
+  // 명세는 크롬을 카드보다 **더 흐리고 더 진하게** 잡는다. 여태 카드 값을
+  // 그대로 써서 탭 바가 그냥 밝은 알약으로 보였다. 값의 출처는 프로토타입
+  // (`docs/design/index.html:553·567`) 이다 — 핸드오프 표에는 컨트롤 한 줄뿐이라
+  // 캡슐의 더 깊은 그림자가 빠져 있다.
+
+  /// 헤더 알약 채움. `rgba(250,251,253,.62)`.
+  final Color chromeFill;
+
+  /// 탭 캡슐 채움. 컨트롤보다 조금 진하다. `rgba(250,251,253,.66)`.
+  final Color chromeFillRaised;
+
+  /// 크롬 블러. Android 는 0.
+  final double chromeBlurSigma;
+
+  /// 크롬 채도.
+  final double chromeSaturation;
+
+  final List<BoxShadow> chromeShadow;
+  final List<BoxShadow> chromeShadowRaised;
+
+  /// 크롬 아래 모서리의 0.5px 그림자 선. `inset 0 -0.5px 0 rgba(20,40,70,.06)`.
+  final Color? chromeEdge;
+
   // ── 반지름 ───────────────────────────────────────────────────
   /// 동심 규칙: 28 카드 안은 22, 그 안은 16. 같거나 더 크면 안 된다.
   final double rCard;
@@ -173,6 +204,25 @@ class TpTokens extends ThemeExtension<TpTokens> {
       ),
     ],
     hasSpecular: true,
+    chromeFill: Color(0x9EFAFBFD), // rgba(250,251,253,.62)
+    chromeFillRaised: Color(0xA8FAFBFD), // rgba(250,251,253,.66)
+    chromeBlurSigma: 34,
+    chromeSaturation: 2,
+    chromeShadow: <BoxShadow>[
+      BoxShadow(
+        color: Color(0x260F2341), // rgba(15,35,65,.15)
+        blurRadius: 22,
+        offset: Offset(0, 6),
+      ),
+    ],
+    chromeShadowRaised: <BoxShadow>[
+      BoxShadow(
+        color: Color(0x290F2341), // rgba(15,35,65,.16)
+        blurRadius: 32,
+        offset: Offset(0, 10),
+      ),
+    ],
+    chromeEdge: Color(0x0F142846), // rgba(20,40,70,.06)
     rCard: 28,
     rInner: 22,
     rIcon: 26,
@@ -222,6 +272,14 @@ class TpTokens extends ThemeExtension<TpTokens> {
       ),
     ],
     hasSpecular: false,
+    // 톤 단계로 층을 만든다. 유리가 아니라 블러도 그림자도 없다.
+    chromeFill: Color(0xFFF6F8FC),
+    chromeFillRaised: tabBarFill,
+    chromeBlurSigma: 0,
+    chromeSaturation: 1,
+    chromeShadow: <BoxShadow>[],
+    chromeShadowRaised: <BoxShadow>[],
+    chromeEdge: null,
     rCard: 20,
     rInner: 16,
     rIcon: 24,
