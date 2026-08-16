@@ -15,6 +15,7 @@ import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../rank/category_chips.dart';
 import '../../shared/widgets/tp_error_state.dart';
+import '../../shared/widgets/tp_press.dart';
 
 /// 프로세서 랭킹. 명세 §5 `cpu`.
 ///
@@ -134,9 +135,9 @@ class _SegmentedCell extends StatelessWidget {
       selected: selected,
       label: label,
       excludeSemantics: true,
-      child: GestureDetector(
+      child: TpPress(
         onTap: onTap,
-        behavior: HitTestBehavior.opaque,
+        semanticsButton: false,
         child: AnimatedContainer(
           duration: context.motion.selection.duration,
           curve: context.motion.selection.curve,

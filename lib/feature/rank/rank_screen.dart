@@ -17,6 +17,7 @@ import 'category_chips.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_button.dart';
+import '../../shared/widgets/tp_press.dart';
 
 /// 랭킹. v1 의 `RankingCPU/Phone/Laptop.dart` 웹뷰 세 개를 대체한다.
 ///
@@ -242,9 +243,9 @@ class _RankRow extends StatelessWidget {
         ],
       ),
       excludeSemantics: true,
-      child: GestureDetector(
+      child: TpPress(
         onTap: onTap,
-        behavior: HitTestBehavior.opaque,
+        semanticsButton: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Column(

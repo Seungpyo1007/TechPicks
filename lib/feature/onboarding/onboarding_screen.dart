@@ -49,10 +49,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       _finish();
       return;
     }
-    _pages.nextPage(
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOut,
-    );
+    // 리터럴이던 때는 바로 아래 점(selection)과 박자가 어긋났고 "동작 줄이기"도
+    // 안 먹었다.
+    final move = context.motion.contentSwap;
+    _pages.nextPage(duration: move.duration, curve: move.curve);
   }
 
   @override

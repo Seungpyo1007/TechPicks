@@ -1,3 +1,5 @@
+import 'package:techpicks/app/shell/tp_tab.dart';
+import 'package:techpicks/app/shell/tp_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
@@ -264,5 +266,22 @@ void _homeMotion() {
 
     expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
     expect(tester.takeException(), isNull);
+  });
+
+  // 같은 동작이 두 크롬에서 정반대였다 — iOS 는 선택만 움직이고 눌림이 없었고,
+  // 안드로이드는 눌림만 있고 선택이 툭 바뀌었다.
+  testWidgets('안드로이드 탭도 선택이 움직인다', (tester) async {
+    await pumpScreen(
+      tester,
+      HomeScreen(onTabSelected: (_) {}),
+      chrome: TpChrome.android,
+    );
+
+    final labels = find.descendant(
+      of: find.byType(TpShell),
+      matching: find.byType(AnimatedDefaultTextStyle),
+    );
+    // 탭 다섯 개 + 앱 바 제목. 여섯 개면 다섯 개가 다 감싸졌다는 뜻이다.
+    expect(labels, findsNWidgets(TpTab.values.length + 1));
   });
 }
