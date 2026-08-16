@@ -22,7 +22,25 @@ class TpSurface extends StatelessWidget {
     this.shadow = true,
     this.onTap,
     this.onLongPress,
+    this.chrome = false,
+    this.raised = false,
   });
+
+  /// 크롬 등급 유리. 카드보다 더 흐리고 더 진하다.
+  ///
+  /// 명세가 카드와 크롬에 다른 값을 주는데 여태 카드 값 하나로 다 그렸다.
+  /// 그래서 탭 바가 유리가 아니라 밝은 알약으로 보였다.
+  const TpSurface.chrome({
+    super.key,
+    required this.child,
+    this.radius,
+    this.padding,
+    this.shadow = true,
+    this.onTap,
+    this.onLongPress,
+    this.raised = false,
+  }) : strong = true,
+       chrome = true;
 
   final Widget child;
 
@@ -39,11 +57,24 @@ class TpSurface extends StatelessWidget {
   /// 길게 눌러 지우는 행에 쓴다. 명세 §3 의 shortlist 행이 그렇다.
   final VoidCallback? onLongPress;
 
+  /// 크롬 등급으로 그릴지. [TpSurface.chrome] 이 켠다.
+  final bool chrome;
+
+  /// 탭 캡슐. 컨트롤보다 진하고 그림자가 깊다.
+  final bool raised;
+
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
     final r = BorderRadius.circular(radius ?? t.rCard);
-    final fill = strong ? t.cardStrong : t.card;
+    final fill = chrome
+        ? (raised ? t.chromeFillRaised : t.chromeFill)
+        : (strong ? t.cardStrong : t.card);
+    final sigma = chrome ? t.chromeBlurSigma : t.blurSigma;
+    final saturation = chrome ? t.chromeSaturation : t.saturation;
+    final shadows = chrome
+        ? (raised ? t.chromeShadowRaised : t.chromeShadow)
+        : t.cardShadow;
 
     Widget content = padding == null
         ? child
@@ -71,11 +102,11 @@ class TpSurface extends StatelessWidget {
       child: content,
     );
 
-    if (t.blurSigma > 0) {
+    if (sigma > 0) {
       surface = BackdropFilter(
         filter: ui.ImageFilter.compose(
-          outer: ui.ColorFilter.matrix(_saturate(t.saturation)),
-          inner: ui.ImageFilter.blur(sigmaX: t.blurSigma, sigmaY: t.blurSigma),
+          outer: ui.ColorFilter.matrix(_saturate(saturation)),
+          inner: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
         ),
         child: surface,
       );
@@ -83,9 +114,9 @@ class TpSurface extends StatelessWidget {
 
     surface = ClipRRect(borderRadius: r, child: surface);
 
-    if (shadow && t.cardShadow.isNotEmpty) {
+    if (shadow && shadows.isNotEmpty) {
       surface = DecoratedBox(
-        decoration: BoxDecoration(borderRadius: r, boxShadow: t.cardShadow),
+        decoration: BoxDecoration(borderRadius: r, boxShadow: shadows),
         child: surface,
       );
     }

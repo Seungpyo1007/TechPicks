@@ -176,8 +176,7 @@ class TpShell extends StatelessWidget {
                   TpTapTarget(
                     onTap: onBack,
                     label: K.back.tr(),
-                    child: const TpSurface(
-                      strong: true,
+                    child: const TpSurface.chrome(
                       radius: TpTokens.rControl,
                       child: SizedBox(
                         width: 42,
@@ -194,8 +193,7 @@ class TpShell extends StatelessWidget {
                 if (title == null && trailing != null) const Spacer(),
                 if (title != null) ...<Widget>[
                   const Spacer(),
-                  TpSurface(
-                    strong: true,
+                  TpSurface.chrome(
                     radius: TpTokens.rControl,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -216,8 +214,7 @@ class TpShell extends StatelessWidget {
                   TpTapTarget(
                     onTap: trailing!.onTap,
                     label: trailing!.label,
-                    child: TpSurface(
-                      strong: true,
+                    child: TpSurface.chrome(
                       radius: TpTokens.rControl,
                       child: SizedBox(
                         width: 42,
@@ -239,8 +236,8 @@ class TpShell extends StatelessWidget {
             right: 12,
             bottom: tabBottom,
             height: _iosTabHeight,
-            child: TpSurface(
-              strong: true,
+            child: TpSurface.chrome(
+              raised: true,
               radius: TpTokens.rControl,
               child: _IosTabBar(
                 current: tab!,
