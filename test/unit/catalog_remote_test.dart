@@ -62,15 +62,14 @@ class _BrokenFeed implements CatalogFeed {
 }
 
 /// 애셋과 같은 모양의 카탈로그 한 벌.
-String _catalog(int version, {String name = 'Galaxy S25'}) => jsonEncode(
-  <String, dynamic>{
-    'version': version,
-    'source': 'TechAPI',
-    'smartphones': <Map<String, dynamic>>[
-      <String, dynamic>{'slug': 'galaxy-s25', 'name': name},
-    ],
-  },
-);
+String _catalog(int version, {String name = 'Galaxy S25'}) =>
+    jsonEncode(<String, dynamic>{
+      'version': version,
+      'source': 'TechAPI',
+      'smartphones': <Map<String, dynamic>>[
+        <String, dynamic>{'slug': 'galaxy-s25', 'name': name},
+      ],
+    });
 
 CatalogRepository _repo({CatalogStore? store, CatalogFeed? feed}) =>
     CatalogRepository(
@@ -163,7 +162,10 @@ void main() {
     final result = await _repo(store: store, feed: feed).load();
     await Future<void>.delayed(Duration.zero);
 
-    expect(result.fold((c) => c.smartphones, (f) => throw f), hasLength(readCatalog().smartphones.length));
+    expect(
+      result.fold((c) => c.smartphones, (f) => throw f),
+      hasLength(readCatalog().smartphones.length),
+    );
     expect(feed.fetches, 0);
   });
 
@@ -171,7 +173,10 @@ void main() {
     final result = await _repo(store: _FakeStore(), feed: _BrokenFeed()).load();
     await Future<void>.delayed(Duration.zero);
 
-    expect(result.fold((c) => c.smartphones, (f) => throw f), hasLength(readCatalog().smartphones.length));
+    expect(
+      result.fold((c) => c.smartphones, (f) => throw f),
+      hasLength(readCatalog().smartphones.length),
+    );
   });
 
   test('저장소가 죽어도 화면은 카탈로그를 받는다', () async {
@@ -181,7 +186,10 @@ void main() {
     ).load();
     await Future<void>.delayed(Duration.zero);
 
-    expect(result.fold((c) => c.smartphones, (f) => throw f), hasLength(readCatalog().smartphones.length));
+    expect(
+      result.fold((c) => c.smartphones, (f) => throw f),
+      hasLength(readCatalog().smartphones.length),
+    );
   });
 
   test('애셋이 없어도 받아둔 것이 있으면 그걸 쓴다', () async {

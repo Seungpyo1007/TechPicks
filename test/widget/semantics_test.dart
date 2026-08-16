@@ -109,7 +109,5 @@ void main() {
 /// 랭킹 1위 행이 읽히는 문장.
 String _topRankSentence() {
   final top = readRanking().first;
-  return K.a11yRankRow.tr(
-    args: <String>['1', top.device.name, '${top.index}'],
-  );
+  return K.a11yRankRow.tr(args: <String>['1', top.device.name, '${top.index}']);
 }

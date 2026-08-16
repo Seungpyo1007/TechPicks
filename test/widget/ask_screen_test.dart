@@ -1,3 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
+import 'package:techpicks/shared/copy_keys.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -123,4 +126,45 @@ void main() {
       expect(find.text('Ask'), findsWidgets);
     }
   });
+
+  // 답을 기다리는 동안 아무 표시가 없었고, 그 사이에 보낸 질문은 조용히
+  // 버려졌다.
+  testWidgets('기다리는 동안 표시가 남고 두 번째 질문은 안 사라진다', (tester) async {
+    final answer = Completer<AskAnswer?>();
+    await pumpScreen(
+      tester,
+      const AskScreen(),
+      size: const Size(1200, 2400),
+      overrides: <Override>[
+        askServiceProvider.overrideWithValue(_SlowAsk(answer.future)),
+      ],
+    );
+
+    await tester.enterText(find.byType(TextField), '뭐가 좋아?');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+
+    expect(find.text(K.askThinking.tr()), findsOneWidget);
+
+    // 기다리는 동안 보내기는 잠겨 있다.
+    final before = tester.widgetList(find.byType(TextField)).length;
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+    expect(before, tester.widgetList(find.byType(TextField)).length);
+
+    answer.complete(null);
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.askThinking.tr()), findsNothing);
+  });
+}
+
+/// 시킨 대로 늦게 답한다.
+class _SlowAsk implements AskService {
+  const _SlowAsk(this.answer);
+
+  final Future<AskAnswer?> answer;
+
+  @override
+  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) => answer;
 }

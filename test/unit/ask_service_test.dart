@@ -126,6 +126,18 @@ void main() {
     test('숫자가 없으면 없다', () {
       expect(LocalAskService.budgetUsd('가벼운 거'), isNull);
     });
+
+    // 아무 세 자리 숫자나 예산으로 읽던 때는 저장 용량이 예산이 됐다.
+    test('용량과 모델 번호는 예산이 아니다', () {
+      expect(LocalAskService.budgetUsd('아이폰 17 Pro 256GB 어때?'), isNull);
+      expect(LocalAskService.budgetUsd('Galaxy S25 512GB vs Pixel 10'), isNull);
+    });
+
+    test('달러라고 적으면 읽는다', () {
+      expect(LocalAskService.budgetUsd('900 달러 이하'), 900);
+      expect(LocalAskService.budgetUsd('under 900 dollars'), 900);
+      expect(LocalAskService.budgetUsd('900불'), 900);
+    });
   });
 
   group('오프라인 답변', () {

@@ -332,7 +332,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _ShortlistRow extends StatelessWidget {
+class _ShortlistRow extends ConsumerWidget {
   const _ShortlistRow({required this.device, this.onTap, this.onRemove});
 
   final Smartphone device;
@@ -340,10 +340,12 @@ class _ShortlistRow extends StatelessWidget {
   final VoidCallback? onRemove;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = context.tp;
     final type = context.tpText;
-    final index = TpIndex.of(device.score);
+    // 결론 카드와 같은 가중치로 센다. 기본값으로 세던 때는 같은 기기가 한
+    // 화면에서 85 와 92 로 보였다.
+    final index = TpIndex.of(device.score, ref.watch(weightsProvider));
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

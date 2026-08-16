@@ -158,12 +158,15 @@ void main() {
         .widget<FractionallySizedBox>(find.byType(FractionallySizedBox))
         .widthFactor!;
 
-    Widget bar(double fraction) =>
-        Center(child: SizedBox(width: 200, child: TpBar(fraction: fraction)));
+    Widget bar(double fraction) => Center(
+      child: SizedBox(width: 200, child: TpBar(fraction: fraction)),
+    );
 
-    Future<void> pumpBar(WidgetTester tester, double fraction,
-        {bool reduce = false}) =>
-        pumpScreen(tester, bar(fraction), disableAnimations: reduce);
+    Future<void> pumpBar(
+      WidgetTester tester,
+      double fraction, {
+      bool reduce = false,
+    }) => pumpScreen(tester, bar(fraction), disableAnimations: reduce);
 
     testWidgets('값이 바뀌면 중간 프레임을 거친다', (tester) async {
       await pumpBar(tester, 0.2);

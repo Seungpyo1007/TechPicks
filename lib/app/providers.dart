@@ -533,18 +533,33 @@ bool get _firebaseReady {
 }
 
 /// 대화 내용.
+/// 답을 기다리는 중인지.
+///
+/// 노티파이어 안의 필드로만 두면 화면이 못 읽는다. 그래서 기다리는 동안
+/// 아무 표시가 없었고, 그 사이에 보낸 두 번째 질문은 조용히 버려졌다.
+class AskBusyNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool value) => state = value;
+}
+
+final askBusyProvider = NotifierProvider<AskBusyNotifier, bool>(
+  AskBusyNotifier.new,
+);
+
 class AskNotifier extends Notifier<List<AskMessage>> {
   @override
   List<AskMessage> build() => <AskMessage>[AskMessage.ai(K.chatSeed.tr())];
 
   bool _busy = false;
-  bool get isBusy => _busy;
 
   Future<void> send(String question) async {
     final text = question.trim();
     if (text.isEmpty || _busy) return;
 
     _busy = true;
+    ref.read(askBusyProvider.notifier).set(true);
     // 사용자 말풍선을 먼저 올린다. 응답을 기다리는 동안 화면이 멈춘 것처럼
     // 보이지 않게 한다.
     state = <AskMessage>[...state, AskMessage.user(text)];
@@ -563,6 +578,7 @@ class AskNotifier extends Notifier<List<AskMessage>> {
     }
 
     _busy = false;
+    if (ref.mounted) ref.read(askBusyProvider.notifier).set(false);
     TpAnalytics.asked(length: text.length, answered: answer != null);
     // 답이 오는 동안 화면을 떠났을 수 있다.
     if (!ref.mounted) return;

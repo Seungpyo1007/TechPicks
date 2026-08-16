@@ -261,8 +261,14 @@ class LocalAskService implements AskService {
       if (n != null && n > 0) return (n / krwPerUsd).round();
     }
 
-    final usd = RegExp(r'(\d[\d,]{2,})').firstMatch(question);
+    // 통화 표시가 있을 때만 달러로 읽는다. 아무 세 자리 숫자나 받던 때는
+    // "아이폰 17 Pro 256GB 어때?" 가 예산 $256 이 돼서 싸구려를 추천했다.
+    final usd = RegExp(
+      r'(?:\$|usd\s*)(\d[\d,]*)|(\d[\d,]*)\s*(?:달러|불|dollars?|usd)',
+      caseSensitive: false,
+    ).firstMatch(question);
     if (usd == null) return null;
-    return int.tryParse(usd.group(1)!.replaceAll(',', ''));
+    final digits = usd.group(1) ?? usd.group(2)!;
+    return int.tryParse(digits.replaceAll(',', ''));
   }
 }
