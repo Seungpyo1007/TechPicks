@@ -73,42 +73,50 @@ class _AskScreenState extends ConsumerState<AskScreen> {
       title: K.tabAsk.tr(),
       tab: TpTab.ask,
       onTabSelected: widget.onTabSelected,
-      child: Stack(
-        children: <Widget>[
-          ListView.builder(
-            controller: _scroll,
-            // 입력 바는 이 영역 바닥에 붙는다. 그만큼 아래를 비워둬야 마지막
-            // 말풍선이 그 뒤로 숨지 않는다. 셸에 여백을 더하면 입력 바가
-            // 탭 바에서 그만큼 떠서 빈 공간이 생긴다.
-            padding: EdgeInsets.fromLTRB(
-              16,
-              8,
-              16,
-              8 + _Composer.height + keyboard,
+      // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면 크롬이
+      // 차지한 자리를 모르는 예전 값이 나온다.
+      child: Builder(
+        builder: (context) => Stack(
+          children: <Widget>[
+            ListView.builder(
+              controller: _scroll,
+              // 입력 바는 이 영역 바닥에 붙는다. 그만큼 아래를 비워둬야 마지막
+              // 말풍선이 그 뒤로 숨지 않는다. 셸에 여백을 더하면 입력 바가
+              // 탭 바에서 그만큼 떠서 빈 공간이 생긴다.
+              padding:
+                  EdgeInsets.fromLTRB(
+                    16,
+                    8,
+                    16,
+                    8 + _Composer.height + keyboard,
+                  ) +
+                  tpContentInset(context),
+              // 기다리는 동안 말풍선 하나를 더 놓는다. 아무 표시가 없으면
+              // 답이 오는 중인지 실패한 건지 알 수 없다.
+              itemCount: messages.length + (busy ? 1 : 0),
+              itemBuilder: (context, i) => i == messages.length
+                  ? _Bubble(message: AskMessage.ai(K.askThinking.tr()))
+                  : _Bubble(
+                      message: messages[i],
+                      // 답이 도착한 걸 스크린 리더가 알려줘야 한다. 화면은
+                      // 스크롤로 알리지만 그건 눈으로 보는 사람에게만 통한다.
+                      announce:
+                          !busy &&
+                          i == messages.length - 1 &&
+                          !messages[i].isUser,
+                      onDeviceTap: widget.onDeviceTap,
+                    ),
             ),
-            // 기다리는 동안 말풍선 하나를 더 놓는다. 아무 표시가 없으면
-            // 답이 오는 중인지 실패한 건지 알 수 없다.
-            itemCount: messages.length + (busy ? 1 : 0),
-            itemBuilder: (context, i) => i == messages.length
-                ? _Bubble(message: AskMessage.ai(K.askThinking.tr()))
-                : _Bubble(
-                    message: messages[i],
-                    // 답이 도착한 걸 스크린 리더가 알려줘야 한다. 화면은
-                    // 스크롤로 알리지만 그건 눈으로 보는 사람에게만 통한다.
-                    announce:
-                        !busy &&
-                        i == messages.length - 1 &&
-                        !messages[i].isUser,
-                    onDeviceTap: widget.onDeviceTap,
-                  ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: keyboard,
-            child: _Composer(controller: _input, onSend: _send, busy: busy),
-          ),
-        ],
+            Positioned(
+              left: 0,
+              right: 0,
+              // 콘텐츠가 탭 바 아래로 흐르므로 입력 바는 그만큼 위에 붙어야
+              // 한다. 안 그러면 제안 칩과 입력창이 탭 캡슐 뒤로 숨는다.
+              bottom: keyboard + tpContentInset(context).bottom,
+              child: _Composer(controller: _input, onSend: _send, busy: busy),
+            ),
+          ],
+        ),
       ),
     );
   }

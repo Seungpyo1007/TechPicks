@@ -94,131 +94,139 @@ class _YouScreenState extends ConsumerState<YouScreen> {
       title: t.isGlass ? null : K.you.tr(),
       tab: TpTab.you,
       onTabSelected: widget.onTabSelected,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        children: <Widget>[
-          if (t.isGlass) ...<Widget>[
-            Text(K.you.tr(), style: type.largeTitle),
-            const SizedBox(height: 12),
-          ],
+      child: Builder(
+        // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
+        // 크롬이 차지한 자리를 모르는 예전 값이 나온다.
+        builder: (context) => ListView(
+          padding:
+              const EdgeInsets.fromLTRB(16, 4, 16, 24) +
+              tpContentInset(context),
+          children: <Widget>[
+            if (t.isGlass) ...<Widget>[
+              Text(K.you.tr(), style: type.largeTitle),
+              const SizedBox(height: 12),
+            ],
 
-          _ProfileHeader(
-            name: name,
-            email: email,
-            // 계정이 없으면 고칠 프로필도 없다. 손님에게 이름 바꾸기 시트를
-            // 열어 주면 저장이 조용히 실패한다.
-            onEdit: hasAccount ? widget.onEditProfile ?? _editName : null,
-          ),
-          const SizedBox(height: 22),
-
-          _YourDevice(onTap: widget.onDeviceTap),
-          const SizedBox(height: 22),
-
-          Text(K.priorities.tr().toUpperCase(), style: type.eyebrow),
-          const SizedBox(height: 8),
-          TpSurface(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-            child: Column(
-              children: <Widget>[
-                for (final kind in TpAxisKind.values)
-                  _WeightSlider(
-                    kind: kind,
-                    value: kind.weightIn(weights),
-                    onChanged: (v) =>
-                        ref.read(weightsProvider.notifier).setAxis(kind, v),
-                  ),
-                const SizedBox(height: 4),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(K.prioritiesNote.tr(), style: type.caption),
-                    ),
-                    const SizedBox(width: 10),
-                    TpTapTarget(
-                      onTap: () => ref.read(weightsProvider.notifier).reset(),
-                      child: Text(
-                        K.reset.tr(),
-                        style: type.caption.copyWith(color: TpTokens.blueText),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-              ],
+            _ProfileHeader(
+              name: name,
+              email: email,
+              // 계정이 없으면 고칠 프로필도 없다. 손님에게 이름 바꾸기 시트를
+              // 열어 주면 저장이 조용히 실패한다.
+              onEdit: hasAccount ? widget.onEditProfile ?? _editName : null,
             ),
-          ),
-          const SizedBox(height: 22),
+            const SizedBox(height: 22),
 
-          TpSurface(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: <Widget>[
-                _SettingRow(
-                  label: K.language.tr(),
-                  value: (locale?.current ?? TpLocale.en).label,
-                  onTap: locale == null
-                      ? null
-                      : () => _pickLanguage(context, ref, locale),
-                ),
-                // 다크 모드는 명세에 토큰이 없다. 색을 지어내지 않고 자리만 둔다.
-                _SettingRow(label: K.darkMode.tr(), value: K.off.tr()),
-                _SettingRow(
-                  label: K.notifications.tr(),
-                  value: (notifications ? K.on : K.off).tr(),
-                  onTap: () => ref
-                      .read(notificationsProvider.notifier)
-                      .set(!notifications),
-                ),
-                _SettingRow(label: K.currency.tr(), value: 'USD', last: true),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
+            _YourDevice(onTap: widget.onDeviceTap),
+            const SizedBox(height: 22),
 
-          TpSurface(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              children: <Widget>[
-                // 비밀번호가 없는 계정(익명·소셜)에는 보낼 곳이 없다.
-                if (email != null && email!.isNotEmpty)
-                  _SettingRow(
-                    label: K.changePassword.tr(),
-                    onTap:
-                        widget.onChangePassword ??
-                        () => unawaited(_resetPassword()),
-                  ),
-                _SettingRow(
-                  // 손님에게 "로그아웃"은 나갈 곳이 없다는 뜻으로 읽힌다.
-                  // 누르면 로그인 화면으로 가니 그렇게 적는다.
-                  label: (hasAccount ? K.logout : K.signIn).tr(),
-                  onTap: widget.onLogout,
-                  last: true,
-                ),
-              ],
-            ),
-          ),
-          if (_notice != null) ...<Widget>[
+            Text(K.priorities.tr().toUpperCase(), style: type.eyebrow),
             const SizedBox(height: 8),
-            Text(_notice!, style: type.caption),
-          ],
-          const SizedBox(height: 20),
-
-          // 푸터 문구는 명세 §13 의 확정 카피다. 글자는 그대로 두고 누르면
-          // Apache-2.0 본문이 열리게만 한다.
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TpTapTarget(
-              link: true,
-              minSize: 44,
-              onTap: () => unawaited(_openLicense()),
-              child: Text(
-                YouScreen.versionLine,
-                // 눌리는 줄이다. 본문과 같은 회색이면 알 방법이 없다.
-                style: type.caption.copyWith(color: TpTokens.blueText),
+            TpSurface(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+              child: Column(
+                children: <Widget>[
+                  for (final kind in TpAxisKind.values)
+                    _WeightSlider(
+                      kind: kind,
+                      value: kind.weightIn(weights),
+                      onChanged: (v) =>
+                          ref.read(weightsProvider.notifier).setAxis(kind, v),
+                    ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(K.prioritiesNote.tr(), style: type.caption),
+                      ),
+                      const SizedBox(width: 10),
+                      TpTapTarget(
+                        onTap: () => ref.read(weightsProvider.notifier).reset(),
+                        child: Text(
+                          K.reset.tr(),
+                          style: type.caption.copyWith(
+                            color: TpTokens.blueText,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 22),
+
+            TpSurface(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: <Widget>[
+                  _SettingRow(
+                    label: K.language.tr(),
+                    value: (locale?.current ?? TpLocale.en).label,
+                    onTap: locale == null
+                        ? null
+                        : () => _pickLanguage(context, ref, locale),
+                  ),
+                  // 다크 모드는 명세에 토큰이 없다. 색을 지어내지 않고 자리만 둔다.
+                  _SettingRow(label: K.darkMode.tr(), value: K.off.tr()),
+                  _SettingRow(
+                    label: K.notifications.tr(),
+                    value: (notifications ? K.on : K.off).tr(),
+                    onTap: () => ref
+                        .read(notificationsProvider.notifier)
+                        .set(!notifications),
+                  ),
+                  _SettingRow(label: K.currency.tr(), value: 'USD', last: true),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            TpSurface(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: <Widget>[
+                  // 비밀번호가 없는 계정(익명·소셜)에는 보낼 곳이 없다.
+                  if (email != null && email!.isNotEmpty)
+                    _SettingRow(
+                      label: K.changePassword.tr(),
+                      onTap:
+                          widget.onChangePassword ??
+                          () => unawaited(_resetPassword()),
+                    ),
+                  _SettingRow(
+                    // 손님에게 "로그아웃"은 나갈 곳이 없다는 뜻으로 읽힌다.
+                    // 누르면 로그인 화면으로 가니 그렇게 적는다.
+                    label: (hasAccount ? K.logout : K.signIn).tr(),
+                    onTap: widget.onLogout,
+                    last: true,
+                  ),
+                ],
+              ),
+            ),
+            if (_notice != null) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(_notice!, style: type.caption),
+            ],
+            const SizedBox(height: 20),
+
+            // 푸터 문구는 명세 §13 의 확정 카피다. 글자는 그대로 두고 누르면
+            // Apache-2.0 본문이 열리게만 한다.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TpTapTarget(
+                link: true,
+                minSize: 44,
+                onTap: () => unawaited(_openLicense()),
+                child: Text(
+                  YouScreen.versionLine,
+                  // 눌리는 줄이다. 본문과 같은 회색이면 알 방법이 없다.
+                  style: type.caption.copyWith(color: TpTokens.blueText),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

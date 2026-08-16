@@ -57,58 +57,67 @@ class CompareScreen extends ConsumerWidget {
       title: K.compareTitle.tr(),
       tab: TpTab.compare,
       onTabSelected: onTabSelected,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _ColumnHead(
-                  device: a,
-                  onTap: onPick == null ? null : () => onPick!(CompareSide.a),
+      child: Builder(
+        // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
+        // 크롬이 차지한 자리를 모르는 예전 값이 나온다.
+        builder: (context) => ListView(
+          padding:
+              const EdgeInsets.fromLTRB(16, 4, 16, 24) +
+              tpContentInset(context),
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _ColumnHead(
+                    device: a,
+                    onTap: onPick == null ? null : () => onPick!(CompareSide.a),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ColumnHead(
+                    device: b,
+                    onTap: onPick == null ? null : () => onPick!(CompareSide.b),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            // 못 읽은 것과 안 고른 것은 다른 일이다. 카탈로그가 없으면 고를
+            // 수도 없으니 "두 대를 고르세요"는 막다른 안내가 된다.
+            if (ref.watch(catalogProvider).hasError)
+              const TpCatalogError()
+            else if (pairs.isEmpty)
+              TpSurface(
+                padding: const EdgeInsets.all(20),
+                child: Text(K.chooseTwo.tr(), style: type.body),
+              )
+            else
+              TpSurface(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                child: Column(
+                  children: <Widget>[
+                    for (final pair in pairs)
+                      _CompareRow(
+                        pair: pair,
+                        nameA: a?.name ?? '',
+                        nameB: b?.name ?? '',
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ColumnHead(
-                  device: b,
-                  onTap: onPick == null ? null : () => onPick!(CompareSide.b),
-                ),
+            const SizedBox(height: 16),
+            if (pairs.isNotEmpty)
+              TpButton(
+                label: K.askWhy.tr(),
+                kind: TpButtonKind.secondary,
+                onTap: onAskWhy,
               ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          // 못 읽은 것과 안 고른 것은 다른 일이다. 카탈로그가 없으면 고를
-          // 수도 없으니 "두 대를 고르세요"는 막다른 안내가 된다.
-          if (ref.watch(catalogProvider).hasError)
-            const TpCatalogError()
-          else if (pairs.isEmpty)
-            TpSurface(
-              padding: const EdgeInsets.all(20),
-              child: Text(K.chooseTwo.tr(), style: type.body),
-            )
-          else
-            TpSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Column(
-                children: <Widget>[
-                  for (final pair in pairs)
-                    _CompareRow(
-                      pair: pair,
-                      nameA: a?.name ?? '',
-                      nameB: b?.name ?? '',
-                    ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 16),
-          if (pairs.isNotEmpty)
-            TpButton(
-              label: K.askWhy.tr(),
-              kind: TpButtonKind.secondary,
-              onTap: onAskWhy,
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

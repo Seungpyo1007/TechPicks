@@ -10,6 +10,14 @@ import '../../shared/copy_keys.dart';
 import 'tp_tab.dart';
 import '../../shared/widgets/tp_press.dart';
 
+/// 셸이 크롬에 내준 자리.
+///
+/// 탭 화면은 콘텐츠가 크롬 아래로 흐른다 — 유리는 뒤에 뭔가 지나가야 유리다.
+/// 대신 스크롤 뷰가 이걸 자기 패딩에 더해야 마지막 항목이 탭 바 뒤에 숨지
+/// 않는다.
+EdgeInsets tpContentInset(BuildContext context) =>
+    MediaQuery.paddingOf(context);
+
 /// 화면이 크롬을 얼마나 쓰는지.
 enum TpChromeMode {
   /// 헤더 + 탭 바. 대부분의 화면.
@@ -133,9 +141,15 @@ class TpShell extends StatelessWidget {
 
     return Stack(
       children: <Widget>[
+        // 인셋을 패딩으로 주면 콘텐츠가 크롬 **위쪽에서 잘린다** — 유리 뒤로
+        // 지나가는 것이 없으니 아무리 흐려도 밝은 알약으로만 보인다. 그래서
+        // 자리를 통째로 주고 인셋은 MediaQuery 로 넘긴다. 화면들은 그걸
+        // 자기 스크롤 패딩에 더해 마지막 항목이 안 가리게 한다.
         Positioned.fill(
-          child: Padding(
-            padding: EdgeInsets.only(top: topInset, bottom: bottomInset),
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: EdgeInsets.only(top: topInset, bottom: bottomInset),
+            ),
             child: child,
           ),
         ),
@@ -417,7 +431,7 @@ class _IosTabBar extends StatelessWidget {
                       Icon(
                         active ? t.activeIcon : t.icon,
                         size: 22,
-                        color: active ? Colors.white : tokens.dim,
+                        color: active ? Colors.white : tokens.chromeDim,
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -427,7 +441,7 @@ class _IosTabBar extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: type.tabLabel.copyWith(
-                          color: active ? Colors.white : tokens.dim,
+                          color: active ? Colors.white : tokens.chromeDim,
                         ),
                       ),
                     ],

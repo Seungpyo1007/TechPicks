@@ -58,23 +58,26 @@ class DetailScreen extends ConsumerWidget {
               label: K.share.tr(),
               onTap: () => unawaited(_share(ref, loaded)),
             ),
-      child: AnimatedSwitcher(
-        duration: context.motion.contentSwap.duration,
-        switchInCurve: context.motion.contentSwap.curve,
-        switchOutCurve: context.motion.contentSwap.curve,
-        child: device.when(
-          loading: () =>
-              const _DetailSkeleton(key: ValueKey<String>('skeleton')),
-          error: (e, _) => _DetailError(
-            key: const ValueKey<String>('error'),
-            error: e,
-            slug: slug,
-          ),
-          data: (d) => _DetailBody(
-            key: ValueKey<String>(d.slug),
-            device: d,
-            onCompare: onCompare,
-            onView3D: onView3D,
+      // 셸의 인셋은 이 자리 아래에 있다.
+      child: Builder(
+        builder: (context) => AnimatedSwitcher(
+          duration: context.motion.contentSwap.duration,
+          switchInCurve: context.motion.contentSwap.curve,
+          switchOutCurve: context.motion.contentSwap.curve,
+          child: device.when(
+            loading: () =>
+                const _DetailSkeleton(key: ValueKey<String>('skeleton')),
+            error: (e, _) => _DetailError(
+              key: const ValueKey<String>('error'),
+              error: e,
+              slug: slug,
+            ),
+            data: (d) => _DetailBody(
+              key: ValueKey<String>(d.slug),
+              device: d,
+              onCompare: onCompare,
+              onView3D: onView3D,
+            ),
           ),
         ),
       ),
@@ -124,7 +127,8 @@ class _DetailBody extends ConsumerWidget {
     final index = TpIndex.of(device.score, weights);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      padding:
+          const EdgeInsets.fromLTRB(16, 4, 16, 24) + tpContentInset(context),
       children: <Widget>[
         const _ImageSlot(),
         const SizedBox(height: 16),
@@ -308,7 +312,8 @@ class _DetailSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tp;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      padding:
+          const EdgeInsets.fromLTRB(16, 4, 16, 24) + tpContentInset(context),
       children: <Widget>[
         for (final h in <double>[196, 40, 220, 160])
           Padding(

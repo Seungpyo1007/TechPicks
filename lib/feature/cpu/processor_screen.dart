@@ -37,41 +37,47 @@ class ProcessorScreen extends ConsumerWidget {
       title: K.cpuTitle.tr(),
       tab: TpTab.rank,
       onTabSelected: onTabSelected,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        children: <Widget>[
-          const CategoryChips(),
-          const SizedBox(height: 14),
-          _Segmented(
-            current: segment,
-            onSelected: (s) =>
-                ref.read(processorSegmentProvider.notifier).set(s),
-          ),
-          const SizedBox(height: 16),
-          AnimatedSwitcher(
-            duration: motion.contentSwap.duration,
-            switchInCurve: motion.contentSwap.curve,
-            switchOutCurve: motion.contentSwap.curve,
-            child: catalog is AsyncLoading && !catalog.hasError
-                ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
-                : catalog.hasError
-                ? const TpCatalogError(key: ValueKey<String>('error'))
-                : ranked.isEmpty
-                ? TpSurface(
-                    key: const ValueKey<String>('empty'),
-                    padding: const EdgeInsets.all(20),
-                    child: Text(K.noDevices.tr(), style: context.tpText.body),
-                  )
-                : Column(
-                    key: ValueKey<String>('rows-${segment.name}'),
-                    children: <Widget>[
-                      for (final r in ranked) _ProcessorRow(entry: r),
-                    ],
-                  ),
-          ),
-          const SizedBox(height: 18),
-          Text(K.cpuNote.tr(), style: context.tpText.caption),
-        ],
+      child: Builder(
+        // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
+        // 크롬이 차지한 자리를 모르는 예전 값이 나온다.
+        builder: (context) => ListView(
+          padding:
+              const EdgeInsets.fromLTRB(16, 4, 16, 24) +
+              tpContentInset(context),
+          children: <Widget>[
+            const CategoryChips(),
+            const SizedBox(height: 14),
+            _Segmented(
+              current: segment,
+              onSelected: (s) =>
+                  ref.read(processorSegmentProvider.notifier).set(s),
+            ),
+            const SizedBox(height: 16),
+            AnimatedSwitcher(
+              duration: motion.contentSwap.duration,
+              switchInCurve: motion.contentSwap.curve,
+              switchOutCurve: motion.contentSwap.curve,
+              child: catalog is AsyncLoading && !catalog.hasError
+                  ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
+                  : catalog.hasError
+                  ? const TpCatalogError(key: ValueKey<String>('error'))
+                  : ranked.isEmpty
+                  ? TpSurface(
+                      key: const ValueKey<String>('empty'),
+                      padding: const EdgeInsets.all(20),
+                      child: Text(K.noDevices.tr(), style: context.tpText.body),
+                    )
+                  : Column(
+                      key: ValueKey<String>('rows-${segment.name}'),
+                      children: <Widget>[
+                        for (final r in ranked) _ProcessorRow(entry: r),
+                      ],
+                    ),
+            ),
+            const SizedBox(height: 18),
+            Text(K.cpuNote.tr(), style: context.tpText.caption),
+          ],
+        ),
       ),
     );
   }

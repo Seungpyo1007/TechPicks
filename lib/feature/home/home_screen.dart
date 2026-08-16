@@ -65,74 +65,80 @@ class HomeScreen extends ConsumerWidget {
       title: t.isGlass ? null : K.homeTitle.tr(),
       tab: TpTab.home,
       onTabSelected: onTabSelected,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        children: <Widget>[
-          // iOS 는 큰 제목이 콘텐츠 안에 있고, Android 는 large app bar 가
-          // 가져간다. 부제는 두 경우 모두 콘텐츠에 남는다.
-          if (t.isGlass) ...<Widget>[
-            Text(K.homeTitle.tr(), style: type.largeTitle),
-            const SizedBox(height: 6),
-          ],
-          // 목록을 못 읽었으면 "아직 결정할 것이 없습니다"도 거짓말이다.
-          if (!ref.watch(catalogProvider).hasError) ...<Widget>[
-            Text(_subtitle(shortlist.length), style: type.secondary),
-            const SizedBox(height: 16),
-          ],
+      child: Builder(
+        // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
+        // 크롬이 차지한 자리를 모르는 예전 값이 나온다.
+        builder: (context) => ListView(
+          padding:
+              const EdgeInsets.fromLTRB(16, 4, 16, 24) +
+              tpContentInset(context),
+          children: <Widget>[
+            // iOS 는 큰 제목이 콘텐츠 안에 있고, Android 는 large app bar 가
+            // 가져간다. 부제는 두 경우 모두 콘텐츠에 남는다.
+            if (t.isGlass) ...<Widget>[
+              Text(K.homeTitle.tr(), style: type.largeTitle),
+              const SizedBox(height: 6),
+            ],
+            // 목록을 못 읽었으면 "아직 결정할 것이 없습니다"도 거짓말이다.
+            if (!ref.watch(catalogProvider).hasError) ...<Widget>[
+              Text(_subtitle(shortlist.length), style: type.secondary),
+              const SizedBox(height: 16),
+            ],
 
-          // 첫 기기를 담는 순간이 이 앱에서 가장 중요한 상태 변화다.
-          // 하드컷으로 갈리면 담긴 걸 놓친다.
-          AnimatedSwitcher(
-            duration: motion.contentSwap.duration,
-            switchInCurve: motion.contentSwap.curve,
-            switchOutCurve: motion.contentSwap.curve,
-            child: ref.watch(catalogProvider).hasError
-                // 목록을 못 읽은 것을 "관심 목록이 비었다"로 그리면, 담아둔
-                // 기기가 있는 사람에게도 비었다고 말하게 된다.
-                ? const TpCatalogError(key: ValueKey<String>('error'))
-                : verdict == null
-                ? _EmptyShortlist(
-                    key: const ValueKey<String>('empty'),
-                    onAdd: onAdd,
-                  )
-                : _VerdictCard(
-                    key: ValueKey<String>(verdict.slug),
-                    device: verdict,
-                    onCompareAll: onCompareAll,
-                    onAskWhy: onAskWhy,
-                  ),
-          ),
-
-          if (shortlist.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 22),
-            _SectionHeader(
-              title: K.shortlist.tr(),
-              action: K.addDevice.tr(),
-              onAction: onAdd,
+            // 첫 기기를 담는 순간이 이 앱에서 가장 중요한 상태 변화다.
+            // 하드컷으로 갈리면 담긴 걸 놓친다.
+            AnimatedSwitcher(
+              duration: motion.contentSwap.duration,
+              switchInCurve: motion.contentSwap.curve,
+              switchOutCurve: motion.contentSwap.curve,
+              child: ref.watch(catalogProvider).hasError
+                  // 목록을 못 읽은 것을 "관심 목록이 비었다"로 그리면, 담아둔
+                  // 기기가 있는 사람에게도 비었다고 말하게 된다.
+                  ? const TpCatalogError(key: ValueKey<String>('error'))
+                  : verdict == null
+                  ? _EmptyShortlist(
+                      key: const ValueKey<String>('empty'),
+                      onAdd: onAdd,
+                    )
+                  : _VerdictCard(
+                      key: ValueKey<String>(verdict.slug),
+                      device: verdict,
+                      onCompareAll: onCompareAll,
+                      onAskWhy: onAskWhy,
+                    ),
             ),
-            const SizedBox(height: 8),
-            for (final d in shortlist)
-              // 지우면 즉시 사라지고 아래가 점프했다. 높이가 같이 줄어든다.
-              _ListSlot(
-                key: ValueKey<String>('slot-${d.slug}'),
-                child: _ShortlistRow(
-                  device: d,
-                  onTap: onDeviceTap == null
-                      ? null
-                      : () => onDeviceTap!(d.slug),
-                  onRemove: () =>
-                      ref.read(shortlistProvider.notifier).remove(d.slug),
-                ),
-              ),
-          ],
 
-          if (movers.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 22),
-            _SectionHeader(title: K.movers.tr()),
-            const SizedBox(height: 8),
-            for (final m in movers) _MoverRow(mover: m, onTap: onMoversTap),
+            if (shortlist.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 22),
+              _SectionHeader(
+                title: K.shortlist.tr(),
+                action: K.addDevice.tr(),
+                onAction: onAdd,
+              ),
+              const SizedBox(height: 8),
+              for (final d in shortlist)
+                // 지우면 즉시 사라지고 아래가 점프했다. 높이가 같이 줄어든다.
+                _ListSlot(
+                  key: ValueKey<String>('slot-${d.slug}'),
+                  child: _ShortlistRow(
+                    device: d,
+                    onTap: onDeviceTap == null
+                        ? null
+                        : () => onDeviceTap!(d.slug),
+                    onRemove: () =>
+                        ref.read(shortlistProvider.notifier).remove(d.slug),
+                  ),
+                ),
+            ],
+
+            if (movers.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 22),
+              _SectionHeader(title: K.movers.tr()),
+              const SizedBox(height: 8),
+              for (final m in movers) _MoverRow(mover: m, onTap: onMoversTap),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
