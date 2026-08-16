@@ -55,7 +55,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                     child: Center(child: _Stage(highlighted: _highlighted)),
                   ),
                   SizedBox(
-                    height: 38,
+                    height: 46,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),

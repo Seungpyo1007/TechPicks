@@ -235,8 +235,8 @@ class _Composer extends StatelessWidget {
     this.busy = false,
   });
 
-  /// 제안 칩 38 + 사이 10 + 입력 48 + 위아래 여백.
-  static const double height = 110;
+  /// 제안 칩 46 + 사이 10 + 입력 48 + 위아래 여백.
+  static const double height = 118;
 
   final TextEditingController controller;
   final ValueChanged<String> onSend;
@@ -254,7 +254,7 @@ class _Composer extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SizedBox(
-          height: 38,
+          height: 46,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),

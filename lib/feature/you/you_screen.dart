@@ -210,7 +210,11 @@ class _YouScreenState extends ConsumerState<YouScreen> {
               link: true,
               minSize: 44,
               onTap: () => unawaited(_openLicense()),
-              child: Text(YouScreen.versionLine, style: type.caption),
+              child: Text(
+                YouScreen.versionLine,
+                // 눌리는 줄이다. 본문과 같은 회색이면 알 방법이 없다.
+                style: type.caption.copyWith(color: TpTokens.blueText),
+              ),
             ),
           ),
         ],
@@ -577,7 +581,16 @@ class _SettingRow extends StatelessWidget {
           ),
           child: Row(
             children: <Widget>[
-              Expanded(child: Text(label, style: type.body)),
+              Expanded(
+                child: Text(
+                  label,
+                  // 못 누르는 줄은 그렇게 보여야 한다. 다크 모드와 통화는
+                  // 자리만 잡아둔 줄인데 알림 줄과 똑같이 생겼었다.
+                  style: onTap == null
+                      ? type.body.copyWith(color: t.dim)
+                      : type.body,
+                ),
+              ),
               if (value != null)
                 Text(value!, style: type.secondary)
               else
