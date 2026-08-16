@@ -127,6 +127,25 @@ void main() {
     }
   });
 
+  // 앱에 Scaffold 가 없어 아무도 키보드를 안 피한다. 입력 바가 화면 바닥에
+  // 붙어 있어서 누르면 키보드가 입력 바와 제안 칩을 통째로 덮었다.
+  testWidgets('키보드가 올라오면 입력 바가 그만큼 올라간다', (tester) async {
+    const frame = Size(402, 874);
+    tester.view.physicalSize = frame;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    await pumpScreen(tester, const AskScreen(), size: frame);
+    final resting = tester.getRect(find.byType(TextField)).bottom;
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 336);
+    await tester.pumpAndSettle();
+
+    final lifted = tester.getRect(find.byType(TextField)).bottom;
+    expect(lifted, lessThanOrEqualTo(frame.height - 336));
+    expect(resting - lifted, closeTo(336, 1));
+  });
+
   // 답을 기다리는 동안 아무 표시가 없었고, 그 사이에 보낸 질문은 조용히
   // 버려졌다.
   testWidgets('기다리는 동안 표시가 남고 두 번째 질문은 안 사라진다', (tester) async {
