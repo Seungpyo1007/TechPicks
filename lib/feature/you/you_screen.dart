@@ -17,6 +17,7 @@ import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/widgets/tp_press.dart';
 
 /// 내 정보.
 ///
@@ -372,35 +373,29 @@ Future<void> _pickLanguage(
           Text(K.language.tr(), style: type.cardTitle),
           const SizedBox(height: 8),
           for (final option in TpLocale.values)
-            Semantics(
-              button: true,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () async {
-                  Navigator.of(sheetContext).pop();
-                  await controller.set(option);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(child: Text(option.label, style: type.body)),
-                      if (option == controller.current)
-                        const Icon(
-                          Icons.check,
-                          size: 18,
-                          color: TpTokens.blueText,
-                        )
-                      else
-                        SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: ColoredBox(
-                            color: t.track.withValues(alpha: 0),
-                          ),
-                        ),
-                    ],
-                  ),
+            TpPress(
+              onTap: () async {
+                Navigator.of(sheetContext).pop();
+                await controller.set(option);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(child: Text(option.label, style: type.body)),
+                    if (option == controller.current)
+                      const Icon(
+                        Icons.check,
+                        size: 18,
+                        color: TpTokens.blueText,
+                      )
+                    else
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: ColoredBox(color: t.track.withValues(alpha: 0)),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -571,9 +566,9 @@ class _SettingRow extends StatelessWidget {
       // 라벨과 값이 따로 읽히면 "알림", "켬" 이 무슨 관계인지 모른다.
       label: value == null ? label : '$label, $value',
       excludeSemantics: true,
-      child: GestureDetector(
+      child: TpPress(
         onTap: onTap,
-        behavior: HitTestBehavior.opaque,
+        semanticsButton: false,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 15),
           decoration: BoxDecoration(

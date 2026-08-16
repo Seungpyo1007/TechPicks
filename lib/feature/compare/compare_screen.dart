@@ -14,6 +14,7 @@ import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_button.dart';
+import '../../app/theme/tp_motion.dart';
 
 /// 비교. 두 기기를 한 표에 놓고 줄마다 이긴 쪽을 칠한다.
 ///
@@ -236,18 +237,24 @@ class _Cell extends StatelessWidget {
         args: <String>[device, spec.value],
       ),
       excludeSemantics: true,
-      child: Container(
+      // 가중치를 만지면 승자가 줄을 옮겨 다닌다. 하드 스왑이면 어느 칸이
+      // 바뀌었는지 눈으로 못 쫓는다.
+      child: AnimatedContainer(
+        duration: context.motion.valueChange.duration,
+        curve: context.motion.valueChange.curve,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
         decoration: BoxDecoration(
           color: won ? t.tintFill : Colors.transparent,
           borderRadius: BorderRadius.circular(t.rInner - 6),
         ),
-        child: Text(
-          spec.value,
+        child: AnimatedDefaultTextStyle(
+          duration: context.motion.valueChange.duration,
+          curve: context.motion.valueChange.curve,
           style: type.body.copyWith(
             fontWeight: won ? t.boldWeight : FontWeight.w400,
             color: spec.hasValue ? TpTokens.ink : t.dim,
           ),
+          child: Text(spec.value),
         ),
       ),
     );

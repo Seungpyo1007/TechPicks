@@ -2,8 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
+import 'tp_press.dart';
 
 /// 카드·시트·크롬이 공통으로 쓰는 면.
 ///
@@ -93,11 +93,7 @@ class TpSurface extends StatelessWidget {
     if (onTap != null || onLongPress != null) {
       // 명세 Interactions: iOS 는 밝기 +4%, Android 는 M3 리플.
       surface = t.isGlass
-          ? _PressBrightness(
-              onTap: onTap,
-              onLongPress: onLongPress,
-              child: surface,
-            )
+          ? TpPress(onTap: onTap, onLongPress: onLongPress, child: surface)
           : Material(
               color: Colors.transparent,
               borderRadius: r,
@@ -115,80 +111,6 @@ class TpSurface extends StatelessWidget {
   }
 }
 
-/// 누르는 동안 밝아지는 면. iOS 크롬 전용.
-///
-/// 리플은 M3 표현이라 유리 위에 얹으면 안 맞는다. 명세가 그래서 두 플랫폼에
-/// 다른 피드백을 준다.
-///
-/// 지속 시간은 명세에 없다. 칩은 90ms 라고 적혀 있지만 카드는 비어 있어서
-/// 누른 즉시 반영하고 뗄 때 되돌린다.
-class _PressBrightness extends StatefulWidget {
-  const _PressBrightness({
-    required this.onTap,
-    required this.onLongPress,
-    required this.child,
-  });
-
-  final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
-  final Widget child;
-
-  /// `filter: brightness(1.04)` 와 같다.
-  static const double amount = 1.04;
-
-  /// 눌린 정도 [t] (0–1) 만큼 밝힌다. 칩은 90ms 로 줄어드는데 카드만 밝기가
-  /// 하드 스냅이라 어긋났다.
-  static ColorFilter filterAt(double t) {
-    final v = 1 + (amount - 1) * t;
-    return ColorFilter.matrix(<double>[
-      v, 0, 0, 0, 0, //
-      0, v, 0, 0, 0, //
-      0, 0, v, 0, 0, //
-      0, 0, 0, 1, 0, //
-    ]);
-  }
-
-  @override
-  State<_PressBrightness> createState() => _PressBrightnessState();
-}
-
-class _PressBrightnessState extends State<_PressBrightness> {
-  bool _pressed = false;
-
-  void _set(bool value) {
-    if (_pressed != value) setState(() => _pressed = value);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final move = context.motion.press;
-    return Semantics(
-      button: true,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        onLongPress: widget.onLongPress,
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => _set(true),
-        onTapUp: (_) => _set(false),
-        onTapCancel: () => _set(false),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween<double>(end: _pressed ? 1 : 0),
-          duration: move.duration,
-          curve: move.curve,
-          child: widget.child,
-          builder: (context, t, child) => t == 0
-              ? child!
-              : ColorFiltered(
-                  colorFilter: _PressBrightness.filterAt(t),
-                  child: child,
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 채도 조정 색상 행렬. `saturate(180%)` 는 [amount] 1.8 에 해당한다.
 List<double> _saturate(double amount) {
   // ITU-R BT.601 휘도 계수. CSS filter 명세가 쓰는 값과 같다.
   const double lr = 0.213, lg = 0.715, lb = 0.072;

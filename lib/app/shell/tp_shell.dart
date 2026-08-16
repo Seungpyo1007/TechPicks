@@ -8,6 +8,7 @@ import '../theme/tp_tokens.dart';
 import '../theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import 'tp_tab.dart';
+import '../../shared/widgets/tp_press.dart';
 
 /// 화면이 크롬을 얼마나 쓰는지.
 enum TpChromeMode {
@@ -398,8 +399,8 @@ class _IosTabBar extends StatelessWidget {
             selected: active,
             label: K.tab(t).tr(),
             excludeSemantics: true,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
+            child: TpPress(
+              semanticsButton: false,
               onTap: onSelected == null ? null : () => onSelected!(t),
               child: Center(
                 child: AnimatedContainer(
@@ -464,17 +465,31 @@ class _AndroidTabBar extends StatelessWidget {
       children: TpTab.values.map((TpTab t) {
         final active = t == current;
         final color = active ? TpTokens.blue : tokens.dim;
+        final move = context.motion.selection;
         return Expanded(
           child: InkWell(
             onTap: onSelected == null ? null : () => onSelected!(t),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Icon(active ? t.activeIcon : t.icon, size: 24, color: color),
+                // iOS 는 알약이 180ms 로 차오르는데 여기는 색이 툭 바뀌었다.
+                // 같은 동작이 두 크롬에서 정반대로 보였다.
+                AnimatedSwitcher(
+                  duration: move.duration,
+                  switchInCurve: move.curve,
+                  child: Icon(
+                    active ? t.activeIcon : t.icon,
+                    key: ValueKey<bool>(active),
+                    size: 24,
+                    color: color,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(
-                  K.tab(t).tr(),
+                AnimatedDefaultTextStyle(
+                  duration: move.duration,
+                  curve: move.curve,
                   style: type.tabLabel.copyWith(color: color),
+                  child: Text(K.tab(t).tr()),
                 ),
               ],
             ),
