@@ -172,7 +172,9 @@ Future<void> main() async {
 
   final out = File('assets/catalog/v1.json');
   out.parent.createSync(recursive: true);
-  out.writeAsStringSync('${const JsonEncoder.withIndent('  ').convert(catalog)}\n');
+  out.writeAsStringSync(
+    '${const JsonEncoder.withIndent('  ').convert(catalog)}\n',
+  );
 
   final kb = (out.lengthSync() / 1024).toStringAsFixed(1);
   stdout.writeln(
@@ -197,7 +199,9 @@ Future<List<Map<String, dynamic>>> _collectPhones(
           .where((s) => !_looksVariant.hasMatch(s))
           .toList()
         // 정규 슬러그는 짧다. `galaxy-s25` vs `galaxy-s25-...-256gb-5g`.
-        ..sort((a, b) => a.length == b.length ? a.compareTo(b) : a.length - b.length);
+        ..sort(
+          (a, b) => a.length == b.length ? a.compareTo(b) : a.length - b.length,
+        );
 
   final probe = <String>{
     ..._pinnedPhones,
@@ -299,8 +303,12 @@ Future<List<Map<String, dynamic>>> _index(
   Directory cache,
   String collection,
 ) async {
-  final json = await _get(client, cache, '$collection/index',
-      '$_base/$collection/index.json');
+  final json = await _get(
+    client,
+    cache,
+    '$collection/index',
+    '$_base/$collection/index.json',
+  );
   return (json['results'] as List<dynamic>).cast<Map<String, dynamic>>();
 }
 
@@ -364,6 +372,42 @@ Map<String, dynamic> _trim(Map<String, dynamic> record) {
   const drop = <String>{'id', 'created_at', 'updated_at', 'variant'};
   return <String, dynamic>{
     for (final e in record.entries)
-      if (!drop.contains(e.key)) e.key: e.value,
+      if (!drop.contains(e.key))
+        e.key: e.key == 'name' && e.value is String
+            ? canonicalName(e.value as String)
+            : e.value,
   };
+}
+
+/// 브랜드 표기를 하나로 맞춘다.
+///
+/// TechAPI 는 같은 브랜드를 `Vivo` 와 `vivo`, `Oppo` 와 `OPPO` 로 섞어 준다.
+/// 랭킹처럼 한 목록에 나란히 서면 고장 난 것처럼 보인다. 브랜드로 시작하는
+/// 이름만 첫 낱말을 바꾸고, `iPhone`·`iQOO` 처럼 소문자로 시작하는 게 맞는
+/// 표기는 그대로 둔다.
+String canonicalName(String name) {
+  const brands = <String, String>{
+    'vivo': 'Vivo',
+    'oppo': 'Oppo',
+    'honor': 'Honor',
+    'realme': 'Realme',
+    'poco': 'POCO',
+    'redmi': 'Redmi',
+    'xiaomi': 'Xiaomi',
+    'oneplus': 'OnePlus',
+    'motorola': 'Motorola',
+    'moto': 'Moto',
+    'huawei': 'Huawei',
+    'nothing': 'Nothing',
+    'google': 'Google',
+    'samsung': 'Samsung',
+  };
+
+  final space = name.indexOf(' ');
+  if (space <= 0) return name;
+  final head = name.substring(0, space);
+  final fixed = brands[head.toLowerCase()];
+  return fixed == null || fixed == head
+      ? name
+      : '$fixed${name.substring(space)}';
 }
