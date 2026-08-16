@@ -29,6 +29,7 @@ class TpTokens extends ThemeExtension<TpTokens> {
     required this.chromeShadow,
     required this.chromeShadowRaised,
     required this.chromeEdge,
+    required this.chromeDim,
     required this.rCard,
     required this.rInner,
     required this.rIcon,
@@ -160,6 +161,12 @@ class TpTokens extends ThemeExtension<TpTokens> {
   /// 흐린 보조 텍스트.
   final Color dim;
 
+  /// 크롬 위의 흐린 글자 — 안 고른 탭 라벨·아이콘.
+  ///
+  /// 크롬이 카드보다 투명해지면서 뒤 배경이 비쳐 [dim] 으로는 대비가 4.44 로
+  /// 떨어졌다(기준 4.5). 유리 위에서만 조금 더 진하게 쓴다.
+  final Color chromeDim;
+
   /// iOS 26 Liquid Glass.
   factory TpTokens.ios() => const TpTokens(
     isGlass: true,
@@ -223,6 +230,7 @@ class TpTokens extends ThemeExtension<TpTokens> {
       ),
     ],
     chromeEdge: Color(0x0F142846), // rgba(20,40,70,.06)
+    chromeDim: Color(0xAD141E2D), // rgba(20,30,45,.68) — 대비 5.1
     rCard: 28,
     rInner: 22,
     rIcon: 26,
@@ -280,6 +288,7 @@ class TpTokens extends ThemeExtension<TpTokens> {
     chromeShadow: <BoxShadow>[],
     chromeShadowRaised: <BoxShadow>[],
     chromeEdge: null,
+    chromeDim: dimInk,
     rCard: 20,
     rInner: 16,
     rIcon: 24,

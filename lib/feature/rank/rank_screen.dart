@@ -65,56 +65,62 @@ class RankScreen extends ConsumerWidget {
       tab: TpTab.rank,
       onTabSelected: onTabSelected,
       floatingAction: onScan == null ? null : _ScanFab(onTap: onScan!),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-        children: <Widget>[
-          const CategoryChips(),
-          const SizedBox(height: 14),
-          _EyebrowText(K.rankBy.tr()),
-          const SizedBox(height: 8),
-          _ChipRow(
-            labels: RankAxis.values.map((a) => K.rankAxis(a).tr()).toList(),
-            selectedIndex: RankAxis.values.indexOf(axis),
-            onSelected: (i) =>
-                ref.read(rankAxisProvider.notifier).set(RankAxis.values[i]),
-          ),
-          const SizedBox(height: 16),
-          // 스켈레톤에서 목록으로 하드컷이면 화면이 튄다.
-          AnimatedSwitcher(
-            duration: motion.contentSwap.duration,
-            switchInCurve: motion.contentSwap.curve,
-            switchOutCurve: motion.contentSwap.curve,
-            child: loading
-                ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
-                // 못 읽은 것을 "기기가 없다"로 그리면 사용자가 할 수 있는 게
-                // 없다. 다시 시도할 자리를 준다.
-                : catalog.hasError
-                ? const TpCatalogError(key: ValueKey<String>('error'))
-                : _RankList(
-                    key: const ValueKey<String>('list'),
-                    ranked: ranked.take(maxRows).toList(growable: false),
-                    axis: axis,
-                    onDeviceTap: onDeviceTap,
-                  ),
-          ),
-          // 잘린 것을 말해준다. 랭킹이 조용히 끊기면 가격순으로 봤을 때
-          // 제일 싼 기기가 왜 없는지 알 방법이 없다.
-          if (ranked.length > maxRows) ...<Widget>[
-            const SizedBox(height: 12),
-            Text(
-              K.rankCapped.tr(
-                args: <String>['$maxRows', '${ranked.length - maxRows}'],
-              ),
-              style: context.tpText.caption,
+      child: Builder(
+        // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
+        // 크롬이 차지한 자리를 모르는 예전 값이 나온다.
+        builder: (context) => ListView(
+          padding:
+              const EdgeInsets.fromLTRB(16, 4, 16, 24) +
+              tpContentInset(context),
+          children: <Widget>[
+            const CategoryChips(),
+            const SizedBox(height: 14),
+            _EyebrowText(K.rankBy.tr()),
+            const SizedBox(height: 8),
+            _ChipRow(
+              labels: RankAxis.values.map((a) => K.rankAxis(a).tr()).toList(),
+              selectedIndex: RankAxis.values.indexOf(axis),
+              onSelected: (i) =>
+                  ref.read(rankAxisProvider.notifier).set(RankAxis.values[i]),
             ),
-          ],
-          if (onScan != null && context.tp.isGlass) ...<Widget>[
             const SizedBox(height: 16),
-            _ScanInlineButton(onTap: onScan!),
+            // 스켈레톤에서 목록으로 하드컷이면 화면이 튄다.
+            AnimatedSwitcher(
+              duration: motion.contentSwap.duration,
+              switchInCurve: motion.contentSwap.curve,
+              switchOutCurve: motion.contentSwap.curve,
+              child: loading
+                  ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
+                  // 못 읽은 것을 "기기가 없다"로 그리면 사용자가 할 수 있는 게
+                  // 없다. 다시 시도할 자리를 준다.
+                  : catalog.hasError
+                  ? const TpCatalogError(key: ValueKey<String>('error'))
+                  : _RankList(
+                      key: const ValueKey<String>('list'),
+                      ranked: ranked.take(maxRows).toList(growable: false),
+                      axis: axis,
+                      onDeviceTap: onDeviceTap,
+                    ),
+            ),
+            // 잘린 것을 말해준다. 랭킹이 조용히 끊기면 가격순으로 봤을 때
+            // 제일 싼 기기가 왜 없는지 알 방법이 없다.
+            if (ranked.length > maxRows) ...<Widget>[
+              const SizedBox(height: 12),
+              Text(
+                K.rankCapped.tr(
+                  args: <String>['$maxRows', '${ranked.length - maxRows}'],
+                ),
+                style: context.tpText.caption,
+              ),
+            ],
+            if (onScan != null && context.tp.isGlass) ...<Widget>[
+              const SizedBox(height: 16),
+              _ScanInlineButton(onTap: onScan!),
+            ],
+            const SizedBox(height: 18),
+            Text(K.rankNote.tr(), style: context.tpText.caption),
           ],
-          const SizedBox(height: 18),
-          Text(K.rankNote.tr(), style: context.tpText.caption),
-        ],
+        ),
       ),
     );
   }
