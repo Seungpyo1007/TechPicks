@@ -66,9 +66,10 @@ void main() {
 
     // 승패는 색으로만 표시된다. 색을 못 보면 알 수 없다.
     // 기본 두 기기는 카탈로그 앞의 둘이고, 가격은 싼 쪽이 이긴다.
-    final phones = readCatalog().smartphones;
-    final a = phones[0];
-    final b = phones[1];
+    // 비교는 지수 1·2위로 시작한다.
+    final ranked = readRanking();
+    final a = ranked[0].device;
+    final b = ranked[1].device;
     final cheaper = (a.msrpUsd ?? 0) <= (b.msrpUsd ?? 0) ? a : b;
     final dearer = identical(cheaper, a) ? b : a;
 

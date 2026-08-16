@@ -134,7 +134,7 @@ void main() {
 
     await tester.tap(find.text(K.tab(TpTab.compare).tr()));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(readCatalog().smartphones[0].name));
+    await tester.tap(find.text(readRanking()[0].device.name));
     await tester.pumpAndSettle();
 
     expect(find.byType(PickerScreen), findsOneWidget);
@@ -285,8 +285,11 @@ void _askFromCompare() {
     final messages = container.read(askProvider);
     // 씨앗 인사 + 질문 + 답.
     expect(messages.length, 3);
-    final phones = readCatalog().smartphones;
-    expect(messages[1].text, '${phones[0].name} or ${phones[1].name}?');
+    final ranked = readRanking();
+    expect(
+      messages[1].text,
+      '${ranked[0].device.name} or ${ranked[1].device.name}?',
+    );
     expect(messages[2].answer, isNotNull);
   });
 
@@ -348,12 +351,12 @@ void _pickerSlots() {
       ],
     );
 
-    final phones = readCatalog().smartphones;
-    expect(container.read(compareProvider).a, phones[0].slug);
-    await pick(tester, phones[0].name, 'Pixel 9 Pro XL');
+    final ranked = readRanking();
+    expect(container.read(compareProvider).a, ranked[0].device.slug);
+    await pick(tester, ranked[0].device.name, 'Pixel 9 Pro XL');
 
     expect(container.read(compareProvider).a, 'pixel-9-pro-xl');
-    expect(container.read(compareProvider).b, phones[1].slug);
+    expect(container.read(compareProvider).b, ranked[1].device.slug);
   });
 
   testWidgets('오른쪽 머리를 누르면 B 에 쓴다', (tester) async {
@@ -368,10 +371,10 @@ void _pickerSlots() {
       ],
     );
 
-    final phones = readCatalog().smartphones;
-    await pick(tester, phones[1].name, 'OnePlus 13');
+    final ranked = readRanking();
+    await pick(tester, ranked[1].device.name, 'OnePlus 13');
 
-    expect(container.read(compareProvider).a, phones[0].slug);
+    expect(container.read(compareProvider).a, ranked[0].device.slug);
     expect(container.read(compareProvider).b, 'oneplus-13');
   });
 }

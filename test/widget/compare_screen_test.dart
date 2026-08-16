@@ -27,14 +27,15 @@ Future<void> _pump(
 void main() {
   setUp(initLocalization);
 
-  testWidgets('카탈로그 앞의 두 기기로 시작한다', (tester) async {
+  testWidgets('지수 1·2위로 시작한다', (tester) async {
     await _pump(tester, const CompareScreen());
 
     // 빈 화면으로 시작하지 않는다.
     expect(find.text('Choose two devices to compare.'), findsNothing);
-    final phones = readCatalog().smartphones;
-    expect(find.text(phones[0].name), findsOneWidget);
-    expect(find.text(phones[1].name), findsOneWidget);
+    // 비교는 지수 1·2위로 시작한다.
+    final ranked = readRanking();
+    expect(find.text(ranked[0].device.name), findsOneWidget);
+    expect(find.text(ranked[1].device.name), findsOneWidget);
   });
 
   testWidgets('열 줄을 모두 보여준다', (tester) async {
@@ -59,11 +60,11 @@ void main() {
     CompareSide? picked;
     await _pump(tester, CompareScreen(onPick: (s) => picked = s));
 
-    await tester.tap(find.text(readCatalog().smartphones[0].name));
+    await tester.tap(find.text(readRanking()[0].device.name));
     await tester.pumpAndSettle();
     expect(picked, CompareSide.a);
 
-    await tester.tap(find.text(readCatalog().smartphones[1].name));
+    await tester.tap(find.text(readRanking()[1].device.name));
     await tester.pumpAndSettle();
     expect(picked, CompareSide.b);
   });
@@ -80,7 +81,7 @@ void main() {
 
     expect(container.read(compareProvider).b, 'oneplus-13');
     // A 슬롯은 그대로여야 한다.
-    expect(container.read(compareProvider).a, readCatalog().smartphones[0].slug);
+    expect(container.read(compareProvider).a, readRanking()[0].device.slug);
   });
 
   testWidgets('picker 는 지수와 가격을 같이 보여준다', (tester) async {
@@ -89,9 +90,22 @@ void main() {
     expect(find.text('Cancel'), findsOneWidget);
     // 목록 첫 기기의 가격이 통화 형태로 붙는다.
     expect(
-      find.text(DeviceSpecs.formatPrice(readCatalog().smartphones.first.msrpUsd)),
+      find.text(DeviceSpecs.formatPrice(readRanking().first.device.msrpUsd)),
       findsWidgets,
     );
+  });
+
+  // 같은 기기를 두 열에 놓으면 모든 줄이 같아 비교가 아니게 된다.
+  testWidgets('반대쪽에 있던 기기를 고르면 자리를 맞바꾼다', (tester) async {
+    final container = await pumpScreen(tester, const CompareScreen());
+    final ranked = readRanking();
+    final a = ranked[0].device.slug;
+    final b = ranked[1].device.slug;
+
+    container.read(compareProvider.notifier).pick(CompareSide.a, b);
+
+    expect(container.read(compareProvider).a, b);
+    expect(container.read(compareProvider).b, a);
   });
 
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
