@@ -94,6 +94,21 @@ There is **no red anywhere.** The palette comes out of the logo.
 **Concentric radii rule:** an inner element inside a 28px card uses 22px, inside that 16px. Never equal,
 never larger than the parent.
 
+**How the glass is drawn.** CSS `backdrop-filter` gives blur and saturation but not refraction — the
+prototype's edges bend the background, and a `BackdropFilter` cannot. On iOS the app renders these
+tokens through `liquid_glass_widgets` (pinned `0.29.6`): chrome at `premium` (full shader — texture
+capture, edge light, chromatic aberration), cards at `standard` (lightweight shader). Colour, blur and
+shadow still come from the table above; the package only adds the refraction and the edge light.
+
+The shader is gated in [`tp_glass.dart`](../lib/app/theme/tp_glass.dart) — off on Android (M3 is tonal,
+blur `0`), off on web (Skia draws nothing), and off in tests (a shader that redraws every frame never
+lets `pumpAndSettle` finish). When the gate is closed the same tokens render through `BackdropFilter`,
+so closing it costs refraction and nothing else. Only two files import the package; a test enforces it.
+
+**Reduce Transparency.** Flutter exposes no such flag, so the app reads `MediaQuery.highContrast` —
+the neighbouring switch in the same iOS settings pane — and drops every surface to an opaque fill.
+This is deliberately separate from Reduce Motion: motion sickness is not a reason to take away glass.
+
 ### Android — Material 3
 
 | Token | Value |

@@ -41,6 +41,8 @@ dependencies:
   google_sign_in: ^7.2.0
   sign_in_with_apple: ^8.1.0
   crypto: ^3.0.7
+  # 셰이더 패키지라 0.x 는 조금씩 그림이 달라진다. 고정해 둔다.
+  liquid_glass_widgets: 0.29.6
 
 
 

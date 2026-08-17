@@ -2,6 +2,9 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+
+import '../../app/theme/tp_glass.dart';
 import '../../app/theme/tp_tokens.dart';
 import 'tp_press.dart';
 
@@ -67,10 +70,16 @@ class TpSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tp;
     final r = BorderRadius.circular(radius ?? t.rCard);
-    final fill = chrome
+
+    // "투명도 줄이기"를 켠 사람에게는 유리를 걷는다. Flutter 에 그 플래그가
+    // 없어서 같은 설정 화면에 있는 고대비를 대신 본다.
+    final flatten = MediaQuery.highContrastOf(context);
+
+    final rawFill = chrome
         ? (raised ? t.chromeFillRaised : t.chromeFill)
         : (strong ? t.cardStrong : t.card);
-    final sigma = chrome ? t.chromeBlurSigma : t.blurSigma;
+    final fill = flatten ? _opaque(rawFill) : rawFill;
+    final sigma = flatten ? 0.0 : (chrome ? t.chromeBlurSigma : t.blurSigma);
     final saturation = chrome ? t.chromeSaturation : t.saturation;
     final shadows = chrome
         ? (raised ? t.chromeShadowRaised : t.chromeShadow)
@@ -95,6 +104,29 @@ class TpSurface extends StatelessWidget {
           ),
         ],
       );
+    }
+
+    // 진짜 유리. 굴절과 엣지 조명은 BackdropFilter 로 안 되는 것들이다.
+    if (sigma > 0 && TpGlassRuntime.enabled) {
+      Widget glass = GlassContainer(
+        shape: LiquidRoundedSuperellipse(borderRadius: radius ?? t.rCard),
+        quality: TpGlassSpec.quality(chrome: chrome),
+        // 우리 면은 각자 따로 서 있다. 층을 안 주면 premium 이 렌더 링크를
+        // 못 찾아 죽고, 설정도 무시된다.
+        useOwnLayer: true,
+        settings: TpGlassSpec.of(
+          fill: fill,
+          blur: sigma,
+          saturation: saturation,
+          shadow: shadow ? shadows : const <BoxShadow>[],
+          chrome: chrome,
+        ),
+        child: content,
+      );
+      if (onTap != null || onLongPress != null) {
+        glass = TpPress(onTap: onTap, onLongPress: onLongPress, child: glass);
+      }
+      return glass;
     }
 
     Widget surface = DecoratedBox(
@@ -141,6 +173,11 @@ class TpSurface extends StatelessWidget {
     return surface;
   }
 }
+
+/// 뒤가 안 비치게 만든다. 앱 배경 위에 얹은 것과 같은 색이 되도록
+/// 흰 종이에 한 번 섞는다.
+Color _opaque(Color c) =>
+    Color.alphaBlend(c, const Color(0xFFFFFFFF)).withValues(alpha: 1);
 
 List<double> _saturate(double amount) {
   // ITU-R BT.601 휘도 계수. CSS filter 명세가 쓰는 값과 같다.
