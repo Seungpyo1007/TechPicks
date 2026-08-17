@@ -49,6 +49,8 @@ dependencies:
   firebase_storage: ^13.4.6
   # preserve/remove 를 앱에서 부른다. 그래서 dev 가 아니라 여기 있다.
   flutter_native_splash: ^2.4.1
+  # 진짜 OS 유리(iOS 26 의 .glassEffect)를 플랫폼 뷰로 가져온다. 0.x 라 고정.
+  native_liquid_glass: 0.2.14
 
 
 
