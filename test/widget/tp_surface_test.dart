@@ -106,4 +106,32 @@ void main() {
     );
     handle.dispose();
   });
+
+  // 유리는 배경이 비쳐야 유리인데, 그게 글자를 읽기 어렵게 만드는 사람이
+  // 있다. iOS 는 "투명도 줄이기"로 그걸 끄는데 Flutter 에 그 플래그가 없어
+  // 같은 설정 화면에 있는 고대비를 대신 본다.
+  testWidgets('고대비를 켜면 유리를 걷는다', (tester) async {
+    await pumpScreen(
+      tester,
+      MediaQuery(
+        data: const MediaQueryData(highContrast: true),
+        child: card(() {}),
+      ),
+      chrome: TpChrome.ios,
+    );
+
+    expect(find.byType(BackdropFilter), findsNothing);
+    // 그라디언트만 든 상자(스페큘러)와 그림자만 든 상자가 같이 있다.
+    final fills = tester
+        .widgetList<DecoratedBox>(
+          find.descendant(
+            of: find.byType(TpSurface),
+            matching: find.byType(DecoratedBox),
+          ),
+        )
+        .map((b) => (b.decoration as BoxDecoration).color)
+        .nonNulls;
+    expect(fills, isNotEmpty);
+    expect(fills.every((c) => c.a == 1), isTrue);
+  });
 }

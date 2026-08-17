@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
+import 'app/theme/tp_glass.dart';
 import 'core/analytics.dart';
 import 'core/error_reporter.dart';
 import 'firebase_options.dart';
@@ -16,6 +17,9 @@ import 'firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+
+  // 유리 셰이더를 미리 굽는다. 안 하면 첫 프레임에 크롬이 하얗게 번쩍인다.
+  await TpGlassRuntime.warmUp();
 
   // Firebase 가 없어도 앱은 뜬다. 로그인만 안 되고 랭킹·비교·상담은 다 된다.
   // google-services.json 이 아직 온전하지 않아 (oauth_client 가 비어 있다)
