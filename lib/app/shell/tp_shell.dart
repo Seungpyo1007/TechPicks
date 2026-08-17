@@ -304,17 +304,37 @@ class TpShell extends StatelessWidget {
             left: 12,
             right: 12,
             bottom: tabBottom,
-            height: iosTabHeight,
-            child: TpSurface.chrome(
-              raised: true,
-              radius: TpTokens.rControl,
-              child: _IosTabBar(
-                current: tab!,
-                onSelected: onTabSelected,
-                tokens: t,
-                type: type,
-              ),
-            ),
+            height: TpNativeGlass.enabled
+                ? iosTabHeight + TpNativeTabBar.overflow
+                : iosTabHeight,
+            child: TpNativeGlass.enabled
+                ? TpNativeTabBar(
+                    index: TpTab.values.indexOf(tab!),
+                    onSelected: onTabSelected == null
+                        ? null
+                        : (i) => onTabSelected!(TpTab.values[i]),
+                    height: iosTabHeight,
+                    tint: TpTokens.blue,
+                    labelStyle: type.tabLabel,
+                    items: <TpNativeTabItem>[
+                      for (final t in TpTab.values)
+                        TpNativeTabItem(
+                          label: K.tab(t).tr(),
+                          symbol: t.symbol,
+                          activeSymbol: t.activeSymbol,
+                        ),
+                    ],
+                  )
+                : TpSurface.chrome(
+                    raised: true,
+                    radius: TpTokens.rControl,
+                    child: _IosTabBar(
+                      current: tab!,
+                      onSelected: onTabSelected,
+                      tokens: t,
+                      type: type,
+                    ),
+                  ),
           ),
       ],
     );
