@@ -109,6 +109,13 @@ bar an opaque pill reads like a sticker stuck to the material. It does not *merg
 iOS 26's own tab bar does (`glassEffectUnion` only works inside one `GlassEffectContainer`, and each
 platform view carries its own namespace), so the pill is a second glass layer riding on the first.
 
+*Tried and rejected:* swapping the whole bar for the plugin's `LiquidGlassTabBar` (a real `UITabBar`,
+which is the only way to get the OS's own merge/morph between the bar and the selection bubble). It
+renders beautifully — SF Symbols, the system indicator, the real material — but its touches land on
+the wrong item and often not at all: the plugin sizes the view `height + 20` for glass overflow, and
+even with that room given back, taps mapped to the wrong index. Navigation is not worth a nicer bar,
+so the bar we lay out ourselves stayed.
+
 Cards keep the shader glass below — one platform view per card would mean dozens in a list.
 
 **How the glass is drawn (fallback).** CSS `backdrop-filter` gives blur and saturation but not refraction — the
