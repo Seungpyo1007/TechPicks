@@ -18,7 +18,8 @@ import '../../shared/copy_keys.dart';
 /// 화면은 이 인터페이스만 본다. 테스트가 모델을 부르지 않아도 되게 하려는
 /// 것이고, 나중에 모델을 갈아끼울 때 화면을 건드리지 않으려는 것이다.
 abstract class AskService {
-  Future<AskAnswer?> ask(String question, List<Smartphone> catalog);
+  /// 답 한 건. null 이면 못 답한 것이고, 화면이 실패 말풍선을 띄운다.
+  Future<AskReply?> ask(String question, List<Smartphone> catalog);
 }
 
 /// Firebase AI Logic 을 쓰는 구현.
@@ -49,7 +50,7 @@ class GeminiAskService implements AskService {
   static const Duration timeout = Duration(seconds: 12);
 
   @override
-  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) async {
     final prompt = buildPrompt(question, catalog, weights);
     try {
       final res = await _resolved
@@ -57,9 +58,20 @@ class GeminiAskService implements AskService {
           .timeout(timeout);
       final text = res.text;
       if (text == null) return null;
+
       final parsed = AskAnswer.tryParse(text);
-      if (parsed == null) return null;
-      return resolveInCatalog(parsed, catalog);
+      if (parsed != null) {
+        final resolved = resolveInCatalog(parsed, catalog);
+        // 목록 밖 기기를 골랐다. 표는 못 그리지만 이유는 말이 된다 —
+        // 여기서 버리면 사람은 아무것도 못 듣는다.
+        if (resolved != null) return AskReply.pick(resolved);
+        if (parsed.reason.isNotEmpty) return AskReply.say(parsed.reason);
+        return null;
+      }
+
+      // 고를 기기가 없는 질문. 문장으로 답한다.
+      final say = tryParseSay(text);
+      return say == null ? null : AskReply.say(say);
     } catch (e, s) {
       // 화면이 실패 말풍선을 띄운다. 원문 예외를 사용자에게 보이지 않는다.
       TpErrors.record(e, s, reason: 'ask.gemini');
@@ -112,6 +124,10 @@ class GeminiAskService implements AskService {
   ///
   /// v1 의 ChatAI 는 질문만 던지고 답을 그대로 뿌렸다. 그러면 UI 가 표를
   /// 그릴 수 없고, 모델이 카탈로그에 없는 기기를 추천해도 막을 방법이 없다.
+  ///
+  /// 그렇다고 **모든** 질문에 기기를 하나 고르라고 하면, "배터리 수명은 뭘로
+  /// 정해지나" 같은 질문에도 폰 하나를 억지로 끼워 답한다. 형태를 둘 주고
+  /// 질문이 고르게 한다.
   static String buildPrompt(
     String question,
     List<Smartphone> catalog,
@@ -131,19 +147,26 @@ class GeminiAskService implements AskService {
     }).toList();
 
     return '''
-You help someone choose a phone. Pick exactly one device from the catalogue below.
+You help someone decide about phones. Answer their question.
 
-Rules:
-- Answer with JSON only. No prose, no markdown, no code fences.
-- The device you pick MUST be one of the catalogue entries. Use its slug.
-- "reason" is one sentence, under 140 characters.
-- "rows" has exactly these four labels in this order:
-  TP Index, Price, Battery, Camera.
+Answer with JSON only. No prose, no markdown, no code fences.
+Answer in the same language the question is written in.
 
-Shape:
-{"pick":"<name>","slug":"<slug>","reason":"<one sentence>",
+If the question asks which device to get, or can be settled by naming one,
+use shape A. The device you pick MUST be one of the catalogue entries below;
+use its slug.
+
+Shape A:
+{"pick":"<name>","slug":"<slug>","reason":"<one sentence, under 140 chars>",
  "rows":[{"label":"TP Index","value":"..."},{"label":"Price","value":"..."},
          {"label":"Battery","value":"..."},{"label":"Camera","value":"..."}]}
+
+If the question is not about picking a device — how something works, what a
+spec means, whether an idea is sound — answer it plainly in shape B, in two or
+three sentences. Do not force a device into the answer.
+
+Shape B:
+{"answer":"<two or three sentences>"}
 
 Catalogue:
 ${jsonEncode(rows)}
@@ -165,7 +188,7 @@ class FallbackAskService implements AskService {
   final AskService fallback;
 
   @override
-  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) async {
     final answer = await primary.ask(question, catalog);
     if (answer != null) return answer;
     return fallback.ask(question, catalog);
@@ -182,7 +205,7 @@ class LocalAskService implements AskService {
   final TpWeights weights;
 
   @override
-  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) async {
     if (catalog.isEmpty) return null;
 
     final budget = budgetUsd(question);
@@ -202,37 +225,40 @@ class LocalAskService implements AskService {
       );
     final best = sorted.first;
 
-    return AskAnswer(
-      pick: best.name,
-      pickSlug: best.slug,
-      reason: budget == null
-          ? K.askLocalTop.tr()
-          : K.askLocalBudget.tr(
-              args: <String>[DeviceSpecs.formatPrice(budget)],
-            ),
-      // 표 라벨은 비교·상세와 같은 걸 쓴다. 여기만 영어로 남으면 한국어에서
-      // 한 화면 안에 두 언어가 섞인다.
-      rows: <AskRow>[
-        AskRow(
-          label: K.tpIndex.tr(),
-          value:
-              TpIndex.of(best.score, weights)?.toString() ?? DeviceSpecs.empty,
-        ),
-        AskRow(
-          label: K.spec(SpecKind.price).tr(),
-          value: DeviceSpecs.formatPrice(best.msrpUsd),
-        ),
-        AskRow(
-          label: K.spec(SpecKind.battery).tr(),
-          value: best.batteryMah == null
-              ? DeviceSpecs.empty
-              : '${best.batteryMah}mAh',
-        ),
-        AskRow(
-          label: K.spec(SpecKind.camera).tr(),
-          value: best.score?.camera?.round().toString() ?? DeviceSpecs.empty,
-        ),
-      ],
+    return AskReply.pick(
+      AskAnswer(
+        pick: best.name,
+        pickSlug: best.slug,
+        reason: budget == null
+            ? K.askLocalTop.tr()
+            : K.askLocalBudget.tr(
+                args: <String>[DeviceSpecs.formatPrice(budget)],
+              ),
+        // 표 라벨은 비교·상세와 같은 걸 쓴다. 여기만 영어로 남으면 한국어에서
+        // 한 화면 안에 두 언어가 섞인다.
+        rows: <AskRow>[
+          AskRow(
+            label: K.tpIndex.tr(),
+            value:
+                TpIndex.of(best.score, weights)?.toString() ??
+                DeviceSpecs.empty,
+          ),
+          AskRow(
+            label: K.spec(SpecKind.price).tr(),
+            value: DeviceSpecs.formatPrice(best.msrpUsd),
+          ),
+          AskRow(
+            label: K.spec(SpecKind.battery).tr(),
+            value: best.batteryMah == null
+                ? DeviceSpecs.empty
+                : '${best.batteryMah}mAh',
+          ),
+          AskRow(
+            label: K.spec(SpecKind.camera).tr(),
+            value: best.score?.camera?.round().toString() ?? DeviceSpecs.empty,
+          ),
+        ],
+      ),
     );
   }
 

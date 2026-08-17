@@ -140,6 +140,42 @@ void main() {
     });
   });
 
+  // 카탈로그 밖 질문에 실패 말풍선을 띄우던 자리다. 모델이 표를 못 채워도
+  // 사람에게 할 말은 있다.
+  group('문장뿐인 답', () {
+    test('answer 한 줄짜리 응답을 읽는다', () {
+      expect(
+        tryParseSay('{"answer":"배터리는 화면이 더 좌우합니다."}'),
+        '배터리는 화면이 더 좌우합니다.',
+      );
+    });
+
+    test('코드펜스를 둘러도 읽는다', () {
+      expect(
+        tryParseSay('```json\n{"answer":"그렇습니다."}\n```'),
+        '그렇습니다.',
+      );
+    });
+
+    test('빈 문장이나 다른 모양은 안 읽는다', () {
+      expect(tryParseSay('{"answer":"   "}'), isNull);
+      expect(tryParseSay('{"pick":"Galaxy S25 Ultra"}'), isNull);
+      expect(tryParseSay('말만 있고 JSON 이 없다'), isNull);
+    });
+
+    test('프롬프트가 두 형태를 다 준다', () {
+      final prompt = GeminiAskService.buildPrompt(
+        '배터리 수명은 뭐가 정하나요?',
+        _catalog,
+        TpWeights.defaults,
+      );
+      expect(prompt, contains('"answer"'));
+      expect(prompt, contains('"pick"'));
+      // 고를 기기가 없는 질문에 폰을 억지로 끼우지 말라고 적혀 있어야 한다.
+      expect(prompt, contains('Do not force a device'));
+    });
+  });
+
   group('오프라인 답변', () {
     const service = LocalAskService();
 
@@ -148,12 +184,12 @@ void main() {
     });
 
     test('고른 기기는 항상 카탈로그 안에 있다', () async {
-      final answer = await service.ask('뭐가 좋아?', _catalog);
+      final answer = (await service.ask('뭐가 좋아?', _catalog))?.answer;
       expect(_catalog.map((d) => d.slug), contains(answer!.pickSlug));
     });
 
     test('명세대로 네 줄을 돌려준다', () async {
-      final answer = await service.ask('뭐가 좋아?', _catalog);
+      final answer = (await service.ask('뭐가 좋아?', _catalog))?.answer;
       expect(answer!.rows.map((r) => r.label), <String>[
         K.tpIndex.tr(),
         K.spec(SpecKind.price).tr(),
@@ -172,7 +208,7 @@ class _NullAsk implements AskService {
   int calls = 0;
 
   @override
-  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) async {
     calls++;
     return null;
   }
@@ -185,9 +221,9 @@ class _FixedAsk implements AskService {
   int calls = 0;
 
   @override
-  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) async {
     calls++;
-    return answer;
+    return AskReply.pick(answer);
   }
 }
 
@@ -201,7 +237,7 @@ void _fallback() {
       fallback,
     ).ask('뭐가 좋아', _catalog);
 
-    expect(got?.pick, 'Galaxy S25 Ultra');
+    expect(got?.answer?.pick, 'Galaxy S25 Ultra');
     expect(fallback.calls, 0);
   });
 
@@ -214,7 +250,7 @@ void _fallback() {
       fallback,
     ).ask('뭐가 좋아', _catalog);
 
-    expect(got?.pickSlug, 'iphone-16-pro-max');
+    expect(got?.answer?.pickSlug, 'iphone-16-pro-max');
     expect(primary.calls, 1);
   });
 }

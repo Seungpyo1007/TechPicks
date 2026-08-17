@@ -149,8 +149,8 @@ class _StubAsk implements AskService {
   final AskAnswer answer;
 
   @override
-  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async =>
-      answer;
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) async =>
+      AskReply.pick(answer);
 }
 
 const _answer = AskAnswer(

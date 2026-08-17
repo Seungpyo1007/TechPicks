@@ -67,6 +67,48 @@ class AskAnswer {
   }
 }
 
+/// 상담이 돌려주는 답 한 건.
+///
+/// 두 모양이 있다. 기기를 고른 답([answer])과 **문장뿐인 답**([text])이다.
+///
+/// 리메이크 뒤에는 앞의 것만 있었다. 카탈로그에서 기기를 못 찾으면 답을
+/// 통째로 버렸고 화면은 그걸 실패로 그렸다 — "배터리 수명은 뭘로 정해지나요"
+/// 처럼 **고를 기기가 없는 질문**은 전부 실패 말풍선이었다. v1 은 그냥
+/// 대답했다.
+/// `{"answer":"..."}` 모양의 문장 답을 읽는다.
+///
+/// 모델에게 두 형태를 줬다 — 기기를 고를 수 있으면 표, 아니면 문장. 어느
+/// 쪽이 올지는 질문이 정한다.
+String? tryParseSay(String raw) {
+  final start = raw.indexOf('{');
+  final end = raw.lastIndexOf('}');
+  if (start < 0 || end <= start) return null;
+
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(raw.substring(start, end + 1));
+  } on FormatException {
+    return null;
+  }
+  if (decoded is! Map<String, dynamic>) return null;
+
+  final say = decoded['answer'];
+  if (say is! String || say.trim().isEmpty) return null;
+  return say.trim();
+}
+
+class AskReply {
+  const AskReply.pick(AskAnswer this.answer) : text = null;
+
+  const AskReply.say(String this.text) : answer = null;
+
+  /// 기기를 고른 답. 화면이 표를 그린다.
+  final AskAnswer? answer;
+
+  /// 표 없이 문장만. 화면이 그냥 말풍선으로 그린다.
+  final String? text;
+}
+
 class AskRow {
   const AskRow({required this.label, required this.value});
 

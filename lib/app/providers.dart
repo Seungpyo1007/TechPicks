@@ -654,27 +654,31 @@ class AskNotifier extends Notifier<List<AskMessage>> {
 
     // 카탈로그를 못 읽으면 답할 근거가 없다. 예외를 그대로 올리면 화면이
     // 멈춘 것처럼 보이고 _busy 도 안 풀린다.
-    AskAnswer? answer;
+    AskReply? reply;
     try {
       final catalog = await ref.read(catalogProvider.future);
-      answer = await ref
-          .read(askServiceProvider)
-          .ask(text, catalog.smartphones);
+      reply = await ref.read(askServiceProvider).ask(text, catalog.smartphones);
     } catch (e, st) {
       TpErrors.record(e, st, reason: 'ask.send');
-      answer = null;
+      reply = null;
     }
 
     _busy = false;
     if (ref.mounted) ref.read(askBusyProvider.notifier).set(false);
-    TpAnalytics.asked(length: text.length, answered: answer != null);
+    TpAnalytics.asked(length: text.length, answered: reply != null);
     // 답이 오는 동안 화면을 떠났을 수 있다.
     if (!ref.mounted) return;
+
+    final answer = reply?.answer;
     state = <AskMessage>[
       ...state,
-      answer == null
-          ? AskMessage.ai(K.askFailed.tr(), failed: true)
-          : AskMessage.ai(answer.pick, answer: answer),
+      if (reply == null)
+        AskMessage.ai(K.askFailed.tr(), failed: true)
+      else if (answer != null)
+        AskMessage.ai(answer.pick, answer: answer)
+      // 고를 기기가 없는 질문. 표 없이 문장만 그린다.
+      else
+        AskMessage.ai(reply.text!),
     ];
   }
 
