@@ -79,3 +79,34 @@ class _TpPressState extends State<TpPress> {
         : gesture;
   }
 }
+
+/// 눌림의 감각을 한곳에서 정한다.
+///
+/// 세 가지가 어색함의 원인이었다.
+///
+/// 1. **폭에 상관없이 같은 비율로 줄었다.** 0.97 은 칩(80pt)에서는 2pt 지만
+///    전체 폭 버튼(342pt)에서는 양쪽이 5pt 씩 움직인다 — 같은 값인데 큰
+///    버튼에서만 과장돼 보인다. 그래서 **줄어드는 양을 pt 로 고정**한다.
+/// 2. **색이 안 변했다.** 크기만 바뀌면 손가락 밑에서 뭐가 일어났는지 안
+///    보인다. 밝은 면은 밝아지고(카드와 같은 +4%), 채운 면은 눌린 만큼
+///    어두워진다.
+/// 3. **누를 때와 뗄 때가 같은 속도였다.** 실제로 누르는 동작은 빠르고 손을
+///    떼면 천천히 돌아온다. 내려갈 때는 [TpMotion.press], 올라올 때는
+///    [TpMotion.selection] 을 쓴다.
+abstract final class TpPressFeel {
+  /// 눌렸을 때 양쪽으로 들어가는 양.
+  static const double inset = 3;
+
+  /// 아무리 작아도 이보다 더 줄지는 않는다.
+  static const double minScale = 0.96;
+
+  /// 폭 [width] 인 면이 눌렸을 때의 배율.
+  static double scaleFor(double width) {
+    if (!width.isFinite || width <= 0) return 0.97;
+    return (1 - (inset * 2) / width).clamp(minScale, 1);
+  }
+
+  /// 누르는 중인지에 따라 시간이 다르다.
+  static TpMove move(BuildContext context, {required bool pressed}) =>
+      pressed ? context.motion.press : context.motion.selection;
+}
