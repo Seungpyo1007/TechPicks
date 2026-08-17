@@ -115,6 +115,10 @@ guideline in both themes (`test/widget/a11y_test.dart`); two screens are also ba
 
 The choice — System / Light / Dark — lives in You → Dark mode and is stored in `theme_mode`.
 
+**Launch.** *(Changing the splash assets? iOS caches the launch image per device; the simulator will
+keep showing the old one until you `xcrun simctl erase` it. A reinstall and a build-number bump are
+not enough — this cost an afternoon once.)*
+
 **Launch.** The native splash holds while Firebase, translations and the glass shaders warm up
 (`preserve`/`remove`), and the app takes over with the *same* logo at the *same* size — 125pt, which is
 `LaunchImage@3x` (375px) ÷ 3 — so the handoff is invisible. The logo then grows and fades while the
