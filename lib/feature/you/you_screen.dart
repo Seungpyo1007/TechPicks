@@ -87,6 +87,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     final weights = ref.watch(weightsProvider);
     final locale = ref.watch(localeControllerProvider);
     final notifications = ref.watch(notificationsProvider);
+    final themeMode = ref.watch(themeModeProvider);
     // 헤더가 "로그인 없이 사용 중"이라고 적는 것과 같은 조건이다.
     final hasAccount = name != null || (email?.isNotEmpty ?? false);
 
@@ -144,7 +145,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                         child: Text(
                           K.reset.tr(),
                           style: type.caption.copyWith(
-                            color: TpTokens.blueText,
+                            color: t.link,
                           ),
                         ),
                       ),
@@ -167,8 +168,11 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                         ? null
                         : () => _pickLanguage(context, ref, locale),
                   ),
-                  // 다크 모드는 명세에 토큰이 없다. 색을 지어내지 않고 자리만 둔다.
-                  _SettingRow(label: K.darkMode.tr(), value: K.off.tr()),
+                  _SettingRow(
+                    label: K.darkMode.tr(),
+                    value: _themeLabel(themeMode).tr(),
+                    onTap: () => _pickTheme(context, ref, themeMode),
+                  ),
                   _SettingRow(
                     label: K.notifications.tr(),
                     value: (notifications ? K.on : K.off).tr(),
@@ -221,7 +225,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 child: Text(
                   YouScreen.versionLine,
                   // 눌리는 줄이다. 본문과 같은 회색이면 알 방법이 없다.
-                  style: type.caption.copyWith(color: TpTokens.blueText),
+                  style: type.caption.copyWith(color: t.link),
                 ),
               ),
             ),
@@ -360,6 +364,63 @@ class _YourDevice extends ConsumerWidget {
 }
 
 /// 언어 목록. 지원 언어가 둘뿐이라 시트 하나로 끝난다.
+/// 밝기 선택 줄의 값.
+String _themeLabel(ThemeMode mode) => switch (mode) {
+  ThemeMode.light => K.themeLight,
+  ThemeMode.dark => K.themeDark,
+  ThemeMode.system => K.themeSystem,
+};
+
+/// 밝게 / 어둡게 / 시스템.
+///
+/// 언어 시트와 같은 모양이다 — 설정 안에서 고르는 방식이 줄마다 다르면
+/// 어느 줄이 시트를 여는지 눌러보기 전에는 모른다.
+Future<void> _pickTheme(
+  BuildContext context,
+  WidgetRef ref,
+  ThemeMode current,
+) async {
+  final type = context.tpText;
+
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => TpSurface(
+      strong: true,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(K.darkMode.tr(), style: type.cardTitle),
+          const SizedBox(height: 8),
+          for (final option in ThemeMode.values)
+            TpPress(
+              onTap: () async {
+                Navigator.of(sheetContext).pop();
+                await ref.read(themeModeProvider.notifier).set(option);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(_themeLabel(option).tr(), style: type.body),
+                    ),
+                    if (option == current)
+                      Icon(Icons.check, size: 18, color: context.tp.link)
+                    else
+                      const SizedBox(width: 18, height: 18),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
 Future<void> _pickLanguage(
   BuildContext context,
   WidgetRef ref,
@@ -392,11 +453,7 @@ Future<void> _pickLanguage(
                   children: <Widget>[
                     Expanded(child: Text(option.label, style: type.body)),
                     if (option == controller.current)
-                      const Icon(
-                        Icons.check,
-                        size: 18,
-                        color: TpTokens.blueText,
-                      )
+                      Icon(Icons.check, size: 18, color: context.tp.link)
                     else
                       SizedBox(
                         width: 18,
@@ -482,7 +539,7 @@ class _ProfileHeader extends StatelessWidget {
                   onTap: onEdit,
                   child: Text(
                     K.editProfile.tr(),
-                    style: type.caption.copyWith(color: TpTokens.blueText),
+                    style: type.caption.copyWith(color: context.tp.link),
                   ),
                 ),
               ],

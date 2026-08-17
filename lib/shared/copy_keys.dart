@@ -108,6 +108,9 @@ abstract final class K {
   static const String reset = 'reset';
   static const String language = 'language';
   static const String darkMode = 'darkMode';
+  static const String themeSystem = 'themeSystem';
+  static const String themeLight = 'themeLight';
+  static const String themeDark = 'themeDark';
   static const String notifications = 'notifications';
   static const String currency = 'currency';
   static const String changePassword = 'changePw';

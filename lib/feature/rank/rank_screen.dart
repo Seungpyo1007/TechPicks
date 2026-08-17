@@ -233,7 +233,7 @@ class _RankRow extends StatelessWidget {
     final t = context.tp;
     final type = context.tpText;
     // 1–3 위만 파란 숫자.
-    final leading = entry.position <= 3 ? TpTokens.blue : TpTokens.graphite;
+    final leading = entry.position <= 3 ? TpTokens.blue : t.mutedInk;
 
     return Semantics(
       // container 를 켜야 행마다 별개 노드가 된다. 안 켜면 목록 전체가
@@ -294,7 +294,7 @@ class _RankRow extends StatelessWidget {
                       maxLines: 1,
                       softWrap: false,
                       style: type.cardTitle.copyWith(
-                        color: entry.axisValue == null ? t.dim : TpTokens.ink,
+                        color: entry.axisValue == null ? t.dim : t.ink,
                       ),
                     ),
                   ],

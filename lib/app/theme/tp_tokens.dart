@@ -11,6 +11,12 @@ import 'package:flutter/material.dart';
 class TpTokens extends ThemeExtension<TpTokens> {
   const TpTokens({
     required this.isGlass,
+    required this.isDark,
+    required this.ink,
+    required this.link,
+    required this.mutedInk,
+    required this.tabBar,
+    required this.scrim,
     required this.fontFamily,
     required this.fontFamilyFallback,
     required this.boldWeight,
@@ -73,14 +79,39 @@ class TpTokens extends ThemeExtension<TpTokens> {
   /// 로고에서 같이 뽑은 중립 잉크.
   static const Color graphite = Color(0xFF484848);
 
-  /// 본문 텍스트.
-  static const Color ink = Color(0xFF14161A);
+  /// 밝은 테마의 본문 텍스트.
+  static const Color inkLight = Color(0xFF14161A);
 
   /// 탭 바 배경. 두 플랫폼 공통값이지만 iOS 는 유리 캡슐을 대신 쓴다.
   static const Color tabBarFill = Color(0xFFE6EBF4);
 
   /// 유리(iOS)인가 톤(Android)인가. 블러·그림자·스페큘러를 켤지 결정한다.
   final bool isGlass;
+
+  // ── 어두운 테마 ──────────────────────────────────────────────
+  // 명세에 다크 토큰 표가 없다. **색을 지어내지 않고 규칙으로 뒤집었다:**
+  // 배경은 같은 남색 계열(#141E2D)의 가장 어두운 쪽으로 내리고, 유리는
+  // 흰색을 낮은 알파로 얹고, 잉크는 거의 흰색으로 올린다. 파란 **글자**만
+  // 예외다 — 밝은 바탕에서는 [blueDark] 가 대비를 벌었지만 어두운 바탕에서는
+  // 반대라 [blueLight] 쪽으로 옮긴다. 채움(버튼·막대)은 양쪽 다 [blue] 다.
+
+  /// 어두운 테마인가. 상태 표시줄 밝기와 그림자 세기를 여기로 고른다.
+  final bool isDark;
+
+  /// 본문 텍스트. 밝을 때 `#14161A`, 어두울 때 거의 흰색.
+  final Color ink;
+
+  /// 파란 글자. 밝은 바탕에서는 [blueDark], 어두운 바탕에서는 밝은 파랑.
+  final Color link;
+
+  /// 중립 보조 잉크. 랭킹 순위 숫자처럼 잉크보다 한 단계 흐린 글자.
+  final Color mutedInk;
+
+  /// Android 탭 바 채움. iOS 는 유리 캡슐이라 안 쓴다.
+  final Color tabBar;
+
+  /// 헤더 아래 106px 그라디언트. 배경의 맨 위 색과 같아야 이어져 보인다.
+  final Color scrim;
 
   final String? fontFamily;
   final List<String> fontFamilyFallback;
@@ -170,6 +201,12 @@ class TpTokens extends ThemeExtension<TpTokens> {
   /// iOS 26 Liquid Glass.
   factory TpTokens.ios() => const TpTokens(
     isGlass: true,
+    isDark: false,
+    ink: inkLight,
+    link: blueText,
+    mutedInk: graphite,
+    tabBar: tabBarFill,
+    scrim: Color(0xFFEEF3FA),
     // 시스템 폰트를 그대로 쓴다. null 이면 Flutter 가 SF Pro 로 붙는다.
     fontFamily: null,
     fontFamilyFallback: <String>[],
@@ -260,9 +297,95 @@ class TpTokens extends ThemeExtension<TpTokens> {
     dim: dimInk, // 명세는 .55 인데 대비가 모자란다 — dimInk 주석 참고
   );
 
+  /// 어두운 iOS. 같은 유리를 밤에 놓은 것이다.
+  factory TpTokens.iosDark() => const TpTokens(
+    isGlass: true,
+    isDark: true,
+    ink: Color(0xFFF2F5F9),
+    link: Color(0xFF5FB4F7),
+    mutedInk: Color(0xFFB9C2CE),
+    tabBar: Color(0xFF171E28),
+    scrim: Color(0xFF121A24),
+    fontFamily: null,
+    fontFamilyFallback: <String>[],
+    boldWeight: FontWeight.w600,
+    pageBackground: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: <Color>[
+          Color(0xFF121A24),
+          Color(0xFF0D141D),
+          Color(0xFF101823),
+          Color(0xFF141C27),
+        ],
+        stops: <double>[0, .42, .78, 1],
+      ),
+    ),
+    // 어두운 유리는 흰색을 낮은 알파로 얹는다. 밝을 때처럼 .58 을 쓰면
+    // 카드가 배경보다 밝아져 종이처럼 보인다.
+    card: Color(0x1AFFFFFF), // white .10
+    cardStrong: Color(0x26FFFFFF), // white .15
+    blurSigma: 26,
+    saturation: 1.8,
+    cardShadow: <BoxShadow>[
+      // 어두운 바탕에서는 그림자가 거의 안 보인다. 더 진하게 준다.
+      BoxShadow(color: Color(0x3D000000), blurRadius: 28, offset: Offset(0, 10)),
+    ],
+    buttonShadow: <BoxShadow>[
+      BoxShadow(
+        color: Color(0x520C78D8),
+        blurRadius: 18,
+        offset: Offset(0, 6),
+      ),
+    ],
+    hasSpecular: true,
+    chromeFill: Color(0x9E141A24), // rgba(20,26,36,.62)
+    chromeFillRaised: Color(0xA8141A24), // rgba(20,26,36,.66)
+    chromeBlurSigma: 34,
+    chromeSaturation: 2,
+    chromeShadow: <BoxShadow>[
+      BoxShadow(color: Color(0x59000000), blurRadius: 22, offset: Offset(0, 6)),
+    ],
+    chromeShadowRaised: <BoxShadow>[
+      BoxShadow(color: Color(0x66000000), blurRadius: 32, offset: Offset(0, 10)),
+    ],
+    chromeEdge: Color(0x14000000),
+    chromeDim: Color(0xC7FFFFFF), // white .78
+    rCard: 28,
+    rInner: 22,
+    rIcon: 26,
+    hairline: Color(0x1AFFFFFF), // white .10
+    track: Color(0x24FFFFFF), // white .14
+    barFill: LinearGradient(colors: <Color>[blue, blueLight]),
+    tintFill: Color(0x380090F0), // rgba(0,144,240,.22)
+    chipBg: Color(0x1FFFFFFF), // white .12
+    inputBg: Color(0x1AFFFFFF), // white .10
+    inputShadow: <BoxShadow>[
+      BoxShadow(color: Color(0x40000000), blurRadius: 26, offset: Offset(0, 8)),
+    ],
+    slotBg: Color(0x0FFFFFFF), // white .06
+    heroFill: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[blueDark, Color(0xFF06243E)],
+      ),
+    ),
+    heroInk: Color(0xFFFFFFFF),
+    heroChip: Color(0x2EFFFFFF), // white .18
+    dim: dimInkDark,
+  );
+
   /// Android Material 3. 반투명이 아니라 톤 단계로 층을 만든다.
   factory TpTokens.android() => const TpTokens(
     isGlass: false,
+    isDark: false,
+    ink: inkLight,
+    link: blueText,
+    mutedInk: graphite,
+    tabBar: tabBarFill,
+    scrim: Color(0xFFF6F8FC),
     fontFamily: 'Roboto Flex',
     fontFamilyFallback: <String>['Roboto'],
     boldWeight: FontWeight.w500,
@@ -312,6 +435,61 @@ class TpTokens extends ThemeExtension<TpTokens> {
     dim: dimInk,
   );
 
+  /// 어두운 Android. M3 는 밤에도 톤 단계다 — 여전히 불투명이고 블러가 없다.
+  factory TpTokens.androidDark() => const TpTokens(
+    isGlass: false,
+    isDark: true,
+    ink: Color(0xFFE7ECF2),
+    link: Color(0xFF7FC0F8),
+    mutedInk: Color(0xFFAAB4C0),
+    tabBar: Color(0xFF171C22),
+    scrim: Color(0xFF101418),
+    fontFamily: 'Roboto Flex',
+    fontFamilyFallback: <String>['Roboto'],
+    boldWeight: FontWeight.w500,
+    pageBackground: BoxDecoration(color: Color(0xFF101418)),
+    card: Color(0xFF191E24),
+    cardStrong: Color(0xFF212831),
+    blurSigma: 0,
+    saturation: 1,
+    cardShadow: <BoxShadow>[],
+    buttonShadow: <BoxShadow>[
+      BoxShadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+    ],
+    hasSpecular: false,
+    chromeFill: Color(0xFF101418),
+    chromeFillRaised: Color(0xFF171C22),
+    chromeBlurSigma: 0,
+    chromeSaturation: 1,
+    chromeShadow: <BoxShadow>[],
+    chromeShadowRaised: <BoxShadow>[],
+    chromeEdge: null,
+    chromeDim: dimInkDark,
+    rCard: 20,
+    rInner: 16,
+    rIcon: 24,
+    hairline: Color(0x17FFFFFF), // white .09
+    track: Color(0xFF2A323C),
+    barFill: LinearGradient(colors: <Color>[blueLight, blueLight]),
+    tintFill: Color(0xFF123A5E),
+    chipBg: Color(0xFF1E262F),
+    inputBg: Color(0xFF212932),
+    inputShadow: <BoxShadow>[
+      BoxShadow(color: Color(0x40000000), blurRadius: 6, offset: Offset(0, 2)),
+    ],
+    slotBg: Color(0xFF1A212A),
+    heroFill: BoxDecoration(color: Color(0xFF12324F)),
+    heroInk: Color(0xFFDCE9F7),
+    heroChip: Color(0x3D0090F0),
+    dim: dimInkDark,
+  );
+
+  /// 어두운 바탕의 흐린 보조 텍스트.
+  ///
+  /// 밝은 쪽과 같은 규칙이다 — 기준(4.5:1)을 막 넘기는 값. 가장 밝은
+  /// 배경(#212831)에서도 흰색 .70 이면 6.4 다.
+  static const Color dimInkDark = Color(0xB3FFFFFF); // white .70
+
   /// 흐린 보조 텍스트.
   ///
   /// **명세와 다른 유일한 색이다.** 명세는 iOS `rgba(20,30,45,.55)`,
@@ -351,11 +529,18 @@ class TpTokens extends ThemeExtension<TpTokens> {
     ],
   );
 
+  /// 네 벌 중 하나를 고른다.
+  static TpTokens pick({required bool glass, required bool dark}) => glass
+      ? (dark ? TpTokens.iosDark() : TpTokens.ios())
+      : (dark ? TpTokens.androidDark() : TpTokens.android());
+
   @override
-  TpTokens copyWith({bool? isGlass}) =>
-      isGlass == null || isGlass == this.isGlass
-      ? this
-      : (isGlass ? TpTokens.ios() : TpTokens.android());
+  TpTokens copyWith({bool? isGlass, bool? isDark}) {
+    final glass = isGlass ?? this.isGlass;
+    final dark = isDark ?? this.isDark;
+    if (glass == this.isGlass && dark == this.isDark) return this;
+    return TpTokens.pick(glass: glass, dark: dark);
+  }
 
   /// 두 크롬 사이를 애니메이션할 일이 없다. 중간값 대신 한쪽을 고른다.
   @override

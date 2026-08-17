@@ -73,7 +73,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 onTap: _finish,
                 child: Text(
                   K.skip.tr(),
-                  style: type.body.copyWith(color: TpTokens.blueText),
+                  style: type.body.copyWith(color: t.link),
                 ),
               ),
             ),

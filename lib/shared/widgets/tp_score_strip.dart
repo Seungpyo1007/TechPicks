@@ -62,7 +62,7 @@ class TpScoreStrip extends StatelessWidget {
                         maxLines: 1,
                         softWrap: false,
                         style: type.secondary.copyWith(
-                          color: axis.hasData ? TpTokens.ink : t.dim,
+                          color: axis.hasData ? t.ink : t.dim,
                           fontWeight: t.boldWeight,
                         ),
                       ),

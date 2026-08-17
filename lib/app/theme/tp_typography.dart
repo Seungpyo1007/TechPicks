@@ -49,7 +49,7 @@ class TpTypography extends ThemeExtension<TpTypography> {
     final base = TextStyle(
       fontFamily: t.fontFamily,
       fontFamilyFallback: t.fontFamilyFallback,
-      color: TpTokens.ink,
+      color: t.ink,
     );
     final glass = t.isGlass;
 

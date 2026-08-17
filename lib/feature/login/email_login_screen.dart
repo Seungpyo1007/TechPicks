@@ -179,7 +179,7 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
                 }),
                 child: Text(
                   (_signingUp ? K.signIn : K.signup).tr(),
-                  style: type.body.copyWith(color: TpTokens.blueText),
+                  style: type.body.copyWith(color: t.link),
                 ),
               ),
             ],

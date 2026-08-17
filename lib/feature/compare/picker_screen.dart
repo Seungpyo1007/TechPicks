@@ -93,7 +93,7 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
                   onTap: widget.onDone,
                   child: Text(
                     K.cancel.tr(),
-                    style: type.body.copyWith(color: TpTokens.blueText),
+                    style: type.body.copyWith(color: t.link),
                   ),
                 ),
               ],
@@ -201,7 +201,7 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
                               maxLines: 1,
                               softWrap: false,
                               style: type.cardTitle.copyWith(
-                                color: index == null ? t.dim : TpTokens.ink,
+                                color: index == null ? t.dim : t.ink,
                               ),
                             ),
                           ],

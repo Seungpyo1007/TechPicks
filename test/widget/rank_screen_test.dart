@@ -117,7 +117,7 @@ void main() {
         matching: find.byType(Text),
       ),
     );
-    expect(label.style?.color, isNot(TpTokens.ink));
+    expect(label.style?.color, isNot(TpTokens.inkLight));
   });
 
   testWidgets('빈 값은 대시로 그린다', (tester) async {

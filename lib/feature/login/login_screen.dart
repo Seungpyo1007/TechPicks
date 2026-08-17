@@ -150,7 +150,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onTap: widget.onSignUp,
                 child: Text(
                   K.signup.tr(),
-                  style: type.body.copyWith(color: TpTokens.blueText),
+                  style: type.body.copyWith(color: t.link),
                 ),
               ),
             ],

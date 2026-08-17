@@ -201,6 +201,22 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
   });
 
+  // 리메이크 뒤 이 줄은 "끔"이라고 적힌 채 눌러도 아무 일이 없었다.
+  testWidgets('다크 모드를 골라 바꾼다', (tester) async {
+    await _pump(tester);
+    expect(_container!.read(themeModeProvider), ThemeMode.system);
+    expect(find.text('System'), findsOneWidget);
+
+    await tester.tap(find.text('System'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    expect(_container!.read(themeModeProvider), ThemeMode.dark);
+    expect(find.text('Dark'), findsOneWidget);
+  });
+
   testWidgets('알림을 눌러 껐다 켠다', (tester) async {
     await _pump(tester);
     expect(_container!.read(notificationsProvider), isTrue);

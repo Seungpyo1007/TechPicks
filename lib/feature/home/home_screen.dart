@@ -342,7 +342,7 @@ class _SectionHeader extends StatelessWidget {
             onTap: onAction,
             child: Text(
               action!,
-              style: type.body.copyWith(color: TpTokens.blueText),
+              style: type.body.copyWith(color: context.tp.link),
             ),
           ),
       ],
@@ -431,7 +431,7 @@ class _MoverRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = context.tpText;
     // 상승은 파랑, 하락은 그래파이트. 명세에 빨강은 없다.
-    final color = mover.isUp ? TpTokens.blue : TpTokens.graphite;
+    final color = mover.isUp ? TpTokens.blue : context.tp.mutedInk;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

@@ -28,22 +28,25 @@ enum TpChrome {
 /// 색과 타이포는 [TpTokens]·[TpTypography] 확장에 들어 있고, 여기서는
 /// Material 위젯이 기본으로 집어가는 값만 맞춘다.
 abstract final class AppTheme {
-  static ThemeData of(TpChrome chrome) {
-    final tokens = chrome == TpChrome.ios ? TpTokens.ios() : TpTokens.android();
+  static ThemeData of(TpChrome chrome, {bool dark = false}) {
+    final glass = chrome == TpChrome.ios;
+    final tokens = TpTokens.pick(glass: glass, dark: dark);
     final type = TpTypography.of(tokens);
-    final motion = chrome == TpChrome.ios ? TpMotion.ios() : TpMotion.android();
+    final motion = glass ? TpMotion.ios() : TpMotion.android();
 
     final scheme =
         ColorScheme.fromSeed(
           seedColor: TpTokens.blue,
-          brightness: Brightness.light,
+          brightness: dark ? Brightness.dark : Brightness.light,
         ).copyWith(
           primary: TpTokens.blue,
           onPrimary: Colors.white,
-          surface: chrome == TpChrome.ios
-              ? const Color(0xFFEEF3FA)
-              : const Color(0xFFF6F8FC),
-          onSurface: TpTokens.ink,
+          // 화면 바탕은 TpShell 이 토큰으로 칠한다. 여기 값은 Material 위젯이
+          // 자기 기본색을 고를 때만 쓰인다.
+          surface: dark
+              ? (glass ? const Color(0xFF0D141D) : const Color(0xFF101418))
+              : (glass ? const Color(0xFFEEF3FA) : const Color(0xFFF6F8FC)),
+          onSurface: tokens.ink,
         );
 
     return ThemeData(

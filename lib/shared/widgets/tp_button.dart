@@ -82,8 +82,8 @@ class _TpButtonState extends State<TpButton> {
         color: filled
             ? Colors.white
             : plain
-            ? TpTokens.blueText
-            : TpTokens.ink,
+            ? t.link
+            : t.ink,
       ),
     );
 
