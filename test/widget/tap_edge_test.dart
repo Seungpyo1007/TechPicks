@@ -1,3 +1,4 @@
+import 'package:techpicks/shared/widgets/tp_press.dart';
 import 'package:techpicks/shared/widgets/tp_tap_target.dart';
 import 'package:techpicks/shared/widgets/tp_button.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -130,19 +131,48 @@ void main() {
 
   // 눌러도 아무 반응이 없으면 죽은 버튼처럼 보인다. 명세가 이름을 준 칩·카드
   // 말고는 규칙이 없어 서른 곳 넘게 그대로 있었다.
-  testWidgets('버튼과 링크는 눌리는 동안 줄어든다', (tester) async {
+  testWidgets('버튼은 눌리는 동안 줄고 어두워진다', (tester) async {
     await pumpScreen(tester, const OnboardingScreen());
 
     final button = find.byType(TpButton).first;
-    expect(tester.widget<AnimatedScale>(_scaleOf(button)).scale, 1);
+    double scale() => tester
+        .widgetList<Transform>(
+          find.descendant(of: button, matching: find.byType(Transform)),
+        )
+        // getMaxScaleOnAxis 는 z(=1)까지 세서 가로가 줄어도 1 로 나온다.
+        .map((t) => t.transform.storage[0])
+        // 쉴 때는 Transform 자체가 없다 — 그때가 1 이다.
+        .fold(1.0, (a, b) => a < b ? a : b);
+
+    expect(scale(), moreOrLessEquals(1, epsilon: 0.001));
 
     final press = await tester.startGesture(tester.getCenter(button));
-    await tester.pump(const Duration(milliseconds: 120));
-    expect(tester.widget<AnimatedScale>(_scaleOf(button)).scale, lessThan(1));
+    // 한 프레임은 티커를 시작만 하고, 그 다음 프레임부터 값이 움직인다.
+    await tester.pump(const Duration(milliseconds: 45));
+    await tester.pump(const Duration(milliseconds: 45));
+    expect(scale(), lessThan(1));
+    // 크기만 바뀌면 손가락 밑에서 뭐가 일어났는지 안 보인다.
+    expect(
+      find.descendant(of: button, matching: find.byType(ColorFiltered)),
+      findsWidgets,
+    );
 
     await press.up();
     await tester.pumpAndSettle();
-    expect(tester.widget<AnimatedScale>(_scaleOf(button)).scale, 1);
+    expect(scale(), moreOrLessEquals(1, epsilon: 0.001));
+  });
+
+  // 같은 0.97 이 칩에서는 2pt, 전체 폭 버튼에서는 10pt 가 된다. 큰 버튼만
+  // 과장돼 보이던 게 그래서다.
+  testWidgets('넓은 버튼이 더 조금 줄어든다', (tester) async {
+    // 전체 폭 버튼은 양쪽 3pt 씩만 들어간다. 예전 0.97 이면 5pt 씩이었다.
+    expect(
+      342 * (1 - TpPressFeel.scaleFor(342)),
+      moreOrLessEquals(6, epsilon: 0.1),
+    );
+    // 좁은 칩은 6pt 가 과해서 한도에 걸린다.
+    expect(80 * (1 - TpPressFeel.scaleFor(80)), lessThan(6));
+    expect(TpPressFeel.scaleFor(342), greaterThan(TpPressFeel.scaleFor(80)));
   });
 
   testWidgets('링크도 같은 박자로 반응한다', (tester) async {
