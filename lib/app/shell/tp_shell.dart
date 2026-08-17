@@ -113,13 +113,11 @@ class TpShell extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // 배경이 어두워지면 시계와 배터리도 같이 뒤집혀야 한다. 안 하면
       // 검은 글자가 검은 배경 위에 남는다.
-      value: t.isDark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      value: t.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: DecoratedBox(
         decoration: t.pageBackground,
-      // Ink 계열 위젯(InkWell, IconButton)이 Material 조상을 요구한다.
-      // 배경은 위 DecoratedBox 가 그리므로 여기서는 투명하게 둔다.
+        // Ink 계열 위젯(InkWell, IconButton)이 Material 조상을 요구한다.
+        // 배경은 위 DecoratedBox 가 그리므로 여기서는 투명하게 둔다.
         child: Material(
           type: MaterialType.transparency,
           child: t.isGlass ? _buildIos(context) : _buildAndroid(context),
@@ -161,11 +159,15 @@ class TpShell extends StatelessWidget {
             data: MediaQuery.of(context).copyWith(
               padding: EdgeInsets.only(top: topInset, bottom: bottomInset),
             ),
-            child: child,
+            child: _TabBody(tab: tab, child: child),
           ),
         ),
 
         // 헤더 스크림. 콘텐츠가 상태 바 아래로 스크롤될 때 글자가 겹치지 않게 한다.
+        //
+        // 위쪽 안전 영역까지는 **불투명**이다. 처음에는 위에서부터 .92 로
+        // 옅어지게 뒀는데, 시계 높이에서 알파가 .7 이라 큰 제목이 시계를
+        // 뚫고 올라왔다. 스크롤한 홈에서 "오늘"과 5:57 이 겹쳤다.
         if (showChrome)
           Positioned(
             top: 0,
@@ -179,8 +181,14 @@ class TpShell extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: <Color>[
-                      t.scrim.withValues(alpha: 0.92),
+                      t.scrim,
+                      t.scrim,
                       t.scrim.withValues(alpha: 0),
+                    ],
+                    stops: <double>[
+                      0,
+                      (safe.top / _iosHeaderScrim).clamp(0.0, 0.9),
+                      1,
                     ],
                   ),
                 ),
@@ -305,7 +313,7 @@ class TpShell extends StatelessWidget {
         Positioned.fill(
           child: Padding(
             padding: EdgeInsets.only(top: topInset, bottom: bottomInset),
-            child: child,
+            child: _TabBody(tab: tab, child: child),
           ),
         ),
 
@@ -573,4 +581,108 @@ class _AppMark extends StatelessWidget {
       fit: BoxFit.contain,
     ),
   );
+}
+
+/// 지금 보고 있는 탭. [TabHost] 가 알려주고 셸이 듣는다.
+class TpActiveTab extends InheritedWidget {
+  const TpActiveTab({super.key, required this.tab, required super.child});
+
+  final TpTab tab;
+
+  static TpTab? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<TpActiveTab>()?.tab;
+
+  @override
+  bool updateShouldNotify(TpActiveTab old) => old.tab != tab;
+}
+
+/// 탭 본문이 들어올 때의 전환.
+///
+/// 탭 알약은 칸에서 칸으로 미끄러지는데 그 아래 본문은 툭 갈렸다. 한 동작
+/// 안에서 한쪽만 움직이면 나머지가 고장 난 것처럼 읽힌다.
+///
+/// M3 의 fade-through 와 같은 모양이다: 나가는 것은 안 보여주고 **들어오는
+/// 것**만 옅게·조금 작게 시작해 제자리로 온다.
+///
+/// **크롬은 안 움직인다.** 셸 안쪽에서 콘텐츠만 감싸기 때문이다 — 바깥에서
+/// 화면을 통째로 감싸면 탭 캡슐까지 같이 줄었다 커진다.
+class _TabBody extends StatefulWidget {
+  const _TabBody({required this.tab, required this.child});
+
+  /// 이 셸이 그리는 탭. null 이면(상세·스캔·뷰어) 아무것도 안 한다.
+  final TpTab? tab;
+
+  final Widget child;
+
+  @override
+  State<_TabBody> createState() => _TabBodyState();
+}
+
+class _TabBodyState extends State<_TabBody>
+    with SingleTickerProviderStateMixin {
+  // late final 로 두면 안 된다. 탭이 아닌 셸(상세·스캔·뷰어)은 build 가 먼저
+  // 빠져나가서 dispose 가 **첫 접근**이 되고, 그때는 트리가 이미 떨어져 나가
+  // TickerMode 를 못 찾는다.
+  late final AnimationController _c;
+
+  TpTab? _active;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1),
+      value: 1,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final active = TpActiveTab.maybeOf(context);
+    final was = _active;
+    _active = active;
+
+    // 처음 붙을 때는 안 움직인다. 앱을 켜자마자 홈이 커지며 나타나면
+    // 화면이 한 번 튄 것처럼 보인다.
+    if (was == null || active == was) return;
+    if (widget.tab == null || active != widget.tab) return;
+
+    final move = context.motion.contentSwap;
+    if (move.duration == Duration.zero) return;
+    _c.duration = move.duration;
+    _c.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.tab == null) return widget.child;
+
+    final curve = CurvedAnimation(
+      parent: _c,
+      curve: context.motion.contentSwap.curve,
+    );
+
+    return AnimatedBuilder(
+      animation: curve,
+      builder: (context, child) {
+        final t = curve.value;
+        if (t == 1) return child!;
+        return Opacity(
+          opacity: t,
+          // 96% 에서 시작한다. 더 줄이면 목록이 크게 튀어 보이고, 안 줄이면
+          // 페이드만 남아 어디서 온 건지 안 읽힌다.
+          child: Transform.scale(scale: 0.96 + 0.04 * t, child: child),
+        );
+      },
+      child: widget.child,
+    );
+  }
 }

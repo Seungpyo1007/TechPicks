@@ -6,6 +6,7 @@ import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_press.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 
 /// 3D 뷰어.
@@ -68,8 +69,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
                           selected: on,
                           // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
                           // 버튼이 글자 글리프 위에서만 눌린다.
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
+                          child: _PressedChip(
                             onTap: () =>
                                 setState(() => _highlighted = on ? null : i),
                             // 다크 인수 화면이라 TpChip 의 밝은 팔레트를 못
@@ -239,4 +239,44 @@ class _WireframePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_WireframePainter old) => old.highlighted != highlighted;
+}
+
+/// 어두운 인수 화면의 칩. 눌리면 알약들과 같은 박자로 줄어든다.
+///
+/// 여기만 [TpChip] 을 못 쓴다 — 밝은 팔레트가 검은 배경에서 안 맞는다.
+/// 그래서 눌림 반응만 [TpPressFeel] 로 맞춘다.
+class _PressedChip extends StatefulWidget {
+  const _PressedChip({required this.onTap, required this.child});
+
+  final VoidCallback onTap;
+  final Widget child;
+
+  @override
+  State<_PressedChip> createState() => _PressedChipState();
+}
+
+class _PressedChipState extends State<_PressedChip> {
+  bool _pressed = false;
+
+  void _set(bool value) {
+    if (_pressed != value) setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final move = TpPressFeel.move(context, pressed: _pressed);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onTap,
+      onTapDown: (_) => _set(true),
+      onTapUp: (_) => _set(false),
+      onTapCancel: () => _set(false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1,
+        duration: move.duration,
+        curve: move.curve,
+        child: widget.child,
+      ),
+    );
+  }
 }

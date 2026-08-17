@@ -94,18 +94,26 @@ class _AskScreenState extends ConsumerState<AskScreen> {
               // 기다리는 동안 말풍선 하나를 더 놓는다. 아무 표시가 없으면
               // 답이 오는 중인지 실패한 건지 알 수 없다.
               itemCount: messages.length + (busy ? 1 : 0),
-              itemBuilder: (context, i) => i == messages.length
-                  ? _Bubble(message: AskMessage.ai(K.askThinking.tr()))
-                  : _Bubble(
-                      message: messages[i],
-                      // 답이 도착한 걸 스크린 리더가 알려줘야 한다. 화면은
-                      // 스크롤로 알리지만 그건 눈으로 보는 사람에게만 통한다.
-                      announce:
-                          !busy &&
-                          i == messages.length - 1 &&
-                          !messages[i].isUser,
-                      onDeviceTap: widget.onDeviceTap,
-                    ),
+              itemBuilder: (context, i) {
+                if (i == messages.length) {
+                  return _Arriving(
+                    child: _Bubble(message: AskMessage.ai(K.askThinking.tr())),
+                  );
+                }
+                final bubble = _Bubble(
+                  message: messages[i],
+                  // 답이 도착한 걸 스크린 리더가 알려줘야 한다. 화면은
+                  // 스크롤로 알리지만 그건 눈으로 보는 사람에게만 통한다.
+                  announce:
+                      !busy && i == messages.length - 1 && !messages[i].isUser,
+                  onDeviceTap: widget.onDeviceTap,
+                );
+                // 마지막 말풍선만 올라오며 나타난다. 목록을 되감을 때마다
+                // 옛 말풍선이 다시 움직이면 그게 더 산만하다.
+                return i == messages.length - 1
+                    ? _Arriving(key: ValueKey<int>(i), child: bubble)
+                    : bubble;
+              },
             ),
             Positioned(
               left: 0,
@@ -118,6 +126,64 @@ class _AskScreenState extends ConsumerState<AskScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 새 말풍선이 아래에서 올라오며 나타난다.
+///
+/// 답이 툭 나타나면 방금 온 것인지 원래 있던 것인지 안 읽힌다. 스크롤은
+/// 같은 순간에 따로 움직이고 있어서 더 그렇다.
+class _Arriving extends StatefulWidget {
+  const _Arriving({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<_Arriving> createState() => _ArrivingState();
+}
+
+class _ArrivingState extends State<_Arriving>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_c.isAnimating || _c.isCompleted) return;
+    final move = context.motion.listItem;
+    _c.duration = move.duration == Duration.zero
+        ? const Duration(milliseconds: 1)
+        : move.duration;
+    _c.forward();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final curve = CurvedAnimation(
+      parent: _c,
+      curve: context.motion.listItem.curve,
+    );
+    return AnimatedBuilder(
+      animation: curve,
+      builder: (context, child) => Opacity(
+        opacity: curve.value,
+        child: FractionalTranslation(
+          // 자기 높이의 12% 만 올라온다. 더 주면 목록 전체가 출렁인다.
+          translation: Offset(0, (1 - curve.value) * 0.12),
+          child: child,
+        ),
+      ),
+      child: widget.child,
     );
   }
 }
