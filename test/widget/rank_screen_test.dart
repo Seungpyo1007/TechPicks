@@ -4,6 +4,7 @@ import 'package:techpicks/shared/copy_keys.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../support/harness.dart';
+import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/ranking.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
@@ -142,6 +143,66 @@ void main() {
     test('점수는 반올림한 정수', () {
       expect(formatAxisValue(RankAxis.tpIndex, 88.6), '89');
       expect(formatAxisValue(RankAxis.camera, 36.1), '36');
+    });
+  });
+
+  // 랭킹은 50행에서 잘린다. 그 아래 기기를 찾을 방법이 스크롤밖에 없었는데,
+  // 카탈로그가 200종이라 사실상 없는 거나 마찬가지였다.
+  group('찾기', () {
+    testWidgets('이름으로 걸러진다', (tester) async {
+      final container = await pumpScreen(
+        tester,
+        const RankScreen(),
+        size: const Size(1200, 4400),
+      );
+
+      await tester.enterText(find.byType(TextField), 'pixel');
+      await tester.pumpAndSettle();
+
+      final visible = container.read(rankVisibleProvider);
+      expect(visible, isNotEmpty);
+      expect(
+        visible.every(
+          (r) =>
+              r.device.name.toLowerCase().contains('pixel') ||
+              (r.device.brand?.name.toLowerCase().contains('pixel') ?? false),
+        ),
+        isTrue,
+      );
+      // 순위 번호는 전체 순위 그대로다. 다시 매기면 "구글 중 1위"가
+      // "전체 1위"처럼 보인다.
+      expect(visible.first.position, greaterThan(0));
+    });
+
+    testWidgets('맞는 게 없으면 그렇게 말한다', (tester) async {
+      await pumpScreen(tester, const RankScreen(), size: const Size(1200, 4400));
+
+      await tester.enterText(find.byType(TextField), 'zzzz');
+      await tester.pumpAndSettle();
+
+      expect(find.text(K.noMatches.tr()), findsOneWidget);
+    });
+
+    testWidgets('브랜드 칩으로 거르고 다시 눌러 푼다', (tester) async {
+      final container = await pumpScreen(
+        tester,
+        const RankScreen(),
+        size: const Size(1200, 4400),
+      );
+
+      final brand = container.read(rankBrandsProvider).first;
+      final all = container.read(rankVisibleProvider).length;
+
+      await tester.tap(find.widgetWithText(TpChip, brand));
+      await tester.pumpAndSettle();
+
+      final filtered = container.read(rankVisibleProvider);
+      expect(filtered.length, lessThan(all));
+      expect(filtered.every((r) => r.device.brand?.name == brand), isTrue);
+
+      await tester.tap(find.widgetWithText(TpChip, brand));
+      await tester.pumpAndSettle();
+      expect(container.read(rankVisibleProvider), hasLength(all));
     });
   });
 }

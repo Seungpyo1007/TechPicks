@@ -14,6 +14,7 @@ import '../../domain/model/ranking.dart';
 import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_chip.dart';
 import 'category_chips.dart';
+import '../../shared/widgets/tp_search_field.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_button.dart';
@@ -54,7 +55,9 @@ class RankScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final axis = ref.watch(rankAxisProvider);
-    final ranked = ref.watch(rankedPhonesProvider);
+    final ranked = ref.watch(rankVisibleProvider);
+    final brands = ref.watch(rankBrandsProvider);
+    final brand = ref.watch(rankBrandProvider);
     // 실패했을 때도 스켈레톤을 계속 돌리면 영원히 로딩처럼 보인다.
     final catalog = ref.watch(catalogProvider);
     final motion = context.motion;
@@ -74,7 +77,15 @@ class RankScreen extends ConsumerWidget {
               tpContentInset(context),
           children: <Widget>[
             const CategoryChips(),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
+            const _RankSearch(),
+            // 브랜드 줄에는 눈썹 글자를 안 붙인다. 검색 · 브랜드 · 정렬이
+            // 각자 제목을 달면 목록이 시작되기 전에 화면 절반이 찬다.
+            if (brands.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 10),
+              _BrandChips(brands: brands, selected: brand),
+            ],
+            const SizedBox(height: 10),
             _EyebrowText(K.rankBy.tr()),
             const SizedBox(height: 8),
             _ChipRow(
@@ -95,6 +106,16 @@ class RankScreen extends ConsumerWidget {
                   // 없다. 다시 시도할 자리를 준다.
                   : catalog.hasError
                   ? const TpCatalogError(key: ValueKey<String>('error'))
+                  // 걸러서 아무것도 안 남으면 빈 목록 대신 그렇게 말한다.
+                  : ranked.isEmpty
+                  ? Padding(
+                      key: const ValueKey<String>('empty'),
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        K.noMatches.tr(),
+                        style: context.tpText.secondary,
+                      ),
+                    )
                   : _RankList(
                       key: const ValueKey<String>('list'),
                       ranked: ranked.take(maxRows).toList(growable: false),
@@ -121,6 +142,77 @@ class RankScreen extends ConsumerWidget {
             Text(K.rankNote.tr(), style: context.tpText.caption),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 랭킹의 검색 줄.
+///
+/// 컨트롤러 하나 때문에 화면 전체를 stateful 로 만들지 않는다. 검색어 자체는
+/// 프로바이더에 있어서 화면을 떠났다 와도 남는다.
+class _RankSearch extends ConsumerStatefulWidget {
+  const _RankSearch();
+
+  @override
+  ConsumerState<_RankSearch> createState() => _RankSearchState();
+}
+
+class _RankSearchState extends ConsumerState<_RankSearch> {
+  late final TextEditingController _query = TextEditingController(
+    text: ref.read(rankQueryProvider),
+  );
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TpSearchField(
+    controller: _query,
+    onChanged: (value) {
+      ref.read(rankQueryProvider.notifier).set(value);
+      // 지우기 버튼이 붙었다 떨어지는 것은 이 위젯이 그린다.
+      setState(() {});
+    },
+  );
+}
+
+/// 브랜드 칩 행. 고른 걸 다시 누르면 풀린다.
+class _BrandChips extends ConsumerWidget {
+  const _BrandChips({required this.brands, required this.selected});
+
+  final List<String> brands;
+  final String? selected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(rankBrandProvider.notifier);
+    return SizedBox(
+      height: 46,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: brands.length + 1,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          if (i == 0) {
+            return TpChip(
+              label: K.allBrands.tr(),
+              selected: selected == null,
+              onTap: selected == null
+                  ? null
+                  : () => notifier.toggle(selected!),
+            );
+          }
+          final brand = brands[i - 1];
+          return TpChip(
+            label: brand,
+            selected: brand == selected,
+            onTap: () => notifier.toggle(brand),
+          );
+        },
       ),
     );
   }

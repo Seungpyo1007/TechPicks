@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/dto/brand.dart';
 import 'package:techpicks/data/dto/smartphone.dart';
+import 'package:techpicks/domain/model/device_search.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/widgets/tp_surface.dart';
@@ -31,27 +32,27 @@ void main() {
     ];
 
     test('빈 검색어는 전부 그대로', () {
-      expect(PickerScreen.filter(devices, '   '), hasLength(2));
+      expect(DeviceSearch.filter(devices, '   '), hasLength(2));
     });
 
     test('이름 일부로 찾는다', () {
-      expect(PickerScreen.filter(devices, 's25').single.slug, 'galaxy-s25');
+      expect(DeviceSearch.filter(devices, 's25').single.slug, 'galaxy-s25');
     });
 
     test('대소문자를 안 가린다', () {
       expect(
-        PickerScreen.filter(devices, 'IPHONE').single.slug,
+        DeviceSearch.filter(devices, 'IPHONE').single.slug,
         'iphone-16-pro',
       );
     });
 
     test('브랜드 이름으로도 찾는다', () {
       // 화면에는 브랜드가 안 보이지만 사람은 "삼성"으로 찾는다.
-      expect(PickerScreen.filter(devices, 'samsung').single.slug, 'galaxy-s25');
+      expect(DeviceSearch.filter(devices, 'samsung').single.slug, 'galaxy-s25');
     });
 
     test('없으면 빈 목록', () {
-      expect(PickerScreen.filter(devices, 'nokia'), isEmpty);
+      expect(DeviceSearch.filter(devices, 'nokia'), isEmpty);
     });
   });
 
