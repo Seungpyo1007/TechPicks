@@ -43,7 +43,6 @@ class TpNativeGlassSurface extends StatelessWidget {
     required this.child,
     required this.radius,
     this.capsule = false,
-    this.tint,
   });
 
   final Widget child;
@@ -53,9 +52,6 @@ class TpNativeGlassSurface extends StatelessWidget {
 
   /// 알약인가. 탭 바와 헤더 알약이 그렇다.
   final bool capsule;
-
-  /// 유리에 섞을 색. 없으면 OS 기본값 그대로다.
-  final Color? tint;
 
   @override
   Widget build(BuildContext context) => LiquidGlassContainer(
@@ -67,7 +63,11 @@ class TpNativeGlassSurface extends StatelessWidget {
           ? LiquidGlassEffectShape.capsule
           : LiquidGlassEffectShape.rect,
       cornerRadius: capsule ? null : radius,
-      tint: tint,
+      // 색을 안 얹는다. 유리는 색이 아니라 뒤에 있는 것으로 보인다.
+      tint: null,
+      // 누르면 OS 가 유리를 눌러 준다. 우리가 스케일을 흉내 내는 것보다
+      // 훨씬 유리 같다 — 빛이 같이 움직인다.
+      interactive: true,
     ),
     child: child,
   );
