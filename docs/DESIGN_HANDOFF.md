@@ -94,7 +94,17 @@ There is **no red anywhere.** The palette comes out of the logo.
 **Concentric radii rule:** an inner element inside a 28px card uses 22px, inside that 16px. Never equal,
 never larger than the parent.
 
-**How the glass is drawn.** CSS `backdrop-filter` gives blur and saturation but not refraction — the
+**How the glass is drawn — the chrome is the OS's own glass.** On iOS 26+ the tab capsule and the
+header pill are `native_liquid_glass` platform views, i.e. SwiftUI's `.glassEffect()`: the real Liquid
+Glass, drawn by the system, which bends and samples the backdrop in ways no shader of ours reproduces.
+Our tokens only add a light tint (35% of the table's fill — any more and the OS glass disappears
+underneath it). Geometry stays ours: 62pt tall, `left/right: 12`, capsule corners, blue pill, our
+labels — all Flutter widgets stacked on top of the platform view. The package's own `LiquidGlassTabBar`
+is deliberately unused: it would replace the spec'd bar with Apple's stock one.
+
+Cards keep the shader glass below — one platform view per card would mean dozens in a list.
+
+**How the glass is drawn (fallback).** CSS `backdrop-filter` gives blur and saturation but not refraction — the
 prototype's edges bend the background, and a `BackdropFilter` cannot. On iOS the app renders these
 tokens through `liquid_glass_widgets` (pinned `0.29.6`): chrome at `premium` (full shader — texture
 capture, edge light, chromatic aberration), cards at `standard` (lightweight shader). Colour, blur and

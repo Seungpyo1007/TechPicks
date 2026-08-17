@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../app/theme/tp_glass.dart';
+import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_tokens.dart';
 import 'tp_press.dart';
 
@@ -106,7 +107,26 @@ class TpSurface extends StatelessWidget {
       );
     }
 
-    // 진짜 유리. 굴절과 엣지 조명은 BackdropFilter 로 안 되는 것들이다.
+    // OS 가 직접 그리는 유리. 크롬에만 쓴다 — 화면당 두 장이고, 카드에 쓰면
+    // 목록 하나에 플랫폼 뷰가 수십 개 생긴다.
+    if (chrome && sigma > 0 && TpNativeGlass.enabled) {
+      Widget glass = TpNativeGlassSurface(
+        radius: radius ?? t.rCard,
+        // 명세의 컨트롤 반지름은 999 다. 알약으로 넘기면 OS 가 높이에 맞춰
+        // 깎는다 — 우리가 숫자로 흉내 내는 것보다 정확하다.
+        capsule: (radius ?? t.rCard) >= TpTokens.rControl,
+        // 유리 자체는 OS 것을 쓰고, 우리 토큰은 아주 옅은 색만 얹는다. 여기에
+        // 카드 채움값(.62)을 그대로 주면 OS 유리가 안 보인다.
+        tint: fill.withValues(alpha: fill.a * 0.35),
+        child: content,
+      );
+      if (onTap != null || onLongPress != null) {
+        glass = TpPress(onTap: onTap, onLongPress: onLongPress, child: glass);
+      }
+      return glass;
+    }
+
+    // 셰이더 유리. 굴절과 엣지 조명은 BackdropFilter 로 안 되는 것들이다.
     if (sigma > 0 && TpGlassRuntime.enabled) {
       Widget glass = GlassContainer(
         shape: LiquidRoundedSuperellipse(borderRadius: radius ?? t.rCard),
