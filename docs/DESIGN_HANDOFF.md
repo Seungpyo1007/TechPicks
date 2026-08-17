@@ -104,6 +104,11 @@ The container is `interactive`, so pressing it is the OS's own glass response ra
 labels — all Flutter widgets stacked on top of the platform view. The package's own `LiquidGlassTabBar`
 is deliberately unused: it would replace the spec'd bar with Apple's stock one.
 
+The selected tab pill is glass too, with `blue` going in as a **tint** rather than a fill — on a glass
+bar an opaque pill reads like a sticker stuck to the material. It does not *merge* with the bar the way
+iOS 26's own tab bar does (`glassEffectUnion` only works inside one `GlassEffectContainer`, and each
+platform view carries its own namespace), so the pill is a second glass layer riding on the first.
+
 Cards keep the shader glass below — one platform view per card would mean dozens in a list.
 
 **How the glass is drawn (fallback).** CSS `backdrop-filter` gives blur and saturation but not refraction — the

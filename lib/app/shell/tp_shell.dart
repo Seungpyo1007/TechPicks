@@ -1,4 +1,5 @@
 import '../theme/tp_motion.dart';
+import '../theme/tp_native_glass.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -478,12 +479,29 @@ class _IosTabBar extends StatelessWidget {
               height: TpShell.iosTabPill,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: TpTokens.blue,
-                    borderRadius: BorderRadius.circular(TpTokens.rControl),
-                  ),
-                ),
+                // 고른 알약도 유리다. iOS 26 의 탭 바는 알약과 바가 같은
+                // 재질이고, 여기만 불투명 파랑이면 유리 위에 스티커를 붙인
+                // 것처럼 보인다. 파랑은 색이 아니라 **틴트**로 들어간다.
+                //
+                // 바와 하나로 합쳐지지는(glassEffectUnion) 않는다 — 플랫폼
+                // 뷰마다 네임스페이스가 따로라 그건 한 컨테이너 안에서만 된다.
+                child: TpNativeGlass.enabled
+                    ? TpNativeGlassSurface(
+                        radius: TpTokens.rControl,
+                        capsule: true,
+                        tint: TpTokens.blue,
+                        // 누르는 것은 그 아래 탭 항목이다. 알약은 장식이다.
+                        interactive: false,
+                        child: const SizedBox.expand(),
+                      )
+                    : DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: TpTokens.blue,
+                          borderRadius: BorderRadius.circular(
+                            TpTokens.rControl,
+                          ),
+                        ),
+                      ),
               ),
             ),
             Row(
