@@ -16,6 +16,7 @@ import '../feature/share/tp_link.dart';
 import '../feature/viewer/viewer_screen.dart';
 import '../feature/you/you_screen.dart';
 import 'providers.dart';
+import 'shell/tp_shell.dart';
 import 'shell/tp_tab.dart';
 
 /// 탭 다섯 개를 들고 있는 화면.
@@ -169,40 +170,45 @@ class _TabHostState extends ConsumerState<TabHost> {
 
   Widget _stack() {
     // IndexedStack 이라 탭을 오가도 스크롤 위치와 입력이 남는다.
-    return IndexedStack(
-      index: TpTab.values.indexOf(_tab),
-      children: <Widget>[
-        HomeScreen(
-          onTabSelected: _select,
-          onDeviceTap: _openDevice,
-          onAdd: () => _select(TpTab.rank),
-          onCompareAll: () => _select(TpTab.compare),
-          onAskWhy: () => _select(TpTab.ask),
-          onMoversTap: () => _select(TpTab.rank),
-        ),
-        RankTab(
-          onTabSelected: _select,
-          onDeviceTap: _openDevice,
-          onScan: _openScan,
-        ),
-        CompareScreen(
-          onTabSelected: _select,
-          onPick: _openPicker,
-          onAskWhy: _askAboutCompared,
-        ),
-        AskScreen(onTabSelected: _select, onDeviceTap: _openDevice),
-        YouScreen(
-          onTabSelected: _select,
-          name: ref.watch(currentUserProvider)?.name,
-          email: ref.watch(currentUserProvider)?.email,
-          // 손님 표시도 같이 지운다. 안 지우면 로그아웃해도 탭에 남는다.
-          onLogout: () {
-            unawaited(ref.read(currentUserProvider.notifier).signOut());
-            unawaited(ref.read(guestProvider.notifier).clear());
-          },
-          onDeviceTap: _openDevice,
-        ),
-      ],
+    // 지금 어느 탭인지 아래로 알린다. 본문의 전환은 각 화면의 셸이 한다 —
+    // 여기서 통째로 감싸면 탭 캡슐까지 같이 줄었다 커진다.
+    return TpActiveTab(
+      tab: _tab,
+      child: IndexedStack(
+        index: TpTab.values.indexOf(_tab),
+        children: <Widget>[
+          HomeScreen(
+            onTabSelected: _select,
+            onDeviceTap: _openDevice,
+            onAdd: () => _select(TpTab.rank),
+            onCompareAll: () => _select(TpTab.compare),
+            onAskWhy: () => _select(TpTab.ask),
+            onMoversTap: () => _select(TpTab.rank),
+          ),
+          RankTab(
+            onTabSelected: _select,
+            onDeviceTap: _openDevice,
+            onScan: _openScan,
+          ),
+          CompareScreen(
+            onTabSelected: _select,
+            onPick: _openPicker,
+            onAskWhy: _askAboutCompared,
+          ),
+          AskScreen(onTabSelected: _select, onDeviceTap: _openDevice),
+          YouScreen(
+            onTabSelected: _select,
+            name: ref.watch(currentUserProvider)?.name,
+            email: ref.watch(currentUserProvider)?.email,
+            // 손님 표시도 같이 지운다. 안 지우면 로그아웃해도 탭에 남는다.
+            onLogout: () {
+              unawaited(ref.read(currentUserProvider.notifier).signOut());
+              unawaited(ref.read(guestProvider.notifier).clear());
+            },
+            onDeviceTap: _openDevice,
+          ),
+        ],
+      ),
     );
   }
 }

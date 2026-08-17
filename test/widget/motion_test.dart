@@ -317,4 +317,46 @@ void _homeMotion() {
     expect(tester.getRect(pill).left, greaterThan(home.left));
     expect(find.byKey(const ValueKey<String>('tab-pill')), findsOneWidget);
   });
+
+  // 알약은 미끄러지는데 그 아래 본문은 툭 갈렸다. 한 동작 안에서 한쪽만
+  // 움직이면 나머지가 고장 난 것처럼 읽힌다.
+  testWidgets('탭을 바꾸면 본문이 옅게 들어오고 크롬은 안 움직인다', (tester) async {
+    await pumpScreen(
+      tester,
+      const TabHost(),
+      size: const Size(402, 874),
+      overrides: <Override>[
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    await tester.pumpAndSettle();
+
+    final pill = find.byKey(const ValueKey<String>('tab-pill'));
+    Rect chrome() => tester.getRect(
+      find.ancestor(of: pill, matching: find.byType(Stack)).first,
+    );
+    final before = chrome();
+
+    await tester.tap(find.text(K.tab(TpTab.you).tr()));
+    // 한 프레임은 티커를 시작만 한다. 그 다음 프레임이 전환의 한가운데다.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+
+    final fading = tester.widgetList<Opacity>(find.byType(Opacity));
+    expect(
+      fading.any((o) => o.opacity > 0 && o.opacity < 1),
+      isTrue,
+      reason: '본문이 옅게 들어와야 한다',
+    );
+    // 크롬은 자기 자리에 그대로 있다.
+    expect(chrome(), before);
+
+    await tester.pumpAndSettle();
+    expect(
+      tester.widgetList<Opacity>(find.byType(Opacity)).every(
+        (o) => o.opacity == 1,
+      ),
+      isTrue,
+    );
+  });
 }

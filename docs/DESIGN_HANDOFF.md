@@ -372,7 +372,7 @@ live — drop the "Restart Required" dialog and its strings.
 
 | Interaction | Spec |
 | --- | --- |
-| Tab switch | Instant; no cross-fade. Active tab: iOS pill fills `#0C78D8` in 180ms; Android icon+label to blue. |
+| Tab switch | Active tab: iOS pill slides to the new cell in 180ms; Android icon+label to blue. **Deviation:** the spec says the body switches instantly, but with the pill sliding, an instant body read as a glitch — the body now fades in (200ms, 96%→100% scale) while the chrome stays put. Set `contentSwap` to zero to get the spec behaviour back. |
 | Push (detail, picker, scan, viewer) | Platform default — iOS slide-from-right, Android shared-axis X. |
 | Back | iOS: glass chevron top-left **and** edge swipe. Android: app-bar arrow **and** system back. Single-level: returns to `prev`. |
 | Rank re-sort | Rows animate to new positions, 220ms `cubic-bezier(.2,.8,.2,1)`. |
