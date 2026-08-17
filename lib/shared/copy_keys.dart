@@ -125,6 +125,14 @@ abstract final class K {
   static const String pwResetSent = 'pwResetSent';
   static const String pwResetFailed = 'pwResetFailed';
   static const String nameLabel = 'nameLabel';
+  static const String usernameLabel = 'usernameLabel';
+  static const String pronounsLabel = 'pronounsLabel';
+  static const String phoneLabel = 'phoneLabel';
+  static const String genderLabel = 'genderLabel';
+  static const String changePhoto = 'changePhoto';
+  static const String photoFailed = 'photoFailed';
+  static const String profileSaved = 'profileSaved';
+  static const String profileFailed = 'profileFailed';
   static const String save = 'save';
   static const String logout = 'logout';
   static const String on = 'on';

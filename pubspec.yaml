@@ -45,6 +45,8 @@ dependencies:
   liquid_glass_widgets: 0.29.6
   flutter_gemma: ^1.5.9
   flutter_gemma_builtin_ai: ^0.1.0
+  image_picker: ^1.2.3
+  firebase_storage: ^13.4.6
 
 
 
