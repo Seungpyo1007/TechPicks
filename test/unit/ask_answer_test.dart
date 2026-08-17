@@ -89,7 +89,7 @@ Hope that helps.
     ];
 
     test('지수가 가장 높은 기기를 고른다', () async {
-      final a = await const LocalAskService().ask('뭐가 좋아?', catalog);
+      final a = (await const LocalAskService().ask('뭐가 좋아?', catalog))?.answer;
       expect(a!.pickSlug, 'flagship');
       expect(a.rows.map((r) => r.label), <String>[
         K.tpIndex.tr(),
@@ -100,13 +100,16 @@ Hope that helps.
     });
 
     test('예산을 말하면 그 안에서 고른다', () async {
-      final a = await const LocalAskService().ask('\$1,000 이하로', catalog);
+      final a = (await const LocalAskService().ask(
+        '\$1,000 이하로',
+        catalog,
+      ))?.answer;
       expect(a!.pickSlug, 'mid');
       expect(a.reason, contains(r'$1,000'));
     });
 
     test('예산 안에 아무것도 없으면 전체에서 고른다', () async {
-      final a = await const LocalAskService().ask('100 달러', catalog);
+      final a = (await const LocalAskService().ask('100 달러', catalog))?.answer;
       expect(a!.pickSlug, 'flagship');
     });
 

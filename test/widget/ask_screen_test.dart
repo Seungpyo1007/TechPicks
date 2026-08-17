@@ -15,15 +15,20 @@ import 'package:techpicks/feature/ask/ask_screen.dart';
 
 /// 모델을 부르지 않는 가짜. 화면만 검사한다.
 class _StubAsk implements AskService {
-  _StubAsk(this.answer);
+  _StubAsk(this.answer, {this.say});
 
   final AskAnswer? answer;
+
+  /// 표 없이 문장만 돌려주는 답.
+  final String? say;
+
   final List<String> asked = <String>[];
 
   @override
-  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) async {
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) async {
     asked.add(question);
-    return answer;
+    if (say != null) return AskReply.say(say!);
+    return answer == null ? null : AskReply.pick(answer!);
   }
 }
 
@@ -105,6 +110,19 @@ void main() {
     expect(find.textContaining('Could not answer'), findsOneWidget);
   });
 
+  // 카탈로그 밖 질문이면 표를 못 그린다. 그렇다고 "답할 수 없습니다"로
+  // 떨어뜨릴 이유는 없다 — v1 은 그냥 대답했다.
+  testWidgets('기기를 고를 수 없는 질문에는 문장으로 답한다', (tester) async {
+    await _pump(tester, _StubAsk(null, say: '배터리 수명은 용량보다 화면과 칩이 더 좌우합니다.'));
+
+    await tester.enterText(find.byType(TextField), '배터리 수명은 뭐가 정하나요?');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(find.text('배터리 수명은 용량보다 화면과 칩이 더 좌우합니다.'), findsOneWidget);
+    expect(find.textContaining('Could not answer'), findsNothing);
+  });
+
   testWidgets('빈 입력은 보내지 않는다', (tester) async {
     final stub = _StubAsk(_answer);
     await _pump(tester, stub);
@@ -149,7 +167,7 @@ void main() {
   // 답을 기다리는 동안 아무 표시가 없었고, 그 사이에 보낸 질문은 조용히
   // 버려졌다.
   testWidgets('기다리는 동안 표시가 남고 두 번째 질문은 안 사라진다', (tester) async {
-    final answer = Completer<AskAnswer?>();
+    final answer = Completer<AskReply?>();
     await pumpScreen(
       tester,
       const AskScreen(),
@@ -182,8 +200,8 @@ void main() {
 class _SlowAsk implements AskService {
   const _SlowAsk(this.answer);
 
-  final Future<AskAnswer?> answer;
+  final Future<AskReply?> answer;
 
   @override
-  Future<AskAnswer?> ask(String question, List<Smartphone> catalog) => answer;
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) => answer;
 }
