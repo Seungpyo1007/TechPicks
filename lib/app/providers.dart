@@ -18,6 +18,7 @@ import '../data/repository/catalog_source.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../data/service/ask_service.dart';
 import '../data/service/on_device_ask_service.dart';
+import '../data/service/profile_service.dart';
 import '../data/service/auth_service.dart';
 import '../data/service/connectivity_service.dart';
 import '../data/service/deep_link_service.dart';
@@ -33,6 +34,7 @@ import '../domain/model/scan_match.dart';
 import '../domain/model/tp_index.dart';
 import '../domain/model/processor.dart';
 import '../domain/model/ranking.dart';
+import '../domain/model/tp_profile.dart';
 import '../domain/model/tp_weights.dart';
 import '../feature/rank/rank_category.dart';
 import '../feature/share/tp_link.dart';
@@ -774,6 +776,51 @@ final authServiceProvider = Provider<AuthService>(
 );
 
 /// 지금 로그인한 사람. 로그인·로그아웃할 때 갱신한다.
+/// 프로필 저장소. 테스트는 이걸 갈아끼운다.
+final profileServiceProvider = Provider<ProfileService>(
+  (ref) => FirebaseProfileService(),
+);
+
+/// 지금 로그인한 사람의 프로필.
+///
+/// 로그인 안 했으면 빈 프로필이다 — 계정 없이 쓰는 사람에게는 올릴 곳이 없다.
+class ProfileNotifier extends AsyncNotifier<TpProfile> {
+  @override
+  Future<TpProfile> build() async {
+    final uid = ref.watch(currentUserProvider)?.uid;
+    if (uid == null) return const TpProfile();
+    return ref.watch(profileServiceProvider).load(uid);
+  }
+
+  /// 저장하고 화면에 바로 반영한다. 실패하면 false 고 상태는 그대로다.
+  Future<bool> save(TpProfile profile) async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return false;
+
+    final ok = await ref.read(profileServiceProvider).save(uid, profile);
+    if (ok && ref.mounted) state = AsyncData(profile);
+    return ok;
+  }
+
+  /// 사진을 올리고 프로필에 붙인다. 주소를 돌려주고, 실패하면 null.
+  Future<String?> uploadPhoto(String filePath) async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return null;
+
+    final url = await ref
+        .read(profileServiceProvider)
+        .uploadPhoto(uid, filePath);
+    if (url == null) return null;
+
+    final next = (state.value ?? const TpProfile()).copyWith(photoUrl: url);
+    return await save(next) ? url : null;
+  }
+}
+
+final profileProvider = AsyncNotifierProvider<ProfileNotifier, TpProfile>(
+  ProfileNotifier.new,
+);
+
 class CurrentUserNotifier extends Notifier<TpUser?> {
   @override
   TpUser? build() {

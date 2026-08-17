@@ -123,6 +123,13 @@ leaves the device. Requirements are narrow — iPhone 15 Pro or newer with Apple
 Pixel 9 / Galaxy S25 or newer — so the sheet says why it can't be used when it can't. This raises
 the iOS deployment target to **16.0**.
 
+**Profile.** You → Edit profile opens a full screen with the photo and five fields (display name,
+username, pronouns, phone, gender) — the set v1 had before the rebuild dropped everything but the
+name. Pronouns are typed, not picked from a list: a list always leaves someone out. Everything but
+the display name lives in Firestore `users/{uid}` under v1's own key names, so returning users still
+see their values; the photo goes to Storage `profile_images/{uid}`. Both degrade to a message rather
+than an error if the console side isn't set up.
+
 **Reduce Transparency.** Flutter exposes no such flag, so the app reads `MediaQuery.highContrast` —
 the neighbouring switch in the same iOS settings pane — and drops every surface to an opaque fill.
 This is deliberately separate from Reduce Motion: motion sickness is not a reason to take away glass.

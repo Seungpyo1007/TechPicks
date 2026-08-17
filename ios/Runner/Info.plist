@@ -77,6 +77,9 @@
 		</dict>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
+		<!-- 프로필 사진을 고를 때만 앨범을 연다. 카메라는 안 쓴다. -->
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Pick a profile photo from your library.</string>
 	<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
 		<key>UIMainStoryboardFile</key>

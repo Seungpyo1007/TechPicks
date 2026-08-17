@@ -15,6 +15,7 @@ import '../../app/locale_controller.dart';
 import '../../core/error_reporter.dart';
 import '../../data/service/link_opener.dart';
 import '../../shared/copy_keys.dart';
+import 'profile_edit_screen.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -71,11 +72,9 @@ class _YouScreenState extends ConsumerState<YouScreen> {
 
   /// 이름 입력칸. 다이얼로그가 닫히는 애니메이션 중에도 살아 있어야 한다 —
   /// 닫자마자 버리면 사라지는 프레임에서 이미 버린 컨트롤러를 읽는다.
-  final TextEditingController _name = TextEditingController();
 
   @override
   void dispose() {
-    _name.dispose();
     super.dispose();
   }
 
@@ -113,11 +112,12 @@ class _YouScreenState extends ConsumerState<YouScreen> {
             ],
 
             _ProfileHeader(
+              photoUrl: ref.watch(profileProvider).value?.photoUrl,
               name: name,
               email: email,
               // 계정이 없으면 고칠 프로필도 없다. 손님에게 이름 바꾸기 시트를
               // 열어 주면 저장이 조용히 실패한다.
-              onEdit: hasAccount ? widget.onEditProfile ?? _editName : null,
+              onEdit: hasAccount ? widget.onEditProfile ?? _openProfile : null,
             ),
             const SizedBox(height: 22),
 
@@ -261,44 +261,17 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     });
   }
 
-  /// 표시 이름만 바꾼다.
+  /// 프로필 편집 화면을 연다.
   ///
-  /// v1 의 EditProfileScreen 은 화면 하나를 통째로 썼는데 바꿀 수 있는 게
-  /// 이름뿐이다. 시트 하나로 충분하다.
-  Future<void> _editName() async {
-    _name.text = name ?? '';
-    final next = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(K.editProfile.tr()),
-        content: TextField(
-          controller: _name,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(labelText: K.nameLabel.tr()),
-          onSubmitted: (v) => Navigator.of(context).pop(v),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(K.cancel.tr()),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(_name.text),
-            child: Text(K.save.tr()),
-          ),
-        ],
+  /// 한동안 여기에 이름 한 줄짜리 알림창이 있었다. v1 은 사진과 다섯 칸을
+  /// 갖고 있었고, 그게 없어진 건 기록조차 안 됐다.
+  Future<void> _openProfile() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (context) => ProfileEditScreen(
+        onBack: () => Navigator.of(context).pop(),
       ),
-    );
-
-    final trimmed = next?.trim() ?? '';
-    if (trimmed.isEmpty || trimmed == name) return;
-
-    final ok = await ref.read(currentUserProvider.notifier).updateName(trimmed);
-    if (!mounted || ok) return;
-
-    setState(() => _notice = K.authFailed.tr());
-  }
+    ),
+  );
 
   Future<void> _openLicense() async {
     try {
@@ -544,11 +517,14 @@ Future<void> _pickLanguage(
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({this.name, this.email, this.onEdit});
+  const _ProfileHeader({this.name, this.email, this.onEdit, this.photoUrl});
 
   final String? name;
   final String? email;
   final VoidCallback? onEdit;
+
+  /// 올린 사진. 없으면 이니셜 원이다.
+  final String? photoUrl;
 
   /// 이름에서 이니셜 두 글자. 없으면 이메일 첫 글자.
   static String initials(String? name, String? email) {
@@ -578,15 +554,34 @@ class _ProfileHeader extends StatelessWidget {
         Container(
           width: 64,
           height: 64,
+          clipBehavior: Clip.antiAlias,
           decoration: const BoxDecoration(
             color: TpTokens.blue,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Text(
-            initials(name, email),
-            style: type.cardTitle.copyWith(fontSize: 22, color: Colors.white),
-          ),
+          child: photoUrl == null
+              ? Text(
+                  initials(name, email),
+                  style: type.cardTitle.copyWith(
+                    fontSize: 22,
+                    color: Colors.white,
+                  ),
+                )
+              // 사진을 못 읽으면 이니셜로 돌아간다.
+              : Image.network(
+                  photoUrl!,
+                  width: 64,
+                  height: 64,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => Text(
+                    initials(name, email),
+                    style: type.cardTitle.copyWith(
+                      fontSize: 22,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
         ),
         const SizedBox(width: 14),
         Expanded(
