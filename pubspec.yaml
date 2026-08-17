@@ -47,6 +47,8 @@ dependencies:
   flutter_gemma_builtin_ai: ^0.1.0
   image_picker: ^1.2.3
   firebase_storage: ^13.4.6
+  # preserve/remove 를 앱에서 부른다. 그래서 dev 가 아니라 여기 있다.
+  flutter_native_splash: ^2.4.1
 
 
 
@@ -55,7 +57,6 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
-  flutter_native_splash: ^2.4.1
   flutter_launcher_icons: ^0.13.1
   build_runner: ^2.15.1
   freezed: ^3.0.0
@@ -84,5 +85,9 @@ flutter_native_splash:
   # 앱 배경 그라디언트의 첫 색. 흰 화면에서 파란 화면으로 튀지 않는다.
   color: "#EEF3FA"
   image: assets/logo/logo.png
+  # 어두운 테마로 켜면 흰 화면이 한 번 번쩍였다. 배경 그라디언트의 첫 색과
+  # 같은 값이다 (TpTokens.iosDark 의 pageBackground 첫 스톱).
+  color_dark: "#121A24"
+  image_dark: assets/logo/logo.png
   android: true
   ios: true

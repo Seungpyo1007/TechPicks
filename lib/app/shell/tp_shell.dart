@@ -126,6 +126,41 @@ class TpShell extends StatelessWidget {
     );
   }
 
+  /// 콘텐츠에 크롬 자리를 어떻게 줄지.
+  ///
+  /// **탭 화면만 크롬 아래로 흐른다.** 유리는 뒤에 뭔가 지나가야 유리이므로
+  /// 자리를 패딩으로 막지 않고 [MediaQuery] 로 알려주고, 화면들이 자기 스크롤
+  /// 패딩에 더한다.
+  ///
+  /// 나머지(plain·takeover)는 뒤로 지나갈 크롬이 없다. 그런데도 한동안 같은
+  /// 규칙을 썼더니, 인셋을 안 읽는 화면 여섯 곳이 상태 바 아래에서 시작했다 —
+  /// 온보딩의 "건너뛰기"가 배터리 아이콘과 겹쳤다. 그쪽은 자리를 그냥 비운다.
+  Widget _content(
+    BuildContext context, {
+    required double top,
+    required double bottom,
+    required Widget child,
+  }) {
+    // 안드로이드 크롬은 불투명하다. 뒤로 지나가는 것이 안 보이므로 흐르게 할
+    // 이유가 없다 — 자리를 그냥 비운다.
+    if (mode == TpChromeMode.full && context.tp.isGlass) {
+      return MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          padding: EdgeInsets.only(top: top, bottom: bottom),
+        ),
+        child: child,
+      );
+    }
+    return MediaQuery(
+      // 패딩으로 이미 비웠다. 그대로 두면 인셋을 읽는 화면이 두 번 비운다.
+      data: MediaQuery.of(context).copyWith(padding: EdgeInsets.zero),
+      child: Padding(
+        padding: EdgeInsets.only(top: top, bottom: bottom),
+        child: child,
+      ),
+    );
+  }
+
   // ── iOS 26 Liquid Glass ──────────────────────────────────────
   Widget _buildIos(BuildContext context) {
     final t = context.tp;
@@ -155,10 +190,10 @@ class TpShell extends StatelessWidget {
         // 자리를 통째로 주고 인셋은 MediaQuery 로 넘긴다. 화면들은 그걸
         // 자기 스크롤 패딩에 더해 마지막 항목이 안 가리게 한다.
         Positioned.fill(
-          child: MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              padding: EdgeInsets.only(top: topInset, bottom: bottomInset),
-            ),
+          child: _content(
+            context,
+            top: topInset,
+            bottom: bottomInset,
             child: _TabBody(tab: tab, child: child),
           ),
         ),
@@ -311,8 +346,10 @@ class TpShell extends StatelessWidget {
     return Stack(
       children: <Widget>[
         Positioned.fill(
-          child: Padding(
-            padding: EdgeInsets.only(top: topInset, bottom: bottomInset),
+          child: _content(
+            context,
+            top: topInset,
+            bottom: bottomInset,
             child: _TabBody(tab: tab, child: child),
           ),
         ),
