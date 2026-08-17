@@ -105,6 +105,16 @@ blur `0`), off on web (Skia draws nothing), and off in tests (a shader that redr
 lets `pumpAndSettle` finish). When the gate is closed the same tokens render through `BackdropFilter`,
 so closing it costs refraction and nothing else. Only two files import the package; a test enforces it.
 
+**Dark theme.** The spec has no dark token table, so the values are **derived by rule, not invented**:
+the page background drops to the darkest end of the same navy family (`#141E2D`), glass becomes white
+at low alpha instead of white at high alpha, ink flips to near-white, and shadows get heavier because a
+soft shadow is invisible on a dark ground. One token moves against the grain — the blue used for *text*
+goes from `blueDark` to a light blue, since on a dark ground the contrast requirement inverts. Fills
+(buttons, bars, chips) keep `blue` in both themes. Every screen is checked against the WCAG AA text
+guideline in both themes (`test/widget/a11y_test.dart`); two screens are also baked as dark goldens.
+
+The choice — System / Light / Dark — lives in You → Dark mode and is stored in `theme_mode`.
+
 **Reduce Transparency.** Flutter exposes no such flag, so the app reads `MediaQuery.highContrast` —
 the neighbouring switch in the same iOS settings pane — and drops every surface to an opaque fill.
 This is deliberately separate from Reduce Motion: motion sickness is not a reason to take away glass.

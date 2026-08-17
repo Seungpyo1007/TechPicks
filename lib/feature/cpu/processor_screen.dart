@@ -157,7 +157,7 @@ class _SegmentedCell extends StatelessWidget {
             style: type.body.copyWith(
               fontSize: 13.5,
               fontWeight: t.boldWeight,
-              color: selected ? Colors.white : TpTokens.ink,
+              color: selected ? Colors.white : t.ink,
             ),
           ),
         ),
@@ -229,7 +229,7 @@ class _ProcessorRow extends StatelessWidget {
                     // 랭킹과 같은 규칙 — 1–3 위만 파랗다.
                     color: entry.position <= 3
                         ? TpTokens.blue
-                        : TpTokens.graphite,
+                        : t.mutedInk,
                   ),
                 ),
               ],

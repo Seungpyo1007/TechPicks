@@ -295,7 +295,7 @@ class _SpecRow extends StatelessWidget {
               spec.value,
               textAlign: TextAlign.right,
               style: type.body.copyWith(
-                color: spec.hasValue ? TpTokens.ink : t.dim,
+                color: spec.hasValue ? t.ink : t.dim,
               ),
             ),
           ),
@@ -412,6 +412,7 @@ class _LinkLine extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = context.tp;
     final target = url;
     // 눌리는 줄은 링크 색으로 둔다. 출처 줄이 본문과 같은 회색이던 때는
     // 눌리는 줄인지 알 방법이 없었다.
@@ -421,7 +422,7 @@ class _LinkLine extends ConsumerWidget {
         label,
         style: target == null
             ? style
-            : style.copyWith(color: TpTokens.blueText),
+            : style.copyWith(color: t.link),
         maxLines: 1,
       ),
     );

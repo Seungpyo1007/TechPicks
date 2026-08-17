@@ -69,12 +69,14 @@ Future<ProviderContainer> pumpScreen(
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
   bool disableAnimations = false,
+  bool dark = false,
   Locale? locale,
 }) async {
   await _pump(
     tester,
     screen,
     chrome: chrome,
+    dark: dark,
     overrides: overrides,
     size: size,
     catalogAsset: catalogAsset,
@@ -139,6 +141,7 @@ Future<void> _pump(
   required String catalogAsset,
   required double textScale,
   required bool disableAnimations,
+  bool dark = false,
   // `.tr()` 은 전역 Localization 을 보지만, 위젯이 Localizations.localeOf 로
   // 언어를 고를 때는 MaterialApp 쪽도 맞춰줘야 한다.
   Locale? locale,
@@ -168,7 +171,7 @@ Future<void> _pump(
           Locale('ko', 'KR'),
         ],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        theme: AppTheme.of(chrome),
+        theme: AppTheme.of(chrome, dark: dark),
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
             textScaler: TextScaler.linear(textScale),

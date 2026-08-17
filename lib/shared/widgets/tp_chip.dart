@@ -74,7 +74,7 @@ class _TpChipState extends State<TpChip> {
                   color: widget.selected
                       ? Colors.white
                       : enabled
-                      ? TpTokens.ink
+                      ? t.ink
                       : t.dim,
                 ),
               ),

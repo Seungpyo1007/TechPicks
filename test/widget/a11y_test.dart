@@ -77,6 +77,25 @@ void main() {
     });
   }
 
+  // 어두운 테마의 색은 명세에 없어 규칙으로 뒤집었다. 그 규칙이 기준을
+  // 넘는지는 눈이 아니라 여기서 본다.
+  for (final entry in _screens.entries) {
+    testWidgets('${entry.key} — 어두운 테마 글자 대비', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpScreen(
+        tester,
+        entry.value,
+        dark: true,
+        size: const Size(1200, 3200),
+        overrides: <Override>[
+          askServiceProvider.overrideWithValue(const LocalAskService()),
+        ],
+      );
+      await expectLater(tester, meetsGuideline(textContrastGuideline));
+      handle.dispose();
+    });
+  }
+
   for (final entry in _noSettle.entries) {
     testWidgets('${entry.key} — 탭 타깃 크기', (tester) async {
       final handle = tester.ensureSemantics();

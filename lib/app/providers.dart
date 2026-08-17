@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -805,6 +806,45 @@ class NotificationsNotifier extends Notifier<bool> with RestoreGuard {
 
 final notificationsProvider = NotifierProvider<NotificationsNotifier, bool>(
   NotificationsNotifier.new,
+);
+
+/// 밝게 / 어둡게 / 시스템.
+///
+/// 리메이크 전에는 전 화면이 다크를 지원했고 토글이 저장까지 됐다. 리메이크
+/// 뒤에는 밝기가 코드에 못박혀 있었고 설정의 "다크 모드" 줄은 눌러도 아무 일이
+/// 없었다 — 명세에 다크 토큰 표가 없다는 게 이유였는데, 그렇다고 기능을
+/// 없앨 이유는 아니다. 색은 [TpTokens] 가 규칙으로 뒤집는다.
+class ThemeModeNotifier extends Notifier<ThemeMode> with RestoreGuard {
+  static const String _prefsKey = 'theme_mode';
+
+  @override
+  ThemeMode build() {
+    unawaited(_restore());
+    return ThemeMode.system;
+  }
+
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted || touched) return;
+    state = _parse(prefs.getString(_prefsKey));
+  }
+
+  static ThemeMode _parse(String? value) => switch (value) {
+    'light' => ThemeMode.light,
+    'dark' => ThemeMode.dark,
+    _ => ThemeMode.system,
+  };
+
+  Future<void> set(ThemeMode value) async {
+    touch();
+    state = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, value.name);
+  }
+}
+
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(
+  ThemeModeNotifier.new,
 );
 
 /// 내 기기.

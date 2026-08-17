@@ -261,7 +261,7 @@ class _Cell extends StatelessWidget {
           curve: context.motion.valueChange.curve,
           style: type.body.copyWith(
             fontWeight: won ? t.boldWeight : FontWeight.w400,
-            color: spec.hasValue ? TpTokens.ink : t.dim,
+            color: spec.hasValue ? t.ink : t.dim,
           ),
           child: Text(spec.value),
         ),

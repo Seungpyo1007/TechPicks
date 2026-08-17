@@ -81,7 +81,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   label: K.back.tr(),
                   child: Text(
                     K.cancel.tr(),
-                    style: type.body.copyWith(color: TpTokens.blueText),
+                    style: type.body.copyWith(color: t.link),
                   ),
                 ),
               ],

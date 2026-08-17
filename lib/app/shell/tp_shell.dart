@@ -1,6 +1,7 @@
 import '../theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
@@ -109,13 +110,20 @@ class TpShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
-    return DecoratedBox(
-      decoration: t.pageBackground,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // 배경이 어두워지면 시계와 배터리도 같이 뒤집혀야 한다. 안 하면
+      // 검은 글자가 검은 배경 위에 남는다.
+      value: t.isDark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
+      child: DecoratedBox(
+        decoration: t.pageBackground,
       // Ink 계열 위젯(InkWell, IconButton)이 Material 조상을 요구한다.
       // 배경은 위 DecoratedBox 가 그리므로 여기서는 투명하게 둔다.
-      child: Material(
-        type: MaterialType.transparency,
-        child: t.isGlass ? _buildIos(context) : _buildAndroid(context),
+        child: Material(
+          type: MaterialType.transparency,
+          child: t.isGlass ? _buildIos(context) : _buildAndroid(context),
+        ),
       ),
     );
   }
@@ -171,8 +179,8 @@ class TpShell extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: <Color>[
-                      const Color(0xFFEEF3FA).withValues(alpha: 0.92),
-                      const Color(0xFFEEF3FA).withValues(alpha: 0),
+                      t.scrim.withValues(alpha: 0.92),
+                      t.scrim.withValues(alpha: 0),
                     ],
                   ),
                 ),
@@ -307,7 +315,7 @@ class TpShell extends StatelessWidget {
             left: 0,
             right: 0,
             child: Container(
-              color: TpTokens.androidBarBg,
+              color: t.chromeFill,
               padding: EdgeInsets.only(top: safe.top),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,7 +379,7 @@ class TpShell extends StatelessWidget {
             right: 0,
             bottom: 0,
             child: Container(
-              color: TpTokens.tabBarFill,
+              color: t.tabBar,
               padding: EdgeInsets.only(bottom: safe.bottom),
               height: _androidTabHeight + safe.bottom,
               child: _AndroidTabBar(

@@ -11,18 +11,21 @@ import 'tab_host.dart';
 import 'theme/app_theme.dart';
 
 /// 앱 루트.
-class TechPicksApp extends StatelessWidget {
+class TechPicksApp extends ConsumerWidget {
   const TechPicksApp({super.key, this.chrome});
 
   /// 강제할 크롬. null 이면 OS 로 정한다.
   final TpChrome? chrome;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final chrome = this.chrome ?? TpChrome.forPlatform();
     return MaterialApp(
       title: 'TechPicks',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.of(chrome ?? TpChrome.forPlatform()),
+      theme: AppTheme.of(chrome),
+      darkTheme: AppTheme.of(chrome, dark: true),
+      themeMode: ref.watch(themeModeProvider),
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
