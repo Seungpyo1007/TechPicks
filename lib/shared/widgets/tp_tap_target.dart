@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme/tp_motion.dart';
+import 'tp_press.dart';
 
 /// 최소 탭 영역을 보장하고, 눌리면 반응하는 래퍼.
 ///
@@ -10,8 +10,7 @@ import '../../app/theme/tp_motion.dart';
 ///
 /// 눌림 반응이 여기 있는 이유: 명세는 칩과 카드에만 눌림 규칙을 줬고, 나머지
 /// 마흔 곳 가까이는 규칙이 없어 **아무것도 안 붙었다**. 링크·아이콘 버튼이
-/// 죽은 것처럼 보이던 게 그래서다. 칩과 같은 박자(0.97 · `motion.press`)로
-/// 맞춘다.
+/// 죽은 것처럼 보이던 게 그래서다. 알약과 같은 박자([TpPressFeel])로 맞춘다.
 class TpTapTarget extends StatefulWidget {
   const TpTapTarget({
     super.key,
@@ -51,7 +50,8 @@ class _TpTapTargetState extends State<TpTapTarget> {
 
   @override
   Widget build(BuildContext context) {
-    final move = context.motion.press;
+    // 버튼과 같은 박자다 — 내려갈 때 빠르고 올라올 때 느리다.
+    final move = TpPressFeel.move(context, pressed: _pressed);
     // 못 누르는 것은 눌린 척도 하지 않는다.
     final enabled = widget.onTap != null;
 
