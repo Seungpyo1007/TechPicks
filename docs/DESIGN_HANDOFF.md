@@ -97,8 +97,10 @@ never larger than the parent.
 **How the glass is drawn — the chrome is the OS's own glass.** On iOS 26+ the tab capsule and the
 header pill are `native_liquid_glass` platform views, i.e. SwiftUI's `.glassEffect()`: the real Liquid
 Glass, drawn by the system, which bends and samples the backdrop in ways no shader of ours reproduces.
-Our tokens only add a light tint (35% of the table's fill — any more and the OS glass disappears
-underneath it). Geometry stays ours: 62pt tall, `left/right: 12`, capsule corners, blue pill, our
+**Nothing of ours is painted on top of it** — no tint, no specular hairline, no fill, no shadow.
+A first pass kept the token fill at 35% opacity and that single thin film was enough to turn the
+material back into an imitation: real glass reads through what is behind it, not through a colour.
+The container is `interactive`, so pressing it is the OS's own glass response rather than our scale. Geometry stays ours: 62pt tall, `left/right: 12`, capsule corners, blue pill, our
 labels — all Flutter widgets stacked on top of the platform view. The package's own `LiquidGlassTabBar`
 is deliberately unused: it would replace the spec'd bar with Apple's stock one.
 
