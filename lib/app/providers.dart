@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_gemma_builtin_ai/flutter_gemma_builtin_ai.dart'
+    show BuiltInAiAvailability;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,6 +17,7 @@ import '../data/repository/catalog_repository.dart';
 import '../data/repository/catalog_source.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../data/service/ask_service.dart';
+import '../data/service/on_device_ask_service.dart';
 import '../data/service/auth_service.dart';
 import '../data/service/connectivity_service.dart';
 import '../data/service/deep_link_service.dart';
@@ -594,18 +597,90 @@ final shortlistDevicesProvider = Provider<List<Smartphone>>((ref) {
   ];
 });
 
+/// 어느 AI 로 답할지.
+enum TpAiEngine {
+  /// 기기 안 → 클라우드 → 카탈로그. 되는 것 중 제일 앞의 것을 쓴다.
+  auto,
+
+  /// 기기 밖으로 질문을 안 보낸다. 기기 안 → 카탈로그.
+  onDevice,
+
+  /// 클라우드 → 카탈로그.
+  cloud;
+
+  String get key => switch (this) {
+    TpAiEngine.auto => K.aiEngineAuto,
+    TpAiEngine.onDevice => K.aiEngineOnDevice,
+    TpAiEngine.cloud => K.aiEngineCloud,
+  };
+}
+
+class AiEngineNotifier extends Notifier<TpAiEngine> with RestoreGuard {
+  static const String _prefsKey = 'ai_engine';
+
+  @override
+  TpAiEngine build() {
+    unawaited(_restore());
+    return TpAiEngine.auto;
+  }
+
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted || touched) return;
+    final saved = prefs.getString(_prefsKey);
+    state = TpAiEngine.values.firstWhere(
+      (e) => e.name == saved,
+      orElse: () => TpAiEngine.auto,
+    );
+  }
+
+  Future<void> set(TpAiEngine value) async {
+    touch();
+    state = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, value.name);
+  }
+}
+
+final aiEngineProvider = NotifierProvider<AiEngineNotifier, TpAiEngine>(
+  AiEngineNotifier.new,
+);
+
+/// 기기 안 AI 를 이 기기에서 쓸 수 있는지.
+///
+/// 못 쓰는 기기가 대부분이다(iPhone 15 Pro 이상 + Apple Intelligence, 또는
+/// Pixel 9 · Galaxy S25 이상). 설정 줄이 그걸 말해줘야 사람이 왜 안 되는지 안다.
+final onDeviceAiProvider = FutureProvider<BuiltInAiAvailability>(
+  (ref) => TpBuiltInAi.shared.availability(),
+);
+
 /// AI 상담.
 ///
-/// Firebase 가 떠 있으면 Gemini 에게 먼저 묻고, 못 부르면 카탈로그만으로
-/// 답하는 로컬 구현이 받는다. 오래 로컬만 쓰다 보니 상담 탭이 모델을 한 번도
-/// 부르지 않는 상태였다 — 명세 §12 의 화면은 그대로인데 답이 가짜였다.
+/// 세 구현이 줄지어 있다. 기기 안 모델(질문이 밖으로 안 나간다) → 클라우드
+/// Gemini → 카탈로그만으로 답하는 로컬. 앞의 것이 못 답하면 뒤가 받는다.
+///
+/// 오래 로컬만 쓰다 보니 상담 탭이 모델을 한 번도 부르지 않는 상태였다 —
+/// 명세 §12 의 화면은 그대로인데 답이 가짜였다.
 final askServiceProvider = Provider<AskService>((ref) {
-  final local = LocalAskService(weights: ref.watch(weightsProvider));
-  if (!_firebaseReady) return local;
-  return FallbackAskService(
-    GeminiAskService(weights: ref.watch(weightsProvider)),
-    local,
-  );
+  final weights = ref.watch(weightsProvider);
+  final engine = ref.watch(aiEngineProvider);
+  final local = LocalAskService(weights: weights);
+
+  AskService cloudOr(AskService next) => _firebaseReady
+      ? FallbackAskService(GeminiAskService(weights: weights), next)
+      : next;
+
+  return switch (engine) {
+    TpAiEngine.cloud => cloudOr(local),
+    TpAiEngine.onDevice => FallbackAskService(
+      OnDeviceAskService(weights: weights),
+      local,
+    ),
+    TpAiEngine.auto => FallbackAskService(
+      OnDeviceAskService(weights: weights),
+      cloudOr(local),
+    ),
+  };
 });
 
 /// Firebase 가 초기화됐는지.

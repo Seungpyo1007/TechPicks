@@ -110,6 +110,12 @@ abstract final class K {
   static const String reset = 'reset';
   static const String language = 'language';
   static const String darkMode = 'darkMode';
+  static const String aiEngine = 'aiEngine';
+  static const String aiEngineAuto = 'aiEngineAuto';
+  static const String aiEngineOnDevice = 'aiEngineOnDevice';
+  static const String aiEngineCloud = 'aiEngineCloud';
+  static const String aiEngineUnavailable = 'aiEngineUnavailable';
+  static const String aiEngineDisabled = 'aiEngineDisabled';
   static const String themeSystem = 'themeSystem';
   static const String themeLight = 'themeLight';
   static const String themeDark = 'themeDark';

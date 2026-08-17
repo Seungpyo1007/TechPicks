@@ -115,6 +115,14 @@ guideline in both themes (`test/widget/a11y_test.dart`); two screens are also ba
 
 The choice — System / Light / Dark — lives in You → Dark mode and is stored in `theme_mode`.
 
+**On-device AI.** Ask runs three implementations in order — the phone's own model
+(`flutter_gemma` + `flutter_gemma_builtin_ai`: Apple Foundation Models on iOS, Gemini Nano on
+Android), then cloud Gemini, then a catalogue-only fallback. The user picks the order in You → AI
+engine (Automatic / On this phone only / Cloud); "on this phone only" means the question never
+leaves the device. Requirements are narrow — iPhone 15 Pro or newer with Apple Intelligence on,
+Pixel 9 / Galaxy S25 or newer — so the sheet says why it can't be used when it can't. This raises
+the iOS deployment target to **16.0**.
+
 **Reduce Transparency.** Flutter exposes no such flag, so the app reads `MediaQuery.highContrast` —
 the neighbouring switch in the same iOS settings pane — and drops every surface to an opaque fill.
 This is deliberately separate from Reduce Motion: motion sickness is not a reason to take away glass.

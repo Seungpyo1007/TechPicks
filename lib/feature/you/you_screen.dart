@@ -2,6 +2,8 @@ import 'dart:async' show unawaited;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gemma_builtin_ai/flutter_gemma_builtin_ai.dart'
+    show BuiltInAiAvailability;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
@@ -88,6 +90,8 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     final locale = ref.watch(localeControllerProvider);
     final notifications = ref.watch(notificationsProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final aiEngine = ref.watch(aiEngineProvider);
+    final onDevice = ref.watch(onDeviceAiProvider).value;
     // 헤더가 "로그인 없이 사용 중"이라고 적는 것과 같은 조건이다.
     final hasAccount = name != null || (email?.isNotEmpty ?? false);
 
@@ -172,6 +176,11 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                     label: K.darkMode.tr(),
                     value: _themeLabel(themeMode).tr(),
                     onTap: () => _pickTheme(context, ref, themeMode),
+                  ),
+                  _SettingRow(
+                    label: K.aiEngine.tr(),
+                    value: aiEngine.key.tr(),
+                    onTap: () => _pickAiEngine(context, ref, aiEngine, onDevice),
                   ),
                   _SettingRow(
                     label: K.notifications.tr(),
@@ -364,6 +373,70 @@ class _YourDevice extends ConsumerWidget {
 }
 
 /// 언어 목록. 지원 언어가 둘뿐이라 시트 하나로 끝난다.
+/// 기기 안 AI 를 못 쓰는 이유를 한 줄로. 쓸 수 있으면 null.
+String? _onDeviceNote(BuiltInAiAvailability? status) => switch (status) {
+  null ||
+  BuiltInAiAvailability.available ||
+  BuiltInAiAvailability.downloadable ||
+  BuiltInAiAvailability.downloading => null,
+  BuiltInAiAvailability.unavailableDisabled => K.aiEngineDisabled,
+  _ => K.aiEngineUnavailable,
+};
+
+/// 자동 / 이 기기 안에서만 / 클라우드.
+///
+/// 못 쓰는 기기가 대부분이라 이유를 같이 적는다. 고르는 것 자체는 막지
+/// 않는다 — 골라두면 나중에 쓸 수 있는 기기에서 그대로 동작한다.
+Future<void> _pickAiEngine(
+  BuildContext context,
+  WidgetRef ref,
+  TpAiEngine current,
+  BuiltInAiAvailability? status,
+) async {
+  final type = context.tpText;
+  final note = _onDeviceNote(status);
+
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => TpSurface(
+      strong: true,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(K.aiEngine.tr(), style: type.cardTitle),
+          if (note != null) ...<Widget>[
+            const SizedBox(height: 6),
+            Text(note.tr(), style: type.caption),
+          ],
+          const SizedBox(height: 8),
+          for (final option in TpAiEngine.values)
+            TpPress(
+              onTap: () async {
+                Navigator.of(sheetContext).pop();
+                await ref.read(aiEngineProvider.notifier).set(option);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(child: Text(option.key.tr(), style: type.body)),
+                    if (option == current)
+                      Icon(Icons.check, size: 18, color: context.tp.link)
+                    else
+                      const SizedBox(width: 18, height: 18),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
 /// 밝기 선택 줄의 값.
 String _themeLabel(ThemeMode mode) => switch (mode) {
   ThemeMode.light => K.themeLight,
