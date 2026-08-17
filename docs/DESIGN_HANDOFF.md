@@ -115,6 +115,13 @@ guideline in both themes (`test/widget/a11y_test.dart`); two screens are also ba
 
 The choice — System / Light / Dark — lives in You → Dark mode and is stored in `theme_mode`.
 
+**Launch.** The native splash holds while Firebase, translations and the glass shaders warm up
+(`preserve`/`remove`), and the app takes over with the *same* logo at the *same* size — 125pt, which is
+`LaunchImage@3x` (375px) ÷ 3 — so the handoff is invisible. The logo then grows and fades while the
+first screen rises under it. Before this there was a blank frame between the two, and the first screen
+appeared with no transition. The splash has a dark variant (`#121A24`), so a dark-mode launch no
+longer flashes white.
+
 **On-device AI.** Ask runs three implementations in order — the phone's own model
 (`flutter_gemma` + `flutter_gemma_builtin_ai`: Apple Foundation Models on iOS, Gemini Nano on
 Android), then cloud Gemini, then a catalogue-only fallback. The user picks the order in You → AI

@@ -12,6 +12,7 @@ import 'package:techpicks/feature/login/email_login_screen.dart';
 import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/app/tab_host.dart';
+import 'package:techpicks/app/tp_launch.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
 import '../support/harness.dart';
@@ -150,6 +151,53 @@ void main() {
     // 가입 쪽부터 보여준다.
     expect(find.text(K.signupTitle.tr()), findsWidgets);
     expect(find.byType(TabHost), findsNothing);
+  });
+
+  // 네이티브 스플래시가 첫 프레임에서 사라지고, 저장값을 읽는 동안 빈 화면이
+  // 지나간 뒤, 첫 화면이 툭 나타났다. 켤 때마다 흰 화면이 한 번 깜빡였다.
+  group('켜지는 장면', () {
+    testWidgets('읽는 동안 로고를 들고 있는다', (tester) async {
+      await initLocalization();
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'is_tutorial_completed': true,
+      });
+
+      await pumpScreenNoSettle(
+        tester,
+        const _RootHost(),
+        overrides: <Override>[
+          authServiceProvider.overrideWithValue(_NoFirebase()),
+        ],
+      );
+
+      // 첫 프레임에 로고가 떠 있다. 그 아래에서 화면이 자리를 잡는 중이다.
+      expect(find.byType(TpLaunch), findsOneWidget);
+      expect(find.image(const AssetImage('assets/logo/logo.png')), findsOne);
+
+      await tester.pumpAndSettle();
+      expect(find.byType(LoginScreen), findsOneWidget);
+    });
+
+    testWidgets('로고가 열리고 나면 아무것도 안 얹는다', (tester) async {
+      await initLocalization();
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+
+      await _boot(tester);
+      await tester.pumpAndSettle();
+
+      // 다 열린 뒤에는 위젯이 자리를 비운다 — 스택도 불투명 판도 없다.
+      expect(
+        find.image(const AssetImage('assets/logo/logo.png')),
+        findsNothing,
+      );
+      expect(find.byType(OnboardingScreen), findsOneWidget);
+    });
+
+    testWidgets('네이티브 스플래시와 같은 크기로 그린다', (tester) async {
+      // LaunchImage@3x 가 375px 이라 화면에서는 125pt 다. 이 값이 어긋나면
+      // 넘어오는 순간 로고가 한 번 튄다.
+      expect(TpLaunch.logoSize, 125);
+    });
   });
 }
 

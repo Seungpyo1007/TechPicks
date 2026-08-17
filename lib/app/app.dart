@@ -9,6 +9,7 @@ import 'locale_controller.dart';
 import 'providers.dart';
 import 'tab_host.dart';
 import 'theme/app_theme.dart';
+import 'tp_launch.dart';
 
 /// 앱 루트.
 class TechPicksApp extends ConsumerWidget {
@@ -91,14 +92,22 @@ class _RootState extends ConsumerState<TechPicksRoot> {
   @override
   Widget build(BuildContext context) {
     final onboarded = ref.watch(onboardingDoneProvider);
+
+    // 저장값을 읽는 동안은 스플래시가 그대로 떠 있다. 예전에는 여기서 빈
+    // 화면을 그렸고, 그래서 켤 때마다 흰 화면이 한 번 깜빡였다.
+    return TpLaunch(
+      ready: onboarded != null,
+      child: onboarded == null
+          ? const SizedBox.expand()
+          : _first(onboarded: onboarded),
+    );
+  }
+
+  /// 온보딩 · 로그인 · 탭 중 무엇을 보여줄지.
+  Widget _first({required bool onboarded}) {
     final user = ref.watch(currentUserProvider);
     final guest = ref.watch(guestProvider);
 
-    // 아직 저장값을 못 읽었다. 온보딩과 탭 중 뭘 보여줄지 모르는 상태라
-    // 아무것도 안 그린다. 배경색은 테마가 이미 깔아둔다.
-    if (onboarded == null) {
-      return const SizedBox.expand();
-    }
     if (!onboarded) {
       return const OnboardingScreen();
     }

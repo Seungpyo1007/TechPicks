@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
@@ -15,7 +16,12 @@ import 'core/error_reporter.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+
+  // 네이티브 스플래시를 첫 프레임에서 걷지 않고 붙잡아 둔다. 안 그러면
+  // Firebase·번역·셰이더를 준비하는 동안 빈 화면이 한 번 지나간다.
+  FlutterNativeSplash.preserve(widgetsBinding: binding);
+
   await EasyLocalization.ensureInitialized();
 
   // 유리 셰이더를 미리 굽는다. 안 하면 첫 프레임에 크롬이 하얗게 번쩍인다.
@@ -34,6 +40,10 @@ Future<void> main() async {
     // 로그인 화면이 "연결되지 않았다"로 떨어진다. 여기서 실패하면 기록할
     // 곳도 없으므로 TpErrors 는 조용한 기본값을 유지한다.
   }
+
+  // 여기서 걷는다. 이 뒤로는 앱이 같은 로고를 같은 자리에 그리고 있어서
+  // 넘어오는 순간이 화면에 안 보인다 — [TpLaunch] 가 그걸 이어받는다.
+  FlutterNativeSplash.remove();
 
   runApp(
     EasyLocalization(

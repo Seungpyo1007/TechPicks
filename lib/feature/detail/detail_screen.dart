@@ -130,7 +130,7 @@ class _DetailBody extends ConsumerWidget {
       padding:
           const EdgeInsets.fromLTRB(16, 4, 16, 24) + tpContentInset(context),
       children: <Widget>[
-        const _ImageSlot(),
+        _ImageSlot(url: device.imageUrl),
         const SizedBox(height: 16),
 
         Text((device.brand?.name ?? '').toUpperCase(), style: type.eyebrow),
@@ -249,23 +249,57 @@ class _DetailBody extends ConsumerWidget {
   }
 }
 
-/// 제품 사진 자리. 명세대로 196px 이고, 사진은 아직 없다.
+/// 제품 사진 자리. 명세대로 196px 이다.
+///
+/// 카탈로그 154종 **전부** `imageUrl` 이 비어 있다 — 원본 CDN 이 404 를
+/// 돌려줘서 굽는 도구가 아무것도 못 채웠다. 그래도 그리는 쪽은 붙여둔다:
+/// 사진이 들어오는 날 카탈로그만 다시 구우면 되고, 그때까지는(그리고 주소가
+/// 죽어 있으면) 이 자리 표시로 떨어진다.
 class _ImageSlot extends StatelessWidget {
-  const _ImageSlot();
+  const _ImageSlot({this.url});
+
+  final String? url;
 
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
+    final radius = BorderRadius.circular(t.rCard);
+    final address = url?.trim();
+
     return Container(
       height: 196,
-      decoration: BoxDecoration(
-        color: t.slotBg,
-        borderRadius: BorderRadius.circular(t.rCard),
-      ),
+      decoration: BoxDecoration(color: t.slotBg, borderRadius: radius),
       alignment: Alignment.center,
-      child: Icon(Icons.image_outlined, size: 34, color: t.dim),
+      clipBehavior: Clip.antiAlias,
+      child: address == null || address.isEmpty
+          ? _Placeholder(tokens: t)
+          : Image.network(
+              address,
+              fit: BoxFit.contain,
+              width: double.infinity,
+              height: 196,
+              // 사진이 도착하면 옅게 들어온다. 툭 나타나면 화면이 한 번 튄다.
+              frameBuilder: (context, child, frame, wasSync) => AnimatedOpacity(
+                opacity: frame == null ? 0 : 1,
+                duration: context.motion.contentSwap.duration,
+                curve: context.motion.contentSwap.curve,
+                child: child,
+              ),
+              errorBuilder: (_, _, _) => _Placeholder(tokens: t),
+            ),
     );
   }
+}
+
+/// 사진이 없거나 못 읽었을 때.
+class _Placeholder extends StatelessWidget {
+  const _Placeholder({required this.tokens});
+
+  final TpTokens tokens;
+
+  @override
+  Widget build(BuildContext context) =>
+      Icon(Icons.image_outlined, size: 34, color: tokens.dim);
 }
 
 class _SpecRow extends StatelessWidget {
