@@ -47,6 +47,8 @@ abstract final class K {
   static const String scanCta = 'scanCta';
   static const String scanShort = 'scanShort';
   static const String noDevices = 'noDevices';
+  static const String noMatches = 'noMatches';
+  static const String allBrands = 'allBrands';
 
   // 프로세서
   static const String cpuTitle = 'cpuTitle';

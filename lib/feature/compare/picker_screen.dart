@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../domain/model/device_search.dart';
 import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
@@ -11,6 +12,7 @@ import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/ranking.dart';
 import '../../domain/model/tp_index.dart';
+import '../../shared/widgets/tp_search_field.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../shared/widgets/tp_error_state.dart';
@@ -28,22 +30,6 @@ class PickerScreen extends ConsumerStatefulWidget {
 
   /// 고르고 나면 호출된다. 라우팅은 바깥에서 한다.
   final VoidCallback? onDone;
-
-  /// 이름과 브랜드로 거른다.
-  ///
-  /// 순수 함수로 떼어둔 이유는 규칙을 테스트로 못박기 위해서다 — 대소문자,
-  /// 공백, 브랜드 이름으로 찾기.
-  static List<Smartphone> filter(List<Smartphone> devices, String query) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return devices;
-    return devices
-        .where(
-          (d) =>
-              d.name.toLowerCase().contains(q) ||
-              (d.brand?.name.toLowerCase().contains(q) ?? false),
-        )
-        .toList(growable: false);
-  }
 
   @override
   ConsumerState<PickerScreen> createState() => _PickerScreenState();
@@ -69,7 +55,7 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
     // 같은 정렬을 쓴다.
     final devices = <Smartphone>[
       for (final r in Ranking.of(
-        PickerScreen.filter(
+        DeviceSearch.filter(
           catalog?.smartphones ?? const <Smartphone>[],
           _query.text,
         ),
@@ -102,44 +88,9 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
 
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Container(
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: t.inputBg,
-                borderRadius: BorderRadius.circular(TpTokens.rControl),
-                boxShadow: t.inputShadow,
-              ),
-              child: Semantics(
-                label: K.searchHint.tr(),
-                child: TextField(
-                  controller: _query,
-                  onChanged: (_) => setState(() {}),
-                  textInputAction: TextInputAction.search,
-                  style: type.body,
-                  decoration: InputDecoration(
-                    // isDense 를 켜면 히트 영역이 접근성 기준에 못 미친다.
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                    border: InputBorder.none,
-                    icon: Icon(Icons.search, size: 20, color: t.dim),
-                    // 이름은 Semantics 가 준다. 힌트까지 들어가면 두 번 읽힌다.
-                    hint: ExcludeSemantics(
-                      child: Text(
-                        K.searchHint.tr(),
-                        style: type.body.copyWith(color: t.dim),
-                      ),
-                    ),
-                    suffixIcon: _query.text.isEmpty
-                        ? null
-                        : TpTapTarget(
-                            label: K.cancel.tr(),
-                            onTap: () => setState(_query.clear),
-                            child: Icon(Icons.close, size: 18, color: t.dim),
-                          ),
-                  ),
-                ),
-              ),
+            child: TpSearchField(
+              controller: _query,
+              onChanged: (_) => setState(() {}),
             ),
           ),
 

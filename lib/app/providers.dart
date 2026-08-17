@@ -23,6 +23,7 @@ import '../data/service/link_opener.dart';
 import '../data/service/share_service.dart';
 import '../data/service/shortlist_sync_service.dart';
 import '../domain/model/ask_answer.dart';
+import '../domain/model/device_search.dart';
 import '../domain/model/device_specs.dart';
 import '../domain/model/movers.dart';
 import '../domain/model/scan_match.dart';
@@ -193,6 +194,62 @@ final rankedPhonesProvider = Provider<List<RankedDevice>>((ref) {
     ref.watch(rankAxisProvider),
     ref.watch(weightsProvider),
   );
+});
+
+/// 랭킹 검색어.
+///
+/// 랭킹은 50행에서 잘린다. 카탈로그가 200종이라 51위 아래의 기기는 스크롤로도
+/// 못 찾았다 — 픽커에만 있던 검색을 여기에도 준다.
+class RankQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void set(String value) => state = value;
+}
+
+final rankQueryProvider = NotifierProvider<RankQueryNotifier, String>(
+  RankQueryNotifier.new,
+);
+
+/// 고른 브랜드. null 이면 전부.
+class RankBrandNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  /// 누른 브랜드를 다시 누르면 풀린다.
+  void toggle(String brand) => state = state == brand ? null : brand;
+}
+
+final rankBrandProvider = NotifierProvider<RankBrandNotifier, String?>(
+  RankBrandNotifier.new,
+);
+
+/// 카탈로그에 실제로 있는 브랜드. 기기가 많은 순이다.
+final rankBrandsProvider = Provider<List<String>>((ref) {
+  final catalog = ref.watch(catalogProvider).value;
+  if (catalog == null) return const <String>[];
+  return DeviceSearch.brands(catalog.smartphones);
+});
+
+/// 검색어와 브랜드로 거른 순위.
+///
+/// **순위 번호는 거르기 전 것을 그대로 쓴다.** 걸러 놓고 1번부터 다시 매기면
+/// "삼성 중 1위"가 "전체 1위"처럼 보인다.
+final rankVisibleProvider = Provider<List<RankedDevice>>((ref) {
+  final ranked = ref.watch(rankedPhonesProvider);
+  final query = ref.watch(rankQueryProvider).trim().toLowerCase();
+  final brand = ref.watch(rankBrandProvider);
+  if (query.isEmpty && brand == null) return ranked;
+
+  return ranked
+      .where(
+        (r) =>
+            (brand == null || r.device.brand?.name == brand) &&
+            (query.isEmpty ||
+                r.device.name.toLowerCase().contains(query) ||
+                (r.device.brand?.name.toLowerCase().contains(query) ?? false)),
+      )
+      .toList(growable: false);
 });
 
 /// 랭킹 탭 안에서 보고 있는 카테고리.
