@@ -87,7 +87,10 @@ class TpShell extends StatelessWidget {
   /// Ask 화면처럼 입력 바가 더 필요한 경우.
   final double extraBottomInset;
 
-  static const double _iosTabHeight = 62;
+  static const double iosTabHeight = 62;
+
+  /// 고른 탭 알약. 명세 프로토타입이 48 을 준다.
+  static const double iosTabPill = 48;
   static const double _iosTabGap = 10;
   static const double _iosHeaderScrim = 106;
   static const double _iosContentTop = 60;
@@ -136,7 +139,7 @@ class TpShell extends StatelessWidget {
         // 어두운 화면 아래로 밝은 배경이 띠처럼 남는다. 스캔·뷰어는 자기
         // 컨트롤에 안전 영역을 직접 더한다.
         ? 0.0
-        : (tab != null ? tabBottom + _iosTabHeight + 16 : safe.bottom + 24) +
+        : (tab != null ? tabBottom + iosTabHeight + 16 : safe.bottom + 24) +
               extraBottomInset;
 
     return Stack(
@@ -249,7 +252,7 @@ class TpShell extends StatelessWidget {
             left: 12,
             right: 12,
             bottom: tabBottom,
-            height: _iosTabHeight,
+            height: iosTabHeight,
             child: TpSurface.chrome(
               raised: true,
               radius: TpTokens.rControl,
@@ -401,57 +404,87 @@ class _IosTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final motion = context.motion;
-    return Row(
-      children: TpTab.values.map((TpTab t) {
-        final active = t == current;
-        return Expanded(
-          child: Semantics(
-            button: true,
-            selected: active,
-            label: K.tab(t).tr(),
-            excludeSemantics: true,
-            child: TpPress(
-              semanticsButton: false,
-              onTap: onSelected == null ? null : () => onSelected!(t),
-              child: Center(
-                child: AnimatedContainer(
-                  duration: motion.selection.duration,
-                  curve: motion.selection.curve,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
+    return LayoutBuilder(
+      builder: (context, box) {
+        final tabs = TpTab.values;
+        final cell = box.maxWidth / tabs.length;
+        final index = tabs.indexOf(current);
+
+        return Stack(
+          children: <Widget>[
+            // 알약은 한 장뿐이고 칸에서 칸으로 미끄러진다. 칸마다 따로 그려
+            // 색만 교차시키던 때는 아무것도 움직이지 않아 툭 바뀌는 것처럼
+            // 보였다. 명세 프로토타입도 알약이 칸을 꽉 채운다(flex:1, 48).
+            AnimatedPositioned(
+              key: const ValueKey<String>('tab-pill'),
+              duration: motion.selection.duration,
+              curve: motion.selection.curve,
+              left: index * cell,
+              width: cell,
+              top: (TpShell.iosTabHeight - TpShell.iosTabPill) / 2,
+              height: TpShell.iosTabPill,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: active ? TpTokens.blue : Colors.transparent,
+                    color: TpTokens.blue,
                     borderRadius: BorderRadius.circular(TpTokens.rControl),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Icon(
-                        active ? t.activeIcon : t.icon,
-                        size: 22,
-                        color: active ? Colors.white : tokens.chromeDim,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        K.tab(t).tr(),
-                        // 라벨이 두 줄이 되면 캡슐(62)을 넘긴다. 명세가 높이를
-                        // 고정해서 늘릴 수 없다.
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: type.tabLabel.copyWith(
-                          color: active ? Colors.white : tokens.chromeDim,
-                        ),
-                      ),
-                    ],
                   ),
                 ),
               ),
             ),
-          ),
+            Row(
+              children: tabs.map((TpTab t) {
+                final active = t == current;
+                final color = active ? Colors.white : tokens.chromeDim;
+                return Expanded(
+                  child: Semantics(
+                    button: true,
+                    selected: active,
+                    label: K.tab(t).tr(),
+                    excludeSemantics: true,
+                    child: TpPress(
+                      semanticsButton: false,
+                      onTap: onSelected == null ? null : () => onSelected!(t),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            // 알약이 지나가는 동안 글자·아이콘 색도 같이 넘어간다.
+                            TweenAnimationBuilder<Color?>(
+                              tween: ColorTween(end: color),
+                              duration: motion.selection.duration,
+                              curve: motion.selection.curve,
+                              builder: (context, value, _) => Icon(
+                                active ? t.activeIcon : t.icon,
+                                size: 22,
+                                color: value,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            AnimatedDefaultTextStyle(
+                              duration: motion.selection.duration,
+                              curve: motion.selection.curve,
+                              // 라벨이 두 줄이 되면 캡슐(62)을 넘긴다. 명세가
+                              // 높이를 고정해서 늘릴 수 없다.
+                              style: type.tabLabel.copyWith(color: color),
+                              child: Text(
+                                K.tab(t).tr(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         );
-      }).toList(),
+      },
     );
   }
 }

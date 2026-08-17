@@ -86,26 +86,32 @@ class HomeScreen extends ConsumerWidget {
             ],
 
             // 첫 기기를 담는 순간이 이 앱에서 가장 중요한 상태 변화다.
-            // 하드컷으로 갈리면 담긴 걸 놓친다.
-            AnimatedSwitcher(
+            // 하드컷으로 갈리면 담긴 걸 놓친다. 페이드만 걸면 높이가 툭 바뀌어
+            // 아래 목록이 튀므로 크기도 같이 움직인다.
+            AnimatedSize(
               duration: motion.contentSwap.duration,
-              switchInCurve: motion.contentSwap.curve,
-              switchOutCurve: motion.contentSwap.curve,
-              child: ref.watch(catalogProvider).hasError
-                  // 목록을 못 읽은 것을 "관심 목록이 비었다"로 그리면, 담아둔
-                  // 기기가 있는 사람에게도 비었다고 말하게 된다.
-                  ? const TpCatalogError(key: ValueKey<String>('error'))
-                  : verdict == null
-                  ? _EmptyShortlist(
-                      key: const ValueKey<String>('empty'),
-                      onAdd: onAdd,
-                    )
-                  : _VerdictCard(
-                      key: ValueKey<String>(verdict.slug),
-                      device: verdict,
-                      onCompareAll: onCompareAll,
-                      onAskWhy: onAskWhy,
-                    ),
+              curve: motion.contentSwap.curve,
+              alignment: Alignment.topCenter,
+              child: AnimatedSwitcher(
+                duration: motion.contentSwap.duration,
+                switchInCurve: motion.contentSwap.curve,
+                switchOutCurve: motion.contentSwap.curve,
+                child: ref.watch(catalogProvider).hasError
+                    // 목록을 못 읽은 것을 "관심 목록이 비었다"로 그리면, 담아둔
+                    // 기기가 있는 사람에게도 비었다고 말하게 된다.
+                    ? const TpCatalogError(key: ValueKey<String>('error'))
+                    : verdict == null
+                    ? _EmptyShortlist(
+                        key: const ValueKey<String>('empty'),
+                        onAdd: onAdd,
+                      )
+                    : _VerdictCard(
+                        key: ValueKey<String>(verdict.slug),
+                        device: verdict,
+                        onCompareAll: onCompareAll,
+                        onAskWhy: onAskWhy,
+                      ),
+              ),
             ),
 
             if (shortlist.isNotEmpty) ...<Widget>[
