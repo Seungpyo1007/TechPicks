@@ -351,6 +351,24 @@ The winning cell per row gets the blue tint fill + w600/w500 weight; the loser s
 (index, price, battery) compare numerically; textual rows are marked only where a winner is unambiguous.
 Bottom: `Ask why` → seeds the assistant with the two devices.
 
+**Deviation — the tint hugs the value, not the cell.** The spec's fill is kept (`tintFill`, same weights),
+but it is drawn as a pill around the winning value instead of filling the whole cell. Filling the cell let
+the row's tallest value set the height of the paint, and the Android tint tokens are opaque
+(`#D6E5F9` / `#123A5E`), so a one-word winner sat inside a solid blue slab. To get the spec look back,
+drop the `Align`/`ConstrainedBox` around the cell's `AnimatedContainer` and put `IntrinsicHeight` +
+`CrossAxisAlignment.stretch` back on the row.
+
+**Deviation — `Ask why` is pinned, not scrolled.** It is still at the bottom, but it sits above the chrome
+instead of after the tenth row; on a 402×874 frame the spec position was off-screen. The list adds the
+button's band to its own bottom padding so the last row still clears it.
+
+**Addition — scores.** Each column head carries its TP Index numeral and a track, and the three rows the
+comparison can never mark (`Screen`, `Chipset`, `Camera`) carry a 3px track per column with that row's
+0–100 axis score. Those bars render **no axis label**: `axCam`/`axBatt` are the same string as
+`detailSpecCamera`/`detailSpecBattery` in both locales, so drawing them would put the same word on the
+screen twice. The scores are shown, not judged — `DeviceComparison` still declines to pick a winner on
+textual rows.
+
 ### 8. Device picker — `picker`
 
 Pushed sheet. Title `Choose a device`, `Cancel` to dismiss. List of all devices with index + price;

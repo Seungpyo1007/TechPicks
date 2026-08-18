@@ -547,6 +547,27 @@ final indexRankingProvider = Provider<List<RankedDevice>>((ref) {
   return Ranking.of(catalog.smartphones, RankAxis.tpIndex);
 });
 
+/// 비교 선택 시트의 기본 순서.
+///
+/// 카탈로그 순서는 TechAPI 원점수 순이라 화면에 찍히는 지수와 어긋난다.
+/// 84, 84, 85 가 잇달아 나오면 목록이 고장 난 것처럼 보인다.
+///
+/// 시트 안에서 하면 **타건마다** 154종을 다시 줄 세운다. 여기 두면
+/// Riverpod 이 (카탈로그, 가중치) 단위로 들고 있고, 검색은 그 위에서
+/// 거르기만 한다.
+final pickerRankedProvider = Provider<List<Smartphone>>((ref) {
+  final catalog = ref.watch(catalogProvider).value;
+  if (catalog == null) return const <Smartphone>[];
+  return <Smartphone>[
+    for (final r in Ranking.of(
+      catalog.smartphones,
+      RankAxis.tpIndex,
+      ref.watch(weightsProvider),
+    ))
+      r.device,
+  ];
+});
+
 /// 다음 실행에 남길 순위. 스냅샷과 Movers 가 같은 목록을 봐야 한다.
 final rankSnapshotSlugsProvider = Provider<List<String>>(
   (ref) => ref
