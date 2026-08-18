@@ -290,12 +290,19 @@ class _RankList extends StatelessWidget {
       height: ranked.length * rowHeight,
       child: Stack(
         children: <Widget>[
-          for (final r in ranked)
+          for (final (i, r) in ranked.indexed)
             AnimatedPositioned(
               key: ValueKey<String>(r.device.slug),
               duration: motion.reorder.duration,
               curve: motion.reorder.curve,
-              top: (r.position - 1) * rowHeight,
+              // **보이는 목록에서의 자리**에 놓는다. 전역 순위로 놓으면 필터를
+              // 켠 순간 행 사이가 순위 차이만큼 벌어지고, 담는 상자보다 아래로
+              // 나간 기기는 통째로 잘려 사라진다 — 삼성만 걸러 보면 갤럭시가
+              // 몇 대 안 보이던 게 그거였다.
+              //
+              // 화면에 찍는 숫자는 그대로 전역 순위다(r.position). 걸러 놓고
+              // 1번부터 다시 매기면 "삼성 중 1위"가 "전체 1위"로 읽힌다.
+              top: i * rowHeight,
               left: 0,
               right: 0,
               height: rowHeight,
