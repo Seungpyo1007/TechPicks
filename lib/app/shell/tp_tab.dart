@@ -9,22 +9,22 @@ enum TpTab {
     'rank',
     Icons.leaderboard_outlined,
     Icons.leaderboard_rounded,
-    'chart.bar',
-    'chart.bar.fill',
+    'trophy',
+    'trophy.fill',
   ),
   compare(
     'compare',
     Icons.compare_arrows_outlined,
     Icons.compare_arrows_rounded,
-    'arrow.left.arrow.right',
-    'arrow.left.arrow.right',
+    'rectangle.on.rectangle',
+    'rectangle.on.rectangle.fill',
   ),
   ask(
     'ask',
     Icons.forum_outlined,
     Icons.forum_rounded,
-    'bubble.left.and.bubble.right',
-    'bubble.left.and.bubble.right.fill',
+    'message',
+    'message.fill',
   ),
   you(
     'you',
@@ -49,6 +49,15 @@ enum TpTab {
   final IconData activeIcon;
 
   /// iOS 네이티브 탭 바에 넘기는 SF Symbol 이름.
+  ///
+  /// **iOS 26 탭 바는 심볼을 알아서 채운다.** 윤곽선 이름을 줘도 채운 변형으로
+  /// 그린다 — 애플 기본 앱들의 탭 바가 다 그렇다. 그래서 무게는 우리가 못
+  /// 정하고, 우리가 정할 수 있는 건 **채운 변형이 있는 심볼을 고르는 것**이다.
+  ///
+  /// 처음에 비교를 `arrow.left.arrow.right` 로 뒀더니 그것만 채운 변형이 없어
+  /// 혼자 가는 선 그림으로 남았다. 옆칸들은 까만 덩어리인데 하나만 실선이라
+  /// 바가 들쭉날쭉해 보였다 — "아이콘이 두껍다"는 인상의 절반은 그 어긋남이다.
+  /// 다섯 개 모두 채운 변형이 있는 것으로 맞췄다.
   final String symbol;
   final String activeSymbol;
 }
