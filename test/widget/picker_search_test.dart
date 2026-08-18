@@ -86,7 +86,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '없는기기이름');
     await tester.pumpAndSettle();
 
-    expect(find.text(K.noDevices.tr()), findsOneWidget);
+    expect(find.text(K.noMatches.tr()), findsOneWidget);
   });
 
   testWidgets('지우면 다시 전부 나온다', (tester) async {

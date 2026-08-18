@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
 
@@ -10,7 +11,7 @@ import 'golden_harness.dart';
 ///
 /// 명세에 다크 토큰 표가 없어 [TpTokens] 가 규칙으로 뒤집는다 — 지어낸 값이
 /// 아니라는 것을 눈으로 확인할 수 있는 자리가 여기다. 밝은 쪽 스물네 장을
-/// 통째로 두 배로 늘리지 않고, 유리(카드·크롬)와 톤이 다 보이는 두 화면만
+/// 통째로 두 배로 늘리지 않고, 유리(카드·크롬)와 톤이 다 보이는 화면만
 /// 굽는다.
 void main() {
   setUp(initLocalization);
@@ -33,6 +34,18 @@ void main() {
     await pumpScreen(
       tester,
       const RankScreen(),
+      chrome: chrome,
+      dark: true,
+      size: frameOf(chrome),
+    );
+  });
+
+  // 이긴 칸의 파란 틴트가 가장 넓게 깔리는 화면이다. 어두운 쪽 tintFill 은
+  // 밝은 쪽을 뒤집은 값이라 눈으로 볼 자리가 있어야 한다.
+  goldenScenario('compare_dark', '비교 — 어두운 테마', (tester, chrome) async {
+    await pumpScreen(
+      tester,
+      const CompareScreen(),
       chrome: chrome,
       dark: true,
       size: frameOf(chrome),

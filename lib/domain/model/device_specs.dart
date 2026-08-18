@@ -24,6 +24,24 @@ enum SpecKind {
   final String key;
 }
 
+/// 승자를 못 가리는 줄이 대신 보여주는 점수 축.
+///
+/// 화면·프로세서·카메라는 문자열이라 무엇이 나은지 데이터만 보고 못 정한다
+/// ([DeviceComparison._winner] 를 볼 것). 대신 그 줄에 대응하는 0–100 점수를
+/// 막대로 깐다 — 승자를 선언하지 않으면서 크기는 보여준다.
+///
+/// 축 **이름은 화면에 안 찍는다.** `axCam`·`axBatt` 가 행 라벨
+/// (`detailSpecCamera`·`detailSpecBattery`)과 영어에서도 한국어에서도 같은
+/// 문자열이라, 찍는 순간 같은 글자가 화면에 둘이 된다.
+extension SpecScoreAxis on SpecKind {
+  TpAxisKind? get scoreAxis => switch (this) {
+    SpecKind.screen => TpAxisKind.display,
+    SpecKind.chipset => TpAxisKind.performance,
+    SpecKind.camera => TpAxisKind.camera,
+    _ => null,
+  };
+}
+
 /// 속성 한 줄.
 class DeviceSpec {
   const DeviceSpec({

@@ -8,9 +8,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
-import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
-import '../../domain/model/ranking.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/widgets/tp_search_field.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -48,22 +46,14 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
   Widget build(BuildContext context) {
     final type = context.tpText;
     final t = context.tp;
-    final catalog = ref.watch(catalogProvider).value;
     final weights = ref.watch(weightsProvider);
-    // 카탈로그 순서는 TechAPI 원점수 순이라 화면에 찍히는 지수와 어긋난다.
-    // 84, 84, 85 가 잇달아 나오면 목록이 고장 난 것처럼 보인다. 랭킹 화면과
-    // 같은 정렬을 쓴다.
-    final devices = <Smartphone>[
-      for (final r in Ranking.of(
-        DeviceSearch.filter(
-          catalog?.smartphones ?? const <Smartphone>[],
-          _query.text,
-        ),
-        RankAxis.tpIndex,
-        weights,
-      ))
-        r.device,
-    ];
+    // 줄 세우는 건 프로바이더가 한 번만 한다. 여기서는 거르기만 한다 —
+    // 예전에는 한 글자 칠 때마다 154종을 다시 세웠다.
+    final devices = DeviceSearch.filter(
+      ref.watch(pickerRankedProvider),
+      _query.text,
+    );
+    final searching = _query.text.trim().isNotEmpty;
 
     return TpShell(
       mode: TpChromeMode.plain,
@@ -100,7 +90,12 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
                 : devices.isEmpty
                 ? Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: Text(K.noDevices.tr(), style: type.secondary),
+                    // 검색해서 안 나온 것과 카탈로그가 빈 것은 다른 일이다.
+                    // "기기가 없습니다"는 검색어를 지워도 소용없다고 들린다.
+                    child: Text(
+                      (searching ? K.noMatches : K.noDevices).tr(),
+                      style: type.secondary,
+                    ),
                   )
                 : ListView.separated(
                     // 키보드가 올라오면 그만큼 더 비운다. 안 그러면 마지막
