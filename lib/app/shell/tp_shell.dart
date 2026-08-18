@@ -301,9 +301,13 @@ class TpShell extends StatelessWidget {
 
         if (tab != null)
           Positioned(
-            left: 12,
-            right: 12,
-            bottom: tabBottom,
+            // 시스템 바는 자기 여백을 스스로 잡는다. 우리가 좌우 12 를 또
+            // 물리면 그 안쪽으로 한 번 더 들어가 좁고 붕 뜬 바가 된다.
+            left: TpNativeGlass.enabled ? 0 : 12,
+            right: TpNativeGlass.enabled ? 0 : 12,
+            // 시스템 바는 홈 인디케이터 바로 위에 앉는다. 명세의 44pt 는
+            // 우리가 그리는 알약 바의 값이다.
+            bottom: TpNativeGlass.enabled ? safe.bottom : tabBottom,
             height: TpNativeGlass.enabled
                 ? iosTabHeight + TpNativeTabBar.overflow
                 : iosTabHeight,
@@ -315,7 +319,9 @@ class TpShell extends StatelessWidget {
                         : (i) => onTabSelected!(TpTab.values[i]),
                     height: iosTabHeight,
                     tint: TpTokens.blue,
-                    labelStyle: type.tabLabel,
+                    // 아이콘 크기도 라벨 타이포도 안 넘긴다. 우리 값을 얹는
+                    // 순간 간격이 어긋난다 — 28pt 아이콘은 라벨을 덮었다.
+                    // 시스템 바의 간격은 UIKit 이 잡게 둔다.
                     items: <TpNativeTabItem>[
                       for (final t in TpTab.values)
                         TpNativeTabItem(

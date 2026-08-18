@@ -112,7 +112,11 @@ platform view carries its own namespace), so the pill is a second glass layer ri
 **The tab bar is the system's own `UITabBar`** (`LiquidGlassTabBar`), which is the only way to get the
 merge and morph between the bar and its selection bubble — that happens inside one
 `GlassEffectContainer`, and stacking two platform views cannot fake it. Icons are SF Symbols; the
-labels, the accent and the 62pt height are still ours.
+labels and the accent are still ours; **the spacing is not**. Passing our own 10pt label and a 28pt
+icon made the bar read wrong — the icons overlapped the labels — and insetting it by the spec's 12pt
+left it narrow and floating too high, because the system bar already keeps its own margins. It now
+gets the full width, sits on the safe-area bottom like a system bar, and UIKit decides icon size and
+spacing.
 
 Two things had to be handled to make it usable:
 
