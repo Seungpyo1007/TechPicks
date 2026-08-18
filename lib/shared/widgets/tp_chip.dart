@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import 'tp_press.dart';
+import 'tp_pressable.dart';
 
 /// 카테고리·정렬 축을 고르는 알약 칩.
 ///
@@ -25,8 +27,6 @@ class TpChip extends StatefulWidget {
 }
 
 class _TpChipState extends State<TpChip> {
-  bool _pressed = false;
-
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
@@ -38,49 +38,53 @@ class _TpChipState extends State<TpChip> {
       // 못 누르는 칩은 버튼이라고 하지 않는다.
       button: enabled,
       selected: widget.selected,
-      // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-      // 버튼이 글자 글리프 위에서만 눌린다.
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
+      child: TpPressable(
         onTap: widget.onTap,
-        // 못 누르는 칩은 눌린 척도 하지 않는다. onTapDown 만 달아둬도
-        // 시맨틱 트리에 탭 액션이 생겨 버튼처럼 읽힌다.
-        onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
-        onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
-        onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
+        haptic: TpHaptic.selection,
         // 알약은 36pt 라 접근성 기준(44)에 못 미친다. 위아래로 4pt 씩
         // 눌리는 영역만 넓힌다 — 보이는 크기는 그대로다.
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
-          child: AnimatedScale(
-            scale: _pressed ? 0.97 : 1,
-            duration: motion.press.duration,
-            curve: motion.press.curve,
-            child: AnimatedContainer(
-              duration: motion.selection.duration,
-              curve: motion.selection.curve,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              decoration: BoxDecoration(
-                color: widget.selected ? TpTokens.blue : t.chipBg,
-                borderRadius: BorderRadius.circular(TpTokens.rControl),
-              ),
-              child: Text(
-                widget.label,
-                style: type.body.copyWith(
-                  fontSize: 13.5,
-                  fontWeight: t.boldWeight,
-                  // 못 누르는 칩은 그렇게 보여야 한다. 랭킹의 Laptops 가
-                  // 데이터가 없어 꺼져 있는데 켜진 것과 똑같이 생겼었다.
-                  color: widget.selected
-                      ? Colors.white
-                      : enabled
-                      ? t.ink
-                      : t.dim,
-                ),
+          child: AnimatedContainer(
+            duration: motion.selection.duration,
+            curve: motion.selection.curve,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            decoration: BoxDecoration(
+              color: widget.selected ? TpTokens.blue : t.chipBg,
+              borderRadius: BorderRadius.circular(TpTokens.rControl),
+            ),
+            child: Text(
+              widget.label,
+              style: type.body.copyWith(
+                fontSize: 13.5,
+                fontWeight: t.boldWeight,
+                // 못 누르는 칩은 그렇게 보여야 한다. 랭킹의 Laptops 가
+                // 데이터가 없어 꺼져 있는데 켜진 것과 똑같이 생겼었다.
+                color: widget.selected
+                    ? Colors.white
+                    : enabled
+                    ? t.ink
+                    : t.dim,
               ),
             ),
           ),
         ),
+        builder: (context, press, child) {
+          if (press == 0) return child!;
+          // 칩은 가로 목록 안이라 폭이 무한대로 들어온다. 알약은 원래 작아서
+          // 비율 0.97 이 맞는 자리다.
+          return Transform.scale(
+            scale: 1 - 0.03 * press,
+            transformHitTests: false,
+            child: ColorFiltered(
+              // 고른 칩은 파란 채움이라 밝히면 바랜다. 눌린 만큼 어둡게.
+              colorFilter: widget.selected
+                  ? TpPressFeel.darken(press)
+                  : TpPress.filterAt(press),
+              child: child,
+            ),
+          );
+        },
       ),
     );
   }

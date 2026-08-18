@@ -180,7 +180,11 @@ void main() {
 
     final skip = find.byType(TpTapTarget).first;
     final press = await tester.startGesture(tester.getCenter(skip));
-    await tester.pump(const Duration(milliseconds: 120));
+    // 이제 크기는 목표값이 아니라 **지금 값**이다. 첫 프레임은 티커를
+    // 시작만 하므로 한 프레임 더 준다 — 대신 예전과 달리 스크롤 안에서도
+    // 데드라인을 안 기다린다.
+    await tester.pump(const Duration(milliseconds: 16));
+    await tester.pump(const Duration(milliseconds: 60));
     expect(tester.widget<AnimatedScale>(_scaleOf(skip)).scale, lessThan(1));
 
     await press.up();
