@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/tp_motion.dart';
+import '../../app/theme/tp_tokens.dart';
+import 'tp_pressable.dart';
 
 /// 누르는 동안 밝아지는 면.
 ///
@@ -10,13 +12,15 @@ import '../../app/theme/tp_motion.dart';
 ///
 /// 알약은 [TpButton]·[TpTapTarget] 처럼 줄어들고, 넓은 면은 이렇게 밝아진다.
 /// 줄어들기를 넓은 면에 쓰면 목록 전체가 출렁인다.
-class TpPress extends StatefulWidget {
+class TpPress extends StatelessWidget {
   const TpPress({
     super.key,
     required this.child,
     required this.onTap,
     this.onLongPress,
     this.semanticsButton = true,
+    this.haptic = TpHaptic.selection,
+    this.tint = true,
   });
 
   final Widget child;
@@ -25,6 +29,14 @@ class TpPress extends StatefulWidget {
 
   /// 바깥에서 이미 시맨틱을 붙였으면 false. 두 번 읽히면 안 된다.
   final bool semanticsButton;
+
+  final TpHaptic haptic;
+
+  /// 눌린 동안 배경을 깔지.
+  ///
+  /// 배경이 없는 줄(랭킹 행)에서는 밝기 +4% 가 사실상 안 보인다. 자기 배경이
+  /// 있는 면(카드)은 밝아지는 것으로 충분하다.
+  final bool tint;
 
   /// `filter: brightness(1.04)` 와 같다.
   static const double amount = 1.04;
@@ -41,42 +53,36 @@ class TpPress extends StatefulWidget {
   }
 
   @override
-  State<TpPress> createState() => _TpPressState();
-}
-
-class _TpPressState extends State<TpPress> {
-  bool _pressed = false;
-
-  void _set(bool value) {
-    if (_pressed != value) setState(() => _pressed = value);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final move = context.motion.press;
-    final enabled = widget.onTap != null || widget.onLongPress != null;
+    final t = context.tp;
 
-    final Widget gesture = GestureDetector(
-      onTap: widget.onTap,
-      onLongPress: widget.onLongPress,
-      behavior: HitTestBehavior.opaque,
-      onTapDown: enabled ? (_) => _set(true) : null,
-      onTapUp: enabled ? (_) => _set(false) : null,
-      onTapCancel: enabled ? () => _set(false) : null,
-      child: TweenAnimationBuilder<double>(
-        tween: Tween<double>(end: _pressed ? 1 : 0),
-        duration: move.duration,
-        curve: move.curve,
-        child: widget.child,
-        builder: (context, t, child) => t == 0
-            ? child!
-            : ColorFiltered(colorFilter: TpPress.filterAt(t), child: child),
-      ),
+    final Widget gesture = TpPressable(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      haptic: haptic,
+      child: child,
+      builder: (context, press, child) {
+        if (press == 0) return child!;
+
+        // 필터는 한 겹뿐이다. 두 겹이 되면 유리 위에서 saveLayer 가 두 번
+        // 뜨고, 테스트도 정확히 한 겹을 못박고 있다.
+        final Widget lit = ColorFiltered(
+          colorFilter: filterAt(press),
+          child: child,
+        );
+        if (!tint) return lit;
+
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: t.ink.withValues(alpha: 0.05 * press),
+            borderRadius: BorderRadius.circular(t.rInner),
+          ),
+          child: lit,
+        );
+      },
     );
 
-    return widget.semanticsButton
-        ? Semantics(button: true, child: gesture)
-        : gesture;
+    return semanticsButton ? Semantics(button: true, child: gesture) : gesture;
   }
 }
 
@@ -104,6 +110,19 @@ abstract final class TpPressFeel {
   static double scaleFor(double width) {
     if (!width.isFinite || width <= 0) return 0.97;
     return (1 - (inset * 2) / width).clamp(minScale, 1);
+  }
+
+  /// 눌린 정도 [t] 만큼 어둡게. 채운 면(파란 버튼·고른 칩)에 쓴다.
+  ///
+  /// 채운 면을 밝히면 색이 바래 비활성처럼 보인다.
+  static ColorFilter darken(double t) {
+    final v = 1 - 0.08 * t;
+    return ColorFilter.matrix(<double>[
+      v, 0, 0, 0, 0, //
+      0, v, 0, 0, 0, //
+      0, 0, v, 0, 0, //
+      0, 0, 0, 1, 0, //
+    ]);
   }
 
   /// 누르는 중인지에 따라 시간이 다르다.

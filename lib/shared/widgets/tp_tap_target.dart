@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'tp_press.dart';
+import 'tp_pressable.dart';
 
 /// 최소 탭 영역을 보장하고, 눌리면 반응하는 래퍼.
 ///
@@ -42,40 +42,28 @@ class TpTapTarget extends StatefulWidget {
 }
 
 class _TpTapTargetState extends State<TpTapTarget> {
-  bool _pressed = false;
-
-  void _set(bool value) {
-    if (_pressed != value) setState(() => _pressed = value);
-  }
-
   @override
   Widget build(BuildContext context) {
-    // 버튼과 같은 박자다 — 내려갈 때 빠르고 올라올 때 느리다.
-    final move = TpPressFeel.move(context, pressed: _pressed);
-    // 못 누르는 것은 눌린 척도 하지 않는다.
-    final enabled = widget.onTap != null;
-
     return Semantics(
       button: !widget.link,
       link: widget.link,
       label: widget.label,
-      child: GestureDetector(
+      child: TpPressable(
         onTap: widget.onTap,
-        onTapDown: enabled ? (_) => _set(true) : null,
-        onTapUp: enabled ? (_) => _set(false) : null,
-        onTapCancel: enabled ? () => _set(false) : null,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedScale(
-          scale: _pressed ? widget.pressScale : 1,
-          duration: move.duration,
-          curve: move.curve,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minWidth: widget.minSize,
-              minHeight: widget.minSize,
-            ),
-            child: Center(widthFactor: 1, heightFactor: 1, child: widget.child),
+        haptic: TpHaptic.selection,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: widget.minSize,
+            minHeight: widget.minSize,
           ),
+          child: Center(widthFactor: 1, heightFactor: 1, child: widget.child),
+        ),
+        // AnimatedScale 을 그대로 둔다. 시간은 뼈대가 들고 있으므로 여기서는
+        // 0 이다 — 붓이지 시계가 아니다.
+        builder: (context, press, child) => AnimatedScale(
+          scale: 1 - (1 - widget.pressScale) * press,
+          duration: Duration.zero,
+          child: child,
         ),
       ),
     );

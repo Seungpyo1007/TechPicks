@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'tp_press.dart';
+import 'tp_pressable.dart';
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
@@ -58,19 +59,12 @@ class TpButton extends StatefulWidget {
 }
 
 class _TpButtonState extends State<TpButton> {
-  bool _pressed = false;
-
-  void _set(bool value) {
-    if (_pressed != value) setState(() => _pressed = value);
-  }
-
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
     final filled = widget.kind == TpButtonKind.primary;
     final plain = widget.kind == TpButtonKind.plain;
-    final enabled = widget.onTap != null;
 
     final label = Text(
       widget.label,
@@ -87,94 +81,69 @@ class _TpButtonState extends State<TpButton> {
       ),
     );
 
-    // 눌린 정도(0–1). 크기와 색이 같이 움직인다.
-    final move = TpPressFeel.move(context, pressed: _pressed);
-
     return Semantics(
       button: true,
-      child: GestureDetector(
-        // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-        // 버튼이 글자 글리프 위에서만 눌린다.
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        onTapDown: enabled ? (_) => _set(true) : null,
-        onTapUp: enabled ? (_) => _set(false) : null,
-        onTapCancel: enabled ? () => _set(false) : null,
-        child: LayoutBuilder(
-          builder: (context, box) => TweenAnimationBuilder<double>(
-            tween: Tween<double>(end: _pressed ? 1 : 0),
-            duration: move.duration,
-            curve: move.curve,
-            builder: (context, press, child) {
-              // 쉴 때는 필터를 걸지 않는다. 항등 행렬이라도 한 겹 더 그리는
-              // 일이고, 색이 미세하게 달라진다.
-              if (press == 0) return child!;
-              return Transform.scale(
-                // 줄어드는 양은 pt 로 고정한다. 비율로 두면 전체 폭 버튼만
-                // 과장돼 보인다.
-                scale: 1 - (1 - TpPressFeel.scaleFor(box.maxWidth)) * press,
-                child: ColorFiltered(
-                  colorFilter: filled
-                      // 채운 면은 눌린 만큼 어두워진다. 밝히면 파랑이 바래
-                      // 비활성처럼 보인다.
-                      ? _darken(press)
-                      : TpPress.filterAt(press),
-                  child: child,
-                ),
-              );
-            },
-            child: AnimatedContainer(
-              // 상태가 바뀌어 색이 갈릴 때(담기 → 담김)는 선택 박자를 쓴다.
-              duration: context.motion.selection.duration,
-              curve: context.motion.selection.curve,
-              height: widget.height,
-              width: widget.expand ? double.infinity : null,
-              padding: widget.alignStart
-                  ? const EdgeInsets.symmetric(horizontal: 18)
-                  : widget.expand
-                  ? null
-                  : const EdgeInsets.symmetric(horizontal: 20),
-              alignment: widget.alignStart
-                  ? Alignment.centerLeft
-                  : Alignment.center,
-              decoration: BoxDecoration(
-                color: plain
-                    ? Colors.transparent
-                    : filled
-                    ? TpTokens.blue
-                    : t.chipBg,
-                borderRadius: BorderRadius.circular(
-                  t.isGlass ? TpTokens.rControl : t.rInner,
-                ),
-                boxShadow: filled ? t.buttonShadow : null,
+      child: LayoutBuilder(
+        builder: (context, box) => TpPressable(
+          onTap: widget.onTap,
+          haptic: TpHaptic.impact,
+          child: AnimatedContainer(
+            // 상태가 바뀌어 색이 갈릴 때(담기 → 담김)는 선택 박자를 쓴다.
+            duration: context.motion.selection.duration,
+            curve: context.motion.selection.curve,
+            height: widget.height,
+            width: widget.expand ? double.infinity : null,
+            padding: widget.alignStart
+                ? const EdgeInsets.symmetric(horizontal: 18)
+                : widget.expand
+                ? null
+                : const EdgeInsets.symmetric(horizontal: 20),
+            alignment: widget.alignStart
+                ? Alignment.centerLeft
+                : Alignment.center,
+            decoration: BoxDecoration(
+              color: plain
+                  ? Colors.transparent
+                  : filled
+                  ? TpTokens.blue
+                  : t.chipBg,
+              borderRadius: BorderRadius.circular(
+                t.isGlass ? TpTokens.rControl : t.rInner,
               ),
-              child: widget.icon == null
-                  ? label
-                  : Row(
-                      mainAxisSize: widget.alignStart
-                          ? MainAxisSize.max
-                          : MainAxisSize.min,
-                      children: <Widget>[
-                        widget.icon!,
-                        const SizedBox(width: 14),
-                        Flexible(child: label),
-                      ],
-                    ),
+              boxShadow: filled ? t.buttonShadow : null,
             ),
+            child: widget.icon == null
+                ? label
+                : Row(
+                    mainAxisSize: widget.alignStart
+                        ? MainAxisSize.max
+                        : MainAxisSize.min,
+                    children: <Widget>[
+                      widget.icon!,
+                      const SizedBox(width: 14),
+                      Flexible(child: label),
+                    ],
+                  ),
           ),
+          builder: (context, press, child) {
+            // 쉴 때는 아무것도 안 얹는다. 항등 필터라도 한 겹 더 그리는
+            // 일이고, 색이 미세하게 달라진다.
+            if (press == 0) return child!;
+            return TpPressPaint.scale(
+              press,
+              box.maxWidth,
+              ColorFiltered(
+                colorFilter: filled
+                    // 채운 면은 눌린 만큼 어두워진다. 밝히면 파랑이 바래
+                    // 비활성처럼 보인다.
+                    ? TpPressFeel.darken(press)
+                    : TpPress.filterAt(press),
+                child: child,
+              ),
+            );
+          },
         ),
       ),
     );
   }
-}
-
-/// 눌린 정도 [t] 만큼 어둡게. 채운 버튼 전용이다.
-ColorFilter _darken(double t) {
-  final v = 1 - 0.08 * t;
-  return ColorFilter.matrix(<double>[
-    v, 0, 0, 0, 0, //
-    0, v, 0, 0, 0, //
-    0, 0, v, 0, 0, //
-    0, 0, 0, 1, 0, //
-  ]);
 }
