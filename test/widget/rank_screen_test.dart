@@ -15,6 +15,25 @@ import 'package:techpicks/shared/widgets/tp_chip.dart';
 Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) =>
     pumpScreen(tester, const RankScreen(), chrome: chrome);
 
+/// 브랜드 시트를 열고 [brand] 를 고른다.
+///
+/// 예전에는 칩 열일곱 개가 가로줄에 있어서 그냥 눌렀다. 지금은 칩 하나가
+/// 시트를 연다.
+Future<void> _pickBrand(WidgetTester tester, String brand) async {
+  await tester.tap(find.widgetWithText(TpChip, K.brand.tr()));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(brand).last);
+  await tester.pumpAndSettle();
+}
+
+/// 브랜드 시트에서 "전체"로 되돌린다.
+Future<void> _clearBrand(WidgetTester tester, String brand) async {
+  await tester.tap(find.widgetWithText(TpChip, brand));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(K.allBrands.tr()).last);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUp(initLocalization);
 
@@ -185,8 +204,7 @@ void main() {
       );
 
       final brand = container.read(rankBrandsProvider).first;
-      await tester.tap(find.widgetWithText(TpChip, brand));
-      await tester.pumpAndSettle();
+      await _pickBrand(tester, brand);
 
       final visible = container.read(rankVisibleProvider);
       expect(visible.length, greaterThan(3));
@@ -220,7 +238,7 @@ void main() {
       expect(find.text(K.noMatches.tr()), findsOneWidget);
     });
 
-    testWidgets('브랜드 칩으로 거르고 다시 눌러 푼다', (tester) async {
+    testWidgets('브랜드 시트로 거르고 전체로 되돌린다', (tester) async {
       final container = await pumpScreen(
         tester,
         const RankScreen(),
@@ -230,15 +248,16 @@ void main() {
       final brand = container.read(rankBrandsProvider).first;
       final all = container.read(rankVisibleProvider).length;
 
-      await tester.tap(find.widgetWithText(TpChip, brand));
-      await tester.pumpAndSettle();
+      await _pickBrand(tester, brand);
 
       final filtered = container.read(rankVisibleProvider);
       expect(filtered.length, lessThan(all));
       expect(filtered.every((r) => r.device.brand?.name == brand), isTrue);
+      // 고른 브랜드는 칩 라벨이 된다. 시트를 다시 열지 않아도 뭘 걸렀는지
+      // 보여야 한다.
+      expect(find.widgetWithText(TpChip, brand), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(TpChip, brand));
-      await tester.pumpAndSettle();
+      await _clearBrand(tester, brand);
       expect(container.read(rankVisibleProvider), hasLength(all));
     });
   });

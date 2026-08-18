@@ -327,6 +327,21 @@ Replaces `lib/MainPage/MenuPage/Home.dart` entirely. The `where_to`, `choose_boo
   emphasised, a 3px progress track underneath scaled to the axis maximum.
 - Footer note: `Ranked in-app from the TechPicks dataset — no webview, no handoff.`
 
+**Deviation — 1–3 wear a badge, not a blue numeral.** A blue 28pt digit is the same size as the grey
+28pt digit under it, so scrolling past the top of the list there was nothing to see. Ranks 1–3 now sit in
+a 34pt blue disc with a 15pt white numeral. Restore the spec by deleting the `position <= 3` branch in
+`_Position` and colouring the numeral `TpTokens.blue` instead.
+
+**Deviation — the row carries a second line.** Under the name: `brand · price`, in `caption`. The spec's
+one-line row read as a numbered table — name and one number, nothing to recognise a phone by. The row
+height is derived from `MediaQuery.textScalerOf`, not a constant, so the second line survives Larger Text.
+Delete the sub-line `Text` and its `heightOf` term to get the one-line row back.
+
+**Deviation — brand lives in a sheet.** The brand filter was seventeen chips in a horizontal row: 46pt of
+height showing three of them, and it appeared only after the catalog loaded, pushing the list down 56pt.
+It is one chip on the search row now; tapping it opens the same bottom sheet the settings screen uses. The
+`Rank by` eyebrow is gone too — the chip labels already say what they sort by.
+
 This deletes the three `RankingPage/*.dart` webviews and the injected-JS DOM surgery, and with them the
 location-permission prompt those screens requested (it was never needed).
 
