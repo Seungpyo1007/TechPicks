@@ -118,10 +118,12 @@ Two things had to be handled to make it usable:
 
 - The plugin sizes its view `height + 20` so the glass can bleed past the bar. Give it only `height`
   and the platform view overflows its box and **taps land at the wrong offset**.
-- It reports selections that nobody made: one for *every* item when the bar is first laid out (five
+- It reported selections that nobody made: one for *every* item when the bar was first laid out (five
   callbacks in the same millisecond), and one more with the previous index ~100ms after each change.
-  Taken at face value, tapping Home lands on You. `TpNativeTabBar` therefore accepts only the first
-  callback that arrives within 600ms of a real touch on the bar.
+  Taken at face value, tapping Home lands on You. The cause is `didSelect` / `didSelectTab` firing for
+  programmatic selection as well as taps; UIKit only calls `shouldSelect` for a real tap, so that is
+  the signal to gate on. Fixed in [`third_party/native_liquid_glass`](../third_party/native_liquid_glass/PATCH.md),
+  which the app uses through a `dependency_overrides` until the fix lands upstream.
 
 Cards keep the shader glass below — one platform view per card would mean dozens in a list.
 
