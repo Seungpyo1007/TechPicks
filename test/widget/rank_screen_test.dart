@@ -174,6 +174,43 @@ void main() {
       expect(visible.first.position, greaterThan(0));
     });
 
+    // 행을 전역 순위 자리에 놓던 때는, 브랜드를 고르는 순간 행 사이가 순위
+    // 차이만큼 벌어지고 담는 상자 아래로 나간 기기는 통째로 잘렸다. 삼성만
+    // 걸러도 몇 대밖에 안 보였다.
+    testWidgets('걸러도 행이 벌어지거나 잘리지 않는다', (tester) async {
+      final container = await pumpScreen(
+        tester,
+        const RankScreen(),
+        size: const Size(1200, 4400),
+      );
+
+      final brand = container.read(rankBrandsProvider).first;
+      await tester.tap(find.widgetWithText(TpChip, brand));
+      await tester.pumpAndSettle();
+
+      final visible = container.read(rankVisibleProvider);
+      expect(visible.length, greaterThan(3));
+
+      // 보이는 행들이 위에서부터 한 줄씩 이어져 있어야 한다. 전역 순위로
+      // 놓으면 여기서 간격이 행 높이의 몇 배로 벌어진다.
+      final tops = <double>[
+        for (final r in visible.take(RankScreen.maxRows))
+          tester.getTopLeft(find.text(r.device.name)).dy,
+      ];
+      for (var i = 1; i < tops.length; i++) {
+        expect(
+          tops[i] - tops[i - 1],
+          closeTo(tops[1] - tops[0], 0.5),
+          reason: '행 간격이 일정해야 한다',
+        );
+      }
+
+      // 그리고 하나도 안 빠지고 다 그려져야 한다.
+      for (final r in visible.take(RankScreen.maxRows)) {
+        expect(find.text(r.device.name), findsOneWidget);
+      }
+    });
+
     testWidgets('맞는 게 없으면 그렇게 말한다', (tester) async {
       await pumpScreen(tester, const RankScreen(), size: const Size(1200, 4400));
 
