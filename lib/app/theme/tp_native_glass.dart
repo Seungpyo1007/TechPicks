@@ -105,12 +105,7 @@ class TpNativeTabItem {
 /// 명세의 치수는 여기서도 우리가 준다: 높이 62, 좌우 12(셸이 잡는다), 파란
 /// 강조, 우리 라벨과 타이포. 아이콘만 SF Symbol 이다 — Material 아이콘을 PNG 로
 /// 구워 넘기면 선 굵기도 선택 상태 전환도 OS 것이 아니게 된다.
-///
-/// **플러그인이 고르지도 않은 칸을 알려온다.** 바를 세울 때 다섯 칸 전부에
-/// 대해 한꺼번에(같은 밀리초에 4·0·2·3·1) 알려오고, 탭을 바꾼 뒤에도 100ms 쯤
-/// 뒤에 예전 칸을 한 번 더 알려온다. 그대로 받으면 홈을 눌렀는데 내 정보가
-/// 켜진다. 그래서 **손가락이 바에 닿은 직후의 첫 통보만** 받는다.
-class TpNativeTabBar extends StatefulWidget {
+class TpNativeTabBar extends StatelessWidget {
   const TpNativeTabBar({
     super.key,
     required this.items,
@@ -133,58 +128,25 @@ class TpNativeTabBar extends StatefulWidget {
 
   /// 플러그인이 유리를 흘려보내려고 상자를 `height + 20` 으로 잡는다. 위쪽
   /// 20pt 는 비고 바는 아래에 붙는다. 담는 쪽이 62 로 잘라두면 그만큼 넘쳐서
-  /// 터치가 어긋난다.
+  /// **터치가 어긋난 자리에 떨어진다.**
   static const double overflow = 20;
 
-  /// 손가락이 닿고 나서 이 시간 안에 온 통보만 사람이 고른 것으로 본다.
-  static const Duration claimWindow = Duration(milliseconds: 600);
-
   @override
-  State<TpNativeTabBar> createState() => _TpNativeTabBarState();
-}
-
-class _TpNativeTabBarState extends State<TpNativeTabBar> {
-  /// 마지막으로 바를 누른 시각.
-  DateTime? _touchedAt;
-
-  /// 이번 터치의 통보를 이미 받았는가.
-  bool _claimed = true;
-
-  void _onTouch(PointerDownEvent _) {
-    _touchedAt = DateTime.now();
-    _claimed = false;
-  }
-
-  void _onNative(int index) {
-    final at = _touchedAt;
-    if (_claimed || at == null) return;
-    if (DateTime.now().difference(at) > TpNativeTabBar.claimWindow) return;
-
-    _claimed = true;
-    widget.onSelected?.call(index);
-  }
-
-  @override
-  Widget build(BuildContext context) => Listener(
-    // 플랫폼 뷰가 터치를 그대로 받게 두고, 닿았다는 사실만 엿본다.
-    behavior: HitTestBehavior.translucent,
-    onPointerDown: _onTouch,
-    child: LiquidGlassTabBar(
-      currentIndex: widget.index,
-      onTabSelected: _onNative,
-      height: widget.height,
-      selectedItemColor: widget.tint,
-      // 칸이 다섯이라 꽉 채운다. 가운데 모으기는 두세 칸짜리 바의 모양이다.
-      iosItemPositioning: LiquidGlassTabBarItemPositioning.fill,
-      labelTextStyle: widget.labelStyle,
-      items: <LiquidGlassTabItem>[
-        for (final item in widget.items)
-          LiquidGlassTabItem(
-            label: item.label,
-            icon: NativeLiquidGlassIcon.sfSymbol(item.symbol),
-            selectedIcon: NativeLiquidGlassIcon.sfSymbol(item.activeSymbol),
-          ),
-      ],
-    ),
+  Widget build(BuildContext context) => LiquidGlassTabBar(
+    currentIndex: index,
+    onTabSelected: (i) => onSelected?.call(i),
+    height: height,
+    selectedItemColor: tint,
+    // 칸이 다섯이라 꽉 채운다. 가운데 모으기는 두세 칸짜리 바의 모양이다.
+    iosItemPositioning: LiquidGlassTabBarItemPositioning.fill,
+    labelTextStyle: labelStyle,
+    items: <LiquidGlassTabItem>[
+      for (final item in items)
+        LiquidGlassTabItem(
+          label: item.label,
+          icon: NativeLiquidGlassIcon.sfSymbol(item.symbol),
+          selectedIcon: NativeLiquidGlassIcon.sfSymbol(item.activeSymbol),
+        ),
+    ],
   );
 }

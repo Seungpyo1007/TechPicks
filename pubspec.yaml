@@ -54,6 +54,12 @@ dependencies:
 
 
 
+dependency_overrides:
+  # 플러그인이 고르지도 않은 탭을 알려온다. 고친 사본을 쓴다 —
+  # third_party/native_liquid_glass/PATCH.md 에 무엇을 고쳤는지 적어뒀다.
+  native_liquid_glass:
+    path: third_party/native_liquid_glass
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

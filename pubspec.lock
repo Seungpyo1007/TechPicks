@@ -1112,10 +1112,9 @@ packages:
   native_liquid_glass:
     dependency: "direct main"
     description:
-      name: native_liquid_glass
-      sha256: "4745b794461528f65a64e2b2a4df36c8cf34eb9c4bc6f0ac8fc948d2495184a2"
-      url: "https://pub.dev"
-    source: hosted
+      path: "third_party/native_liquid_glass"
+      relative: true
+    source: path
     version: "0.2.14"
   nm:
     dependency: transitive
