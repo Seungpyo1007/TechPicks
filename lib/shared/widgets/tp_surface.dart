@@ -28,6 +28,7 @@ class TpSurface extends StatelessWidget {
     this.onLongPress,
     this.chrome = false,
     this.raised = false,
+    this.opaque = false,
   });
 
   /// 크롬 등급 유리. 카드보다 더 흐리고 더 진하다.
@@ -44,7 +45,8 @@ class TpSurface extends StatelessWidget {
     this.onLongPress,
     this.raised = false,
   }) : strong = true,
-       chrome = true;
+       chrome = true,
+       opaque = false;
 
   final Widget child;
 
@@ -67,6 +69,14 @@ class TpSurface extends StatelessWidget {
   /// 탭 캡슐. 컨트롤보다 진하고 그림자가 깊다.
   final bool raised;
 
+  /// 뒤가 비치지 않는 면.
+  ///
+  /// 유리는 **자기 레이어에서** 그려진다(`useOwnLayer`). 그 레이어 뒤에 아무
+  /// 것도 없는 자리 — 라우트 위에 뜨는 시트가 그렇다 — 에서는 흐릴 대상이
+  /// 없어서 흐림이 안 걸리고, 72% 흰 면 아래로 아래 화면 글자가 그대로
+  /// 읽힌다. 브랜드 시트는 목록 열두 줄이 랭킹 오십 줄 위에 겹쳤다.
+  final bool opaque;
+
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
@@ -74,7 +84,7 @@ class TpSurface extends StatelessWidget {
 
     // "투명도 줄이기"를 켠 사람에게는 유리를 걷는다. Flutter 에 그 플래그가
     // 없어서 같은 설정 화면에 있는 고대비를 대신 본다.
-    final flatten = MediaQuery.highContrastOf(context);
+    final flatten = opaque || MediaQuery.highContrastOf(context);
 
     final rawFill = chrome
         ? (raised ? t.chromeFillRaised : t.chromeFill)

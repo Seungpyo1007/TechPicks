@@ -24,9 +24,6 @@ import '../../shared/widgets/tp_press.dart';
 ///
 /// 그 화면들은 nanoreview.net 을 띄우고 JS 로 헤더를 지웠고, 그 과정에서
 /// 필요도 없는 위치 권한을 요청했다. 셋 다 사라진다.
-///
-/// 카피는 아직 하드코딩이다. 명세에 EN/KO 표가 통째로 있어서 화면마다 조금씩
-/// 옮기는 것보다 한 번에 번역 파일로 넘기는 편이 낫다. 그 작업은 따로 한다.
 class RankScreen extends ConsumerWidget {
   const RankScreen({
     super.key,
@@ -45,6 +42,9 @@ class RankScreen extends ConsumerWidget {
   /// 이 화면에만 있다.
   static const int maxRows = 50;
 
+  /// 컨트롤 사이 간격. 예전에는 12/10/10/8/16 이 섞여 있었다.
+  static const double _gap = 12;
+
   final ValueChanged<TpTab>? onTabSelected;
   final ValueChanged<String>? onDeviceTap;
 
@@ -56,12 +56,11 @@ class RankScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final axis = ref.watch(rankAxisProvider);
     final ranked = ref.watch(rankVisibleProvider);
-    final brands = ref.watch(rankBrandsProvider);
-    final brand = ref.watch(rankBrandProvider);
     // 실패했을 때도 스켈레톤을 계속 돌리면 영원히 로딩처럼 보인다.
     final catalog = ref.watch(catalogProvider);
     final motion = context.motion;
     final loading = catalog is AsyncLoading && !catalog.hasError;
+    final hasList = !loading && !catalog.hasError && ranked.isNotEmpty;
 
     return TpShell(
       title: K.rankTitle.tr(),
@@ -77,24 +76,20 @@ class RankScreen extends ConsumerWidget {
               tpContentInset(context),
           children: <Widget>[
             const CategoryChips(),
-            const SizedBox(height: 12),
-            const _RankSearch(),
-            // 브랜드 줄에는 눈썹 글자를 안 붙인다. 검색 · 브랜드 · 정렬이
-            // 각자 제목을 달면 목록이 시작되기 전에 화면 절반이 찬다.
-            if (brands.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 10),
-              _BrandChips(brands: brands, selected: brand),
-            ],
-            const SizedBox(height: 10),
-            _EyebrowText(K.rankBy.tr()),
-            const SizedBox(height: 8),
+            const SizedBox(height: _gap),
+            // 검색과 브랜드가 한 줄이다. 브랜드가 17개짜리 칩 줄이던 때는
+            // 컨트롤만으로 화면 절반이 찼고, 카탈로그가 읽힌 뒤에 그 줄이
+            // 생겨나면서 목록이 56pt 씩 아래로 밀렸다.
+            const _RankControls(),
+            const SizedBox(height: _gap),
+            // "정렬 기준" 눈썹은 뺐다. 칩 라벨이 이미 정렬이라고 말한다.
             _ChipRow(
               labels: RankAxis.values.map((a) => K.rankAxis(a).tr()).toList(),
               selectedIndex: RankAxis.values.indexOf(axis),
               onSelected: (i) =>
                   ref.read(rankAxisProvider.notifier).set(RankAxis.values[i]),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: _gap),
             // 스켈레톤에서 목록으로 하드컷이면 화면이 튄다.
             AnimatedSwitcher(
               duration: motion.contentSwap.duration,
@@ -126,7 +121,7 @@ class RankScreen extends ConsumerWidget {
             // 잘린 것을 말해준다. 랭킹이 조용히 끊기면 가격순으로 봤을 때
             // 제일 싼 기기가 왜 없는지 알 방법이 없다.
             if (ranked.length > maxRows) ...<Widget>[
-              const SizedBox(height: 12),
+              const SizedBox(height: _gap),
               Text(
                 K.rankCapped.tr(
                   args: <String>['$maxRows', '${ranked.length - maxRows}'],
@@ -138,13 +133,33 @@ class RankScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               _ScanInlineButton(onTap: onScan!),
             ],
-            const SizedBox(height: 18),
-            Text(K.rankNote.tr(), style: context.tpText.caption),
+            // 순위를 어떻게 냈는지는 순위가 있을 때 할 말이다. 오류 화면과
+            // "맞는 게 없습니다" 아래에도 붙어 있었다.
+            if (hasList) ...<Widget>[
+              const SizedBox(height: 18),
+              Text(K.rankNote.tr(), style: context.tpText.caption),
+            ],
           ],
         ),
       ),
     );
   }
+}
+
+/// 검색 줄과 브랜드 칩. 한 줄이다.
+class _RankControls extends StatelessWidget {
+  const _RankControls();
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: const <Widget>[
+      Expanded(child: _RankSearch()),
+      SizedBox(width: 8),
+      // 검색 줄과 같은 높이로 늘린다. 칩이 자기 크기(44)로 서면 옆의 48짜리
+      // 입력칸과 어긋나고, 누르는 자리도 접근성 기준(48)에 모자란다.
+      SizedBox(height: TpSearchField.height, child: _BrandChip()),
+    ],
+  );
 }
 
 /// 랭킹의 검색 줄.
@@ -180,52 +195,92 @@ class _RankSearchState extends ConsumerState<_RankSearch> {
   );
 }
 
-/// 브랜드 칩 행. 고른 걸 다시 누르면 풀린다.
-class _BrandChips extends ConsumerWidget {
-  const _BrandChips({required this.brands, required this.selected});
-
-  final List<String> brands;
-  final String? selected;
+/// 브랜드 하나짜리 칩. 누르면 시트가 열린다.
+///
+/// 열일곱 개를 가로로 늘어놓던 줄을 접은 것이다. 그 줄은 세로로 46pt 를
+/// 먹으면서도 화면에 세 개밖에 안 보였고, 나머지는 옆으로 밀어야 나왔다.
+class _BrandChip extends ConsumerWidget {
+  const _BrandChip();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.read(rankBrandProvider.notifier);
-    return SizedBox(
-      height: 46,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: brands.length + 1,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          if (i == 0) {
-            return TpChip(
-              label: K.allBrands.tr(),
-              selected: selected == null,
-              onTap: selected == null
-                  ? null
-                  : () => notifier.toggle(selected!),
-            );
-          }
-          final brand = brands[i - 1];
-          return TpChip(
-            label: brand,
-            selected: brand == selected,
-            onTap: () => notifier.toggle(brand),
-          );
-        },
-      ),
+    final brands = ref.watch(rankBrandsProvider);
+    final selected = ref.watch(rankBrandProvider);
+
+    return TpChip(
+      label: selected ?? K.brand.tr(),
+      selected: selected != null,
+      // 카탈로그를 읽기 전에도 자리는 잡아둔다. 없다가 생기면 목록이 밀린다.
+      onTap: brands.isEmpty
+          ? null
+          : () => _pickBrand(context, ref, brands, selected),
     );
   }
 }
 
-class _EyebrowText extends StatelessWidget {
-  const _EyebrowText(this.text);
+/// 브랜드 시트. 설정의 언어·AI 엔진 시트와 같은 모양이다.
+Future<void> _pickBrand(
+  BuildContext context,
+  WidgetRef ref,
+  List<String> brands,
+  String? current,
+) async {
+  final type = context.tpText;
+  final t = context.tp;
+  // 열일곱 개가 넘어서 시트가 화면을 넘는다.
+  final maxHeight = MediaQuery.sizeOf(context).height * 0.6;
 
-  final String text;
-
-  @override
-  Widget build(BuildContext context) =>
-      Text(text.toUpperCase(), style: context.tpText.eyebrow);
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (sheetContext) => TpSurface(
+      strong: true,
+      // 랭킹 오십 줄 위에 뜬다. 비치면 못 읽는다.
+      opaque: true,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(K.brand.tr(), style: type.cardTitle),
+          const SizedBox(height: 8),
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxHeight),
+            child: ListView(
+              shrinkWrap: true,
+              children: <Widget>[
+                for (final option in <String?>[null, ...brands])
+                  TpPress(
+                    onTap: () {
+                      Navigator.of(sheetContext).pop();
+                      ref.read(rankBrandProvider.notifier).set(option);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              option ?? K.allBrands.tr(),
+                              style: type.body,
+                            ),
+                          ),
+                          if (option == current)
+                            Icon(Icons.check, size: 18, color: t.link)
+                          else
+                            const SizedBox(width: 18, height: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _ChipRow extends StatelessWidget {
@@ -270,22 +325,15 @@ class _RankList extends StatelessWidget {
     this.onDeviceTap,
   });
 
-  static const double rowHeight = 62;
-
   final List<RankedDevice> ranked;
   final RankAxis axis;
   final ValueChanged<String>? onDeviceTap;
 
   @override
   Widget build(BuildContext context) {
-    if (ranked.isEmpty) {
-      return TpSurface(
-        padding: const EdgeInsets.all(20),
-        child: Text(K.noDevices.tr(), style: context.tpText.body),
-      );
-    }
-
     final motion = context.motion;
+    final rowHeight = _RankRow.heightOf(context);
+
     return SizedBox(
       height: ranked.length * rowHeight,
       child: Stack(
@@ -309,6 +357,7 @@ class _RankList extends StatelessWidget {
               child: _RankRow(
                 entry: r,
                 axis: axis,
+                last: i == ranked.length - 1,
                 onTap: onDeviceTap == null
                     ? null
                     : () => onDeviceTap!(r.device.slug),
@@ -321,18 +370,68 @@ class _RankList extends StatelessWidget {
 }
 
 class _RankRow extends StatelessWidget {
-  const _RankRow({required this.entry, required this.axis, this.onTap});
+  const _RankRow({
+    required this.entry,
+    required this.axis,
+    required this.last,
+    this.onTap,
+  });
 
   final RankedDevice entry;
   final RankAxis axis;
+  final bool last;
   final VoidCallback? onTap;
+
+  /// 값이 아무리 길어도 이름을 밀어내지 못하는 한도.
+  ///
+  /// 예전에는 한도가 없어서 `$1,000,000` 이 이름 폭을 0 으로 만들었다.
+  static const double _valueWidth = 110;
+
+  static const double _padV = 10;
+  static const double _barGap = 8;
+
+  /// 행 하나의 높이.
+  ///
+  /// **상수로 잡으면 안 된다.** 이름과 그 아래 줄이 손쉬운 사용 배율을 그대로
+  /// 따라간다 — 1.6배면 두 줄이 60pt 라 74pt 짜리 고정 행을 넘는다.
+  /// 목록이 `Stack` 이라 넘친 만큼이 다음 행 위에 겹쳐 그려진다.
+  static double heightOf(BuildContext context) {
+    final type = context.tpText;
+    final scale = MediaQuery.textScalerOf(context);
+    final block =
+        scale.scale(type.cardTitle.fontSize!) * 1.25 +
+        2 +
+        scale.scale(type.caption.fontSize!) * 1.3;
+    // 순위 쪽이 더 클 수도 있다. 배지는 지름이 고정이고, 큰 숫자는 1.3배에서
+    // 묶여 있다(_Position). 둘 다 재서 큰 쪽을 쓴다 — 여기서 0.8pt 만 모자라도
+    // 목록이 Stack 이라 다음 행 위에 겹쳐 그려진다.
+    final lead = <double>[
+      _Position.badge,
+      scale.scale(_Position.numeral).clamp(0, _Position.numeral * 1.3) *
+          _Position.numeralHeight,
+    ].reduce((a, b) => a > b ? a : b);
+    // 정수로 올린다. 소수점이 남으면 행마다 안쪽 글자가 다른 서브픽셀에
+    // 떨어져서, 자리는 일정한데 글자 간격이 0.5pt 씩 어긋나 보인다.
+    return (_padV * 2 + (block > lead ? block : lead) + _barGap + 3 + 1)
+        .ceilToDouble();
+  }
+
+  /// 이름 아래 줄. 브랜드와 가격이다.
+  ///
+  /// 명세의 행은 한 줄이었는데, 순위·이름·점수만 있으면 목록이 숫자 표처럼
+  /// 읽혔다. 값을 하나 더 얹는 대신 **이미 아는 것**을 놓는다.
+  String get _sub {
+    final price = DeviceSpecs.formatPrice(entry.device.msrpUsd);
+    return <String>[
+      if (entry.device.brand?.name != null) entry.device.brand!.name,
+      if (price != DeviceSpecs.empty) price,
+    ].join(' · ');
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
-    // 1–3 위만 파란 숫자.
-    final leading = entry.position <= 3 ? TpTokens.blue : t.mutedInk;
 
     return Semantics(
       // container 를 켜야 행마다 별개 노드가 된다. 안 켜면 목록 전체가
@@ -351,60 +450,129 @@ class _RankRow extends StatelessWidget {
       child: TpPress(
         onTap: onTap,
         semanticsButton: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: _padV),
+          decoration: last
+              ? null
+              : BoxDecoration(
+                  border: Border(bottom: BorderSide(color: t.hairline)),
+                ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              SizedBox(
-                // 행 높이가 고정이라 안쪽도 고정한다. 숫자가 두 자리가 되면서
-                // 줄바꿈되면 Column 이 넘친다.
-                height: 34,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    SizedBox(
-                      width: 46,
-                      child: Text(
-                        '${entry.position}',
-                        maxLines: 1,
-                        softWrap: false,
-                        style: type.cardTitle.copyWith(
-                          fontSize: 28,
-                          fontWeight: t.isGlass
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: leading,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  SizedBox(
+                    width: 46,
+                    child: _Position(position: entry.position),
+                  ),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          entry.device.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: type.cardTitle.copyWith(height: 1.25),
                         ),
-                      ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _sub,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: type.caption.copyWith(height: 1.3),
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      child: Text(
-                        entry.device.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: type.cardTitle,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
+                  ),
+                  const SizedBox(width: 10),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: _valueWidth),
+                    child: Text(
                       formatAxisValue(axis, entry.axisValue),
                       maxLines: 1,
                       softWrap: false,
+                      overflow: TextOverflow.ellipsis,
                       style: type.cardTitle.copyWith(
                         color: entry.axisValue == null ? t.dim : t.ink,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 7),
+              const SizedBox(height: _barGap),
               TpBar(height: 3, radius: 2, fraction: entry.fraction),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 순위 숫자. 1–3 위는 파란 원 안에 들어간다.
+///
+/// **명세와 다른 자리다.** §4 는 행 전체를 "숫자 · 이름 · 값 · 3px 막대"로
+/// 못박고 1–3 위를 파란 **글자**로 준다. 파란 28pt 숫자는 4위의 회색 28pt
+/// 숫자와 크기가 같아서, 스크롤하다 보면 어디까지가 위쪽인지 안 보였다.
+class _Position extends StatelessWidget {
+  const _Position({required this.position});
+
+  final int position;
+
+  /// 배지 지름. 큰 숫자와 자리를 맞춘다.
+  static const double badge = 34;
+
+  /// 4위 아래의 큰 숫자.
+  static const double numeral = 28;
+
+  /// 그 숫자의 줄 높이. 기본값(폰트 메트릭)에 맡기면 행 높이를 미리 못 잰다.
+  static const double numeralHeight = 1.1;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tp;
+    final type = context.tpText;
+
+    // 배지는 지름이 고정이라 안의 숫자도 같이 묶어야 한다. 큰 숫자는
+    // 28pt 라 배율을 그대로 곱하면 두 줄이 된다.
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.3,
+      child: position <= 3
+          ? Container(
+              width: badge,
+              height: badge,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                color: TpTokens.blue,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                '$position',
+                maxLines: 1,
+                softWrap: false,
+                style: type.cardTitle.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : Text(
+              '$position',
+              maxLines: 1,
+              softWrap: false,
+              style: type.cardTitle.copyWith(
+                fontSize: numeral,
+                height: numeralHeight,
+                fontWeight: t.isGlass ? FontWeight.w700 : FontWeight.w500,
+                color: t.mutedInk,
+              ),
+            ),
     );
   }
 }
@@ -417,13 +585,17 @@ class _RowSkeletons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
+    // 나타날 목록과 보폭이 같아야 예고가 된다. 52+10 이던 때는 뼈대가
+    // 사라지면서 아래 것들이 한 번 튀었다.
+    final stride = _RankRow.heightOf(context);
+
     return Column(
       children: <Widget>[
         for (var i = 0; i < 5; i++)
           Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Container(
-              height: 52,
+              height: stride - 8,
               decoration: BoxDecoration(
                 color: t.track,
                 borderRadius: BorderRadius.circular(t.rInner),
@@ -450,7 +622,6 @@ String formatAxisValue(RankAxis axis, double? value) {
   return value.round().toString();
 }
 
-/// Android 확장 FAB.
 /// Android 확장 FAB. 랭킹에서 기기 찾기로 간다.
 class _ScanFab extends StatelessWidget {
   const _ScanFab({required this.onTap});

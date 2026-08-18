@@ -221,8 +221,8 @@ class RankBrandNotifier extends Notifier<String?> {
   @override
   String? build() => null;
 
-  /// 누른 브랜드를 다시 누르면 풀린다.
-  void toggle(String brand) => state = state == brand ? null : brand;
+  /// 시트에서 고른 것. null 이면 전부.
+  void set(String? brand) => state = brand;
 }
 
 final rankBrandProvider = NotifierProvider<RankBrandNotifier, String?>(

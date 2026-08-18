@@ -14,7 +14,8 @@ void main() {
 
     expect(find.text('랭킹'), findsWidgets);
     expect(find.text('스마트폰'), findsOneWidget);
-    expect(find.text('정렬 기준'), findsOneWidget);
+    // "정렬 기준" 눈썹은 빠졌다. 그 자리에 브랜드 칩이 있다.
+    expect(find.text('브랜드'), findsOneWidget);
     expect(find.text('TP 지수'), findsWidgets);
     // 영어 문구가 남아 있으면 하드코딩이 덜 걷힌 것이다.
     expect(find.text('Rankings'), findsNothing);
