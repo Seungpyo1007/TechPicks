@@ -113,7 +113,8 @@ class TpNativeTabBar extends StatelessWidget {
     required this.onSelected,
     required this.height,
     required this.tint,
-    required this.labelStyle,
+    this.labelStyle,
+    this.iconSize,
   });
 
   final List<TpNativeTabItem> items;
@@ -124,7 +125,15 @@ class TpNativeTabBar extends StatelessWidget {
   /// 고른 칸의 강조색.
   final Color tint;
 
-  final TextStyle labelStyle;
+  /// 라벨 타이포. null 이면 시스템 기본.
+  ///
+  /// 우리 값을 넘기면 시스템 바의 치수와 어긋난다 — 10pt 라벨은 헐렁하고,
+  /// 아이콘을 28 로 키우면 라벨과 겹친다. 간격·크기는 UIKit 이 자기 규칙대로
+  /// 잡게 두는 것이 결국 제일 네이티브다.
+  final TextStyle? labelStyle;
+
+  /// 아이콘 한 변. null 이면 시스템 기본.
+  final double? iconSize;
 
   /// 플러그인이 유리를 흘려보내려고 상자를 `height + 20` 으로 잡는다. 위쪽
   /// 20pt 는 비고 바는 아래에 붙는다. 담는 쪽이 62 로 잘라두면 그만큼 넘쳐서
@@ -137,6 +146,7 @@ class TpNativeTabBar extends StatelessWidget {
     onTabSelected: (i) => onSelected?.call(i),
     height: height,
     selectedItemColor: tint,
+    iconSize: iconSize,
     // 칸이 다섯이라 꽉 채운다. 가운데 모으기는 두세 칸짜리 바의 모양이다.
     iosItemPositioning: LiquidGlassTabBarItemPositioning.fill,
     labelTextStyle: labelStyle,
