@@ -254,20 +254,25 @@ void _homeMotion() {
     expect(find.text(K.verdict.tr().toUpperCase()), findsOneWidget);
   });
 
-  testWidgets('관심 목록 행이 접히며 사라진다', (tester) async {
+  // 한동안 행마다 AnimatedSize 를 하나씩 달아두고 "지우면 접히며 사라진다"고
+  // 적어 뒀는데, AnimatedSize 는 **살아 있는 자식**만 줄일 수 있다. 지우면
+  // 행 위젯 자체가 목록에서 빠져 그 프레임에 언마운트되므로 접힐 것이 없다.
+  // 행마다 렌더 오브젝트만 하나씩 더 달렸다. 지금 남은 애니메이션은 결론
+  // 카드 하나뿐이고, 목록이 짧아진 만큼은 그 카드가 흡수한다.
+  testWidgets('관심 목록에서 지우면 목록이 튀지 않는다', (tester) async {
     await initLocalization();
     SharedPreferences.setMockInitialValues(<String, Object>{
       'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
     });
 
     final container = await pumpScreen(tester, const HomeScreen());
-    final before = tester.getSize(find.byType(AnimatedSize).first).height;
-    expect(before, greaterThan(0));
+    expect(find.text('iPhone 16 Pro Max'), findsWidgets);
 
     container.read(shortlistProvider.notifier).remove('iphone-16-pro-max');
     await tester.pumpAndSettle();
 
     expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
+    expect(find.text('iPhone 16 Pro Max'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

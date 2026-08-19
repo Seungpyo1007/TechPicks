@@ -45,6 +45,34 @@ class FileBundle extends CachingAssetBundle {
 /// 위젯을 올려서 앱 전체를 띄우는 테스트도 시도해 봤는데, `pumpAndSettle` 이
 /// 끝나지 않고 10분 타임아웃까지 간다. 그래서 앱 루트는 [TechPicksRoot] 만
 /// 떼어 검사한다 (test/widget/startup_test.dart).
+/// 홈이 알맹이를 그리게 하는 최소한의 저장 상태.
+///
+/// [initLocalization] 은 저장소를 비운다. 그러면 홈에는 큰 제목과 "관심 목록이
+/// 비어 있습니다" 카드밖에 없고, 레이아웃·글자 배율·접근성 스윕이 **결론 카드도
+/// 관심목록 행도 변동 행도 한 번도 안 그린 채** 지나간다. 그 뒤에 1.6배에서
+/// 넘치는 Row 와 52pt 상자에 든 34pt 숫자가 조용히 숨어 있었다.
+///
+/// [initLocalization] **뒤에** 부른다 — 그쪽이 저장소를 비운다.
+void seedHomeContent() {
+  SharedPreferences.setMockInitialValues(<String, Object>{
+    'shortlist_slugs': <String>['galaxy-s25', 'oneplus-13', 'pixel-9-pro'],
+    // 변동 섹션은 지난 실행의 순위가 있어야 생긴다. 실제 순위를 뒤집어
+    // 저장해두면 세 줄이 잡힌다.
+    'rank_snapshot_slugs': <String>[
+      'oneplus-13r',
+      'iphone-16-pro',
+      'galaxy-s25',
+      'pixel-9-pro',
+      'iphone-16-pro-max',
+      'pixel-9-pro-xl',
+      'galaxy-z-fold-7',
+      'xiaomi-15-ultra',
+      'oneplus-13',
+      'galaxy-s25-ultra',
+    ],
+  });
+}
+
 Future<void> initLocalization({
   Locale locale = const Locale('en', 'US'),
 }) async {

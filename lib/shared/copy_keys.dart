@@ -194,6 +194,8 @@ abstract final class K {
 
   // 스크린 리더 전용. 화면에는 안 보이고 읽히기만 한다.
   static const String a11yRankRow = 'a11yRankRow';
+  static const String a11yMoverRow = 'a11yMoverRow';
+  static const String a11yMoverDown = 'a11yMoverDown';
   static const String a11yProcessorRow = 'a11yProcessorRow';
   static const String a11yAxis = 'a11yAxis';
   static const String a11yAxisMissing = 'a11yAxisMissing';

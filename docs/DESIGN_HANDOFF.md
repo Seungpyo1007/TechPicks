@@ -318,6 +318,25 @@ Scroll order:
 Replaces `lib/MainPage/MenuPage/Home.dart` entirely. The `where_to`, `choose_bookmark` and
 `set_destination_on_map` strings are dead — remove them from the translation files.
 
+**Deviation — the numerals are not in fixed-width boxes.** The 62px verdict numeral and the 34px
+shortlist numeral used to sit in hard-coded boxes (the shortlist one 52px wide). A two-digit index at
+34px needs 68px, so the numeral was already being cut through the middle of a glyph at the default text
+size — not only under Larger Text. Both now size themselves, with a minimum width so the rows still line
+up, and both clamp their text scaling at 1.3 the way the detail screen does. The verdict row also gained
+a flexible `TP Index` label; without one it had no flexible child and overflowed the card at 1.6.
+
+**Addition — a loading skeleton.** The Interactions table already asks for skeleton rows at the card's
+own radius. Home had none, so anyone with a saved shortlist saw `Nothing on your shortlist yet` flash on
+every cold start, because both the shortlist and the verdict are empty until the catalogue resolves.
+
+**Addition — the shortlist and movers rows read as sentences.** The bare numerals were announced as
+loose numbers, and the movers delta was read glyph-literally ("black up-pointing triangle 2").
+
+Note the share control in the verdict card is **not** in this spec at all; it exists because the card is
+already the share text. It now uses the standard 48px tap target — the 44px it had failed the Android
+guideline, and unlike the other 44s in the app it is a button, not a link, so the guideline does not skip
+it.
+
 ### 4. Rankings — `rank`
 
 - Category chips row (horizontal scroll): `Phones` · `Processors` · `Laptops` → `rank` / `cpu` / `laptop`.
