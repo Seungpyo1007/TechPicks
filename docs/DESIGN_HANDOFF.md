@@ -411,6 +411,31 @@ tapping writes to `cmpA` or `cmpB` and pops back to `compare`.
 Keep `firebase_vertexai` from `ChatAI.dart`, but the response contract changes: the model must return
 `{pick, reason, rows[]}` so the UI can render the table. Do not render raw markdown.
 
+**Deviation — the four rows come from the catalogue, not from the model.** The prompt now asks for
+`{pick, slug, reason}`; `resolveInCatalog` attaches TP Index / Price / Battery / Camera from the catalogue
+entry it just matched, using the same label keys Compare and Detail use. Two reasons. TP Index is the
+user's own weighting, so no model can compute it. And a model answering in Korean invents its own Korean
+row names, so the same table reads differently on three screens. The on-device prompt never asked for
+`rows` at all, which meant the default engine showed no table — the thing §10 calls the point of the
+screen. To get the spec contract back, put `rows` into shape A and drop the `askRowsFor` call in
+`resolveInCatalog`.
+
+**Deviation — the input bar rides the keyboard.** `iOS bottom inset 190px, Android 172px` are resting
+values from a prototype with no keyboard. At rest the bar sits on the chrome reserve; with the keyboard
+up it sits 8px above the keyboard and reclaims the tab-capsule band, which the keyboard covers anyway.
+Keeping the resting inset while the keyboard was up left a 122px empty strip over a hidden tab bar.
+
+**Addition — a failed answer says so and offers `Try again`.** `AskMessage.failed` was set and never read,
+so a failure rendered pixel-identical to a good answer with no way to retry.
+
+**Addition — a catalogue-only answer is marked.** When neither the on-device nor the cloud model answers,
+`LocalAskService` still picks from the catalogue. The bubble now says so in `caption` rather than passing
+it off as the model's.
+
+**Deviation — loading is a skeleton, not `Thinking…`.** The Interactions table already forbids a centred
+spinner and asks for skeleton rows at the card's own radius; this screen was showing a real bubble with
+the word "Thinking…" in it, which reads as an answer.
+
 ### 11. Scan — `scan`
 
 Full-bleed dark takeover (`#0B0D10`), **content starts at y=0 under a light-content status bar**.

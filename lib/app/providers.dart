@@ -773,11 +773,29 @@ class AskNotifier extends Notifier<List<AskMessage>> {
       if (reply == null)
         AskMessage.ai(K.askFailed.tr(), failed: true)
       else if (answer != null)
-        AskMessage.ai(answer.pick, answer: answer)
+        AskMessage.ai(
+          answer.pick,
+          answer: answer,
+          fromCatalog: reply.fromCatalog,
+        )
       // 고를 기기가 없는 질문. 표 없이 문장만 그린다.
       else
-        AskMessage.ai(reply.text!),
+        AskMessage.ai(reply.text!, fromCatalog: reply.fromCatalog),
     ];
+  }
+
+  /// 실패한 답을 걷어내고 같은 질문을 다시 보낸다.
+  ///
+  /// [send] 를 그냥 부르면 같은 질문이 두 번 올라간 것처럼 보인다. 실패한 답과
+  /// **그 질문**을 같이 걷어내고 처음부터 다시 태운다.
+  Future<void> retry() async {
+    if (_busy || state.length < 2) return;
+    final failed = state.last;
+    final question = state[state.length - 2];
+    if (failed.isUser || !failed.failed || !question.isUser) return;
+
+    state = state.sublist(0, state.length - 2);
+    await send(question.text);
   }
 
   /// 비교 화면의 "왜?" 에서 넘어올 때 두 기기를 물어봐 준다.

@@ -54,7 +54,7 @@ class OnDeviceAskService implements AskService {
       );
       final res = await chat.generateChatResponse().timeout(timeout);
       if (res is! TextResponse) return null;
-      return replyFrom(res.token, catalog);
+      return replyFrom(res.token, catalog, weights: weights);
     } catch (e, s) {
       TpErrors.record(e, s, reason: 'ask.onDevice');
       return null;
@@ -63,10 +63,20 @@ class OnDeviceAskService implements AskService {
 
   /// 모델이 뱉은 글자를 답으로 바꾼다. [GeminiAskService] 와 규칙이 같다.
   @visibleForTesting
-  static AskReply? replyFrom(String raw, List<Smartphone> catalog) {
+  static AskReply? replyFrom(
+    String raw,
+    List<Smartphone> catalog, {
+    TpWeights weights = TpWeights.defaults,
+  }) {
     final parsed = AskAnswer.tryParse(raw);
     if (parsed != null) {
-      final resolved = GeminiAskService.resolveInCatalog(parsed, catalog);
+      // 이 프롬프트는 rows 를 아예 안 시킨다 — 작은 모델은 규칙이 길어지면
+      // 형태를 놓친다. 표는 resolveInCatalog 가 카탈로그에서 만들어 붙인다.
+      final resolved = GeminiAskService.resolveInCatalog(
+        parsed,
+        catalog,
+        weights: weights,
+      );
       if (resolved != null) return AskReply.pick(resolved);
       if (parsed.reason.isNotEmpty) return AskReply.say(parsed.reason);
       return null;

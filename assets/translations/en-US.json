@@ -17,6 +17,7 @@
   "allBrands": "All",
   "anonFailed": "Could not start a session. Try again.",
   "askFailed": "Could not answer that one. Try again in a moment.",
+  "askFromCatalog": "Answered from the catalogue — the model was not available.",
   "askHint": "Ask anything",
   "askLocalBudget": "Best index under {} on your current weights.",
   "askLocalTop": "Highest index in the catalogue on your current weights.",

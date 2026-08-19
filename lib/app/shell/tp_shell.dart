@@ -20,6 +20,44 @@ import '../../shared/widgets/tp_press.dart';
 EdgeInsets tpContentInset(BuildContext context) =>
     MediaQuery.paddingOf(context);
 
+/// 셸이 위아래에 낸 자리를 **어떻게** 냈는지까지 알려준다.
+///
+/// 두 크롬이 같은 숫자를 다른 방법으로 낸다. 유리는 콘텐츠를 크롬 뒤로
+/// 흘려보내고 [MediaQuery.padding] 으로 **알려만** 주고, 안드로이드는 진짜
+/// [Padding] 으로 **이미 비운다**. 대부분의 화면은 [tpContentInset] 하나면
+/// 되는데, 키보드를 피해야 하는 화면은 둘을 구분해야 한다 — 알려만 준 자리는
+/// 키보드가 올라오면 다시 쓸 수 있고(그 아래 탭 바는 어차피 키보드에 가린다),
+/// 이미 비운 자리는 애초에 우리 것이 아니다.
+///
+/// 이게 없을 때 상담 화면의 입력 바가 키보드 위 122pt 에 떠 있었다.
+class TpChromeInsets extends InheritedWidget {
+  const TpChromeInsets({
+    super.key,
+    required this.advisory,
+    required this.physical,
+    required super.child,
+  });
+
+  /// MediaQuery 로만 알려준 자리. 콘텐츠가 그 아래로 흐른다.
+  final EdgeInsets advisory;
+
+  /// 패딩으로 이미 비워 둔 자리.
+  final EdgeInsets physical;
+
+  static const TpChromeInsets zero = TpChromeInsets(
+    advisory: EdgeInsets.zero,
+    physical: EdgeInsets.zero,
+    child: SizedBox.shrink(),
+  );
+
+  static TpChromeInsets of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<TpChromeInsets>() ?? zero;
+
+  @override
+  bool updateShouldNotify(TpChromeInsets old) =>
+      advisory != old.advisory || physical != old.physical;
+}
+
 /// 화면이 크롬을 얼마나 쓰는지.
 enum TpChromeMode {
   /// 헤더 + 탭 바. 대부분의 화면.
@@ -65,7 +103,6 @@ class TpShell extends StatelessWidget {
     this.onTabSelected,
     this.trailing,
     this.floatingAction,
-    this.extraBottomInset = 0,
   });
 
   final Widget child;
@@ -85,9 +122,6 @@ class TpShell extends StatelessWidget {
 
   /// Android 확장 FAB. iOS 는 콘텐츠 안 인라인 버튼을 쓰므로 무시한다.
   final Widget? floatingAction;
-
-  /// Ask 화면처럼 입력 바가 더 필요한 경우.
-  final double extraBottomInset;
 
   static const double iosTabHeight = 62;
 
@@ -144,20 +178,25 @@ class TpShell extends StatelessWidget {
   }) {
     // 안드로이드 크롬은 불투명하다. 뒤로 지나가는 것이 안 보이므로 흐르게 할
     // 이유가 없다 — 자리를 그냥 비운다.
+    final inset = EdgeInsets.only(top: top, bottom: bottom);
+
     if (mode == TpChromeMode.full && context.tp.isGlass) {
-      return MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          padding: EdgeInsets.only(top: top, bottom: bottom),
+      return TpChromeInsets(
+        advisory: inset,
+        physical: EdgeInsets.zero,
+        child: MediaQuery(
+          data: MediaQuery.of(context).copyWith(padding: inset),
+          child: child,
         ),
-        child: child,
       );
     }
-    return MediaQuery(
-      // 패딩으로 이미 비웠다. 그대로 두면 인셋을 읽는 화면이 두 번 비운다.
-      data: MediaQuery.of(context).copyWith(padding: EdgeInsets.zero),
-      child: Padding(
-        padding: EdgeInsets.only(top: top, bottom: bottom),
-        child: child,
+    return TpChromeInsets(
+      advisory: EdgeInsets.zero,
+      physical: inset,
+      child: MediaQuery(
+        // 패딩으로 이미 비웠다. 그대로 두면 인셋을 읽는 화면이 두 번 비운다.
+        data: MediaQuery.of(context).copyWith(padding: EdgeInsets.zero),
+        child: Padding(padding: inset, child: child),
       ),
     );
   }
@@ -181,8 +220,7 @@ class TpShell extends StatelessWidget {
         // 어두운 화면 아래로 밝은 배경이 띠처럼 남는다. 스캔·뷰어는 자기
         // 컨트롤에 안전 영역을 직접 더한다.
         ? 0.0
-        : (tab != null ? tabBottom + iosTabHeight + 16 : safe.bottom + 24) +
-              extraBottomInset;
+        : (tab != null ? tabBottom + iosTabHeight + 16 : safe.bottom + 24);
 
     return Stack(
       children: <Widget>[
@@ -367,7 +405,6 @@ class TpShell extends StatelessWidget {
         : (tab != null
                   ? _androidTabHeight + safe.bottom + 12
                   : safe.bottom + 24) +
-              extraBottomInset +
               (floatingAction != null ? _androidFabInset : 0);
 
     return Stack(

@@ -98,15 +98,23 @@ String? tryParseSay(String raw) {
 }
 
 class AskReply {
-  const AskReply.pick(AskAnswer this.answer) : text = null;
+  const AskReply.pick(AskAnswer this.answer, {this.fromCatalog = false})
+    : text = null;
 
-  const AskReply.say(String this.text) : answer = null;
+  const AskReply.say(String this.text, {this.fromCatalog = false})
+    : answer = null;
 
   /// 기기를 고른 답. 화면이 표를 그린다.
   final AskAnswer? answer;
 
   /// 표 없이 문장만. 화면이 그냥 말풍선으로 그린다.
   final String? text;
+
+  /// 모델을 한 번도 못 부르고 카탈로그만으로 만든 답인가.
+  ///
+  /// 모델이 죽으면 [FallbackAskService] 가 조용히 로컬 답을 대신 내보낸다.
+  /// 답 자체는 쓸 만하지만 모델이 답한 것처럼 보이면 안 된다.
+  final bool fromCatalog;
 }
 
 class AskRow {
@@ -121,10 +129,15 @@ class AskMessage {
   const AskMessage.user(this.text)
     : isUser = true,
       answer = null,
-      failed = false;
+      failed = false,
+      fromCatalog = false;
 
-  const AskMessage.ai(this.text, {this.answer, this.failed = false})
-    : isUser = false;
+  const AskMessage.ai(
+    this.text, {
+    this.answer,
+    this.failed = false,
+    this.fromCatalog = false,
+  }) : isUser = false;
 
   final String text;
   final bool isUser;
@@ -134,4 +147,7 @@ class AskMessage {
 
   /// 모델 호출이 실패했을 때.
   final bool failed;
+
+  /// 모델 없이 카탈로그만으로 만든 답인가. 말풍선이 그렇다고 밝힌다.
+  final bool fromCatalog;
 }
