@@ -29,6 +29,7 @@ class TpSurface extends StatelessWidget {
     this.chrome = false,
     this.raised = false,
     this.opaque = false,
+    this.semanticsLabel,
   });
 
   /// 크롬 등급 유리. 카드보다 더 흐리고 더 진하다.
@@ -46,7 +47,8 @@ class TpSurface extends StatelessWidget {
     this.raised = false,
   }) : strong = true,
        chrome = true,
-       opaque = false;
+       opaque = false,
+       semanticsLabel = null;
 
   final Widget child;
 
@@ -68,6 +70,9 @@ class TpSurface extends StatelessWidget {
 
   /// 탭 캡슐. 컨트롤보다 진하고 그림자가 깊다.
   final bool raised;
+
+  /// 누를 수 있는 면이 스크린 리더에 알릴 이름. [onTap] 이 있을 때만 쓴다.
+  final String? semanticsLabel;
 
   /// 뒤가 비치지 않는 면.
   ///
@@ -116,7 +121,12 @@ class TpSurface extends StatelessWidget {
         child: content,
       );
       if (onTap != null || onLongPress != null) {
-        glass = TpPress(onTap: onTap, onLongPress: onLongPress, child: glass);
+        glass = TpPress(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          semanticsLabel: semanticsLabel,
+          child: glass,
+        );
       }
       return glass;
     }
@@ -188,16 +198,25 @@ class TpSurface extends StatelessWidget {
     if (onTap != null || onLongPress != null) {
       // 명세 Interactions: iOS 는 밝기 +4%, Android 는 M3 리플.
       surface = t.isGlass
-          ? TpPress(onTap: onTap, onLongPress: onLongPress, child: surface)
-          : Material(
-              color: Colors.transparent,
-              borderRadius: r,
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: onTap,
-                onLongPress: onLongPress,
+          ? TpPress(
+              onTap: onTap,
+              onLongPress: onLongPress,
+              semanticsLabel: semanticsLabel,
+              child: surface,
+            )
+          : Semantics(
+              button: true,
+              label: semanticsLabel,
+              child: Material(
+                color: Colors.transparent,
                 borderRadius: r,
-                child: surface,
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: onTap,
+                  onLongPress: onLongPress,
+                  borderRadius: r,
+                  child: surface,
+                ),
               ),
             );
     }

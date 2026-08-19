@@ -22,6 +22,30 @@ abstract class AskService {
   Future<AskReply?> ask(String question, List<Smartphone> catalog);
 }
 
+/// 명세 §10 의 네 줄. 라벨도 값도 **카탈로그가 정한다.**
+///
+/// 모델에게 이 표를 시키면 안 되는 이유가 둘이다. TP 지수는 사용자가 만지는
+/// 가중치라 모델이 계산할 수 없고, 한국어로 답하는 모델은 줄 이름을 제 마음대로
+/// 짓는다 — 그러면 같은 표가 비교·상세와 다르게 읽힌다.
+List<AskRow> askRowsFor(Smartphone d, TpWeights weights) => <AskRow>[
+  AskRow(
+    label: K.tpIndex.tr(),
+    value: TpIndex.of(d.score, weights)?.toString() ?? DeviceSpecs.empty,
+  ),
+  AskRow(
+    label: K.spec(SpecKind.price).tr(),
+    value: DeviceSpecs.formatPrice(d.msrpUsd),
+  ),
+  AskRow(
+    label: K.spec(SpecKind.battery).tr(),
+    value: d.batteryMah == null ? DeviceSpecs.empty : '${d.batteryMah}mAh',
+  ),
+  AskRow(
+    label: K.spec(SpecKind.camera).tr(),
+    value: d.score?.camera?.round().toString() ?? DeviceSpecs.empty,
+  ),
+];
+
 /// Firebase AI Logic 을 쓰는 구현.
 class GeminiAskService implements AskService {
   GeminiAskService({GenerativeModel? model, this.weights = TpWeights.defaults})
@@ -61,7 +85,7 @@ class GeminiAskService implements AskService {
 
       final parsed = AskAnswer.tryParse(text);
       if (parsed != null) {
-        final resolved = resolveInCatalog(parsed, catalog);
+        final resolved = resolveInCatalog(parsed, catalog, weights: weights);
         // 목록 밖 기기를 골랐다. 표는 못 그리지만 이유는 말이 된다 —
         // 여기서 버리면 사람은 아무것도 못 듣는다.
         if (resolved != null) return AskReply.pick(resolved);
@@ -89,8 +113,9 @@ class GeminiAskService implements AskService {
   /// 둘 다 실패하면 null 이라 화면이 실패 말풍선을 띄운다.
   static AskAnswer? resolveInCatalog(
     AskAnswer answer,
-    List<Smartphone> catalog,
-  ) {
+    List<Smartphone> catalog, {
+    TpWeights weights = TpWeights.defaults,
+  }) {
     Smartphone? bySlug;
     for (final d in catalog) {
       if (d.slug == answer.pickSlug) {
@@ -106,7 +131,8 @@ class GeminiAskService implements AskService {
       // 표시 이름은 카탈로그 쪽을 쓴다. 상세 화면 제목과 어긋나면 안 된다.
       pick: picked.name,
       reason: answer.reason,
-      rows: answer.rows,
+      // 모델이 준 rows 는 버린다. 방금 맞춘 기기에서 우리가 만든다.
+      rows: askRowsFor(picked, weights),
       pickSlug: picked.slug,
     );
   }
@@ -157,9 +183,7 @@ use shape A. The device you pick MUST be one of the catalogue entries below;
 use its slug.
 
 Shape A:
-{"pick":"<name>","slug":"<slug>","reason":"<one sentence, under 140 chars>",
- "rows":[{"label":"TP Index","value":"..."},{"label":"Price","value":"..."},
-         {"label":"Battery","value":"..."},{"label":"Camera","value":"..."}]}
+{"pick":"<name>","slug":"<slug>","reason":"<one sentence, under 140 chars>"}
 
 If the question is not about picking a device — how something works, what a
 spec means, whether an idea is sound — answer it plainly in shape B, in two or
@@ -234,31 +258,10 @@ class LocalAskService implements AskService {
             : K.askLocalBudget.tr(
                 args: <String>[DeviceSpecs.formatPrice(budget)],
               ),
-        // 표 라벨은 비교·상세와 같은 걸 쓴다. 여기만 영어로 남으면 한국어에서
-        // 한 화면 안에 두 언어가 섞인다.
-        rows: <AskRow>[
-          AskRow(
-            label: K.tpIndex.tr(),
-            value:
-                TpIndex.of(best.score, weights)?.toString() ??
-                DeviceSpecs.empty,
-          ),
-          AskRow(
-            label: K.spec(SpecKind.price).tr(),
-            value: DeviceSpecs.formatPrice(best.msrpUsd),
-          ),
-          AskRow(
-            label: K.spec(SpecKind.battery).tr(),
-            value: best.batteryMah == null
-                ? DeviceSpecs.empty
-                : '${best.batteryMah}mAh',
-          ),
-          AskRow(
-            label: K.spec(SpecKind.camera).tr(),
-            value: best.score?.camera?.round().toString() ?? DeviceSpecs.empty,
-          ),
-        ],
+        rows: askRowsFor(best, weights),
       ),
+      // 모델을 한 번도 안 불렀다. 화면이 그렇다고 밝힌다.
+      fromCatalog: true,
     );
   }
 

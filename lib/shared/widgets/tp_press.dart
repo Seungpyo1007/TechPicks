@@ -19,6 +19,7 @@ class TpPress extends StatelessWidget {
     required this.onTap,
     this.onLongPress,
     this.semanticsButton = true,
+    this.semanticsLabel,
     this.haptic = TpHaptic.selection,
     this.tint = true,
   });
@@ -29,6 +30,10 @@ class TpPress extends StatelessWidget {
 
   /// 바깥에서 이미 시맨틱을 붙였으면 false. 두 번 읽히면 안 된다.
   final bool semanticsButton;
+
+  /// 이 면을 눌러 무엇으로 가는지. 아이콘도 글자도 없는 면은 이게 없으면
+  /// 스크린 리더가 "버튼"만 읽는다.
+  final String? semanticsLabel;
 
   final TpHaptic haptic;
 
@@ -82,7 +87,9 @@ class TpPress extends StatelessWidget {
       },
     );
 
-    return semanticsButton ? Semantics(button: true, child: gesture) : gesture;
+    return semanticsButton
+        ? Semantics(button: true, label: semanticsLabel, child: gesture)
+        : gesture;
   }
 }
 

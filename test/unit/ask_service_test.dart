@@ -38,7 +38,15 @@ void main() {
       expect(r?.pickSlug, 'galaxy-s25-ultra');
       expect(r?.pick, 'Galaxy S25 Ultra');
       expect(r?.reason, '어쩌구');
-      expect(r?.rows.length, 1);
+      // 모델이 준 rows 는 버리고 카탈로그에서 만든 네 줄을 붙인다. 모델이
+      // 계산할 수 없는 값(TP 지수는 사용자 가중치다)이고, 한국어로 답하는
+      // 모델은 줄 이름도 제 마음대로 짓는다.
+      expect(r?.rows.map((row) => row.label).toList(), <String>[
+        K.tpIndex.tr(),
+        K.spec(SpecKind.price).tr(),
+        K.spec(SpecKind.battery).tr(),
+        K.spec(SpecKind.camera).tr(),
+      ]);
     });
 
     test('slug 가 없으면 이름으로 찾아 채운다', () {

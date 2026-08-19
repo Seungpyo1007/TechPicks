@@ -94,6 +94,7 @@ abstract final class K {
   static const String askThinking = 'askThinking';
   static const String send = 'send';
   static const String askFailed = 'askFailed';
+  static const String askFromCatalog = 'askFromCatalog';
   static const String askLocalTop = 'askLocalTop';
   static const String askLocalBudget = 'askLocalBudget';
   static const List<String> askSuggestions = <String>[

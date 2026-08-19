@@ -147,26 +147,39 @@ void main() {
 
   // 앱에 Scaffold 가 없어 아무도 키보드를 안 피한다. 입력 바가 화면 바닥에
   // 붙어 있어서 누르면 키보드가 입력 바와 제안 칩을 통째로 덮었다.
-  testWidgets('키보드가 올라오면 입력 바가 그만큼 올라간다', (tester) async {
-    const frame = Size(402, 874);
-    tester.view.physicalSize = frame;
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  //
+  // 그걸 고치면서 이번엔 **키보드 높이만큼** 올렸는데, 그러면 크롬이 비워 둔
+  // 자리(iOS 122 · Android 124)가 키보드 위에 빈 띠로 남았다. 키보드가
+  // 올라오면 탭 캡슐은 그 뒤에 가려지므로 그 자리를 도로 쓴다. 그래서 올라간
+  // 거리는 키보드 높이가 **아니다** — 확인할 것은 바가 키보드 바로 위에
+  // 붙는가다.
+  for (final chrome in TpChrome.values) {
+    testWidgets('키보드가 올라오면 입력 바가 그 위에 붙는다 · ${chrome.name}', (tester) async {
+      const frame = Size(402, 874);
+      const keyboard = 336.0;
+      tester.view.physicalSize = frame;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    await pumpScreen(tester, const AskScreen(), size: frame);
-    final resting = tester.getRect(find.byType(TextField)).bottom;
+      await pumpScreen(tester, const AskScreen(), chrome: chrome, size: frame);
+      final resting = tester.getRect(find.byType(TextField)).bottom;
 
-    tester.view.viewInsets = const FakeViewPadding(bottom: 336);
-    await tester.pumpAndSettle();
+      tester.view.viewInsets = const FakeViewPadding(bottom: keyboard);
+      await tester.pumpAndSettle();
 
-    final lifted = tester.getRect(find.byType(TextField)).bottom;
-    expect(lifted, lessThanOrEqualTo(frame.height - 336));
-    expect(resting - lifted, closeTo(336, 1));
-  });
+      final lifted = tester.getRect(find.byType(TextField)).bottom;
+      final keyboardTop = frame.height - keyboard;
+      expect(lifted, lessThanOrEqualTo(keyboardTop), reason: chrome.name);
+      // 바로 위여야 한다. 예전에는 여기가 122pt 였다.
+      expect(keyboardTop - lifted, lessThanOrEqualTo(16), reason: chrome.name);
+      expect(lifted, lessThan(resting), reason: chrome.name);
+    });
+  }
 
-  // 답을 기다리는 동안 아무 표시가 없었고, 그 사이에 보낸 질문은 조용히
-  // 버려졌다.
-  testWidgets('기다리는 동안 표시가 남고 두 번째 질문은 안 사라진다', (tester) async {
+  // 기다리는 동안 아무 표시가 없었다. 이제 답 자리에 뼈대가 놓인다 —
+  // "생각 중…" 이라고 쓴 진짜 말풍선이 아니라, 답과 같은 반지름의 뼈대다.
+  // 글자로 알리면 그게 답인 줄 알고 읽게 된다.
+  testWidgets('기다리는 동안 답 자리에 뼈대가 놓인다', (tester) async {
     final answer = Completer<AskReply?>();
     await pumpScreen(
       tester,
@@ -181,27 +194,88 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
 
-    expect(find.text(K.askThinking.tr()), findsOneWidget);
-
-    // 기다리는 동안 보내기는 잠겨 있다.
-    final before = tester.widgetList(find.byType(TextField)).length;
-    await tester.tap(find.byIcon(Icons.arrow_upward));
-    await tester.pump();
-    expect(before, tester.widgetList(find.byType(TextField)).length);
+    expect(find.byKey(AskScreen.thinkingKey), findsOneWidget);
 
     answer.complete(null);
     await tester.pumpAndSettle();
 
-    expect(find.text(K.askThinking.tr()), findsNothing);
+    expect(find.byKey(AskScreen.thinkingKey), findsNothing);
+  });
+
+  // 보내기 버튼은 잠겨 있었는데 Return 은 안 잠겨 있었다. `_send` 가 입력을
+  // 먼저 비우고 노티파이어가 _busy 가드에서 되돌아가서, **친 글자만 사라지고**
+  // 아무 일도 안 일어났다. 예전 테스트는 TextField 개수를 비교해서(늘 1)
+  // 아무것도 검사하지 않았다.
+  testWidgets('기다리는 중에 또 보내도 질문이 사라지지 않는다', (tester) async {
+    final answer = Completer<AskReply?>();
+    final slow = _SlowAsk(answer.future);
+    await pumpScreen(
+      tester,
+      const AskScreen(),
+      size: const Size(1200, 2400),
+      overrides: <Override>[askServiceProvider.overrideWithValue(slow)],
+    );
+
+    await tester.enterText(find.byType(TextField), '첫 번째');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(slow.asked, <String>['첫 번째']);
+
+    await tester.enterText(find.byType(TextField), '두 번째');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+
+    // 두 번째 질문은 안 나갔고,
+    expect(slow.asked, <String>['첫 번째']);
+    // 친 글자는 그대로 남아 있다.
+    expect(find.widgetWithText(TextField, '두 번째'), findsOneWidget);
+
+    answer.complete(null);
+    await tester.pumpAndSettle();
+  });
+
+  // 실패한 답이 성공한 답과 픽셀 단위로 같았다. failed 는 세팅만 되고
+  // 아무 데서도 안 읽혔다.
+  testWidgets('실패한 답에는 다시 시도가 붙는다', (tester) async {
+    final container = await pumpScreen(
+      tester,
+      const AskScreen(),
+      size: const Size(1200, 2400),
+      overrides: <Override>[
+        askServiceProvider.overrideWithValue(_StubAsk(null)),
+      ],
+    );
+
+    await tester.enterText(find.byType(TextField), '뭐가 좋아?');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.retry.tr()), findsOneWidget);
+    // 씨앗 + 질문 + 실패.
+    expect(container.read(askProvider), hasLength(3));
+
+    // 다시 시도는 실패한 답과 그 질문을 걷어내고 다시 보낸다. 그냥 send 를
+    // 부르면 같은 질문이 두 번 올라간 것처럼 보인다.
+    await tester.tap(find.text(K.retry.tr()));
+    await tester.pumpAndSettle();
+
+    expect(container.read(askProvider), hasLength(3));
   });
 }
 
 /// 시킨 대로 늦게 답한다.
 class _SlowAsk implements AskService {
-  const _SlowAsk(this.answer);
+  _SlowAsk(this.answer);
 
   final Future<AskReply?> answer;
 
+  final List<String> asked = <String>[];
+
   @override
-  Future<AskReply?> ask(String question, List<Smartphone> catalog) => answer;
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) {
+    asked.add(question);
+    return answer;
+  }
 }

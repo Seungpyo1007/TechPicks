@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import '../../app/theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +13,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import '../../domain/model/ask_answer.dart';
+import '../../shared/widgets/tp_button.dart';
 import '../../shared/widgets/tp_chip.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
@@ -18,13 +22,15 @@ import '../../shared/widgets/tp_tap_target.dart';
 ///
 /// v1 의 ChatAI 는 모델 답을 문단 그대로 뿌렸다. 명세는 고른 기기 하나,
 /// 한 줄 근거, 4줄 표로 나눠 받으라고 못박았고 마크다운 렌더링을 금지한다.
-///
-/// 카피는 아직 하드코딩이다.
 class AskScreen extends ConsumerStatefulWidget {
   const AskScreen({super.key, this.onTabSelected, this.onDeviceTap});
 
   final ValueChanged<TpTab>? onTabSelected;
   final ValueChanged<String>? onDeviceTap;
+
+  /// 기다리는 동안 답 자리에 놓이는 뼈대.
+  @visibleForTesting
+  static const Key thinkingKey = ValueKey<String>('ask-thinking');
 
   /// 입력 바 위에 깔리는 제안. 명세의 suggestion chips.
   ///
@@ -37,37 +43,75 @@ class AskScreen extends ConsumerStatefulWidget {
   ConsumerState<AskScreen> createState() => _AskScreenState();
 }
 
-class _AskScreenState extends ConsumerState<AskScreen> {
+class _AskScreenState extends ConsumerState<AskScreen>
+    with WidgetsBindingObserver {
   final TextEditingController _input = TextEditingController();
   final ScrollController _scroll = ScrollController();
 
+  /// 마지막으로 본 키보드 높이. 올라올 때만 따라 내린다.
+  double _keyboard = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _input.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeMetrics() {
+    final next = MediaQuery.viewInsetsOf(context).bottom;
+    final grew = next > _keyboard;
+    _keyboard = next;
+    // 키보드가 올라오면 목록이 그만큼 짧아진다. 그대로 두면 방금 읽던 답이
+    // 키보드 뒤로 밀린다.
+    if (grew) _scrollToEnd();
+  }
+
   Future<void> _send(String text) async {
     if (text.trim().isEmpty) return;
+    // 기다리는 중에는 안 받는다. 여기서 지우면 글자만 사라지고 질문은
+    // 노티파이어의 _busy 가드에서 조용히 버려진다 — 톡 치고 나면 아무 일도
+    // 안 일어나고 쳤던 것만 없어졌다.
+    if (ref.read(askBusyProvider)) return;
     _input.clear();
     await ref.read(askProvider.notifier).send(text);
-    if (!mounted || !_scroll.hasClients) return;
-    final motion = context.motion;
-    await _scroll.animateTo(
-      _scroll.position.maxScrollExtent,
-      duration: motion.contentSwap.duration,
-      curve: motion.contentSwap.curve,
-    );
+  }
+
+  /// 마지막 말풍선까지 내린다.
+  ///
+  /// **다음 프레임에** 내려야 한다. 상태가 바뀐 직후의 `maxScrollExtent` 는
+  /// 아직 답이 놓이기 전 값이라, 답이 길수록 아래가 잘린 채로 멈췄다.
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      final target = _scroll.position.maxScrollExtent;
+      final move = context.motion.contentSwap;
+      if (move.duration == Duration.zero) {
+        _scroll.jumpTo(target);
+        return;
+      }
+      unawaited(
+        _scroll.animateTo(target, duration: move.duration, curve: move.curve),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    // 말풍선이 붙을 때마다 따라 내린다. 사용자 말풍선, 긴 답, 다시 시도,
+    // 비교 화면의 "이유 물어보기"(_send 를 안 거친다)가 전부 이 하나로 걸린다.
+    ref.listen<List<AskMessage>>(askProvider, (_, _) => _scrollToEnd());
+
     final messages = ref.watch(askProvider);
     final busy = ref.watch(askBusyProvider);
-    // 앱에 Scaffold 가 없어 아무도 키보드를 안 피한다. 입력 바가 화면 바닥에
-    // 붙어 있어서, 누르면 키보드가 입력 바와 제안 칩을 통째로 덮었다.
-    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
 
     return TpShell(
       title: K.tabAsk.tr(),
@@ -76,54 +120,150 @@ class _AskScreenState extends ConsumerState<AskScreen> {
       // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면 크롬이
       // 차지한 자리를 모르는 예전 값이 나온다.
       child: Builder(
-        builder: (context) => Stack(
-          children: <Widget>[
-            ListView.builder(
-              controller: _scroll,
-              // 입력 바는 이 영역 바닥에 붙는다. 그만큼 아래를 비워둬야 마지막
-              // 말풍선이 그 뒤로 숨지 않는다. 셸에 여백을 더하면 입력 바가
-              // 탭 바에서 그만큼 떠서 빈 공간이 생긴다.
-              padding:
-                  EdgeInsets.fromLTRB(
-                    16,
-                    8,
-                    16,
-                    8 + _Composer.height + keyboard,
-                  ) +
-                  tpContentInset(context),
-              // 기다리는 동안 말풍선 하나를 더 놓는다. 아무 표시가 없으면
-              // 답이 오는 중인지 실패한 건지 알 수 없다.
-              itemCount: messages.length + (busy ? 1 : 0),
-              itemBuilder: (context, i) {
-                if (i == messages.length) {
-                  return _Arriving(
-                    child: _Bubble(message: AskMessage.ai(K.askThinking.tr())),
+        builder: (context) {
+          final motion = context.motion;
+          final insets = TpChromeInsets.of(context);
+          final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+          // 화면 바닥에서 입력 바까지.
+          //
+          // 키보드가 올라오면 탭 캡슐은 그 뒤로 숨는다 — 유리 크롬이 "알려만
+          // 준" 자리를 도로 쓴다. 안 그러면 키보드 위에 122pt 짜리 빈 띠가
+          // 남는다. 안드로이드는 그 자리를 이미 패딩으로 비웠으므로 그만큼
+          // 뺀다. 두 크롬 다 키보드 바로 위에 붙는다.
+          final lift = math.max(
+            insets.advisory.bottom,
+            keyboard + _keyboardGap - insets.physical.bottom,
+          );
+          final composer = _Composer.heightOf(context);
+
+          return Stack(
+            children: <Widget>[
+              ListView.builder(
+                controller: _scroll,
+                // 입력 바는 이 영역 바닥에 붙는다. 그만큼 아래를 비워둬야
+                // 마지막 말풍선이 그 뒤로 숨지 않는다.
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  8 + insets.advisory.top,
+                  16,
+                  8 + composer + lift,
+                ),
+                // 기다리는 동안 답 자리에 뼈대를 놓는다. 아무 표시가 없으면
+                // 답이 오는 중인지 실패한 건지 알 수 없다.
+                itemCount: messages.length + 1,
+                itemBuilder: (context, i) {
+                  if (i == messages.length) {
+                    return AnimatedSwitcher(
+                      duration: motion.contentSwap.duration,
+                      switchInCurve: motion.contentSwap.curve,
+                      switchOutCurve: motion.contentSwap.curve,
+                      child: busy
+                          ? const _Thinking(key: AskScreen.thinkingKey)
+                          : const SizedBox.shrink(
+                              key: ValueKey<String>('idle'),
+                            ),
+                    );
+                  }
+                  final bubble = _Bubble(
+                    message: messages[i],
+                    // 답이 도착한 걸 스크린 리더가 알려줘야 한다. 화면은
+                    // 스크롤로 알리지만 그건 눈으로 보는 사람에게만 통한다.
+                    announce:
+                        !busy &&
+                        i == messages.length - 1 &&
+                        !messages[i].isUser,
+                    onDeviceTap: widget.onDeviceTap,
+                    onRetry: !busy && i == messages.length - 1
+                        ? () => ref.read(askProvider.notifier).retry()
+                        : null,
                   );
-                }
-                final bubble = _Bubble(
-                  message: messages[i],
-                  // 답이 도착한 걸 스크린 리더가 알려줘야 한다. 화면은
-                  // 스크롤로 알리지만 그건 눈으로 보는 사람에게만 통한다.
-                  announce:
-                      !busy && i == messages.length - 1 && !messages[i].isUser,
-                  onDeviceTap: widget.onDeviceTap,
-                );
-                // 마지막 말풍선만 올라오며 나타난다. 목록을 되감을 때마다
-                // 옛 말풍선이 다시 움직이면 그게 더 산만하다.
-                return i == messages.length - 1
-                    ? _Arriving(key: ValueKey<int>(i), child: bubble)
-                    : bubble;
-              },
+                  // 마지막 말풍선만 올라오며 나타난다. 목록을 되감을 때마다
+                  // 옛 말풍선이 다시 움직이면 그게 더 산만하다.
+                  return i == messages.length - 1
+                      ? _Arriving(key: ValueKey<int>(i), child: bubble)
+                      : bubble;
+                },
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: lift,
+                child: _Composer(
+                  key: askComposerKey,
+                  controller: _input,
+                  onSend: _send,
+                  busy: busy,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// 입력 바와 키보드 사이.
+const double _keyboardGap = 8;
+
+/// 컴포저가 실제로 차지한 높이를 재는 자리.
+@visibleForTesting
+const Key askComposerKey = ValueKey<String>('ask-composer');
+
+/// 답을 기다리는 동안 답 자리에 놓이는 뼈대.
+///
+/// 예전에는 "생각 중…" 이라고 쓴 **진짜 말풍선**이었다. 명세는 로딩을 카드
+/// 자기 반지름의 뼈대로 그리라고 했고(가운데 스피너 금지), 랭킹·비교·상세가
+/// 다 그렇게 한다. 글자로 알리면 그게 답인 줄 알고 읽게 된다.
+class _Thinking extends StatelessWidget {
+  const _Thinking({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tp;
+    final type = context.tpText;
+    // 답 글자 한 줄과 같은 높이. 배율을 따라간다.
+    final line =
+        (MediaQuery.textScalerOf(context).scale(type.body.fontSize!) * 1.4)
+            .ceilToDouble();
+
+    Widget bar(double factor) => FractionallySizedBox(
+      alignment: Alignment.centerLeft,
+      widthFactor: factor,
+      child: Container(
+        height: line,
+        decoration: BoxDecoration(
+          color: t.track,
+          borderRadius: BorderRadius.circular(6),
+        ),
+      ),
+    );
+
+    return Semantics(
+      container: true,
+      label: K.askThinking.tr(),
+      excludeSemantics: true,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: FractionallySizedBox(
+          alignment: Alignment.centerLeft,
+          widthFactor: 0.78,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: TpSurface(
+              strong: true,
+              radius: t.rInner,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  bar(0.9),
+                  const SizedBox(height: 8),
+                  bar(0.6),
+                ],
+              ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              // 콘텐츠가 탭 바 아래로 흐르므로 입력 바는 그만큼 위에 붙어야
-              // 한다. 안 그러면 제안 칩과 입력창이 탭 캡슐 뒤로 숨는다.
-              bottom: keyboard + tpContentInset(context).bottom,
-              child: _Composer(controller: _input, onSend: _send, busy: busy),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -169,10 +309,9 @@ class _ArrivingState extends State<_Arriving>
 
   @override
   Widget build(BuildContext context) {
-    final curve = CurvedAnimation(
-      parent: _c,
-      curve: context.motion.listItem.curve,
-    );
+    // CurvedAnimation 을 여기서 만들면 리빌드마다 하나씩 새고(dispose 를 못
+    // 부른다), 누수 추적기가 그걸 잡는다. drive 는 들고 있을 것이 없다.
+    final curve = _c.drive(CurveTween(curve: context.motion.listItem.curve));
     return AnimatedBuilder(
       animation: curve,
       builder: (context, child) => Opacity(
@@ -193,6 +332,7 @@ class _Bubble extends StatelessWidget {
     required this.message,
     this.announce = false,
     this.onDeviceTap,
+    this.onRetry,
   });
 
   final AskMessage message;
@@ -201,6 +341,9 @@ class _Bubble extends StatelessWidget {
   final bool announce;
 
   final ValueChanged<String>? onDeviceTap;
+
+  /// 실패한 답에만 붙는다.
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -246,6 +389,9 @@ class _Bubble extends StatelessWidget {
               onTap: answer?.pickSlug == null || onDeviceTap == null
                   ? null
                   : () => onDeviceTap!(answer!.pickSlug!),
+              // 누를 수 있는 면인데 이름이 없었다. 스크린 리더가 "버튼"
+              // 하나만 읽고 무엇으로 가는지는 안 읽었다.
+              semanticsLabel: answer?.pick,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -262,6 +408,24 @@ class _Bubble extends StatelessWidget {
                       const SizedBox(height: 10),
                       for (final row in answer.rows) _AnswerRow(row: row),
                     ],
+                  ],
+                  // 실패한 답이 성공한 답과 똑같이 생겼었다. failed 는
+                  // 세팅만 되고 아무 데서도 안 읽혔다.
+                  if (message.failed && onRetry != null) ...<Widget>[
+                    const SizedBox(height: 10),
+                    TpButton(
+                      label: K.retry.tr(),
+                      kind: TpButtonKind.secondary,
+                      height: 48,
+                      expand: false,
+                      onTap: onRetry,
+                    ),
+                  ],
+                  // 모델이 못 답해서 카탈로그가 대신 고른 것이다. 모델이
+                  // 답한 것처럼 보이면 안 된다.
+                  if (message.fromCatalog) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(K.askFromCatalog.tr(), style: type.caption),
                   ],
                 ],
               ),
@@ -289,12 +453,20 @@ class _AnswerRow extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Expanded(child: Text(row.label, style: type.secondary)),
-          Text(
-            row.value,
-            maxLines: 1,
-            softWrap: false,
-            style: type.body.copyWith(fontWeight: t.boldWeight),
+          Expanded(flex: 3, child: Text(row.label, style: type.secondary)),
+          const SizedBox(width: 12),
+          // softWrap 이 false 면 기본이 clip 이라 글리프 한가운데서 잘린다.
+          // 그리고 유연하지 않은 자식이면 폭을 먼저 다 가져가 라벨을 굶긴다.
+          Expanded(
+            flex: 2,
+            child: Text(
+              row.value,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: type.body.copyWith(fontWeight: t.boldWeight),
+            ),
           ),
         ],
       ),
@@ -304,13 +476,49 @@ class _AnswerRow extends StatelessWidget {
 
 class _Composer extends StatelessWidget {
   const _Composer({
+    super.key,
     required this.controller,
     required this.onSend,
     this.busy = false,
   });
 
-  /// 제안 칩 46 + 사이 10 + 입력 48 + 위아래 여백.
-  static const double height = 118;
+  static const double _chipPadV = 9;
+  static const double _chipTapPadV = 4;
+  static const double _gap = 10;
+  static const double _padBottom = 4;
+
+  /// 입력칸 안쪽 위아래 여백. 배율 1.0 에서 알약이 정확히 48 이 되는 값이다.
+  static const double _fieldPadV = 13.5;
+
+  /// 접근성 최소 탭 크기. 이 아래로는 안 내려간다.
+  static const double _minTap = 48;
+
+  /// 제안 칩 줄의 높이. 13.5pt · height 1.4 가 배율을 그대로 따라간다.
+  static double chipsHeightOf(BuildContext context) => math.max(
+    46,
+    (MediaQuery.textScalerOf(context).scale(13.5) * 1.4 +
+            2 * _chipPadV +
+            2 * _chipTapPadV)
+        .ceilToDouble(),
+  );
+
+  /// 입력 알약의 높이.
+  static double fieldHeightOf(BuildContext context) => math.max(
+    _minTap,
+    (MediaQuery.textScalerOf(context).scale(context.tpText.body.fontSize!) *
+                1.4 +
+            2 * _fieldPadV)
+        .ceilToDouble(),
+  );
+
+  /// 컴포저가 통째로 먹는 높이.
+  ///
+  /// **상수로 잡으면 안 된다.** 예전에는 118 이었는데 실제로는 어느 배율에서도
+  /// 108 이었다 — 두 상자가 높이로 묶여 있어서 안 자랐고, 1.6배에서 칩 라벨은
+  /// 20pt 자리에 30pt 가 들어가고 입력 글자는 48 상자 밖으로 삐져나갔다.
+  /// 예외가 안 나서 글자 배율 테스트도 조용했다.
+  static double heightOf(BuildContext context) =>
+      chipsHeightOf(context) + _gap + fieldHeightOf(context) + _padBottom;
 
   final TextEditingController controller;
   final ValueChanged<String> onSend;
@@ -322,33 +530,37 @@ class _Composer extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tp;
     final type = context.tpText;
+    // 한 프레임에 한 번만 만든다. 예전에는 itemCount·label·onTap 에서 각각
+    // 불러서 프레임마다 네 번씩 다시 번역했다. static 으로 캐시하면 안 된다 —
+    // 언어가 실시간으로 바뀐다.
+    final items = AskScreen.suggestions();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         SizedBox(
-          height: 46,
+          height: chipsHeightOf(context),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: AskScreen.suggestions().length,
+            itemCount: items.length,
             separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, i) => TpChip(
-              label: AskScreen.suggestions()[i],
+              label: items[i],
               selected: false,
-              onTap: () => onSend(AskScreen.suggestions()[i]),
+              onTap: () => onSend(items[i]),
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: _gap),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, _padBottom),
           child: Row(
             children: <Widget>[
               Expanded(
                 child: Container(
-                  height: 48,
+                  height: fieldHeightOf(context),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
@@ -367,7 +579,7 @@ class _Composer extends StatelessWidget {
                         // isDense 를 켜면 필드의 히트 영역이 29px 로 줄어
                         // 접근성 기준(48)에 못 미친다.
                         contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14,
+                          vertical: _fieldPadV,
                         ),
                         border: InputBorder.none,
                         // 이름은 Semantics 가 준다. 힌트까지 시맨틱에 들어가면
@@ -390,8 +602,8 @@ class _Composer extends StatelessWidget {
                 // "무엇이든 물어보세요"라고 읽는다.
                 label: K.send.tr(),
                 child: Container(
-                  width: 48,
-                  height: 48,
+                  width: _minTap,
+                  height: _minTap,
                   decoration: BoxDecoration(
                     // 잠긴 동안은 잠긴 것처럼 보여야 한다.
                     color: busy ? t.chipBg : TpTokens.blue,
