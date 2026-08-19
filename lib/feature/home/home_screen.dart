@@ -58,6 +58,10 @@ class HomeScreen extends ConsumerWidget {
     final shortlist = ref.watch(shortlistDevicesProvider);
     final verdict = ref.watch(verdictProvider);
     final movers = ref.watch(moversProvider);
+    final catalog = ref.watch(catalogProvider);
+    // 카탈로그가 오기 전에는 관심목록도 결론도 비어 있다. 그걸 "아직 담은 게
+    // 없다"로 그리면, 담아둔 사람에게도 켤 때마다 빈 카드가 한 번 번쩍인다.
+    final loading = catalog is AsyncLoading && !catalog.hasError;
 
     return TpShell(
       // Android 는 large app bar 가 제목을 갖고, iOS 는 콘텐츠 안 큰 제목이
@@ -80,8 +84,12 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 6),
             ],
             // 목록을 못 읽었으면 "아직 결정할 것이 없습니다"도 거짓말이다.
-            if (!ref.watch(catalogProvider).hasError) ...<Widget>[
-              Text(_subtitle(shortlist.length), style: type.secondary),
+            // 읽는 중일 때도 마찬가지다.
+            if (!catalog.hasError) ...<Widget>[
+              Text(
+                loading ? '' : _subtitle(shortlist.length),
+                style: type.secondary,
+              ),
               const SizedBox(height: 16),
             ],
 
@@ -96,7 +104,9 @@ class HomeScreen extends ConsumerWidget {
                 duration: motion.contentSwap.duration,
                 switchInCurve: motion.contentSwap.curve,
                 switchOutCurve: motion.contentSwap.curve,
-                child: ref.watch(catalogProvider).hasError
+                child: loading
+                    ? const _HomeSkeleton(key: ValueKey<String>('skeleton'))
+                    : catalog.hasError
                     // 목록을 못 읽은 것을 "관심 목록이 비었다"로 그리면, 담아둔
                     // 기기가 있는 사람에게도 비었다고 말하게 된다.
                     ? const TpCatalogError(key: ValueKey<String>('error'))
@@ -123,17 +133,14 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               for (final d in shortlist)
-                // 지우면 즉시 사라지고 아래가 점프했다. 높이가 같이 줄어든다.
-                _ListSlot(
+                _ShortlistRow(
                   key: ValueKey<String>('slot-${d.slug}'),
-                  child: _ShortlistRow(
-                    device: d,
-                    onTap: onDeviceTap == null
-                        ? null
-                        : () => onDeviceTap!(d.slug),
-                    onRemove: () =>
-                        ref.read(shortlistProvider.notifier).remove(d.slug),
-                  ),
+                  device: d,
+                  onTap: onDeviceTap == null
+                      ? null
+                      : () => onDeviceTap!(d.slug),
+                  onRemove: () =>
+                      ref.read(shortlistProvider.notifier).remove(d.slug),
                 ),
             ],
 
@@ -194,7 +201,8 @@ class _VerdictCard extends ConsumerWidget {
               TpTapTarget(
                 onTap: () => unawaited(_share(ref, index, reason)),
                 label: K.share.tr(),
-                minSize: 44,
+                // 44 로 좁혀 뒀는데 안드로이드 탭 타깃 기준은 48 이다. 링크가
+                // 아니라 버튼이라 기준에서 빠지지도 않는다.
                 child: const Icon(Icons.share, size: 20),
               ),
             ],
@@ -212,25 +220,41 @@ class _VerdictCard extends ConsumerWidget {
           const SizedBox(height: 6),
           Semantics(
             container: true,
+            // 값이 없으면 대시를 그대로 읽는다. 라벨을 주는 쪽이 낫다.
             label: index == null
-                ? null
+                ? K.verdictNoData.tr()
                 : K.a11yIndex.tr(args: <String>[index.toString()]),
-            excludeSemantics: index != null,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: <Widget>[
-                Text(
-                  index?.toString() ?? DeviceSpecs.empty,
-                  style: type.indexNumeral,
-                  maxLines: 1,
-                  softWrap: false,
-                ),
-                const SizedBox(width: 10),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(K.tpIndex.tr(), style: type.secondary),
-                ),
-              ],
+            excludeSemantics: true,
+            // 62pt 숫자에 배율을 그대로 곱하면 1.6배에서 라벨과 합쳐 카드
+            // 폭을 넘는다. 상세 화면과 같은 한도를 **줄 전체에** 건다 —
+            // 숫자만 묶으면 라벨이 대신 잘린다.
+            child: MediaQuery.withClampedTextScaling(
+              maxScaleFactor: 1.3,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  Text(
+                    index?.toString() ?? DeviceSpecs.empty,
+                    style: type.indexNumeral,
+                    maxLines: 1,
+                    softWrap: false,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(width: 10),
+                  // 유연한 자식이 하나도 없어서 넘칠 자리였다.
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        K.tpIndex.tr(),
+                        style: type.secondary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -351,7 +375,12 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _ShortlistRow extends ConsumerWidget {
-  const _ShortlistRow({required this.device, this.onTap, this.onRemove});
+  const _ShortlistRow({
+    super.key,
+    required this.device,
+    this.onTap,
+    this.onRemove,
+  });
 
   final Smartphone device;
   final VoidCallback? onTap;
@@ -380,15 +409,32 @@ class _ShortlistRow extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           child: Row(
             children: <Widget>[
-              SizedBox(
-                width: 52,
-                child: Text(
-                  index?.toString() ?? DeviceSpecs.empty,
-                  maxLines: 1,
-                  softWrap: false,
-                  style: type.cardTitle.copyWith(
-                    fontSize: 34,
-                    fontWeight: t.isGlass ? FontWeight.w700 : FontWeight.w500,
+              // 폭을 52 로 못박아 뒀는데 34pt 두 자리는 68pt 다 — 배율을
+              // 올리기도 전에 이미 글리프 한가운데서 잘리고 있었다. 자리는
+              // 맞추되(최소 폭) 넘치면 늘어난다.
+              // 숫자만 있으면 "72 Galaxy S25 $799 · Dimensity 9500" 으로
+              // 읽힌다. 어느 게 지수인지 알 수 없다.
+              Semantics(
+                label: index == null
+                    ? null
+                    : K.a11yIndex.tr(args: <String>[index.toString()]),
+                excludeSemantics: index != null,
+                child: MediaQuery.withClampedTextScaling(
+                  maxScaleFactor: 1.3,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 52),
+                    child: Text(
+                      index?.toString() ?? DeviceSpecs.empty,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      style: type.cardTitle.copyWith(
+                        fontSize: 34,
+                        fontWeight: t.isGlass
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -435,52 +481,89 @@ class _MoverRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: TpSurface(
-        onTap: onTap,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: <Widget>[
-            SizedBox(
-              width: 30,
-              child: Text('${mover.position}', style: type.cardTitle),
-            ),
-            Expanded(
-              child: Text(
-                mover.name,
-                style: type.body,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Text(
-              '${mover.isUp ? '▲' : '▼'}${mover.delta.abs()}',
-              maxLines: 1,
-              softWrap: false,
-              style: type.body.copyWith(
-                color: color,
-                fontWeight: context.tp.boldWeight,
-              ),
-            ),
+      child: Semantics(
+        container: true,
+        button: onTap != null,
+        // 숫자 둘과 화살표가 따로 읽히면 "10 Galaxy S25 검은색 위쪽 삼각형 2"
+        // 가 된다. 글리프는 글자 그대로 읽힌다.
+        label: (mover.isUp ? K.a11yMoverRow : K.a11yMoverDown).tr(
+          args: <String>[
+            '${mover.position}',
+            mover.name,
+            '${mover.delta.abs()}',
           ],
+        ),
+        excludeSemantics: true,
+        child: TpSurface(
+          onTap: onTap,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: <Widget>[
+              // 30pt 상자에 maxLines 도 overflow 도 없었다. 두 자리 순위는
+              // 세로로 쪼개져 "1" / "0" 두 줄이 됐다.
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 30),
+                child: Text(
+                  '${mover.position}',
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: type.cardTitle,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  mover.name,
+                  style: type.body,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${mover.isUp ? '▲' : '▼'}${mover.delta.abs()}',
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+                style: type.body.copyWith(
+                  color: color,
+                  fontWeight: context.tp.boldWeight,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _ListSlot extends StatelessWidget {
-  const _ListSlot({super.key, required this.child});
-
-  final Widget child;
+/// 카탈로그를 읽는 동안의 뼈대.
+///
+/// 명세는 로딩을 카드 자기 반지름의 뼈대로 그리라고 했고(가운데 스피너 금지),
+/// 랭킹·비교·상세가 다 그렇게 한다. 홈만 없어서, 담아둔 기기가 있는 사람도
+/// 켤 때마다 "관심 목록이 비어 있습니다" 를 한 번 보고 지나갔다.
+class _HomeSkeleton extends StatelessWidget {
+  const _HomeSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final move = context.motion.listItem;
-    return AnimatedSize(
-      duration: move.duration,
-      curve: move.curve,
-      alignment: Alignment.topCenter,
-      child: child,
+    final t = context.tp;
+    return Column(
+      children: <Widget>[
+        for (final height in <double>[188, 74, 74])
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Container(
+              height: height,
+              decoration: BoxDecoration(
+                color: t.track,
+                borderRadius: BorderRadius.circular(t.rCard),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

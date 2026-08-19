@@ -3,6 +3,8 @@
   "a11yAxisMissing": "{} not scored",
   "a11yCompareCell": "{}: {}",
   "a11yIndex": "TP Index {} out of 100",
+  "a11yMoverDown": "Rank {}. {}, down {}",
+  "a11yMoverRow": "Rank {}. {}, up {}",
   "a11yProcessorRow": "Rank {}. {}, index {}",
   "a11yRankRow": "Rank {}. {}, TP Index {}",
   "a11yWinner": "{}: {}, better",

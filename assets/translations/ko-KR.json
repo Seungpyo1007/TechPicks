@@ -3,6 +3,8 @@
   "a11yAxisMissing": "{} 점수 없음",
   "a11yCompareCell": "{} {}",
   "a11yIndex": "TP 지수 100점 만점에 {}점",
+  "a11yMoverDown": "{}위 {}, {}계단 하락",
+  "a11yMoverRow": "{}위 {}, {}계단 상승",
   "a11yProcessorRow": "{}위. {}, 지수 {}",
   "a11yRankRow": "{}위 {}, TP 지수 {}",
   "a11yWinner": "{} {}, 우세",

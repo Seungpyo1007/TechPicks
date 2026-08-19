@@ -58,6 +58,10 @@ Map<String, Widget> _noSettle() => <String, Widget>{
 const double _scale = 1.6;
 
 void main() {
+  setUp(initLocalization);
+  // 홈은 저장된 관심목록이 없으면 빈 카드 하나뿐이라, 이 스윕이 결론
+  // 카드도 행도 한 번도 안 본 채로 초록이었다.
+  setUp(seedHomeContent);
   for (final frame in <(String, TpChrome, Size)>[
     ('ios', TpChrome.ios, _iosFrame),
     ('android', TpChrome.android, _androidFrame),
