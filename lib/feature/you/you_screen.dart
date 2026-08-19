@@ -148,9 +148,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                         onTap: () => ref.read(weightsProvider.notifier).reset(),
                         child: Text(
                           K.reset.tr(),
-                          style: type.caption.copyWith(
-                            color: t.link,
-                          ),
+                          style: type.caption.copyWith(color: t.link),
                         ),
                       ),
                     ],
@@ -180,7 +178,8 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                   _SettingRow(
                     label: K.aiEngine.tr(),
                     value: aiEngine.key.tr(),
-                    onTap: () => _pickAiEngine(context, ref, aiEngine, onDevice),
+                    onTap: () =>
+                        _pickAiEngine(context, ref, aiEngine, onDevice),
                   ),
                   _SettingRow(
                     label: K.notifications.tr(),
@@ -267,9 +266,8 @@ class _YouScreenState extends ConsumerState<YouScreen> {
   /// 갖고 있었고, 그게 없어진 건 기록조차 안 됐다.
   Future<void> _openProfile() => Navigator.of(context).push(
     MaterialPageRoute<void>(
-      builder: (context) => ProfileEditScreen(
-        onBack: () => Navigator.of(context).pop(),
-      ),
+      builder: (context) =>
+          ProfileEditScreen(onBack: () => Navigator.of(context).pop()),
     ),
   );
 
@@ -295,9 +293,13 @@ class _YourDevice extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = context.tp;
     final type = context.tpText;
-    final device = ref.watch(thisDeviceProvider).value;
+    final asyncDevice = ref.watch(thisDeviceProvider);
+    final device = asyncDevice.value;
     final match = ref.watch(thisDeviceMatchProvider);
     final weights = ref.watch(weightsProvider);
+    // .value 는 **읽는 중에도** null 이다. 그걸 "못 읽었다"로 그려서, 이 탭의
+    // 첫 프레임은 늘 실패 문구였다가 곧 진짜 이름으로 바뀌었다.
+    final reading = asyncDevice is AsyncLoading && !asyncDevice.hasError;
 
     final index = match == null
         ? null
@@ -317,9 +319,11 @@ class _YourDevice extends ConsumerWidget {
                 Text(K.yourDevice.tr().toUpperCase(), style: type.eyebrow),
                 const SizedBox(height: 4),
                 Text(
-                  device == null
-                      ? K.yourDeviceUnavailable.tr()
-                      : (match?.device.name ?? device.name),
+                  device != null
+                      ? (match?.device.name ?? device.name)
+                      : reading
+                      ? ''
+                      : K.yourDeviceUnavailable.tr(),
                   style: type.cardTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -335,6 +339,7 @@ class _YourDevice extends ConsumerWidget {
               index.toString(),
               maxLines: 1,
               softWrap: false,
+              overflow: TextOverflow.ellipsis,
               style: type.cardTitle.copyWith(fontSize: 24),
             ),
           ] else
@@ -374,6 +379,9 @@ Future<void> _pickAiEngine(
     backgroundColor: Colors.transparent,
     builder: (sheetContext) => TpSurface(
       strong: true,
+      // 유리는 자기 레이어에서 그려진다. 라우트 위에 뜬 시트에는 흐릴 대상이
+      // 없어서, 72% 흰 면 아래로 아래 화면 글자가 그대로 읽혔다.
+      opaque: true,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -433,6 +441,9 @@ Future<void> _pickTheme(
     backgroundColor: Colors.transparent,
     builder: (sheetContext) => TpSurface(
       strong: true,
+      // 유리는 자기 레이어에서 그려진다. 라우트 위에 뜬 시트에는 흐릴 대상이
+      // 없어서, 72% 흰 면 아래로 아래 화면 글자가 그대로 읽혔다.
+      opaque: true,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -480,6 +491,9 @@ Future<void> _pickLanguage(
     backgroundColor: Colors.transparent,
     builder: (sheetContext) => TpSurface(
       strong: true,
+      // 유리는 자기 레이어에서 그려진다. 라우트 위에 뜬 시트에는 흐릴 대상이
+      // 없어서, 72% 흰 면 아래로 아래 화면 글자가 그대로 읽혔다.
+      opaque: true,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -551,37 +565,47 @@ class _ProfileHeader extends StatelessWidget {
 
     return Row(
       children: <Widget>[
-        Container(
-          width: 64,
-          height: 64,
-          clipBehavior: Clip.antiAlias,
-          decoration: const BoxDecoration(
-            color: TpTokens.blue,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: photoUrl == null
-              ? Text(
-                  initials(name, email),
-                  style: type.cardTitle.copyWith(
-                    fontSize: 22,
-                    color: Colors.white,
-                  ),
-                )
-              // 사진을 못 읽으면 이니셜로 돌아간다.
-              : Image.network(
-                  photoUrl!,
-                  width: 64,
-                  height: 64,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Text(
+        // 원은 64pt 로 고정인데 안의 22pt 글자는 배율을 그대로 따라간다.
+        // 1.6배면 'SP' 가 원 밖으로 나가고, 한글 두 글자는 두 줄로 쪼개진다 —
+        // Clip.antiAlias 가 그걸 그냥 잘라내서 예외도 안 났다.
+        MediaQuery.withClampedTextScaling(
+          maxScaleFactor: 1.2,
+          child: Container(
+            width: 64,
+            height: 64,
+            clipBehavior: Clip.antiAlias,
+            decoration: const BoxDecoration(
+              color: TpTokens.blue,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: photoUrl == null
+                ? Text(
                     initials(name, email),
+                    maxLines: 1,
+                    softWrap: false,
                     style: type.cardTitle.copyWith(
                       fontSize: 22,
                       color: Colors.white,
                     ),
+                  )
+                // 사진을 못 읽으면 이니셜로 돌아간다.
+                : Image.network(
+                    photoUrl!,
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Text(
+                      initials(name, email),
+                      maxLines: 1,
+                      softWrap: false,
+                      style: type.cardTitle.copyWith(
+                        fontSize: 22,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                ),
+          ),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -627,6 +651,9 @@ class _WeightSlider extends StatelessWidget {
     required this.onChanged,
   });
 
+  /// 0–1 을 나누는 걸음 수. 5% 씩이다.
+  static const int steps = 20;
+
   final TpAxisKind kind;
   final double value;
   final ValueChanged<double> onChanged;
@@ -649,6 +676,9 @@ class _WeightSlider extends StatelessWidget {
                   style: type.body,
                   maxLines: 1,
                   softWrap: false,
+                  // softWrap 이 false 면 기본이 clip 이라 글리프 한가운데서
+                  // 잘린다.
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Text(
@@ -656,6 +686,7 @@ class _WeightSlider extends StatelessWidget {
                 '${(value * 100).round()}',
                 maxLines: 1,
                 softWrap: false,
+                overflow: TextOverflow.ellipsis,
                 style: type.body.copyWith(fontWeight: t.boldWeight),
               ),
             ],
@@ -667,8 +698,26 @@ class _WeightSlider extends StatelessWidget {
               inactiveTrackColor: t.track,
               thumbColor: Colors.white,
               overlayShape: SliderComponentShape.noOverlay,
+              // 걸음이 보이면 슬라이더가 자기 눈금을 그린다. 명세의 트랙은
+              // 민짜다.
+              showValueIndicator: ShowValueIndicator.never,
+              tickMarkShape: SliderTickMarkShape.noTickMark,
             ),
-            child: Slider(value: value.clamp(0, 1), onChanged: onChanged),
+            child: Slider(
+              value: value.clamp(0, 1),
+              // **걸음을 준다.** 연속이면 손가락이 지나는 픽셀마다 onChanged 가
+              // 울리고, 그때마다 카탈로그 154종이 다시 줄 세워진다. 탭 다섯이
+              // IndexedStack 안에 다 살아 있어서 랭킹·비교·홈이 같이 돈다.
+              // 5% 걸음이면 명세의 "손가락을 따라 지수가 다시 계산된다"는
+              // 그대로 유지하면서 한 번 끄는 동안 300번이 20번이 된다.
+              divisions: steps,
+              // 축 이름이 옆줄에 따로 있어서, 스크린 리더는 그냥 퍼센트만
+              // 읽었다 — 어느 축인지 알 수 없었다.
+              label: '${SpecLabels.axis(kind)} ${(value * 100).round()}',
+              semanticFormatterCallback: (v) =>
+                  '${SpecLabels.axis(kind)} ${(v * 100).round()}',
+              onChanged: onChanged,
+            ),
           ),
         ],
       ),
@@ -712,16 +761,29 @@ class _SettingRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  // 못 누르는 줄은 그렇게 보여야 한다. 다크 모드와 통화는
-                  // 자리만 잡아둔 줄인데 알림 줄과 똑같이 생겼었다.
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  // 못 누르는 줄은 그렇게 보여야 한다. 통화는 자리만 잡아둔
+                  // 줄인데 알림 줄과 똑같이 생겼었다.
                   style: onTap == null
                       ? type.body.copyWith(color: t.dim)
                       : type.body,
                 ),
               ),
-              if (value != null)
-                Text(value!, style: type.secondary)
-              else
+              if (value != null) ...<Widget>[
+                const SizedBox(width: 12),
+                // 유연하지 않은 자식이면 폭을 먼저 다 가져가 라벨을 굶긴다.
+                // "On this phone only" 나 "시스템 설정" 이 그렇다.
+                Flexible(
+                  child: Text(
+                    value!,
+                    style: type.secondary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                  ),
+                ),
+              ] else
                 Icon(Icons.chevron_right, size: 18, color: t.dim),
             ],
           ),
