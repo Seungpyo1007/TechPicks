@@ -8,6 +8,7 @@ import 'package:riverpod/misc.dart' show Override;
 import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
+import 'package:techpicks/shared/spec_labels.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/tp_index.dart';
 import 'package:techpicks/domain/model/tp_weights.dart';
@@ -55,6 +56,29 @@ void main() {
     ]) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
+  });
+
+  // 연속 슬라이더는 손가락이 지나는 픽셀마다 onChanged 를 울린다. 그때마다
+  // 카탈로그 154종이 다시 줄 세워지고, 탭 다섯이 IndexedStack 안에 다 살아
+  // 있어서 랭킹·비교·홈이 같이 돈다. 한 번 끄는 데 300번쯤이었다.
+  testWidgets('슬라이더가 걸음으로 움직인다', (tester) async {
+    await _pump(tester);
+
+    for (final slider in tester.widgetList<Slider>(find.byType(Slider))) {
+      expect(slider.divisions, isNotNull);
+    }
+  });
+
+  // 축 이름은 옆줄에 따로 있어서 스크린 리더는 퍼센트만 읽었다 — 어느 축을
+  // 만지는지 알 수 없었다.
+  testWidgets('슬라이더가 어느 축인지 읽어준다', (tester) async {
+    await _pump(tester);
+
+    final slider = tester.widget<Slider>(find.byType(Slider).first);
+    expect(
+      slider.semanticFormatterCallback!(0.25),
+      contains(SpecLabels.axis(TpAxisKind.performance)),
+    );
   });
 
   testWidgets('슬라이더를 움직이면 가중치가 바뀐다', (tester) async {

@@ -488,6 +488,15 @@ Replaces `Model3D.dart`.
 - Footer: `TechPicks version 2.0.0 · Apache-2.0`.
 
 Merges `Profile.dart`, `EditProfileScreen.dart`, `ChangePassword.dart` and `PhoneSetting.dart`.
+
+**Deviation — the weight sliders move in 5% steps.** The Interactions table says every visible index
+recomputes live as the thumb moves, and it still does. But a continuous slider fires `onChanged` on every
+pixel of travel, and each call re-sorts the 154-device catalogue — across all five tabs at once, because
+they all stay mounted in the `IndexedStack`. Twenty divisions keeps the live recompute and turns ~300
+sorts per drag into 20. Set `divisions: null` on `_WeightSlider` to get the continuous thumb back.
+
+**Addition — the sliders say which axis they are.** The axis name is a sibling `Text`, so a screen reader
+announced a bare percentage with nothing to attach it to.
 Note the current app **restarts** to change language (`restart_app`); with `easy_localization` this can be
 live — drop the "Restart Required" dialog and its strings.
 
