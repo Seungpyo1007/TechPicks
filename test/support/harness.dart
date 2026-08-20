@@ -87,13 +87,30 @@ Future<void> initLocalization({
   Localization.load(locale, translations: Translations(raw));
 }
 
+/// 위젯 테스트의 기본 창.
+///
+/// 오래 `Size(1200, 3000)` 이었는데, 그건 폭으로는 **데스크톱**이다. 최대 폭
+/// 제약이 앱에 하나도 없던 때는 아무 차이가 없었지만, 셸이 넓은 창에서 본문을
+/// 가운데 한 칸으로 묶기 시작하면 이 크기의 테스트는 전부 데스크톱 레이아웃을
+/// 검사하게 된다. 폭은 폰으로 내리고 높이는 그대로 둔다 — 3000pt 는 스크롤을
+/// 없애서 넘침 잡음을 지우려고 일부러 크게 잡은 값이다.
+///
+/// 데스크톱을 보려면 테스트가 직접 선언한다:
+/// `size: Size(1440, 900), viewPadding: FakeViewPadding.zero`.
+const Size tpPhoneWindow = Size(402, 3000);
+
+/// 안전 영역이 0 인 기기는 없다. 셸이 헤더·탭 바 자리를 여기서 잡는다.
+/// 브라우저는 노치를 보고하지 않으므로 데스크톱 테스트는 zero 를 넘긴다.
+const FakeViewPadding tpPhonePadding = FakeViewPadding(top: 47, bottom: 34);
+
 /// 화면 하나를 앱과 같은 테마·프로바이더 위에 올린다.
 Future<ProviderContainer> pumpScreen(
   WidgetTester tester,
   Widget screen, {
   TpChrome chrome = TpChrome.ios,
   List<Override> overrides = const <Override>[],
-  Size size = const Size(1200, 3000),
+  Size size = tpPhoneWindow,
+  FakeViewPadding viewPadding = tpPhonePadding,
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
   bool disableAnimations = false,
@@ -107,6 +124,7 @@ Future<ProviderContainer> pumpScreen(
     dark: dark,
     overrides: overrides,
     size: size,
+    viewPadding: viewPadding,
     catalogAsset: catalogAsset,
     textScale: textScale,
     disableAnimations: disableAnimations,
@@ -122,7 +140,8 @@ Future<void> pumpScreenNoSettle(
   Widget screen, {
   TpChrome chrome = TpChrome.ios,
   List<Override> overrides = const <Override>[],
-  Size size = const Size(1200, 3000),
+  Size size = tpPhoneWindow,
+  FakeViewPadding viewPadding = tpPhonePadding,
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
   bool disableAnimations = false,
@@ -133,6 +152,7 @@ Future<void> pumpScreenNoSettle(
     chrome: chrome,
     overrides: overrides,
     size: size,
+    viewPadding: viewPadding,
     catalogAsset: catalogAsset,
     textScale: textScale,
     disableAnimations: disableAnimations,
@@ -169,6 +189,7 @@ Future<void> _pump(
   required String catalogAsset,
   required double textScale,
   required bool disableAnimations,
+  FakeViewPadding viewPadding = tpPhonePadding,
   bool dark = false,
   // `.tr()` 은 전역 Localization 을 보지만, 위젯이 Localizations.localeOf 로
   // 언어를 고를 때는 MaterialApp 쪽도 맞춰줘야 한다.
@@ -176,10 +197,8 @@ Future<void> _pump(
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
-  // 안전 영역이 0 인 기기는 없다. 셸이 헤더·탭 바 위치를 여기서 잡으므로
-  // 이걸 비워두면 콘텐츠가 헤더 스크림 아래로 들어가 실제와 다르게 겹친다.
-  tester.view.viewPadding = const FakeViewPadding(top: 47, bottom: 34);
-  tester.view.padding = const FakeViewPadding(top: 47, bottom: 34);
+  tester.view.viewPadding = viewPadding;
+  tester.view.padding = viewPadding;
   addTearDown(tester.view.reset);
 
   await tester.pumpWidget(

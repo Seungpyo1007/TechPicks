@@ -40,7 +40,7 @@ Future<void> _pump(
   tester,
   const AskScreen(),
   chrome: chrome,
-  size: const Size(1200, 2400),
+  size: const Size(700, 2400),
   overrides: <Override>[askServiceProvider.overrideWithValue(service)],
 );
 
@@ -64,9 +64,20 @@ void main() {
     expect(find.textContaining('Give me a budget'), findsOneWidget);
   });
 
-  testWidgets('제안 칩이 있다', (tester) async {
+  // 칩 줄은 가로 스크롤이라 뒤쪽 칩은 화면 밖이면 아예 안 만들어진다.
+  // 넷이 한 번에 들어가는 폭을 억지로 주는 것보다, 실제로 닿을 수 있는지를
+  // 본다 — 그게 사람이 하는 일이다.
+  testWidgets('제안 칩 넷에 다 닿는다', (tester) async {
     await _pump(tester, _StubAsk(_answer));
+
+    final row = find
+        .descendant(
+          of: find.byType(AskScreen),
+          matching: find.byType(Scrollable),
+        )
+        .last;
     for (final s in AskScreen.suggestions()) {
+      await tester.dragUntilVisible(find.text(s), row, const Offset(-120, 0));
       expect(find.text(s), findsOneWidget, reason: s);
     }
   });
