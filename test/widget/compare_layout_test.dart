@@ -70,9 +70,7 @@ void main() {
     // 값 텍스트를 감싼 가장 가까운 칠해진 상자.
     final value = find.text(DeviceSpecs.formatPrice(cheaper.msrpUsd));
     final fill = tester.getRect(
-      find
-          .ancestor(of: value, matching: find.byType(AnimatedContainer))
-          .first,
+      find.ancestor(of: value, matching: find.byType(AnimatedContainer)).first,
     );
     final cell = tester.getRect(
       find.ancestor(of: value, matching: find.byType(ConstrainedBox)).first,
@@ -95,11 +93,7 @@ void main() {
   });
 
   testWidgets('이유 물어보기가 표를 안 지나고 화면 안에 있다', (tester) async {
-    await pumpScreen(
-      tester,
-      const CompareScreen(),
-      size: const Size(402, 874),
-    );
+    await pumpScreen(tester, const CompareScreen(), size: const Size(402, 874));
 
     final button = tester.getRect(find.byType(TpButton));
     expect(button.bottom, lessThanOrEqualTo(874));
@@ -107,11 +101,7 @@ void main() {
   });
 
   testWidgets('바닥 버튼이 마지막 줄을 가리지 않는다', (tester) async {
-    await pumpScreen(
-      tester,
-      const CompareScreen(),
-      size: const Size(402, 874),
-    );
+    await pumpScreen(tester, const CompareScreen(), size: const Size(402, 874));
 
     // 끝까지 내린다. 목록이 자기 패딩에 버튼 자리를 안 더하면 마지막 줄이
     // 버튼 뒤에 영영 숨는다.

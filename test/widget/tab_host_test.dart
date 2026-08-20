@@ -9,7 +9,7 @@ import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/shell/tp_tab.dart';
-import 'package:techpicks/app/tab_host.dart';
+import 'package:techpicks/app/router.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/data/service/auth_service.dart';
@@ -51,15 +51,18 @@ class _NoAuth implements AuthService {
 
 ProviderContainer? _container;
 
+/// 탭은 이제 라우터가 들고 있다. `TabHost` 를 직접 올리면 실제로 도는 것과
+/// 다른 것을 검사하게 된다.
 Future<void> _pump(
   WidgetTester tester, {
   TpChrome chrome = TpChrome.ios,
+  String at = TpRoute.home,
 }) async {
-  _container = await pumpScreen(
+  _container = await pumpApp(
     tester,
-    const TabHost(),
+    initialLocation: at,
     chrome: chrome,
-    size: const Size(1200, 3000),
+    size: const Size(700, 3000),
     overrides: <Override>[
       authServiceProvider.overrideWithValue(_NoAuth()),
       askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -196,12 +199,12 @@ void main() {
 /// 스냅샷이 영영 비어 있고 섹션이 한 번도 안 뜬다.
 void _moversRoundTrip() {
   testWidgets('앱을 켜면 지금 순위를 다음 실행용으로 남긴다', (tester) async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    // initLocalization 이 prefs 목을 비운다. 그 뒤에 심어야 한다.
     await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{});
 
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TabHost(),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -226,9 +229,8 @@ void _moversRoundTrip() {
       'rank_snapshot_slugs': <String>['iphone-16-pro-max', 'galaxy-s25-ultra'],
     });
 
-    final container = await pumpScreen(
+    final container = await pumpApp(
       tester,
-      const TabHost(),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -249,9 +251,8 @@ void _moversRoundTrip() {
       'rank_snapshot_slugs': <String>['oneplus-13r', 'galaxy-s25-ultra'],
     });
 
-    final container = await pumpScreen(
+    final container = await pumpApp(
       tester,
-      const TabHost(),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -271,9 +272,9 @@ void _moversRoundTrip() {
 void _askFromCompare() {
   testWidgets('비교 중인 두 기기를 상담이 물어본다', (tester) async {
     await initLocalization();
-    final container = await pumpScreen(
+    final container = await pumpApp(
       tester,
-      const TabHost(initialTab: TpTab.compare),
+      initialLocation: TpRoute.compare,
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -297,9 +298,9 @@ void _askFromCompare() {
 
   testWidgets('비교할 게 없으면 물어볼 버튼도 없다', (tester) async {
     await initLocalization();
-    final container = await pumpScreen(
+    final container = await pumpApp(
       tester,
-      const TabHost(initialTab: TpTab.compare),
+      initialLocation: TpRoute.compare,
       catalogAsset: missingCatalogAsset,
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
@@ -343,9 +344,9 @@ void _pickerSlots() {
 
   testWidgets('왼쪽 머리를 누르면 A 에 쓴다', (tester) async {
     await initLocalization();
-    final container = await pumpScreen(
+    final container = await pumpApp(
       tester,
-      const TabHost(initialTab: TpTab.compare),
+      initialLocation: TpRoute.compare,
       size: const Size(1200, 3200),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
@@ -363,9 +364,9 @@ void _pickerSlots() {
 
   testWidgets('오른쪽 머리를 누르면 B 에 쓴다', (tester) async {
     await initLocalization();
-    final container = await pumpScreen(
+    final container = await pumpApp(
       tester,
-      const TabHost(initialTab: TpTab.compare),
+      initialLocation: TpRoute.compare,
       size: const Size(1200, 3200),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
@@ -385,9 +386,9 @@ void _pickerSlots() {
 void _pushedScreens() {
   testWidgets('상세의 View in 3D 가 뷰어를 연다', (tester) async {
     await initLocalization();
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TabHost(initialTab: TpTab.rank),
+      initialLocation: TpRoute.rank,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -410,9 +411,9 @@ void _pushedScreens() {
 
   testWidgets('스캔 결과에서 상세로 넘어간다', (tester) async {
     await initLocalization();
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TabHost(initialTab: TpTab.rank),
+      initialLocation: TpRoute.rank,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -430,9 +431,9 @@ void _pushedScreens() {
 
   testWidgets('뒤로 가면 원래 탭으로 돌아온다', (tester) async {
     await initLocalization();
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TabHost(initialTab: TpTab.rank),
+      initialLocation: TpRoute.rank,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -467,9 +468,9 @@ void _systemBack() {
 
   testWidgets('다른 탭에서 뒤로 가면 홈으로 온다', (tester) async {
     await initLocalization();
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TabHost(initialTab: TpTab.rank),
+      initialLocation: TpRoute.rank,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -488,9 +489,8 @@ void _systemBack() {
 
   testWidgets('홈에서 뒤로 가면 앱이 닫힌다', (tester) async {
     await initLocalization();
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TabHost(),
       size: const Size(1200, 3200),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:techpicks/app/app.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/data/service/auth_service.dart';
@@ -93,10 +92,9 @@ void main() {
     });
     final auth = _StubAuth();
 
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TechPicksRoot(),
-      size: const Size(1200, 3000),
+      size: const Size(700, 3000),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(auth),
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -121,10 +119,9 @@ void main() {
       'browsing_as_guest': true,
     });
 
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TechPicksRoot(),
-      size: const Size(1200, 3000),
+      size: const Size(700, 3000),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_HangingAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),

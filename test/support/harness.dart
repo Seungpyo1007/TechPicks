@@ -13,7 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:techpicks/app/app.dart';
 import 'package:techpicks/app/providers.dart';
+import 'package:techpicks/app/router.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/domain/model/ranking.dart';
@@ -230,6 +232,75 @@ Future<void> _pump(
       ),
     ),
   );
+}
+
+/// 앱의 **진짜 라우터** 위에 올린다.
+///
+/// 탭·밀린 화면·딥링크를 보는 테스트는 이걸 쓴다. 예전에는 `TabHost` 를 직접
+/// 올렸는데, 탭이 `IndexedStack` + `setState` 이던 때 이야기다. 지금은 라우터가
+/// 탭을 들고 있어서 그걸 건너뛰면 실제로 도는 것과 다른 것을 검사하게 된다.
+Future<ProviderContainer> pumpApp(
+  WidgetTester tester, {
+  String initialLocation = TpRoute.home,
+  TpChrome chrome = TpChrome.ios,
+  List<Override> overrides = const <Override>[],
+  Size size = tpPhoneWindow,
+  FakeViewPadding viewPadding = tpPhonePadding,
+  String catalogAsset = defaultCatalogAsset,
+  bool settle = true,
+  bool onboarded = true,
+}) async {
+  // 온보딩·로그인 게이트는 이제 라우터의 redirect 에 있다. 대부분의 테스트는
+  // **그 뒤의 앱**을 보므로 기본으로 지나 있게 둔다. 게이트 자체를 보는
+  // 테스트(startup_test)만 false 를 준다.
+  //
+  // 덮어쓰지 않고 얹는다 — 테스트가 이미 심어둔 값이 살아 있어야 한다.
+  if (onboarded) {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_tutorial_completed', true);
+    await prefs.setBool('browsing_as_guest', true);
+  }
+
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  tester.view.viewPadding = viewPadding;
+  tester.view.padding = viewPadding;
+  addTearDown(tester.view.reset);
+
+  final container = ProviderContainer(
+    overrides: <Override>[
+      catalogRepositoryProvider.overrideWithValue(
+        CatalogRepository(bundle: FileBundle(), assetPath: catalogAsset),
+      ),
+      ...overrides,
+    ],
+  );
+  addTearDown(container.dispose);
+
+  // 앱이 쓰는 것과 같은 프로바이더에서 꺼낸다.
+  final router = container.read(routerProvider);
+  if (initialLocation != TpRoute.home) router.go(initialLocation);
+
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        supportedLocales: const <Locale>[
+          Locale('en', 'US'),
+          Locale('ko', 'KR'),
+        ],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        theme: AppTheme.of(chrome),
+        routerConfig: router,
+        // 앱과 같은 자리. TpLaunch 와 앱 전체가 사는 구독 둘이 여기 있다.
+        builder: (context, child) =>
+            TechPicksRoot(child: child ?? const SizedBox.expand()),
+      ),
+    ),
+  );
+  if (settle) await tester.pumpAndSettle();
+  return container;
 }
 
 /// 지금 화면의 시맨틱 라벨 전부.

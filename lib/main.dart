@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'app/app.dart';
 import 'app/theme/tp_glass.dart';
@@ -18,6 +19,14 @@ import 'firebase_options.dart';
 
 Future<void> main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
+
+  // `/rank` 같은 깨끗한 주소. 기본값인 해시(`/#/rank`)는 아무 정적 호스팅에서나
+  // 그냥 되는 대신 주소가 지저분하다.
+  //
+  // **호스트가 모르는 경로를 index.html 로 되돌려줘야 한다.** 없으면 `/rank`
+  // 에서 새로고침하면 404 다. Firebase Hosting·Netlify·Vercel·Cloudflare Pages
+  // 는 한 줄이면 되고, GitHub Pages 는 404.html 로 우회해야 한다.
+  usePathUrlStrategy();
 
   // 네이티브 스플래시를 첫 프레임에서 걷지 않고 붙잡아 둔다. 안 그러면
   // Firebase·번역·셰이더를 준비하는 동안 빈 화면이 한 번 지나간다.

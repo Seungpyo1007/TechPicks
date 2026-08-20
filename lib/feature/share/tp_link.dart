@@ -8,8 +8,16 @@
 /// techpicks://compare/galaxy-s25/oneplus-13
 /// ```
 ///
-/// 커스텀 스킴이라 도메인이 없어도 지금 동작한다. 대신 앱이 없는 사람에게는
-/// 링크가 안 열린다 — `techpicks.com` 을 사면 `https` 형태를 여기에 더한다.
+/// 웹에서는 같은 문법이 그냥 경로다. 라우터가 쓰는 것과 여기가 읽는 것이
+/// 한 문장으로 맞는다 — 우연이 아니라 처음부터 같은 모양이었다.
+///
+/// ```
+/// /device/galaxy-s25
+/// https://techpicks.example/compare/galaxy-s25/oneplus-13
+/// ```
+///
+/// 커스텀 스킴은 도메인이 없어도 동작하는 대신 앱이 없는 사람에게는 안 열린다.
+/// 브라우저에서는 반대다.
 library;
 
 /// 링크가 가리키는 곳.
@@ -63,19 +71,30 @@ abstract final class TpLink {
   static Uri compare(String a, String b) =>
       Uri(scheme: scheme, host: _compare, pathSegments: <String>[a, b]);
 
+  /// 라우터가 쓰는 경로. 주소창에 찍히는 것과 같은 문자열이다.
+  static String path(TpLinkTarget target) => switch (target) {
+    DeviceTarget(:final slug) => '/$_device/$slug',
+    CompareTarget(:final a, :final b) => '/$_compare/$a/$b',
+  };
+
   /// 우리 링크가 아니거나 형태가 안 맞으면 null.
   ///
   /// 밖에서 들어오는 값이다. 모르는 것은 조용히 버리고 앱은 평소대로 뜬다.
   static TpLinkTarget? parse(Uri uri) {
     // Uri 가 스킴을 소문자로 정규화한다.
-    if (uri.scheme != scheme) return null;
-
-    // `techpicks://device/x` 는 host 에, `techpicks:/device/x` 는 경로에
-    // 들어온다. 둘 다 같은 것으로 본다.
-    final parts = <String>[
-      if (uri.host.isNotEmpty) uri.host,
-      ...uri.pathSegments.where((s) => s.isNotEmpty),
-    ];
+    final parts = switch (uri.scheme) {
+      // `techpicks://device/x` 는 host 에, `techpicks:/device/x` 는 경로에
+      // 들어온다. 둘 다 같은 것으로 본다.
+      scheme => <String>[
+        if (uri.host.isNotEmpty) uri.host,
+        ...uri.pathSegments.where((s) => s.isNotEmpty),
+      ],
+      // 브라우저에서 오는 것. 여기서 host 는 도메인이지 우리 문법이 아니다.
+      'http' || 'https' || '' => <String>[
+        ...uri.pathSegments.where((s) => s.isNotEmpty),
+      ],
+      _ => const <String>[],
+    };
     if (parts.length == 2 && parts.first == _device) {
       return DeviceTarget(parts[1]);
     }
