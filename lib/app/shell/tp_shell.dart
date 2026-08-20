@@ -573,9 +573,13 @@ class _IosTabBar extends StatelessWidget {
                 final color = active ? Colors.white : tokens.chromeDim;
                 return Expanded(
                   child: Semantics(
-                    button: true,
+                    button: onSelected != null,
                     selected: active,
                     label: K.tab(t).tr(),
+                    // excludeSemantics 는 안쪽 글자와 **함께 탭 액션도**
+                    // 지운다. 그래서 보이스오버가 "탭, 버튼"이라고 읽어주고
+                    // 두 번 눌러도 아무 일이 없었다 — 탭을 바꿀 수가 없었다.
+                    onTap: onSelected == null ? null : () => onSelected!(t),
                     excludeSemantics: true,
                     child: TpPress(
                       semanticsButton: false,

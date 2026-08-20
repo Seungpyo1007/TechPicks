@@ -82,9 +82,15 @@ class _TpButtonState extends State<TpButton> {
     );
 
     return Semantics(
-      button: true,
+      // 누를 것이 없으면 버튼이라고 하지 않는다. 그리고 액션은 이 노드가
+      // 직접 들고 있어야 한다 — 안쪽 GestureDetector 의 것은 별개 노드로
+      // 남아서, 스크린 리더에는 "버튼"만 있고 누를 것은 없었다.
+      button: widget.onTap != null,
+      onTap: widget.onTap,
       child: LayoutBuilder(
         builder: (context, box) => TpPressable(
+          // 바깥 Semantics 가 버튼·이름·액션을 다 들고 있다.
+          semantics: false,
           onTap: widget.onTap,
           haptic: TpHaptic.impact,
           child: AnimatedContainer(

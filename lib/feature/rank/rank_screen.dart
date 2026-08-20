@@ -446,6 +446,9 @@ class _RankRow extends StatelessWidget {
           entry.index?.toString() ?? DeviceSpecs.empty,
         ],
       ),
+      // excludeSemantics 는 안쪽 글자와 함께 탭 액션도 지운다. 액션은
+      // 이 노드가 직접 들고 있어야 한다.
+      onTap: onTap,
       excludeSemantics: true,
       child: TpPress(
         onTap: onTap,
