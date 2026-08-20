@@ -12,8 +12,19 @@ import 'package:techpicks/app/theme/tp_tokens.dart';
 import 'package:techpicks/feature/rank/category_chips.dart';
 import 'package:techpicks/shared/widgets/tp_chip.dart';
 
+/// 폭을 넓게 준다.
+///
+/// 여기 테스트들은 **칩 동작**을 본다 — 다섯 축이 다 있고, 눌러서 정렬이
+/// 바뀌는지. 칩 줄은 가로 스크롤이라 폰 폭에서는 뒤쪽 칩이 아예 안 만들어져서
+/// `find.text` 로는 못 닿는다. 스크롤해서 잡을 수도 있지만, 그러면 매 테스트가
+/// 칩 줄의 스크롤 구현에 묶인다.
 Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) =>
-    pumpScreen(tester, const RankScreen(), chrome: chrome);
+    pumpScreen(
+      tester,
+      const RankScreen(),
+      chrome: chrome,
+      size: const Size(700, 3000),
+    );
 
 /// 브랜드 시트를 열고 [brand] 를 고른다.
 ///

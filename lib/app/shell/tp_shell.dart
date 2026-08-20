@@ -10,6 +10,7 @@ import '../theme/tp_tokens.dart';
 import '../theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import 'tp_tab.dart';
+import 'tp_window.dart';
 import '../../shared/widgets/tp_press.dart';
 
 /// 셸이 크롬에 내준 자리.
@@ -179,6 +180,7 @@ class TpShell extends StatelessWidget {
     // 안드로이드 크롬은 불투명하다. 뒤로 지나가는 것이 안 보이므로 흐르게 할
     // 이유가 없다 — 자리를 그냥 비운다.
     final inset = EdgeInsets.only(top: top, bottom: bottom);
+    final body = _column(context, child);
 
     if (mode == TpChromeMode.full && context.tp.isGlass) {
       return TpChromeInsets(
@@ -186,7 +188,7 @@ class TpShell extends StatelessWidget {
         physical: EdgeInsets.zero,
         child: MediaQuery(
           data: MediaQuery.of(context).copyWith(padding: inset),
-          child: child,
+          child: body,
         ),
       );
     }
@@ -196,7 +198,29 @@ class TpShell extends StatelessWidget {
       child: MediaQuery(
         // 패딩으로 이미 비웠다. 그대로 두면 인셋을 읽는 화면이 두 번 비운다.
         data: MediaQuery.of(context).copyWith(padding: EdgeInsets.zero),
-        child: Padding(padding: inset, child: child),
+        child: Padding(padding: inset, child: body),
+      ),
+    );
+  }
+
+  /// 넓은 창에서 본문을 가운데 한 칸으로 묶는다.
+  ///
+  /// 이 앱의 화면들은 폰 프레임만 보고 만들어졌고 최대 폭 제약이 하나도
+  /// 없다. 1440pt 짜리 창에서는 전부 그냥 늘어난다 — 상담 말풍선이 1098pt
+  /// 슬래브가 되고 랭킹 행은 이름과 값 사이가 1200pt 벌어진다.
+  ///
+  /// **여기 한 곳에서만 한다.** 화면 본문이 전부 이 목을 지나고, 전체 폭에
+  /// `Positioned` 로 그리던 셋(상담 컴포저·비교 고정 버튼·뷰어 컨트롤)도
+  /// 자기 화면의 `Stack` 안에 있어서 같이 좁혀진다.
+  ///
+  /// `takeover` 는 그냥 둔다 — 스캐너와 3D 뷰어는 창을 다 써야 한다.
+  Widget _column(BuildContext context, Widget child) {
+    if (mode == TpChromeMode.takeover) return child;
+    if (tpWindowClass(context) == TpWindowClass.compact) return child;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: tpContentMaxWidth),
+        child: child,
       ),
     );
   }
@@ -392,6 +416,13 @@ class TpShell extends StatelessWidget {
     final showChrome = mode == TpChromeMode.full;
     final takeover = mode == TpChromeMode.takeover;
 
+    // 넓은 창에서는 바닥 바 대신 왼쪽 레일이다. 1440pt 짜리 창에서 다섯 칸이
+    // 288pt 씩 벌어진 바가 창 아래를 가로지르는 건 폰 것을 늘려 놓은 모양이다.
+    final rail =
+        showChrome &&
+        tab != null &&
+        tpWindowClass(context) != TpWindowClass.compact;
+
     final headerHeight = title == null
         ? _androidAppBar
         : _androidAppBar + _androidLargeTitle;
@@ -402,12 +433,12 @@ class TpShell extends StatelessWidget {
     };
     final bottomInset = takeover
         ? 0.0
-        : (tab != null
+        : (tab != null && !rail
                   ? _androidTabHeight + safe.bottom + 12
                   : safe.bottom + 24) +
               (floatingAction != null ? _androidFabInset : 0);
 
-    return Stack(
+    final body = Stack(
       children: <Widget>[
         Positioned.fill(
           child: _content(
@@ -426,49 +457,55 @@ class TpShell extends StatelessWidget {
             child: Container(
               color: t.chromeFill,
               padding: EdgeInsets.only(top: safe.top),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SizedBox(
-                    height: _androidAppBar,
-                    child: Row(
-                      children: <Widget>[
-                        const SizedBox(width: 4),
-                        if (onBack != null)
-                          IconButton(
-                            onPressed: onBack,
-                            tooltip: K.back.tr(),
-                            icon: const Icon(Icons.arrow_back),
-                          )
-                        else
-                          const Padding(
-                            padding: EdgeInsets.only(left: 12),
-                            child: _AppMark(width: 16, height: 22),
-                          ),
-                        if (trailing != null) ...<Widget>[
-                          const Spacer(),
-                          IconButton(
-                            onPressed: trailing!.onTap,
-                            tooltip: trailing!.label,
-                            icon: Icon(trailing!.icon),
-                          ),
-                          const SizedBox(width: 4),
-                        ],
-                      ],
-                    ),
-                  ),
-                  if (title != null)
+              // 앱 바 **바탕**은 창을 가로지르고 그 **안의 것**만 본문과 같은
+              // 칸에 든다. 안 그러면 큰 제목이 창 왼쪽 끝에 붙고 카드는 가운데
+              // 있어서 둘이 다른 화면처럼 보인다.
+              child: _column(
+                context,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
                     SizedBox(
-                      height: _androidLargeTitle,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-                        child: Align(
-                          alignment: Alignment.bottomLeft,
-                          child: Text(title!, style: type.largeAppBarTitle),
-                        ),
+                      height: _androidAppBar,
+                      child: Row(
+                        children: <Widget>[
+                          const SizedBox(width: 4),
+                          if (onBack != null)
+                            IconButton(
+                              onPressed: onBack,
+                              tooltip: K.back.tr(),
+                              icon: const Icon(Icons.arrow_back),
+                            )
+                          else
+                            const Padding(
+                              padding: EdgeInsets.only(left: 12),
+                              child: _AppMark(width: 16, height: 22),
+                            ),
+                          if (trailing != null) ...<Widget>[
+                            const Spacer(),
+                            IconButton(
+                              onPressed: trailing!.onTap,
+                              tooltip: trailing!.label,
+                              icon: Icon(trailing!.icon),
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                        ],
                       ),
                     ),
-                ],
+                    if (title != null)
+                      SizedBox(
+                        height: _androidLargeTitle,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                          child: Align(
+                            alignment: Alignment.bottomLeft,
+                            child: Text(title!, style: type.largeAppBarTitle),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -482,7 +519,7 @@ class TpShell extends StatelessWidget {
             child: floatingAction!,
           ),
 
-        if (tab != null)
+        if (tab != null && !rail)
           Positioned(
             left: 0,
             right: 0,
@@ -501,7 +538,62 @@ class TpShell extends StatelessWidget {
           ),
       ],
     );
+
+    if (!rail) return body;
+    return Row(
+      children: <Widget>[
+        _TpRail(current: tab!, onSelected: onTabSelected, tokens: t),
+        Expanded(child: body),
+      ],
+    );
   }
+}
+
+/// 넓은 창의 왼쪽 내비게이션.
+///
+/// 다섯 [TpTab] 과 1:1 로 맞고, `NavigationRail` 은 포커스와 화살표 이동을
+/// 공짜로 준다 — 이 앱은 키보드로 닿는 곳이 입력칸뿐이라 그것만으로도 크다.
+///
+/// 라벨은 아이콘 아래에 둔다(`extended` 안 씀). 펼친 레일은 256pt 라 1024pt
+/// 창에서 본문 840pt 와 같이 놓으면 안 들어간다.
+class _TpRail extends StatelessWidget {
+  const _TpRail({
+    required this.current,
+    required this.onSelected,
+    required this.tokens,
+  });
+
+  final TpTab current;
+  final ValueChanged<TpTab>? onSelected;
+  final TpTokens tokens;
+
+  @override
+  Widget build(BuildContext context) => NavigationRail(
+    backgroundColor: tokens.tabBar,
+    indicatorColor: TpTokens.blue,
+    selectedIndex: TpTab.values.indexOf(current),
+    onDestinationSelected: onSelected == null
+        ? null
+        : (i) => onSelected!(TpTab.values[i]),
+    labelType: NavigationRailLabelType.all,
+    selectedIconTheme: const IconThemeData(color: Colors.white, size: 22),
+    unselectedIconTheme: IconThemeData(color: tokens.chromeDim, size: 22),
+    selectedLabelTextStyle: context.tpText.caption.copyWith(
+      color: tokens.ink,
+      fontWeight: tokens.boldWeight,
+    ),
+    unselectedLabelTextStyle: context.tpText.caption.copyWith(
+      color: tokens.chromeDim,
+    ),
+    destinations: <NavigationRailDestination>[
+      for (final t in TpTab.values)
+        NavigationRailDestination(
+          icon: Icon(t.icon),
+          selectedIcon: Icon(t.activeIcon),
+          label: Text(K.tab(t).tr()),
+        ),
+    ],
+  );
 }
 
 /// 활성 탭이 파란 알약으로 채워지는 iOS 캡슐 바.

@@ -14,8 +14,19 @@ enum TpChrome {
   ios,
   android;
 
-  /// 현재 플랫폼에 맞는 크롬. 데스크톱·웹은 Android 쪽으로 떨어뜨린다.
-  static TpChrome forPlatform([TargetPlatform? platform]) {
+  /// 현재 플랫폼에 맞는 크롬.
+  ///
+  /// **웹은 언제나 M3 다.** 여기 주석에 오래 "데스크톱·웹은 Android 쪽으로
+  /// 떨어뜨린다"고 적혀 있었는데 사실이 아니었다 — 웹에서
+  /// [defaultTargetPlatform] 은 브라우저 UA 에서 나오므로 맥에서 연 브라우저는
+  /// `macOS` 로 보고되고, 그러면 데스크톱 창에 **폰용 유리 크롬**이 깔렸다.
+  /// 같은 주소인데 윈도우에서 열면 다른 앱이 나왔다.
+  ///
+  /// 유리는 웹에서 어차피 꺼진다([TpGlassRuntime]·[TpNativeGlass]). 그 상태로
+  /// iOS 토큰을 쓰면 면마다 `BackdropFilter` 만 남는데, 그건 웹에서 가장 비싼
+  /// 원시 연산이다. M3 토큰은 `blurSigma: 0` 이라 그것도 같이 사라진다.
+  static TpChrome forPlatform([TargetPlatform? platform, bool web = kIsWeb]) {
+    if (web) return TpChrome.android;
     final p = platform ?? defaultTargetPlatform;
     return p == TargetPlatform.iOS || p == TargetPlatform.macOS
         ? TpChrome.ios
