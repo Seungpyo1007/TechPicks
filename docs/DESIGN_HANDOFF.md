@@ -495,6 +495,16 @@ pixel of travel, and each call re-sorts the 154-device catalogue — across all 
 they all stay mounted in the `IndexedStack`. Twenty divisions keeps the live recompute and turns ~300
 sorts per drag into 20. Set `divisions: null` on `_WeightSlider` to get the continuous thumb back.
 
+**Deviation — the `Currency` row is gone.** It rendered a hard-coded `USD` with no handler, and nothing
+in the app read a currency preference — the Data model section already says prices are localised, not
+converted, so there is nothing to choose between yet. A settings row that cannot be changed makes the
+rows beside it look untrustworthy too. Bring it back when prices arrive in more than one currency; the
+copy key is parked in `translations_test`'s `_pending` list with that reason.
+
+**Deviation — `Notifications` reads as a switch, not a button.** It is the only row here that toggles
+rather than opening a sheet, and a screen reader announcing "button" gives no way to know what pressing
+it does. The preference still only persists — nothing consumes it until push ships.
+
 **Addition — the sliders say which axis they are.** The axis name is a sibling `Text`, so a screen reader
 announced a bare percentage with nothing to attach it to.
 Note the current app **restarts** to change language (`restart_app`); with `easy_localization` this can be

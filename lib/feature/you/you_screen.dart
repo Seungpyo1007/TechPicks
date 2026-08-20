@@ -181,14 +181,21 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                     onTap: () =>
                         _pickAiEngine(context, ref, aiEngine, onDevice),
                   ),
+                  // 통화 줄은 뺐다. `'USD'` 가 못박혀 있고 핸들러도 없고 이걸
+                  // 읽는 코드가 앱에 하나도 없었다 — 못 누르는 설정 줄은
+                  // 옆에 있는 진짜 설정들까지 못 미덥게 만든다. 값이 여러
+                  // 통화로 들어오면(명세 Data model 의 P4) 그때 되살린다.
                   _SettingRow(
                     label: K.notifications.tr(),
                     value: (notifications ? K.on : K.off).tr(),
+                    // 켜고 끄는 줄이다. 스크린 리더에 "버튼"이라고 하면 눌러야
+                    // 무엇이 되는지 알 수 없다.
+                    toggled: notifications,
                     onTap: () => ref
                         .read(notificationsProvider.notifier)
                         .set(!notifications),
+                    last: true,
                   ),
-                  _SettingRow(label: K.currency.tr(), value: 'USD', last: true),
                 ],
               ),
             ),
@@ -730,12 +737,17 @@ class _SettingRow extends StatelessWidget {
     required this.label,
     this.value,
     this.onTap,
+    this.toggled,
     this.last = false,
   });
 
   final String label;
   final String? value;
   final VoidCallback? onTap;
+
+  /// 켜고 끄는 줄이면 지금 상태. 시트를 여는 줄은 null 이다.
+  final bool? toggled;
+
   final bool last;
 
   @override
@@ -744,7 +756,10 @@ class _SettingRow extends StatelessWidget {
     final type = context.tpText;
 
     return Semantics(
-      button: onTap != null,
+      // 켜고 끄는 줄은 스위치로 읽혀야 한다. 버튼이라고 하면 눌러서 무엇이
+      // 되는지 알 수 없다.
+      button: toggled == null && onTap != null,
+      toggled: toggled,
       // 라벨과 값이 따로 읽히면 "알림", "켬" 이 무슨 관계인지 모른다.
       label: value == null ? label : '$label, $value',
       // excludeSemantics 는 안쪽 글자와 함께 탭 액션도 지운다.
