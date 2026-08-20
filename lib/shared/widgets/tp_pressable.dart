@@ -45,6 +45,7 @@ class TpPressable extends StatefulWidget {
     this.onLongPress,
     this.haptic = TpHaptic.selection,
     this.behavior = HitTestBehavior.opaque,
+    this.semantics = true,
   });
 
   /// 눌린 정도 [t] (0–1) 로 그린다. [child] 는 t 가 바뀌어도 다시 안 만든다.
@@ -60,6 +61,14 @@ class TpPressable extends StatefulWidget {
   final TpHaptic haptic;
 
   final HitTestBehavior behavior;
+
+  /// 이 위젯이 시맨틱 노드를 낼지.
+  ///
+  /// 바깥에서 [Semantics] 로 이름·버튼·액션을 다 붙였으면 꺼야 한다. 안 끄면
+  /// **노드가 둘로 갈린다** — 바깥 노드는 "버튼"이라고 하는데 누르는 동작이
+  /// 없고, 안쪽 노드는 누를 수 있는데 이름이 없다. 스크린 리더로는 어느
+  /// 쪽으로도 못 쓴다.
+  final bool semantics;
 
   bool get enabled => onTap != null || onLongPress != null;
 
@@ -186,6 +195,7 @@ class _TpPressableState extends State<TpPressable>
     // 탭과 시맨틱은 그대로 GestureDetector 가 맡는다. 눌림만 포인터로 잡는다.
     final Widget gesture = GestureDetector(
       behavior: widget.behavior,
+      excludeFromSemantics: !widget.semantics,
       onTap: widget.onTap == null ? null : _tapped,
       onLongPress: widget.onLongPress,
       child: AnimatedBuilder(

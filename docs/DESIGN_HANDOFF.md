@@ -515,6 +515,7 @@ live — drop the "Restart Required" dialog and its strings.
 | Send message | Optimistic user bubble, then the AI bubble. Scroll to bottom. |
 | Scan | `idle → done` after a match; result card rises 240ms. |
 | Chip press | Scale to 0.97 for 90ms. |
+| Screen reader activation | Every control that announces itself as a button carries the tap action on **that same node**. Wrapping a pressable in `Semantics(button: true, excludeSemantics: true)` looks right and is not — `excludeSemantics` drops the inner gesture's action along with the inner text, so the node reads as a button and does nothing when activated. Either give the wrapper `onTap:`, or let the wrapper own semantics entirely and pass `semantics: false` to `TpPressable`. `tap_semantics_test` asserts both directions. |
 | Card press | iOS: brightness up 4%. Android: standard M3 ripple. |
 | Loading | Skeleton rows at the card's own radius — never a centred spinner (the current app uses `CircularProgressIndicator` on a blank page; replace it). |
 | Empty shortlist | Card with `Nothing on your shortlist yet` + `Add a device` — do not show the verdict card. |

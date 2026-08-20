@@ -98,7 +98,10 @@ class _Segmented extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = context.tp;
     return Container(
-      height: 46,
+      // 안쪽 3pt 여백을 빼면 칸이 40pt 였다 — 접근성 기준(48)에 못 미친다.
+      // 여태 안 걸린 이유는 그 노드에 탭 액션이 없어서 검사가 통째로 건너뛰고
+      // 있었기 때문이다.
+      height: 54,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: t.chipBg,
@@ -140,6 +143,8 @@ class _SegmentedCell extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
+      // excludeSemantics 는 안쪽 글자와 함께 탭 액션도 지운다.
+      onTap: onTap,
       excludeSemantics: true,
       child: TpPress(
         onTap: onTap,

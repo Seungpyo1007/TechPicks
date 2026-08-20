@@ -45,10 +45,15 @@ class _TpTapTargetState extends State<TpTapTarget> {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      button: !widget.link,
-      link: widget.link,
+      // 누를 것이 없으면 버튼도 링크도 아니다. 액션도 이 노드가 들고 있어야
+      // 안쪽 GestureDetector 와 갈라지지 않는다.
+      button: !widget.link && widget.onTap != null,
+      link: widget.link && widget.onTap != null,
       label: widget.label,
+      onTap: widget.onTap,
       child: TpPressable(
+        // 바깥 Semantics 가 버튼·링크·이름·액션을 다 들고 있다.
+        semantics: false,
         onTap: widget.onTap,
         haptic: TpHaptic.selection,
         child: ConstrainedBox(

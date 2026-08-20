@@ -493,6 +493,8 @@ class _MoverRow extends StatelessWidget {
             '${mover.delta.abs()}',
           ],
         ),
+        // excludeSemantics 는 안쪽 글자와 함께 탭 액션도 지운다.
+        onTap: onTap,
         excludeSemantics: true,
         child: TpSurface(
           onTap: onTap,

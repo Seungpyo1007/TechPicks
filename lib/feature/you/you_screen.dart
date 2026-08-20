@@ -747,6 +747,8 @@ class _SettingRow extends StatelessWidget {
       button: onTap != null,
       // 라벨과 값이 따로 읽히면 "알림", "켬" 이 무슨 관계인지 모른다.
       label: value == null ? label : '$label, $value',
+      // excludeSemantics 는 안쪽 글자와 함께 탭 액션도 지운다.
+      onTap: onTap,
       excludeSemantics: true,
       child: TpPress(
         onTap: onTap,

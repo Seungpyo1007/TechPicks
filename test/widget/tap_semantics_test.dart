@@ -49,13 +49,25 @@ Map<String, Widget> _noSettle() => <String, Widget>{
   'viewer': ViewerScreen(deviceName: 'Galaxy S25 Ultra', onBack: () {}),
 };
 
-/// 탭 액션이 있는데 버튼이 아니거나 이름이 없는 노드.
+/// 탭 액션이 있는데 버튼이 아니거나 이름이 없는 노드, **그리고 그 반대**.
+///
+/// 오래 앞쪽만 봤다. 그래서 정반대 결함이 앱 전체에 깔려 있었다 — `버튼`
+/// 이라고 알리면서 **누르는 동작이 없는** 노드다.
+/// `Semantics(button: true, excludeSemantics: true)` 로 안쪽 글자를 묶으면,
+/// 같이 묶여서 사라지는 것 중에 `GestureDetector` 가 내주던 탭 액션이 있다.
+/// 스크린 리더는 버튼이라고 읽어주고, 두 번 눌러도 아무 일이 안 일어난다.
+///
+/// 랭킹은 버튼 55개 중 47개가, 내 정보는 11개 중 9개가 그랬다. **탭 바
+/// 다섯 칸이 전부 여기 있었다** — 보이스오버로는 탭을 바꿀 수가 없었다.
 List<String> _unlabeledTapTargets(WidgetTester tester) {
   final bad = <String>[];
 
   void walk(SemanticsNode node) {
     final data = node.getSemanticsData();
     final tappable = data.hasAction(SemanticsAction.tap);
+    if (data.flagsCollection.isButton && !tappable) {
+      bad.add('눌리지 않는 버튼: "${data.label}"');
+    }
     if (tappable) {
       // 입력창도 탭 액션을 갖는다. 그쪽은 버튼이 아니라 텍스트 필드로 읽혀야
       // 맞다. 앱 밖으로 나가는 것은 링크로 읽혀야 맞다 — 스크린 리더가
