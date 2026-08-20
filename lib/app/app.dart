@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -110,6 +111,15 @@ class _RootState extends ConsumerState<TechPicksRoot> {
 
     if (!onboarded) {
       return const OnboardingScreen();
+    }
+    // 웹에서는 Firebase 를 안 켠다(main.dart). 인증이 통째로 없으니 로그인
+    // 화면은 막다른 길이다 — 구글·애플·이메일이 다 조용히 null 을 돌려주고
+    // "계정 없이 둘러보기"만 남는다. 그 한 걸음을 없앤다.
+    //
+    // guestProvider 를 켜지는 않는다. 그건 사용자가 고른 상태고 기기에 저장돼서,
+    // 여기서 켜면 나중에 iOS 에서도 손님으로 남는다.
+    if (kIsWeb) {
+      return const TabHost();
     }
     if (user == null && !guest) {
       return LoginScreen(
