@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -179,6 +180,11 @@ class _TpPressableState extends State<TpPressable>
   }
 
   void _tapped() {
+    // 웹에는 진동이 없는데 채널 왕복은 그대로 일어난다. 클릭마다 한 번씩이다.
+    if (kIsWeb) {
+      widget.onTap?.call();
+      return;
+    }
     switch (widget.haptic) {
       case TpHaptic.none:
         break;

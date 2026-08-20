@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <!-- `flutter build` 의 --base-href 가 여기에 들어간다. -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="기기 사양을 하나의 지수로 비교하는 앱.">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="TechPicks">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>TechPicks</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- 앱 배경 그라디언트의 첫 색. 흰 화면에서 파란 화면으로 튀지 않는다.
+       pubspec 의 flutter_native_splash.color / color_dark 와 같은 값이다. -->
+  <meta name="theme-color" content="#EEF3FA" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121A24" media="(prefers-color-scheme: dark)">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background-color: #EEF3FA; }
+    @media (prefers-color-scheme: dark) { html, body { background-color: #121A24; } }
+  </style>
+</head>
+<body>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

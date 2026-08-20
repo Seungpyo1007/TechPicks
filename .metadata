@@ -1,0 +1,9 @@
+# 이 파일은 Flutter 도구가 프로젝트 종류와 타깃을 알아보는 데 쓴다.
+# 손으로 적었다 — `flutter create` 를 이 저장소에 돌리면 템플릿이 소유한
+# 파일(lib/main.dart, analysis_options.yaml, pubspec 일부)을 덮어쓴다.
+
+version:
+  revision: "unknown"
+  channel: "stable"
+
+project_type: app
