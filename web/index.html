@@ -16,6 +16,14 @@
 
   <link rel="icon" type="image/png" href="favicon.png"/>
 
+  <!-- M3 토큰이 'Roboto Flex' 를 부르는데 번들에 없다. 폰·안드로이드에서는
+       시스템 폰트가 받아주지만 브라우저에서는 아무것도 안 걸려서 OS 기본으로
+       떨어진다 — 그러면 fontSize 로 높이를 재는 자리들(비교·랭킹·상담)이
+       어긋난다. 저장소에 바이트를 안 넣고 웹 방식으로 가져온다. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,300..700&display=swap">
+
   <title>TechPicks</title>
   <link rel="manifest" href="manifest.json">
 

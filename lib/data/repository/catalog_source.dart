@@ -1,50 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:firebase_remote_config/firebase_remote_config.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../core/failure.dart';
 import '../../core/network/tech_api_client.dart';
-
-/// 받아둔 카탈로그를 두는 곳.
-///
-/// 애셋은 못 덮어쓰므로 내려받은 것은 파일로 남긴다. 다음 실행이 이걸 먼저
-/// 읽는다.
-abstract class CatalogStore {
-  /// 받아둔 것이 없으면 null.
-  Future<String?> read();
-
-  Future<void> write(String json);
-}
-
-/// 앱 지원 디렉터리의 파일 하나.
-///
-/// 캐시 디렉터리가 아니라 지원 디렉터리다 — OS 가 지우면 앱이 조용히 옛
-/// 점수로 돌아간다.
-class FileCatalogStore implements CatalogStore {
-  const FileCatalogStore();
-
-  static const String fileName = 'catalog.json';
-
-  Future<File> _file() async {
-    final dir = await getApplicationSupportDirectory();
-    return File('${dir.path}/$fileName');
-  }
-
-  @override
-  Future<String?> read() async {
-    final file = await _file();
-    if (!file.existsSync()) return null;
-    return file.readAsString();
-  }
-
-  @override
-  Future<void> write(String json) async {
-    final file = await _file();
-    await file.writeAsString(json, flush: true);
-  }
-}
 
 /// 지금 배포된 카탈로그가 무엇인지 알려주는 곳.
 ///

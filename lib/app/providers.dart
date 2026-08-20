@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data' show Uint8List;
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -15,6 +16,7 @@ import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
 import '../data/repository/catalog_source.dart';
+import '../data/repository/catalog_store.dart';
 import '../data/repository/tech_api_repository.dart';
 import '../data/service/ask_service.dart';
 import '../data/service/on_device_ask_service.dart';
@@ -47,7 +49,7 @@ import 'locale_controller.dart';
 /// 똑같이 동작한다.
 final catalogRepositoryProvider = Provider<CatalogRepository>(
   (ref) => CatalogRepository(
-    store: const FileCatalogStore(),
+    store: defaultCatalogStore(),
     feed: RemoteConfigCatalogFeed(),
   ),
 );
@@ -842,13 +844,11 @@ class ProfileNotifier extends AsyncNotifier<TpProfile> {
   }
 
   /// 사진을 올리고 프로필에 붙인다. 주소를 돌려주고, 실패하면 null.
-  Future<String?> uploadPhoto(String filePath) async {
+  Future<String?> uploadPhoto(Uint8List bytes) async {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return null;
 
-    final url = await ref
-        .read(profileServiceProvider)
-        .uploadPhoto(uid, filePath);
+    final url = await ref.read(profileServiceProvider).uploadPhoto(uid, bytes);
     if (url == null) return null;
 
     final next = (state.value ?? const TpProfile()).copyWith(photoUrl: url);

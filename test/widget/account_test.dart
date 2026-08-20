@@ -1,3 +1,4 @@
+import 'dart:typed_data' show Uint8List;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -79,8 +80,8 @@ class _StubProfiles implements ProfileService {
   }
 
   @override
-  Future<String?> uploadPhoto(String uid, String filePath) async {
-    uploads.add(filePath);
+  Future<String?> uploadPhoto(String uid, Uint8List bytes) async {
+    uploads.add('${bytes.length}B');
     return succeeds ? 'https://example.test/p.jpg' : null;
   }
 }

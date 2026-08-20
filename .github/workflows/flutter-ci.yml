@@ -122,6 +122,35 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  build-web:
+    name: web release build
+    # 웹으로 오면서 새로 생긴 위험은 전부 **통합** 쪽이다 — 컴파일되나, 뜨나,
+    # 주소가 풀리나. 위젯 테스트는 그중 아무것도 안 잡는다(그리고 하네스가
+    # dart:io 로 애셋을 읽어서 --platform chrome 으로는 거의 안 돈다).
+    # 이 잡 하나가 그걸 잡는 게이트다. 우분투에서 3분.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: install deps
+        run: flutter pub get
+
+      - name: build web
+        run: flutter build web --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+          retention-days: 7
+          if-no-files-found: error
+
   build-ios:
     name: ios release build & goldens
     # iOS 를 먼저 낸다. 여기가 없으면 iOS 빌드를 아무도 안 본다.

@@ -1,4 +1,4 @@
-import 'dart:io' show File;
+import 'dart:typed_data' show Uint8List;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -16,7 +16,11 @@ abstract class ProfileService {
   Future<bool> save(String uid, TpProfile profile);
 
   /// 사진을 올리고 주소를 돌려준다. 실패하면 null.
-  Future<String?> uploadPhoto(String uid, String filePath);
+  ///
+  /// 경로가 아니라 바이트를 받는다. 웹에서 `XFile.path` 는 `blob:` URL 이라
+  /// `File(...)` 로 열 수 없다 — `putData` 는 어디서나 되므로 구현이 하나로
+  /// 남고 `dart:io` 의존도 사라진다.
+  Future<String?> uploadPhoto(String uid, Uint8List bytes);
 }
 
 /// Firestore `users/{uid}` + Storage `profile_images/{uid}`.
@@ -61,13 +65,13 @@ class FirebaseProfileService implements ProfileService {
   }
 
   @override
-  Future<String?> uploadPhoto(String uid, String filePath) async {
+  Future<String?> uploadPhoto(String uid, Uint8List bytes) async {
     try {
       final ref = (_storage ??= FirebaseStorage.instance)
           .ref()
           .child('profile_images')
           .child(uid);
-      await ref.putFile(File(filePath));
+      await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
       return await ref.getDownloadURL();
     } catch (e, s) {
       TpErrors.record(e, s, reason: 'profile.photo');

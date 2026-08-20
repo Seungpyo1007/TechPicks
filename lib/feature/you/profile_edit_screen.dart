@@ -120,7 +120,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       setState(() => _busy = true);
       final url = await ref
           .read(profileProvider.notifier)
-          .uploadPhoto(picked.path);
+          .uploadPhoto(await picked.readAsBytes());
       if (!mounted) return;
       setState(() {
         _busy = false;

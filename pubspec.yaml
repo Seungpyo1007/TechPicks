@@ -79,7 +79,12 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/logo/
+    # 디렉터리째 싣지 않는다. logo2.png 는 아이콘 생성용(flutter_icons)이라
+    # 런타임에 한 번도 안 읽히는데 33KB 가 번들에 따라 들어갔다.
+    - assets/logo/logo.png
+    - assets/logo/NBlogo_black.png
+    - assets/logo/apple_logo.png
+    - assets/logo/google_logo.png
     - assets/translations/
     - assets/catalog/
 
