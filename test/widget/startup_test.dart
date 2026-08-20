@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:techpicks/app/app.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/service/auth_service.dart';
 import 'package:techpicks/feature/login/email_login_screen.dart';
@@ -47,21 +46,15 @@ class _NoFirebase implements AuthService {
   Future<void> signOut() async {}
 }
 
+/// 온보딩·로그인·탭 중 무엇이 먼저 뜨는지는 이제 라우터의 redirect 가
+/// 정한다. 그래서 진짜 라우터 위에 올린다.
 Future<ProviderContainer> _boot(WidgetTester tester) async {
-  return pumpScreen(
+  return pumpApp(
     tester,
-    const _RootHost(),
+    // 온보딩·로그인 게이트 자체를 보는 파일이다.
+    onboarded: false,
     overrides: <Override>[authServiceProvider.overrideWithValue(_NoFirebase())],
   );
-}
-
-/// TechPicksApp 은 MaterialApp 을 직접 만든다. 하네스가 이미 하나 올리므로
-/// 루트 분기만 떼어 쓴다.
-class _RootHost extends StatelessWidget {
-  const _RootHost();
-
-  @override
-  Widget build(BuildContext context) => const TechPicksRoot();
 }
 
 void main() {
@@ -74,9 +67,9 @@ void main() {
       'is_tutorial_completed': true,
     });
     final auth = _LateSession();
-    final container = await pumpScreen(
+    final container = await pumpApp(
       tester,
-      const _RootHost(),
+      onboarded: false,
       overrides: <Override>[authServiceProvider.overrideWithValue(auth)],
     );
     await tester.pumpAndSettle();
@@ -98,9 +91,10 @@ void main() {
       'is_tutorial_completed': true,
     });
 
-    await pumpScreenNoSettle(
+    await pumpApp(
       tester,
-      const _RootHost(),
+      onboarded: false,
+      settle: false,
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoFirebase()),
       ],
@@ -162,9 +156,10 @@ void main() {
         'is_tutorial_completed': true,
       });
 
-      await pumpScreenNoSettle(
+      await pumpApp(
         tester,
-        const _RootHost(),
+        onboarded: false,
+        settle: false,
         overrides: <Override>[
           authServiceProvider.overrideWithValue(_NoFirebase()),
         ],

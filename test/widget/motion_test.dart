@@ -1,6 +1,5 @@
 import 'package:riverpod/misc.dart' show Override;
 import 'package:techpicks/data/service/ask_service.dart';
-import 'package:techpicks/app/tab_host.dart';
 import 'package:techpicks/app/shell/tp_tab.dart';
 import 'package:techpicks/app/shell/tp_shell.dart';
 import 'package:flutter/material.dart';
@@ -296,9 +295,8 @@ void _homeMotion() {
   // 알약이 칸마다 따로 있어 색만 교차하던 때는 **아무것도 움직이지 않았다**.
   // 이제 한 장이 칸에서 칸으로 미끄러진다.
   testWidgets('iOS 탭 알약은 한 장이고 고른 칸으로 옮겨간다', (tester) async {
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TabHost(),
       size: const Size(402, 874),
       overrides: <Override>[
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -326,9 +324,8 @@ void _homeMotion() {
   // 알약은 미끄러지는데 그 아래 본문은 툭 갈렸다. 한 동작 안에서 한쪽만
   // 움직이면 나머지가 고장 난 것처럼 읽힌다.
   testWidgets('탭을 바꾸면 본문이 옅게 들어오고 크롬은 안 움직인다', (tester) async {
-    await pumpScreen(
+    await pumpApp(
       tester,
-      const TabHost(),
       size: const Size(402, 874),
       overrides: <Override>[
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -358,9 +355,9 @@ void _homeMotion() {
 
     await tester.pumpAndSettle();
     expect(
-      tester.widgetList<Opacity>(find.byType(Opacity)).every(
-        (o) => o.opacity == 1,
-      ),
+      tester
+          .widgetList<Opacity>(find.byType(Opacity))
+          .every((o) => o.opacity == 1),
       isTrue,
     );
   });

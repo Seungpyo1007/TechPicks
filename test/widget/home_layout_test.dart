@@ -68,11 +68,7 @@ void main() {
 
         // 62pt 숫자와 "TP Index" 라벨이 한 Row 에 있고 유연한 자식이 없었다.
         // 1.6배에서 둘을 합치면 카드 폭을 넘는다.
-        expectFits(
-          tester,
-          find.text(K.tpIndex.tr()),
-          why: 'TP Index 라벨이 잘린다',
-        );
+        expectFits(tester, find.text(K.tpIndex.tr()), why: 'TP Index 라벨이 잘린다');
       });
 
       testWidgets('관심목록 행의 지수와 이름이 안 잘린다 · $label', (tester) async {
@@ -117,5 +113,4 @@ void main() {
       });
     }
   }
-
 }

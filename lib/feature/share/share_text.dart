@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../shared/copy_keys.dart';
 import 'tp_link.dart';
@@ -40,6 +41,18 @@ abstract final class ShareText {
     else
       K.shareDevice.tr(args: <String>[name, '$index']),
     ?reason,
-    TpLink.device(slug).toString(),
+    link(DeviceTarget(slug)),
   ].join('\n');
+
+  /// 문구 마지막 줄에 붙는 링크.
+  ///
+  /// 커스텀 스킴은 앱이 깔린 기기에서만 열린다. 브라우저에 붙여넣으면 그냥
+  /// 죽은 글자였다 — 지금 보고 있는 곳의 주소로 내보낸다. 도메인을 안 사도
+  /// 프리뷰 배포에서 바로 동작한다.
+  static String link(TpLinkTarget target) => kIsWeb
+      ? '\${Uri.base.origin}\${TpLink.path(target)}'
+      : switch (target) {
+          DeviceTarget(:final slug) => TpLink.device(slug).toString(),
+          CompareTarget(:final a, :final b) => TpLink.compare(a, b).toString(),
+        };
 }

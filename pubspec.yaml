@@ -14,6 +14,9 @@ dependencies:
   # 꽂아야 해서 명시한다.
   flutter_localizations:
     sdk: flutter
+  # main() 의 usePathUrlStrategy. 웹에서만 쓰지만 import 는 늘 있다.
+  flutter_web_plugins:
+    sdk: flutter
 
 
 
@@ -51,6 +54,7 @@ dependencies:
   flutter_native_splash: ^2.4.1
   # 진짜 OS 유리(iOS 26 의 .glassEffect)를 플랫폼 뷰로 가져온다. 0.x 라 고정.
   native_liquid_glass: 0.2.14
+  go_router: ^17.5.0
 
 
 

@@ -39,10 +39,9 @@ class _BrokenLinks implements DeepLinkService {
   Stream<Uri> stream() => const Stream<Uri>.empty();
 }
 
-Future<void> _pump(WidgetTester tester, DeepLinkService links) => pumpScreen(
+Future<void> _pump(WidgetTester tester, DeepLinkService links) => pumpApp(
   tester,
-  const TabHost(),
-  size: const Size(1200, 3000),
+  size: const Size(700, 3000),
   overrides: <Override>[
     deepLinkServiceProvider.overrideWithValue(links),
     askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -76,10 +75,9 @@ void main() {
   });
 
   testWidgets('비교 링크는 두 슬롯을 채우고 비교 탭으로 간다', (tester) async {
-    final container = await pumpScreen(
+    final container = await pumpApp(
       tester,
-      const TabHost(),
-      size: const Size(1200, 3000),
+      size: const Size(700, 3000),
       overrides: <Override>[
         deepLinkServiceProvider.overrideWithValue(
           _FakeLinks(
@@ -126,10 +124,9 @@ void main() {
   });
 
   testWidgets('연 링크는 다시 열리지 않는다', (tester) async {
-    final container = await pumpScreen(
+    final container = await pumpApp(
       tester,
-      const TabHost(),
-      size: const Size(1200, 3000),
+      size: const Size(700, 3000),
       overrides: <Override>[
         deepLinkServiceProvider.overrideWithValue(
           _FakeLinks(first: Uri.parse('techpicks://device/galaxy-s25')),

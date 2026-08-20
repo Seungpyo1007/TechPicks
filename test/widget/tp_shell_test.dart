@@ -55,7 +55,10 @@ void main() {
     // 웹에서 defaultTargetPlatform 은 브라우저 UA 에서 나오므로 맥에서 연
     // 브라우저는 macOS 로 보고되고, 데스크톱 창에 폰용 유리 크롬이 깔렸다.
     test('웹은 UA 가 뭐라 하든 M3 다', () {
-      expect(TpChrome.forPlatform(TargetPlatform.macOS, true), TpChrome.android);
+      expect(
+        TpChrome.forPlatform(TargetPlatform.macOS, true),
+        TpChrome.android,
+      );
       expect(TpChrome.forPlatform(TargetPlatform.iOS, true), TpChrome.android);
       expect(
         TpChrome.forPlatform(TargetPlatform.android, true),

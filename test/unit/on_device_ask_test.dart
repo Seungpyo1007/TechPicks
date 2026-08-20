@@ -48,13 +48,13 @@ void main() {
           .split(' | ')
           .first;
 
-      final best = (catalog.toList()
-            ..sort(
-              (a, b) => (b.score?.performance ?? 0).compareTo(
-                a.score?.performance ?? 0,
-              ),
-            ))
-          .first;
+      final best =
+          (catalog.toList()..sort(
+                (a, b) => (b.score?.performance ?? 0).compareTo(
+                  a.score?.performance ?? 0,
+                ),
+              ))
+              .first;
       // 정확히 1위까지 맞출 필요는 없다 — 잘린 목록 안에 있으면 된다.
       expect(prompt, contains(best.slug));
       expect(first, isNotEmpty);

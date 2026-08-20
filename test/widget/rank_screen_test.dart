@@ -241,7 +241,11 @@ void main() {
     });
 
     testWidgets('맞는 게 없으면 그렇게 말한다', (tester) async {
-      await pumpScreen(tester, const RankScreen(), size: const Size(1200, 4400));
+      await pumpScreen(
+        tester,
+        const RankScreen(),
+        size: const Size(1200, 4400),
+      );
 
       await tester.enterText(find.byType(TextField), 'zzzz');
       await tester.pumpAndSettle();

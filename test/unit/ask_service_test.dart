@@ -159,10 +159,7 @@ void main() {
     });
 
     test('코드펜스를 둘러도 읽는다', () {
-      expect(
-        tryParseSay('```json\n{"answer":"그렇습니다."}\n```'),
-        '그렇습니다.',
-      );
+      expect(tryParseSay('```json\n{"answer":"그렇습니다."}\n```'), '그렇습니다.');
     });
 
     test('빈 문장이나 다른 모양은 안 읽는다', () {
