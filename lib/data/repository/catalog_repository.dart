@@ -12,6 +12,7 @@ import '../dto/cpu.dart';
 import '../dto/smartphone.dart';
 import '../dto/soc.dart';
 import 'catalog_source.dart';
+import 'catalog_store.dart';
 
 /// 앱에 같이 실리는 큐레이션 카탈로그.
 ///

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/data/repository/catalog_source.dart';
+import 'package:techpicks/data/repository/catalog_store.dart';
+import 'package:techpicks/data/repository/catalog_store_io.dart';
 
 import '../support/harness.dart';
 
@@ -80,6 +82,7 @@ CatalogRepository _repo({CatalogStore? store, CatalogFeed? feed}) =>
     );
 
 void main() {
+  group('플랫폼 저장소', _defaultStore);
   test('받아둔 것이 없으면 애셋을 읽는다', () async {
     final store = _FakeStore();
     final result = await _repo(store: store, feed: _FakeFeed()).load();
@@ -213,5 +216,13 @@ void main() {
     );
 
     expect((await repo.load()).fold((c) => 'ok', (f) => 'err'), 'err');
+  });
+}
+
+/// VM 에서는 파일 저장소가 나와야 한다. 조건부 import 의 방향을 뒤집으면
+/// 컴파일은 되고 아무 일도 안 한다 — 그걸 여기서 못박는다.
+void _defaultStore() {
+  test('VM 에서는 파일 저장소를 쓴다', () {
+    expect(defaultCatalogStore(), isA<FileCatalogStore>());
   });
 }
