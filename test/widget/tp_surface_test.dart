@@ -102,7 +102,14 @@ void main() {
 
     expect(
       tester.getSemantics(find.byType(TpSurface)),
-      matchesSemantics(hasTapAction: true, isButton: true, label: '카드'),
+      // 포커스도 받는다 — 키보드로 닿을 수 있어야 마우스·키보드로 쓸 수 있다.
+      matchesSemantics(
+        hasTapAction: true,
+        hasFocusAction: true,
+        isFocusable: true,
+        isButton: true,
+        label: '카드',
+      ),
     );
     handle.dispose();
   });

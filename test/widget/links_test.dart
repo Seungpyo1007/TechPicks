@@ -117,9 +117,12 @@ void main() {
             matching: find.byType(TpTapTarget),
           ),
         ),
+        // 포커스도 받는다 — 키보드로 닿을 수 있어야 한다.
         matchesSemantics(
           isLink: true,
           hasTapAction: true,
+          hasFocusAction: true,
+          isFocusable: true,
           label: K.dataSource.tr(),
         ),
       );
