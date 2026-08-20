@@ -29,6 +29,7 @@ abstract final class K {
   static const String verdict = 'verdict';
   static const String tpIndex = 'tpIndex';
   static const String shortlist = 'shortlist';
+  static const String remove = 'remove';
   static const String addDevice = 'addDevice';
   static const String compareAll = 'compareAll';
   static const String askWhy = 'askWhy';

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
+
+import '../../app/theme/tp_tokens.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../app/theme/tp_motion.dart';
@@ -96,6 +98,9 @@ class _TpPressableState extends State<TpPressable>
   /// 손가락이 아직 붙어 있는가. 뗐는데 내려가는 중이면 false 다.
   bool _held = false;
 
+  /// 키보드로 여기 와 있는가.
+  bool _focused = false;
+
   @override
   void initState() {
     super.initState();
@@ -144,7 +149,12 @@ class _TpPressableState extends State<TpPressable>
     _claims[event.pointer] = this;
     _pointer = event.pointer;
     _origin = event.position;
-    _slop = computeHitSlop(event.kind, MediaQuery.maybeGestureSettingsOf(context));
+    // 마우스는 `computeHitSlop` 이 1px 을 준다(`kPrecisePointerHitSlop`).
+    // 손떨림 정도로도 눌림이 취소돼서, 카드를 누르고 있으면 표시가 깜빡였다.
+    // 터치 쪽은 그대로 둔다 — iOS 는 비트 단위로 같아야 한다.
+    _slop = event.kind == PointerDeviceKind.mouse
+        ? kTouchSlop
+        : computeHitSlop(event.kind, MediaQuery.maybeGestureSettingsOf(context));
     _held = true;
 
     if (_instant) {
@@ -213,12 +223,47 @@ class _TpPressableState extends State<TpPressable>
 
     if (!widget.enabled) return gesture;
 
-    return Listener(
+    final Widget pointer = Listener(
       onPointerDown: _down,
       onPointerMove: _move,
       onPointerUp: _up,
       onPointerCancel: _up,
       child: gesture,
+    );
+
+    // 마우스와 키보드.
+    //
+    // `GestureDetector` 는 포커스를 못 받는다. 그래서 Tab 으로 닿는 것이
+    // 입력칸과 슬라이더 하나뿐이었다 — 버튼도, 칩도, 카드도, 탭도 키보드로는
+    // 쓸 수 없었다. 커서도 어디서나 화살표였다.
+    //
+    // 한 곳에서 다 준다. TpPress·TpButton·TpTapTarget·TpChip 이 전부 이걸
+    // 물려받으므로 호출부는 안 건드린다.
+    return FocusableActionDetector(
+      mouseCursor: SystemMouseCursors.click,
+      onShowFocusHighlight: (v) => setState(() => _focused = v),
+      shortcuts: const <ShortcutActivator, Intent>{
+        SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+        SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+      },
+      actions: <Type, Action<Intent>>{
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (_) {
+            _tapped();
+            return null;
+          },
+        ),
+      },
+      child: _focused
+          ? DecoratedBox(
+              // 포커스가 어디 있는지 보여야 키보드로 쓸 수 있다.
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(context.tp.rInner),
+                border: Border.all(color: context.tp.link, width: 2),
+              ),
+              child: pointer,
+            )
+          : pointer,
     );
   }
 }

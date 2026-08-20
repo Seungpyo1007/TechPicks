@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -29,6 +30,9 @@ class TechPicksApp extends ConsumerWidget {
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       routerConfig: router,
+      // 웹에서 끌어서 스크롤이 안 된다. 가로 목록(칩 줄·제안 칩)에서 사람들이
+      // 반드시 시도하는 동작이다.
+      scrollBehavior: const _TpScrollBehavior(),
       builder: (inner, child) => ProviderScope(
         // LocaleController 는 easy_localization 의 context 가 필요해서
         // MaterialApp 아래에서 만들어 넣는다.
@@ -78,4 +82,17 @@ class _RootState extends ConsumerState<TechPicksRoot> {
     final onboarded = ref.watch(onboardingDoneProvider);
     return TpLaunch(ready: onboarded != null, child: widget.child);
   }
+}
+
+/// 마우스로도 끌어서 스크롤한다.
+class _TpScrollBehavior extends MaterialScrollBehavior {
+  const _TpScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const <PointerDeviceKind>{
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
 }

@@ -459,6 +459,15 @@ class _ShortlistRow extends ConsumerWidget {
                   ],
                 ),
               ),
+              // 지우는 길이 스와이프와 길게 누르기뿐이었다. 스와이프는 배경이
+              // `SizedBox.shrink()` 라 **아무 표시도 없고**, 길게 누르기는
+              // 마우스로 알아낼 방법이 없다. 키보드로는 아예 못 지웠다.
+              if (onRemove != null)
+                TpTapTarget(
+                  onTap: onRemove,
+                  label: K.remove.tr(),
+                  child: Icon(Icons.close, size: 18, color: t.dim),
+                ),
             ],
           ),
         ),
