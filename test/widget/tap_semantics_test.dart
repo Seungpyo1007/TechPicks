@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -75,7 +77,9 @@ List<String> _unlabeledTapTargets(WidgetTester tester) {
       final actionable =
           data.flagsCollection.isButton ||
           data.flagsCollection.isTextField ||
-          data.flagsCollection.isLink;
+          data.flagsCollection.isLink ||
+          // 켜고 끄는 줄은 스위치로 읽힌다. 버튼이 아니고, 버튼이면 안 된다.
+          data.flagsCollection.isToggled != Tristate.none;
       if (!actionable) {
         bad.add('버튼 아님: "${data.label}"');
       } else if (data.label.trim().isEmpty) {

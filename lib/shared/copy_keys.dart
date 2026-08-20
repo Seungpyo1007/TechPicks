@@ -122,7 +122,6 @@ abstract final class K {
   static const String themeLight = 'themeLight';
   static const String themeDark = 'themeDark';
   static const String notifications = 'notifications';
-  static const String currency = 'currency';
   static const String changePassword = 'changePw';
   static const String pwResetSent = 'pwResetSent';
   static const String pwResetFailed = 'pwResetFailed';

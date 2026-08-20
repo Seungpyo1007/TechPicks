@@ -161,14 +161,18 @@ void main() {
     for (final label in <String>[
       'Language',
       'Dark mode',
+      'AI engine',
       'Notifications',
-      'Currency',
       // 계정이 없으면 마지막 줄은 로그인이다.
       'Sign in',
     ]) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
     expect(find.text(YouScreen.versionLine), findsOneWidget);
+    // 통화 줄은 뺐다. 'USD' 가 못박혀 있고 핸들러도 없고 이걸 읽는 코드가
+    // 앱에 하나도 없었다 — 못 누르는 설정 줄은 옆의 진짜 설정까지 못 미덥게
+    // 만든다.
+    expect(find.text('Currency'), findsNothing);
   });
 
   testWidgets('비밀번호 줄은 메일 주소가 있을 때만 나온다', (tester) async {
