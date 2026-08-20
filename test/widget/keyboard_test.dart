@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:techpicks/shared/widgets/tp_button.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/harness.dart';
@@ -28,18 +29,32 @@ void main() {
   });
 
   testWidgets('Enter 로 누를 수 있다', (tester) async {
-    await pumpApp(tester, size: const Size(1440, 900));
+    var taps = 0;
+    await pumpScreen(
+      tester,
+      Center(child: TpButton(label: '눌러', onTap: () => taps++)),
+    );
 
-    // 탭 하나를 포커스로 잡아 Enter 를 친다.
-    var moved = false;
-    for (var i = 0; i < 20 && !moved; i++) {
-      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-      await tester.pumpAndSettle();
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await tester.pumpAndSettle();
-      moved = find.text('랭킹').evaluate().isNotEmpty ||
-          find.byType(Scrollable).evaluate().length > 1;
-    }
-    expect(tester.takeException(), isNull);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+
+    expect(taps, 1);
+  });
+
+  testWidgets('Space 로도 누를 수 있다', (tester) async {
+    var taps = 0;
+    await pumpScreen(
+      tester,
+      Center(child: TpButton(label: '눌러', onTap: () => taps++)),
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pumpAndSettle();
+
+    expect(taps, 1);
   });
 }

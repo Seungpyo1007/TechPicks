@@ -574,6 +574,9 @@ class _Composer extends StatelessWidget {
                     child: TextField(
                       controller: controller,
                       onSubmitted: onSend,
+                      // 한 줄짜리 입력이라 Enter 가 곧 보내기다. 명시해 두면
+                      // 화면 키보드도 줄바꿈 대신 보내기를 그린다.
+                      textInputAction: TextInputAction.send,
                       style: type.body,
                       decoration: InputDecoration(
                         // isDense 를 켜면 필드의 히트 영역이 29px 로 줄어

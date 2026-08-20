@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_gemma_builtin_ai/flutter_gemma_builtin_ai.dart'
     show BuiltInAiAvailability;
@@ -199,30 +200,33 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 14),
-
-            TpSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: <Widget>[
-                  // 비밀번호가 없는 계정(익명·소셜)에는 보낼 곳이 없다.
-                  if (email != null && email!.isNotEmpty)
+            // 웹에는 계정 자체가 없다(main.dart 가 Firebase 를 안 켠다).
+            // 로그인 줄을 눌러도 갈 곳이 없다 — 통화 줄과 같은 처지다.
+            if (!kIsWeb) ...<Widget>[
+              const SizedBox(height: 14),
+              TpSurface(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: <Widget>[
+                    // 비밀번호가 없는 계정(익명·소셜)에는 보낼 곳이 없다.
+                    if (email != null && email!.isNotEmpty)
+                      _SettingRow(
+                        label: K.changePassword.tr(),
+                        onTap:
+                            widget.onChangePassword ??
+                            () => unawaited(_resetPassword()),
+                      ),
                     _SettingRow(
-                      label: K.changePassword.tr(),
-                      onTap:
-                          widget.onChangePassword ??
-                          () => unawaited(_resetPassword()),
+                      // 손님에게 "로그아웃"은 나갈 곳이 없다는 뜻으로 읽힌다.
+                      // 누르면 로그인 화면으로 가니 그렇게 적는다.
+                      label: (hasAccount ? K.logout : K.signIn).tr(),
+                      onTap: widget.onLogout,
+                      last: true,
                     ),
-                  _SettingRow(
-                    // 손님에게 "로그아웃"은 나갈 곳이 없다는 뜻으로 읽힌다.
-                    // 누르면 로그인 화면으로 가니 그렇게 적는다.
-                    label: (hasAccount ? K.logout : K.signIn).tr(),
-                    onTap: widget.onLogout,
-                    last: true,
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
             if (_notice != null) ...<Widget>[
               const SizedBox(height: 8),
               Text(_notice!, style: type.caption),
