@@ -49,3 +49,6 @@ android/.gradle/
 
 # 골든이 어긋나면 flutter test 가 여기에 비교 이미지를 쏟는다.
 test/golden/failures/
+
+# 세션 인계. 명세가 아니라 로컬에만 둔다.
+docs/HANDOFF.md
