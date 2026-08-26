@@ -4,8 +4,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 2.0.0+2
 
 environment:
-  # json_serializable 6.14+ 가 ^3.8.0 이상을 요구한다.
-  sdk: ^3.8.0
+  # Vendored native_liquid_glass requires Dart 3.11 or newer.
+  sdk: ^3.11.0
 
 dependencies:
   flutter:

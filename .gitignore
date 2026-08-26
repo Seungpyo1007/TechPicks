@@ -35,6 +35,12 @@ ios/Runner/GoogleService-Info.plist
 .pub-cache/
 .pub/
 /build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Local Xcode user state.
+**/xcuserdata/
+**/*.xcuserstate
 
 # Symbolication related
 app.*.symbols
@@ -50,6 +56,3 @@ android/.gradle/
 # 골든이 어긋나면 flutter test 가 여기에 비교 이미지를 쏟는다.
 test/golden/failures/
 coverage/
-
-# 명세·인계·디자인 시안. 로컬에만 둔다.
-docs/

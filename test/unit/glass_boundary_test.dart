@@ -21,10 +21,11 @@ void main() {
 
     for (final entity in Directory('lib').listSync(recursive: true)) {
       if (entity is! File || !entity.path.endsWith('.dart')) continue;
-      if (allowed.contains(entity.path)) continue;
+      final normalizedPath = entity.path.replaceAll(r'\', '/');
+      if (allowed.contains(normalizedPath)) continue;
       // 글로 언급하는 것은 괜찮다. import 만 센다.
       if (entity.readAsStringSync().contains(needle)) {
-        offenders.add(entity.path);
+        offenders.add(normalizedPath);
       }
     }
 
