@@ -40,7 +40,8 @@ class DumpSource extends TechApiSource {
       Uri.parse('$baseUrl/v1/$collection/$slug/index.json');
 
   @override
-  Uri list(String collection) => Uri.parse('$baseUrl/v1/$collection/index.json');
+  Uri list(String collection) =>
+      Uri.parse('$baseUrl/v1/$collection/index.json');
 
   @override
   Uri index() => Uri.parse('$baseUrl/v1/index.json');

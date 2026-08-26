@@ -11,8 +11,7 @@ import '../fixtures/fixtures.dart';
 void main() {
   group('Smartphone', () {
     test('galaxy-s25의 점수 5축과 종합을 뽑아낸다 (issue #4 완료 기준)', () {
-      final phone =
-          Smartphone.fromJson(loadFixture('smartphone_galaxy_s25'));
+      final phone = Smartphone.fromJson(loadFixture('smartphone_galaxy_s25'));
 
       expect(phone.slug, 'galaxy-s25');
       expect(phone.name, 'Galaxy S25');
@@ -34,8 +33,7 @@ void main() {
     });
 
     test('brand와 soc가 조인되어 있어 추가 요청이 필요 없다', () {
-      final phone =
-          Smartphone.fromJson(loadFixture('smartphone_galaxy_s25'));
+      final phone = Smartphone.fromJson(loadFixture('smartphone_galaxy_s25'));
 
       expect(phone.brand?.slug, 'samsung');
       expect(phone.brand?.country, 'KR');
@@ -48,8 +46,7 @@ void main() {
     });
 
     test('중첩 스펙을 구조화해 읽는다', () {
-      final phone =
-          Smartphone.fromJson(loadFixture('smartphone_galaxy_s25'));
+      final phone = Smartphone.fromJson(loadFixture('smartphone_galaxy_s25'));
 
       expect(phone.display?.sizeInch, 6.2);
       expect(phone.display?.refreshHz, 120);

@@ -98,7 +98,7 @@ jobs:
               {
                 "client_info": {
                   "mobilesdk_app_id": "1:746932050988:android:38c726866fc4693a8e8589",
-                  "android_client_info": { "package_name": "com.example.techpicks" }
+                  "android_client_info": { "package_name": "com.techpicks.app" }
                 },
                 "oauth_client": [],
                 "api_key": [ { "current_key": "AIzaSyCvUWkpyXTAkDNcv1F7o2z-QDRK-u_00f4" } ],
@@ -121,3 +121,39 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 7
           if-no-files-found: error
+
+  build-ios:
+    name: ios release build & goldens
+    # iOS 를 먼저 낸다. 여기가 없으면 iOS 빌드를 아무도 안 본다.
+    # 골든도 macOS 밖에서는 건너뛰므로(test/golden/golden_harness.dart)
+    # 리눅스 잡에서는 한 장도 검사되지 않는다.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: install deps
+        run: flutter pub get
+
+      # GoogleService-Info.plist 는 저장소에 없다. firebase_options.dart 로
+      # 초기화하므로 빌드에는 필요 없다.
+      - name: build (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: goldens
+        # 러너의 렌더링이 개발 기계와 다르면 여기서 갈린다. 갈리면 실패한
+        # 그림을 받아 눈으로 보고 기준선을 어디서 구울지 정한다.
+        run: flutter test test/golden
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: golden-failures
+          path: test/golden/failures
+          retention-days: 7
+          if-no-files-found: ignore

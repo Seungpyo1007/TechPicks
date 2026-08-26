@@ -1,5 +1,7 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '17.0'
+# flutter_gemma(기기 안 AI)가 iOS 16 을 요구한다. Apple Foundation Models 자체는
+# iOS 26 부터라 실제로 도는 기기는 더 좁지만, 빌드 최소는 16 이다.
+platform :ios, '16.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'

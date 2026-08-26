@@ -15,7 +15,7 @@ import '../dto/soc.dart';
 /// 파싱 도중 터지는 예외도 [ParseFailure]로 감싸 밖으로 새지 않게 한다.
 class TechApiRepository implements DeviceRepository {
   TechApiRepository({TechApiClient? client})
-      : _client = client ?? TechApiClient();
+    : _client = client ?? TechApiClient();
 
   final TechApiClient _client;
 
@@ -48,22 +48,21 @@ class TechApiRepository implements DeviceRepository {
 
   @override
   Future<Result<Map<String, dynamic>>> index() => _guard(() async {
-        return _client.getJson(_client.source.index());
-      });
+    return _client.getJson(_client.source.index());
+  });
 
   Future<Result<T>> _detail<T>(
     String collection,
     String slug,
     T Function(Map<String, dynamic>) parse,
-  ) =>
-      _guard(() async {
-        final json = await _client.getJson(
-          _client.source.detail(collection, slug),
-          collection: collection,
-          slug: slug,
-        );
-        return parse(json);
-      });
+  ) => _guard(() async {
+    final json = await _client.getJson(
+      _client.source.detail(collection, slug),
+      collection: collection,
+      slug: slug,
+    );
+    return parse(json);
+  });
 
   Future<Result<T>> _guard<T>(Future<T> Function() body) async {
     try {

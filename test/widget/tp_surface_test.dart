@@ -1,0 +1,144 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:techpicks/app/theme/app_theme.dart';
+import 'package:techpicks/shared/widgets/tp_surface.dart';
+
+import '../support/harness.dart';
+
+/// 카드 누름 피드백.
+///
+/// 명세 Interactions 는 두 플랫폼에 다른 걸 준다 — iOS 밝기 +4%,
+/// Android M3 리플. 리플을 유리 위에 얹으면 안 맞는다.
+void main() {
+  setUp(initLocalization);
+
+  Widget card(VoidCallback? onTap, {VoidCallback? onLongPress}) => Center(
+    child: TpSurface(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      padding: const EdgeInsets.all(20),
+      child: const Text('카드'),
+    ),
+  );
+
+  testWidgets('iOS 는 누르는 동안 밝아진다', (tester) async {
+    await pumpScreen(tester, card(() {}), chrome: TpChrome.ios);
+
+    expect(find.byType(ColorFiltered), findsNothing);
+    expect(find.byType(InkWell), findsNothing);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('카드')),
+    );
+    // 밝기가 트윈된다. 시작 프레임은 아직 0 이라 필터가 없다.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 45));
+    expect(find.byType(ColorFiltered), findsOneWidget);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(find.byType(ColorFiltered), findsNothing);
+  });
+
+  testWidgets('Android 는 리플을 쓴다', (tester) async {
+    await pumpScreen(tester, card(() {}), chrome: TpChrome.android);
+
+    expect(find.byType(InkWell), findsOneWidget);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('카드')),
+    );
+    await tester.pump();
+    expect(find.byType(ColorFiltered), findsNothing);
+    await gesture.up();
+  });
+
+  testWidgets('누를 수 없는 카드는 피드백도 없다', (tester) async {
+    await pumpScreen(tester, card(null), chrome: TpChrome.ios);
+
+    expect(find.byType(ColorFiltered), findsNothing);
+    expect(find.byType(InkWell), findsNothing);
+  });
+
+  testWidgets('두 크롬 다 탭이 전달된다', (tester) async {
+    for (final chrome in TpChrome.values) {
+      var taps = 0;
+      await pumpScreen(tester, card(() => taps++), chrome: chrome);
+      await tester.tap(find.text('카드'));
+      await tester.pumpAndSettle();
+      expect(taps, 1, reason: '$chrome');
+    }
+  });
+
+  testWidgets('두 크롬 다 길게 누르기가 전달된다', (tester) async {
+    for (final chrome in TpChrome.values) {
+      var held = 0;
+      await pumpScreen(
+        tester,
+        card(() {}, onLongPress: () => held++),
+        chrome: chrome,
+      );
+      await tester.longPress(find.text('카드'));
+      await tester.pumpAndSettle();
+      expect(held, 1, reason: '$chrome');
+    }
+  });
+
+  testWidgets('길게 누르기만 있어도 반응한다', (tester) async {
+    var held = 0;
+    await pumpScreen(
+      tester,
+      card(null, onLongPress: () => held++),
+      chrome: TpChrome.ios,
+    );
+    await tester.longPress(find.text('카드'));
+    await tester.pumpAndSettle();
+    expect(held, 1);
+  });
+
+  testWidgets('스크린 리더가 버튼으로 읽는다', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pumpScreen(tester, card(() {}), chrome: TpChrome.ios);
+
+    expect(
+      tester.getSemantics(find.byType(TpSurface)),
+      // 포커스도 받는다 — 키보드로 닿을 수 있어야 마우스·키보드로 쓸 수 있다.
+      matchesSemantics(
+        hasTapAction: true,
+        hasFocusAction: true,
+        isFocusable: true,
+        isButton: true,
+        label: '카드',
+      ),
+    );
+    handle.dispose();
+  });
+
+  // 유리는 배경이 비쳐야 유리인데, 그게 글자를 읽기 어렵게 만드는 사람이
+  // 있다. iOS 는 "투명도 줄이기"로 그걸 끄는데 Flutter 에 그 플래그가 없어
+  // 같은 설정 화면에 있는 고대비를 대신 본다.
+  testWidgets('고대비를 켜면 유리를 걷는다', (tester) async {
+    await pumpScreen(
+      tester,
+      MediaQuery(
+        data: const MediaQueryData(highContrast: true),
+        child: card(() {}),
+      ),
+      chrome: TpChrome.ios,
+    );
+
+    expect(find.byType(BackdropFilter), findsNothing);
+    // 그라디언트만 든 상자(스페큘러)와 그림자만 든 상자가 같이 있다.
+    final fills = tester
+        .widgetList<DecoratedBox>(
+          find.descendant(
+            of: find.byType(TpSurface),
+            matching: find.byType(DecoratedBox),
+          ),
+        )
+        .map((b) => (b.decoration as BoxDecoration).color)
+        .nonNulls;
+    expect(fills, isNotEmpty);
+    expect(fills.every((c) => c.a == 1), isTrue);
+  });
+}

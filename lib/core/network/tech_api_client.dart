@@ -10,8 +10,8 @@ import 'tech_api_source.dart';
 /// 파싱은 하지 않는다. HTTP 결과를 [Failure]로 번역하는 것까지가 책임이다.
 class TechApiClient {
   TechApiClient({TechApiSource? source, Dio? dio})
-      : source = source ?? const DumpSource(),
-        _dio = dio ?? Dio() {
+    : source = source ?? const DumpSource(),
+      _dio = dio ?? Dio() {
     _dio.options
       ..connectTimeout = const Duration(seconds: 15)
       ..receiveTimeout = const Duration(seconds: 30)
