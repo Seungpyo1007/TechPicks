@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -54,13 +53,8 @@ final routerProvider = Provider<GoRouter>((ref) => buildRouter(ref));
 
 /// 앱의 라우터.
 ///
-/// 여태 라우터가 없었다. 탭은 `IndexedStack` 을 `setState` 로 바꾸는 것이었고,
-/// 밀린 화면은 이름 없는 `MaterialPageRoute` 였다. 폰에서는 그걸로 충분했지만
-/// 브라우저에서는 **주소창이 끝까지 안 바뀌고**, 뒤로가기가 홈 탭 점프로
-/// 먹히고, 공유한 링크를 열 수가 없다.
-///
-/// `StatefulShellRoute.indexedStack` 은 지금 있던 것과 같은 패턴이다 —
-/// 스크롤과 입력을 유지하는 `IndexedStack` — 에 주소와 이력만 붙인 것이다.
+/// `StatefulShellRoute.indexedStack` 은 탭 스크롤과 입력을 유지하는
+/// IndexedStack 에 주소와 이력을 붙인 것이다.
 GoRouter buildRouter(Ref ref) {
   return GoRouter(
     initialLocation: TpRoute.home,
@@ -87,12 +81,6 @@ GoRouter buildRouter(Ref ref) {
         return here == TpRoute.onboarding ? null : TpRoute.onboarding;
       }
       if (here == TpRoute.onboarding) return TpRoute.home;
-
-      // 웹에서는 Firebase 를 안 켠다(main.dart). 인증이 통째로 없으니 로그인
-      // 화면은 막다른 길이다 — 셋 다 조용히 null 을 돌려준다.
-      if (kIsWeb) {
-        return here.startsWith(TpRoute.login) ? TpRoute.home : null;
-      }
 
       final signedIn =
           ref.read(currentUserProvider) != null || ref.read(guestProvider);

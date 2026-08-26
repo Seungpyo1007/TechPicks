@@ -51,21 +51,6 @@ void main() {
       expect(TpChrome.forPlatform(TargetPlatform.windows), TpChrome.android);
     });
 
-    // 이 주석은 오래 "웹은 M3 로 떨어진다"고 적혀 있었는데 사실이 아니었다.
-    // 웹에서 defaultTargetPlatform 은 브라우저 UA 에서 나오므로 맥에서 연
-    // 브라우저는 macOS 로 보고되고, 데스크톱 창에 폰용 유리 크롬이 깔렸다.
-    test('웹은 UA 가 뭐라 하든 M3 다', () {
-      expect(
-        TpChrome.forPlatform(TargetPlatform.macOS, true),
-        TpChrome.android,
-      );
-      expect(TpChrome.forPlatform(TargetPlatform.iOS, true), TpChrome.android);
-      expect(
-        TpChrome.forPlatform(TargetPlatform.android, true),
-        TpChrome.android,
-      );
-    });
-
     test('두 크롬이 같은 팔레트를 쓴다', () {
       // 색은 앱 로고에서 뽑은 하나의 팔레트다. 플랫폼이 바꾸는 건 표현 방식뿐.
       // 명세 값은 #0C78D8 인데 흰 글자 대비가 4.474 로 0.03 모자라 한 단계

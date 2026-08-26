@@ -155,7 +155,7 @@ class TpBuiltInAi {
   Future<BuiltInAiAvailability> _checkAvailability() async {
     // 테스트에는 OS 모델도 플랫폼 채널도 없다. 물어보면 답이 영영 안 와서
     // 20초짜리 타이머만 남는다 — 위젯 테스트는 그걸 실패로 잡는다.
-    if (kIsWeb || Platform.environment.containsKey('FLUTTER_TEST')) {
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
       return BuiltInAiAvailability.unavailableOther;
     }
     try {

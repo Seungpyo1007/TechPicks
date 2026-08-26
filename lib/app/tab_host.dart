@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,10 +14,8 @@ import 'shell/tp_tab.dart';
 /// 명세의 back stack 은 한 단계다. 상세·선택·스캔·뷰어는 이 위로 밀어 올리고
 /// 뒤로 가면 원래 탭으로 돌아온다.
 ///
-/// 여기 오래 "go_router 를 쓰지 않았다. 필요해지면 그때 바꾼다"고 적혀 있었다.
-/// 웹으로 오면서 그때가 됐다 — 주소창이 끝까지 안 바뀌고, 브라우저 뒤로가기가
-/// 홈 탭 점프로 먹히고, 공유한 링크를 열 방법이 없었다.
-/// [StatefulShellRoute.indexedStack] 은 여기 있던 것과 같은 패턴이다.
+/// [StatefulShellRoute.indexedStack] 은 탭 스크롤을 유지하는 IndexedStack
+/// 에 주소와 이력만 붙인 것이다.
 class TabHost extends ConsumerStatefulWidget {
   const TabHost({super.key, required this.shell});
 
@@ -66,11 +63,8 @@ class _TabHostState extends ConsumerState<TabHost> {
     // 다른 탭에서 시스템 뒤로 가기를 누르면 앱을 끄는 대신 홈으로 온다.
     // 명세의 back stack 은 밀어 올린 화면만 다루고 탭은 언급하지 않는데,
     // Android 에서 탭 하나 눌렀다가 뒤로 갔다고 앱이 꺼지면 사고에 가깝다.
-    //
-    // **웹에서는 안 한다.** 브라우저 뒤로가기까지 여기로 들어와서, 이력을
-    // 되짚는 대신 홈 탭으로 점프하고 제스처를 먹었다.
     return PopScope(
-      canPop: kIsWeb || tab == TpTab.home,
+      canPop: tab == TpTab.home,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) context.go(TpRoute.home);
       },

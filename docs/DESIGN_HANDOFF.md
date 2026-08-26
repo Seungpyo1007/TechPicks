@@ -512,33 +512,6 @@ live — drop the "Restart Required" dialog and its strings.
 
 ---
 
-## Web
-
-The app is web-first now; iOS stays alive on the same codebase. Three things differ by target, and
-nothing else does.
-
-**Chrome.** Web always gets the Material chrome, never the glass one. `defaultTargetPlatform` on web comes
-from the browser user agent, so a Mac browser reports `macOS` and used to receive the iOS phone chrome —
-the same URL rendered as two different apps depending on the visitor's OS. Glass is disabled on web
-anyway; keeping the iOS tokens only left a per-surface `BackdropFilter`, the most expensive primitive
-there. The Material tokens carry `blurSigma: 0`.
-
-**Layout.** Below 600px the app is exactly the phone design. From 600px up the body is centred in an
-840px column and the bottom tab bar becomes a left navigation rail. That is applied in one place —
-`TpShell._content` — which every screen's body passes through, so the three screens that draw with
-`Positioned` against the full width (the Ask composer, Compare's pinned action, the viewer controls) are
-constrained by it too. Takeover screens stay full-bleed.
-
-**URLs.** `/`, `/rank`, `/compare`, `/compare/:a/:b`, `/ask`, `/you`, `/device/:slug`, `/device/:slug/3d`,
-`/scan`, `/login`, `/onboarding`. This is the same grammar as the `techpicks://` scheme — deliberately so;
-`TpLink` owns both and converts between them. Share text emits the page URL on web and the custom scheme
-on iOS. The address uses the path strategy, so **whatever host serves the build must rewrite unknown paths
-to `index.html`** or a refresh on `/rank` 404s.
-
-Firebase is deliberately off on web for now, so there are no accounts there and Ask answers from the
-catalogue only — the bubble says so. Turning it on means registering a web app in the console; Crashlytics
-and `firebase_ai` have no web implementation and would stay off regardless.
-
 ## Interactions & Behavior
 
 | Interaction | Spec |

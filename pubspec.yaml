@@ -14,11 +14,6 @@ dependencies:
   # 꽂아야 해서 명시한다.
   flutter_localizations:
     sdk: flutter
-  # main() 의 usePathUrlStrategy. 웹에서만 쓰지만 import 는 늘 있다.
-  flutter_web_plugins:
-    sdk: flutter
-
-
 
   cupertino_icons: ^1.0.8
   firebase_core: ^4.13.0
