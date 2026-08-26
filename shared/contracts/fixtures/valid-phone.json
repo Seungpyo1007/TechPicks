@@ -1,0 +1,28 @@
+{
+  "slug": "galaxy-s25-ultra",
+  "name": "Galaxy S25 Ultra",
+  "brand": { "slug": "samsung", "name": "Samsung" },
+  "soc": { "slug": "snapdragon-8-elite", "name": "Snapdragon 8 Elite" },
+  "release_date": "2025-02-07",
+  "msrp_usd": 1299,
+  "ram_gb": 12,
+  "storage_options_gb": [256, 512, 1024],
+  "display": {
+    "size_inch": 6.9,
+    "resolution": "3120x1440",
+    "refresh_hz": 120,
+    "type": "Dynamic AMOLED 2X"
+  },
+  "battery_mah": 5000,
+  "image_url": "https://cdn.jsdelivr.net/gh/GetTechAPI/images/smartphones/galaxy-s25-ultra.webp",
+  "score": {
+    "overall": 78.9,
+    "performance": 85.1,
+    "camera": 81.2,
+    "battery": 72.4,
+    "display": 86.3,
+    "value": 58.5
+  },
+  "verified": true,
+  "source_urls": ["https://www.samsung.com/galaxy-s25-ultra/"]
+}

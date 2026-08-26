@@ -1,0 +1,19 @@
+:root {
+  --tp-blue: #0c77d7;
+  --tp-blue-dark: #0b5490;
+  --tp-blue-light: #0090f0;
+  --tp-ink: #14161a;
+  --tp-muted-ink: #484848;
+  --tp-dim-ink: rgba(20, 30, 45, 0.63);
+  --tp-page: #f6f8fc;
+  --tp-card: #edf1f7;
+  --tp-card-strong: #e6edf6;
+  --tp-hairline: rgba(20, 40, 70, 0.08);
+  --tp-track: #d6e2f2;
+  --tp-tint: #d6e5f9;
+  --tp-radius-card: 20px;
+  --tp-radius-inner: 16px;
+  --tp-radius-control: 999px;
+  --tp-font-sans: Inter, Pretendard, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}

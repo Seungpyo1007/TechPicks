@@ -1,0 +1,6 @@
+{
+  "slug": "Not a valid slug!",
+  "name": "Invalid Slug Phone",
+  "brand": { "slug": "fixture", "name": "Fixture" },
+  "source_urls": []
+}

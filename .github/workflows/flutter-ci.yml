@@ -9,8 +9,26 @@ on:
   # Android 빌드가 8분대라 알림과 러너 시간이 계속 나간다.
   pull_request:
     branches: [main]
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'assets/**'
+      - 'shared/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/flutter-ci.yml'
   push:
     branches: [main]
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'assets/**'
+      - 'shared/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/flutter-ci.yml'
   # 그 외에는 필요할 때 브랜치를 지정해 직접 돌린다.
   #   gh workflow run flutter-ci.yml --ref <branch>
   workflow_dispatch:
