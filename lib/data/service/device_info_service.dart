@@ -1,7 +1,7 @@
 import '../../core/error_reporter.dart';
 
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart' show TargetPlatform;
 
 /// 지금 이 앱이 돌고 있는 기기.
@@ -33,16 +33,6 @@ class PlatformDeviceInfoService implements DeviceInfoService {
   @override
   Future<ThisDevice?> read() async {
     try {
-      // 브라우저. `Platform.isAndroid` 만 보던 때는 여기서 그냥 null 이
-      // 떨어져서 "이 기기" 줄이 통째로 사라졌다.
-      //
-      // 이름이 카탈로그와 맞을 리는 없다 — 안드로이드의 `SM-S931B` 와 같은
-      // 처지다. **보여주는 것이 정직해지는 것이지 매칭이 되는 게 아니다.**
-      if (kIsWeb) {
-        final info = await _plugin.webBrowserInfo;
-        final name = info.browserName.name;
-        return ThisDevice(name: name.isEmpty ? 'Browser' : name);
-      }
       if (defaultTargetPlatform == TargetPlatform.android) {
         final info = await _plugin.androidInfo;
         return ThisDevice(name: info.model, brand: info.manufacturer);

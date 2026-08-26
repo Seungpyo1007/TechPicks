@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/shell/tp_window.dart';
-import 'package:techpicks/app/theme/app_theme.dart';
 
 /// 창 등급의 경계.
 ///
@@ -29,13 +28,5 @@ void main() {
     expect(await classAt(tester, 600), TpWindowClass.medium);
     expect(await classAt(tester, 1023), TpWindowClass.medium);
     expect(await classAt(tester, 1024), TpWindowClass.expanded);
-  });
-
-  // 오래 주석은 "데스크톱·웹은 M3 로 떨어진다"고 적어놨는데 사실이 아니었다.
-  // 웹에서 defaultTargetPlatform 은 브라우저 UA 에서 나온다.
-  test('웹은 UA 가 뭐라 하든 M3 다', () {
-    for (final p in TargetPlatform.values) {
-      expect(TpChrome.forPlatform(p, true), TpChrome.android, reason: p.name);
-    }
   });
 }
