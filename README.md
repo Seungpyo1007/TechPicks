@@ -32,16 +32,9 @@ dart tool/smoke_techapi.dart      # 원격 왕복 확인
 
 ## 디자인
 
-`docs/DESIGN_HANDOFF.md` 가 확정 명세다. 토큰·지오메트리·EN/KO 카피가 전부
-거기 있고, 코드는 그 값을 그대로 따른다. 명세와 다르게 간 곳은 이유를 코드
-주석에 남겼다 — 색 세 군데가 WCAG AA 에 못 미쳐 최소로 조정한 것이 전부다.
-
 두 플랫폼의 크롬이 다르다. iOS 는 반투명 유리에 블러를, Android M3 는 불투명한
 톤 단계를 쓴다. 화면 코드는 플랫폼 분기를 갖지 않고 토큰만 갈아 끼운다.
-
-앱이 실제로 무엇을 하는지는 `docs/FUNCTIONAL_SPEC.md`, 지금 쓰는 패키지는
-`docs/DEPENDENCIES.md`, 앞으로 넣을 만한 것은 `docs/PLUGIN_RESEARCH.md`,
-재구축 경위와 남은 일은 `docs/REBUILD_PLAN.md` 에 있다.
+명세와 다르게 간 곳은 이유를 코드 주석에 남겼다.
 
 ## 개발
 
