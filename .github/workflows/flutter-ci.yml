@@ -82,32 +82,17 @@ jobs:
           cache: true
 
       - name: write Firebase Android config
-        # google-services.json은 gitignore 대상이라 저장소에 없다.
-        # 아래 값은 lib/firebase_options.dart에 이미 커밋된 공개 클라이언트
-        # 식별자와 동일하다. oauth_client가 비어 있어 Google 로그인은 되지
-        # 않지만, 빌드 검증에는 충분하다 (issue #12).
+        # Firebase Console에서 com.techpicks.app 앱을 등록한 뒤 내려받은 실제
+        # 설정만 쓴다. 임시 app id나 API key를 워크플로에 만들지 않는다.
+        env:
+          FIREBASE_ANDROID_CONFIG_BASE64: ${{ secrets.FIREBASE_ANDROID_CONFIG_BASE64 }}
         run: |
-          cat > android/app/google-services.json <<'JSON'
-          {
-            "project_info": {
-              "project_number": "746932050988",
-              "project_id": "techpicks-project",
-              "storage_bucket": "techpicks-project.appspot.com"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:746932050988:android:38c726866fc4693a8e8589",
-                  "android_client_info": { "package_name": "com.techpicks.app" }
-                },
-                "oauth_client": [],
-                "api_key": [ { "current_key": "AIzaSyCvUWkpyXTAkDNcv1F7o2z-QDRK-u_00f4" } ],
-                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          JSON
+          if [ -z "$FIREBASE_ANDROID_CONFIG_BASE64" ]; then
+            echo "::error::Register com.techpicks.app in Firebase and set FIREBASE_ANDROID_CONFIG_BASE64."
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_ANDROID_CONFIG_BASE64" | base64 --decode \
+            > android/app/google-services.json
 
       - name: install deps
         run: flutter pub get

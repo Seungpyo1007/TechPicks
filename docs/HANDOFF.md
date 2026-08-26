@@ -14,7 +14,9 @@ The Android and iOS applications must be registered in Firebase under
 `com.techpicks.app`. After registration, run `flutterfire configure` for the
 `techpicks-project` project and commit the regenerated `firebase.json` and
 `lib/firebase_options.dart`. Google and Apple sign-in registrations must use the
-same application identifiers.
+same application identifiers. Store the base64-encoded Android download in the
+GitHub Actions secret `FIREBASE_ANDROID_CONFIG_BASE64`; the Android CI job fails
+closed when this real configuration is unavailable.
 
 Do not invent replacement Firebase application IDs or commit downloaded
 `google-services.json` / `GoogleService-Info.plist` files.
