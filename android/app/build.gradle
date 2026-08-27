@@ -39,7 +39,10 @@ android {
         applicationId = "com.techpicks.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion flutter.minSdkVersion
+        // flutter_gemma_builtin_ai 가 26 을 요구한다. Flutter 기본값은 24 라
+        // 그대로 두면 assembleDebug 가 매니페스트 병합에서 멈춘다.
+        // 온디바이스 AI(Gemini Nano)를 쓰는 이상 내릴 수 없는 하한이다.
+        minSdkVersion 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
