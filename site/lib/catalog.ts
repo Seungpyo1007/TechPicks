@@ -5,7 +5,13 @@ import { cpuSchema, type Cpu } from "@/lib/cpu";
 import { phoneSchema, type Phone } from "@/lib/phone";
 import { socSchema, type Soc } from "@/lib/soc";
 
-/** Flutter 앱이 번들하는 카탈로그. 앱과 웹이 같은 순위를 보여주려면 같은 파일을 읽어야 한다. */
+/**
+ * Flutter 앱이 번들하는 카탈로그의 스냅샷.
+ *
+ * 앱과 웹이 같은 순위를 보여주려면 같은 데이터를 읽어야 한다. 원본은 저장소 루트의
+ * `assets/catalog/v1.json` 이고, `pnpm sync:catalog` 가 여기로 복사한다.
+ * 배포는 `site/` 만 프로젝트 루트로 올리기 때문에 사이트 안에 사본이 있어야 한다.
+ */
 const catalogSchema = z.object({
   version: z.number(),
   source: z.string(),
@@ -19,7 +25,7 @@ type Catalog = z.infer<typeof catalogSchema>;
 let catalogPromise: Promise<Catalog> | undefined;
 
 export function catalogPath(cwd = process.cwd()): string {
-  return path.resolve(cwd, "..", "assets", "catalog", "v1.json");
+  return path.resolve(cwd, "data", "catalog.json");
 }
 
 export async function readCatalog(filePath = catalogPath()): Promise<Catalog> {

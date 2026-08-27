@@ -49,6 +49,13 @@ jobs:
       - name: install locked dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: catalog snapshot matches the application catalog
+        # site/ 는 배포 루트라 카탈로그 사본을 안에 들고 있다. 원본과 어긋나면
+        # 앱과 웹이 서로 다른 순위를 보여주게 되므로 여기서 막는다.
+        run: |
+          pnpm sync:catalog
+          git diff --exit-code -- data/catalog.json
+
       - name: lint
         run: pnpm lint
 

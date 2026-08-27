@@ -6,7 +6,7 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "sync:brand": "node scripts/sync-brand.mjs",
-    "predev": "pnpm sync:brand",
+    "predev": "pnpm sync:brand && pnpm sync:catalog",
     "dev": "next dev",
     "prebuild": "pnpm sync:brand",
     "build": "next build",
@@ -16,7 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sync:laptops": "node scripts/sync-laptops.mjs",
-    "sync:parts": "node scripts/sync-desktop-parts.mjs"
+    "sync:parts": "node scripts/sync-desktop-parts.mjs",
+    "sync:catalog": "node scripts/sync-catalog.mjs"
   },
   "dependencies": {
     "next": "16.3.2",
