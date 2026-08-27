@@ -36,7 +36,7 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      <ProfileSettings version="web beta 0.0.2" />
+      <ProfileSettings />
     </div>
   );
 }

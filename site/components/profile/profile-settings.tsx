@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Switch, useNotifications, useTheme } from "@/components/shell/theme";
 
 /** 정본 프로필 화면의 설정 행. 값은 이 브라우저에만 남는다(계정 저장은 아직 없다). */
-export function ProfileSettings({ version }: { version: string }) {
+export function ProfileSettings() {
   const [theme, setTheme] = useTheme();
   const [notifications, setNotifications] = useNotifications();
 
@@ -36,10 +36,6 @@ export function ProfileSettings({ version }: { version: string }) {
         >
           TechAPI · CC-BY-SA 4.0
         </a>
-      </div>
-      <div className="setting-row">
-        <span>앱 버전</span>
-        <span className="note">{version}</span>
       </div>
       <Link
         className="btn btn-secondary btn-block"

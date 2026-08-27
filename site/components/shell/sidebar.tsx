@@ -16,12 +16,7 @@ export function Sidebar() {
         <span className="brand-mark">
           <Image src="/brand/NBlogo.png" alt="" width={21} height={21} priority />
         </span>
-        <span>
-          <span className="brand-name">TechPicks</span>
-          <span className="brand-version" style={{ display: "block" }}>
-            Web beta 0.0.2
-          </span>
-        </span>
+        <span className="brand-name">TechPicks</span>
       </Link>
 
       <nav className="sidebar-nav" aria-label="주요 메뉴">
