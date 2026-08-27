@@ -53,22 +53,24 @@ class DefaultFirebaseOptions {
     projectId: 'techpicks-project',
     storageBucket: 'techpicks-project.appspot.com',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyByPuhsjr8D8WpfNdYKBzCNpcF7iJ-CkNc',
-    appId: '1:746932050988:ios:e8542400d383954d8e8589',
+    appId: '1:746932050988:ios:a094b93173186c568e8589',
     messagingSenderId: '746932050988',
     projectId: 'techpicks-project',
     storageBucket: 'techpicks-project.appspot.com',
-    iosBundleId: 'com.example.techpicks',
+    androidClientId: '746932050988-rmo56abubadqbankfl1ruapi46tlnlmr.apps.googleusercontent.com',
+    iosClientId: '746932050988-gmv9q1o03iccpcj276o4tflfj8ogugo1.apps.googleusercontent.com',
+    iosBundleId: 'com.techpicks.app',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyByPuhsjr8D8WpfNdYKBzCNpcF7iJ-CkNc',
-    appId: '1:746932050988:ios:e8542400d383954d8e8589',
+    appId: '1:746932050988:ios:a094b93173186c568e8589',
     messagingSenderId: '746932050988',
     projectId: 'techpicks-project',
     storageBucket: 'techpicks-project.appspot.com',
-    iosBundleId: 'com.example.techpicks',
+    androidClientId: '746932050988-rmo56abubadqbankfl1ruapi46tlnlmr.apps.googleusercontent.com',
+    iosClientId: '746932050988-gmv9q1o03iccpcj276o4tflfj8ogugo1.apps.googleusercontent.com',
+    iosBundleId: 'com.techpicks.app',
   );
 }
