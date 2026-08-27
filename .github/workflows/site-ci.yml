@@ -1,15 +1,17 @@
 name: site-ci
 
 on:
+  # 사이트 검사는 Android 빌드가 없어 2분이면 끝난다. 릴리스 지점만 보는
+  # flutter-ci 와 달리 develop PR 에서도 돌려 웹 변경을 병합 전에 잡는다.
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'site/**'
       - 'shared/**'
       - 'assets/logo/**'
       - '.github/workflows/site-ci.yml'
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'site/**'
       - 'shared/**'

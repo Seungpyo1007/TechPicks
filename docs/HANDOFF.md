@@ -39,8 +39,11 @@ golden tests skipped by their platform guards.
 - Deployment target: Vercel with `site/` as the project root
 - Production origin: supplied through `NEXT_PUBLIC_SITE_URL`
 - Public surfaces: home, phone ranking and detail, CPU ranking and detail, laptop
-  configurations, and comparison. Scan, 3D viewer, profile, and login are shipped
-  but excluded from the index.
+  configurations, comparison, and the desktop build estimator. Scan, 3D viewer,
+  profile, and login are shipped but excluded from the index.
+- Data snapshots live under `site/data/` and are refreshed with `pnpm sync:laptops`
+  and `pnpm sync:parts`. The committed snapshot is the build input so the site
+  builds without network access.
 
 ### App and web URL map
 
@@ -48,9 +51,23 @@ golden tests skipped by their platform guards.
 | --- | --- | --- |
 | Phone detail | `techpicks://device/{slug}` | `/phones/{slug}` |
 | Comparison | `techpicks://compare/{a}/{b}` | `/compare?type=phone&ids={a},{b}` |
+| Build estimate | not in the application | `/build?use={case}&budget={usd}&cpu={slug}&gpu={slug}` |
 
 The web comparison also accepts `type=cpu` and `type=laptop`, and up to three
 identifiers. The two-phone form above is unchanged.
+
+### Deployment
+
+Vercel, with `site` as the project root and `develop` as the production branch.
+`vercel.json` already declares the Next.js framework. Two environment variables
+are required: `NEXT_PUBLIC_SITE_URL` (the assigned origin, which drives canonical
+URLs, the sitemap, and Open Graph tags) and `TECHAPI_BASE_URL`. Preview
+deployments are excluded from the index by `isPreviewDeployment()` in
+`site/lib/seo.ts`.
+
+The comparison and build screens render on demand because they read query
+parameters, so a static export target would lose them. That rules out GitHub
+Pages for this site.
 
 ### Palette
 
