@@ -35,6 +35,27 @@ golden tests skipped by their platform guards.
 ## Web delivery
 
 - Source directory: `site/` (never Flutter's reserved `web/` directory)
+- Design source of truth: `TechPicks Web M3.dc.html` — see `docs/WEB_DESIGN_FIDELITY.md`
 - Deployment target: Vercel with `site/` as the project root
 - Production origin: supplied through `NEXT_PUBLIC_SITE_URL`
-- First public surfaces: phone ranking, detail, and two-phone comparison
+- Public surfaces: home, phone ranking and detail, CPU ranking and detail, laptop
+  configurations, and comparison. Scan, 3D viewer, profile, and login are shipped
+  but excluded from the index.
+
+### App and web URL map
+
+| Resource | App deep link | Web |
+| --- | --- | --- |
+| Phone detail | `techpicks://device/{slug}` | `/phones/{slug}` |
+| Comparison | `techpicks://compare/{a}/{b}` | `/compare?type=phone&ids={a},{b}` |
+
+The web comparison also accepts `type=cpu` and `type=laptop`, and up to three
+identifiers. The two-phone form above is unchanged.
+
+### Palette
+
+The web deliberately does not share the application palette. The application uses
+the logo blue `#0C78D8` from `lib/app/theme/tp_tokens.dart`; the web uses the
+design source's slate accent `#5980a6` from `site/styles/tokens.css`.
+`shared/tokens/techpicks.css` remains the application contract and is not
+imported by the web.

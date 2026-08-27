@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { formatPrice } from "@/lib/format";
 
 export const phoneSlugSchema = z
   .string()
@@ -127,4 +128,22 @@ export function toPhoneListItem(phone: Phone): PhoneListItem {
 
 export function toPhoneOption(phone: Phone): PhoneOption {
   return { slug: phone.slug, name: phone.name };
+}
+
+/** 정본 순위 리스트가 필요로 하는 최소 필드. 클라이언트로 넘기는 양을 줄인다. */
+export type RankListItem = {
+  slug: string;
+  name: string;
+  priceLabel: string;
+  total: number | null;
+};
+
+export function toRankListItem(phone: Phone): RankListItem {
+  const overall = phone.score?.overall;
+  return {
+    slug: phone.slug,
+    name: phone.name,
+    priceLabel: formatPrice(phone.msrp_usd),
+    total: overall === undefined || overall === null ? null : Math.round(overall),
+  };
 }

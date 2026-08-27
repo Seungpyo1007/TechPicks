@@ -14,7 +14,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sync:laptops": "node scripts/sync-laptops.mjs"
   },
   "dependencies": {
     "next": "16.3.2",
