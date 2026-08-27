@@ -35,6 +35,7 @@ ZIP 안의 `support.js` / `techpicks-data.js` / `_ds_bundle.js` 는 디자인 �
 | CPU | `/cpus`, `/cpus/[slug]` | O (40 SSG) |
 | 노트북 | `/laptops` | O |
 | 비교 | `/compare?type=phone\|cpu\|laptop&ids=a,b[,c]` | O |
+| (원본에 없음) 조립 견적 | `/build?use=&budget=&cpu=&gpu=` | O |
 | OCR 스캔 | `/scan` | X |
 | 3D 뷰어 | `/viewer` | X |
 | 프로필 | `/profile` | X |
@@ -64,6 +65,17 @@ CSS 미디어쿼리로 처리한다(서버 HTML 이 하나여야 하이드레이
 
 ## 원본에 없던 추가
 
+- **조립 견적 `/build`** — 원본 정본에 없는 화면이다. 사이드바가 8개에서 9개가 되고,
+  홈 타일의 `북마크`(자리표시라 `/phones` 로 가던 항목)를 `조립` 으로 바꿨다.
+  화면 언어는 정본 그대로 쓴다 — 용도 탭은 비교 화면의 알약, 요구사양 행은 노트북 카드의 행.
+  실제 제품을 고르는 것은 CPU 와 GPU 뿐이다. TechAPI 에 메인보드·메모리·저장장치·파워·케이스가
+  없어서, 그 부품들은 소켓·메모리 규격·권장 파워 같은 **도출 요구사양**으로만 제시한다.
+  데이터는 `site/data/desktop-parts.json` (`pnpm sync:parts`).
+- **대비 토큰** — 정본 팔레트를 그대로 두되 글자가 놓이는 조합만 WCAG AA 를 넘기게 고정했다.
+  다크 모드에서 홈 히어로가 배경 `--color-accent-900` 에 글자 `--color-neutral-100` 이라
+  대비 1.08 로 사실상 보이지 않았다. 자세한 값은 `site/styles/tokens.css` 주석.
+  검사는 `site/scripts/audit-contrast.mjs`.
+- `Web beta 0.0.2` 표기는 제거했다.
 - `@media (prefers-reduced-motion: reduce)` — 정본에는 없지만 접근성상 필요하다.
   `tp-*` 애니메이션을 전부 멈춘다.
 - 상세 화면의 `앱에서 열기` 링크 (`techpicks://device/{slug}`) — 앱↔웹 URL 매핑을 화면에서도
@@ -75,3 +87,5 @@ CSS 미디어쿼리로 처리한다(서버 HTML 이 하나여야 하이드레이
 - 상세 화면은 TechAPI 원격을 먼저 조회하고 실패하면 카탈로그로 폴백한다 (`site/lib/techapi.ts`)
 - 노트북 9종: `site/data/laptops.json` — `pnpm sync:laptops` 로 TechAPI `/v1/laptops/` 에서 갱신.
   카탈로그에 노트북이 없고 빌드는 네트워크 없이도 같은 결과를 내야 해서 스냅샷을 커밋한다.
+- 데스크톱 CPU 69종 · GPU 101종: `site/data/desktop-parts.json` — `pnpm sync:parts`.
+  앱 카탈로그의 CPU 40건은 전부 노트북용(`segment: "laptop"`)이라 조립에 쓸 수 없다.

@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sync:laptops": "node scripts/sync-laptops.mjs"
+    "sync:laptops": "node scripts/sync-laptops.mjs",
+    "sync:parts": "node scripts/sync-desktop-parts.mjs"
   },
   "dependencies": {
     "next": "16.3.2",

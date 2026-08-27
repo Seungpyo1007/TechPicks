@@ -8,6 +8,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/phones", label: "휴대폰", icon: "phone" },
   { href: "/cpus", label: "CPU", icon: "cpu" },
   { href: "/laptops", label: "노트북", icon: "laptop" },
+  { href: "/build", label: "조립", icon: "build" },
   { href: "/compare", label: "비교", icon: "compare" },
   { href: "/scan", label: "OCR 스캔", icon: "scan" },
   { href: "/viewer", label: "3D 뷰어", icon: "box" },
@@ -29,6 +30,7 @@ const TITLES: Record<string, ScreenTitle> = {
   "/phones": { kicker: "랭킹", title: "스마트폰" },
   "/cpus": { kicker: "랭킹", title: "CPU" },
   "/laptops": { kicker: "랭킹", title: "노트북" },
+  "/build": { kicker: "도구", title: "조립 견적" },
   "/compare": { kicker: "도구", title: "제품 비교" },
   "/scan": { kicker: "도구", title: "OCR 스캔" },
   "/viewer": { kicker: "도구", title: "3D 뷰어" },
@@ -57,6 +59,6 @@ export function homeTiles(counts: { phones: number; cpus: number; laptops: numbe
     { href: "/scan", label: "OCR 스캔", sub: "모델명 인식", icon: "scan" },
     { href: "/viewer", label: "3D 뷰어", sub: "지원 예정", icon: "box" },
     { href: "/profile", label: "프로필", sub: "계정 · 설정", icon: "user" },
-    { href: "/phones", label: "북마크", sub: "관심 제품", icon: "home" },
+    { href: "/build", label: "조립", sub: "부품 추천", icon: "build" },
   ];
 }

@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import BuildPage from "@/app/(shell)/build/page";
 import ComparePage from "@/app/(shell)/compare/page";
 import CpuPage from "@/app/(shell)/cpus/[slug]/page";
 import CpusPage from "@/app/(shell)/cpus/page";
@@ -131,12 +132,70 @@ describe("compare", () => {
   });
 });
 
+describe("build", () => {
+  it("server-renders recommendations and the derived requirements", async () => {
+    const html = renderToStaticMarkup(
+      await BuildPage({ searchParams: Promise.resolve({ use: "gaming", budget: "1500" }) }),
+    );
+    expect(html).toContain("1순위 추천");
+    expect(html).toContain("나머지 부품 요구사양");
+    expect(html).toContain("메인보드 소켓");
+    expect(html).toContain("권장 파워");
+    // TechAPI 에 없는 부품을 제품으로 고르는 척하지 않는다는 문구
+    expect(html).toContain("요구사양");
+  });
+
+  it("honours a hand-picked pair", async () => {
+    const html = renderToStaticMarkup(
+      await BuildPage({
+        searchParams: Promise.resolve({
+          use: "ai",
+          budget: "3000",
+          cpu: "ryzen-9-9950x",
+          gpu: "geforce-rtx-5090",
+        }),
+      }),
+    );
+    expect(html).toContain("AMD Ryzen 9 9950X");
+    expect(html).toContain("GeForce RTX 5090");
+  });
+
+  it("says so when the budget buys nothing", async () => {
+    const html = renderToStaticMarkup(
+      await BuildPage({ searchParams: Promise.resolve({ budget: "200" }) }),
+    );
+    expect(html).toContain("이 예산으로 만들 수 있는 조합이 없습니다");
+  });
+
+  it("404s on an unknown use case, budget or part", async () => {
+    await expect(
+      BuildPage({ searchParams: Promise.resolve({ use: "mining" }) }),
+    ).rejects.toMatchObject({ digest: expect.stringContaining("404") });
+    await expect(
+      BuildPage({ searchParams: Promise.resolve({ cpu: "no-such-cpu" }) }),
+    ).rejects.toMatchObject({ digest: expect.stringContaining("404") });
+  });
+});
+
 describe("sitemap", () => {
   it("lists every catalog phone and processor, and no private screen", async () => {
     const entries = await sitemap();
     expect(entries.filter((entry) => entry.url.includes("/phones/"))).toHaveLength(154);
     expect(entries.filter((entry) => entry.url.includes("/cpus/"))).toHaveLength(40);
     expect(entries.some((entry) => entry.url.endsWith("/compare"))).toBe(true);
+    expect(entries.some((entry) => entry.url.endsWith("/build"))).toBe(true);
     expect(entries.some((entry) => /\/(login|profile|scan|viewer)$/.test(entry.url))).toBe(false);
+  });
+});
+
+describe("shell", () => {
+  it("lists every screen in the sidebar, including the new estimator", async () => {
+    const { Sidebar } = await import("@/components/shell/sidebar");
+    const html = renderToStaticMarkup(<Sidebar />);
+    for (const label of ["홈", "휴대폰", "CPU", "노트북", "조립", "비교", "OCR 스캔", "3D 뷰어", "프로필"]) {
+      expect(html).toContain(label);
+    }
+    // 베타 표기는 제거했다.
+    expect(html).not.toContain("beta");
   });
 });

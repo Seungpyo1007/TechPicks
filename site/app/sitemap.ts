@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: canonicalUrl("/phones"), changeFrequency: "daily", priority: 1 },
     { url: canonicalUrl("/cpus"), changeFrequency: "weekly", priority: 0.8 },
     { url: canonicalUrl("/laptops"), changeFrequency: "weekly", priority: 0.6 },
+    { url: canonicalUrl("/build"), changeFrequency: "weekly", priority: 0.7 },
     { url: canonicalUrl("/compare"), changeFrequency: "weekly", priority: 0.7 },
     ...phones.map((phone) => ({
       url: canonicalUrl(`/phones/${phone.slug}`),

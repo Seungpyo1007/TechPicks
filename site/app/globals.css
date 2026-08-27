@@ -404,6 +404,27 @@ img { max-width: 100%; height: auto; }
 .compare-spec-cell { font-size: 14px; line-height: 1.45; min-width: 0; color: inherit; transition: color .3s ease; }
 .compare-spec-cell.is-best { font-weight: 600; color: var(--color-accent-700); }
 
+/* ── 조립 견적 ─────────────────────────────────────────── */
+.build-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+.build-budget { display: flex; flex-direction: column; gap: 10px; }
+.build-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.build-presets .compare-tab { border: 0; }
+.build-picks { display: flex; flex-direction: column; gap: 10px; }
+
+.build-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.combo-card { padding: 20px; display: flex; flex-direction: column; gap: 14px; animation: tp-rise .5s cubic-bezier(.2,0,0,1) both; }
+.combo-card[aria-current="true"] { outline: 2px solid var(--color-accent-ink); outline-offset: -2px; }
+.combo-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.combo-score { font-family: var(--font-heading); font-weight: 600; font-size: 26px; line-height: 1; color: var(--color-accent-ink); }
+.combo-card .laptop-row dd { text-align: right; line-height: 1.4; }
+
+.build-selected { display: grid; grid-template-columns: 1fr 54px 1fr; gap: 0 20px; align-items: center; }
+.build-part { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.build-part h2 { margin: 0; font-size: 22px; line-height: 1.15; }
+.build-plus { display: flex; justify-content: center; font-family: var(--font-heading); font-size: 22px; color: var(--color-muted); }
+.build-warning { align-self: start; margin: 16px 0 0; white-space: normal; line-height: 1.5; }
+.build-subhead { margin: 22px 0 10px; font-size: 15px; letter-spacing: .04em; }
+
 /* ── 스캔 / 뷰어 ──────────────────────────────────────── */
 .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 940px; align-items: start; }
 .scan-frame { position: relative; height: 260px; border-radius: 22px; background: var(--color-neutral-200); overflow: hidden; }
@@ -492,6 +513,8 @@ img { max-width: 100%; height: auto; }
 /* ── 반응형 ────────────────────────────────────────────── */
 @media (max-width: 1080px) {
   .home-split, .detail-body, .tool-grid { grid-template-columns: 1fr; }
+  .build-controls { grid-template-columns: 1fr; }
+  .build-results { grid-template-columns: 1fr; }
   .tile-grid { grid-template-columns: repeat(2, 1fr); }
   .card-grid { grid-template-columns: repeat(2, 1fr); }
   .master-detail { grid-template-columns: 1fr; }
@@ -504,6 +527,8 @@ img { max-width: 100%; height: auto; }
   .screen { padding: 16px 16px 150px; }
   .compare-fab { bottom: 82px; }
   .home-hero { grid-template-columns: 1fr; }
+  .build-selected { grid-template-columns: 1fr; gap: 16px; }
+  .build-plus { justify-content: flex-start; }
   .card-grid { grid-template-columns: 1fr; }
   .login { grid-template-columns: 1fr; }
   .login-stage, .login-form { padding: 32px 24px; }
