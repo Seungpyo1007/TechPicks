@@ -58,12 +58,18 @@ identifiers. The two-phone form above is unchanged.
 
 ### Deployment
 
-Vercel, with `site` as the project root and `develop` as the production branch.
-`vercel.json` already declares the Next.js framework. Two environment variables
-are required: `NEXT_PUBLIC_SITE_URL` (the assigned origin, which drives canonical
-URLs, the sitemap, and Open Graph tags) and `TECHAPI_BASE_URL`. Preview
-deployments are excluded from the index by `isPreviewDeployment()` in
-`site/lib/seo.ts`.
+Live at **https://techpicks-mu.vercel.app** (Vercel project `techpicks` under
+`seungpyo1007s-projects`). `techpicks.vercel.app` was already taken, so the
+assigned origin carries the `-mu` suffix; `NEXT_PUBLIC_SITE_URL` must match it
+exactly because canonical URLs, the sitemap, and Open Graph tags derive from it.
+`TECHAPI_BASE_URL` is the second required variable. Preview deployments are
+excluded from the index by `isPreviewDeployment()` in `site/lib/seo.ts`.
+
+Deployments run from `site/` as the project root, so everything the build reads
+has to live inside it. That is why the catalog is snapshotted to
+`site/data/catalog.json` and why `next.config.ts` names the snapshots in
+`outputFileTracingIncludes` — without that the serverless functions ship without
+their data and every dynamic route answers ENOENT.
 
 The comparison and build screens render on demand because they read query
 parameters, so a static export target would lose them. That rules out GitHub
