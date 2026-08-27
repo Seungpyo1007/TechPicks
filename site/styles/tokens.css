@@ -48,6 +48,17 @@
   --space-6: 20.4px;
   --space-8: 27.2px;
 
+  /* 대비 토큰. 정본 팔레트를 그대로 두되, 글자가 놓이는 조합만 WCAG AA(4.5:1)를 넘기게 고정한다.
+     아래 네 값은 테마를 따라 뒤집지 않는다 — 뒤집히면 어두운 면 위에서 대비가 무너진다. */
+  --hero-bg: #1d2d3d;
+  --hero-ink: #f5f5f8;
+  --color-accent-fill: #4d7396;
+  --color-on-accent: #f5f5f8;
+  /* 액센트를 글자색으로 쓸 때. accent-700 은 테마별로 뒤집혀 양쪽에서 읽힌다. */
+  --color-accent-ink: var(--color-accent-700);
+  /* 보조 문구. 정본은 50~52% 였는데 라이트 모드에서 3.1:1 이라 68% 로 올렸다. */
+  --color-muted: color-mix(in srgb, var(--color-text) 68%, transparent);
+
   --shadow-sm: 0 1px 2px color-mix(in srgb, #2b2b2d 14%, transparent);
   --shadow-md: 0 3px 10px color-mix(in srgb, #2b2b2d 16%, transparent);
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
