@@ -1,0 +1,6 @@
+{
+  "slug": "fixture-basic-phone",
+  "name": "Fixture Basic Phone",
+  "brand": { "slug": "fixture", "name": "Fixture" },
+  "source_urls": ["https://example.com/fixture-basic-phone"]
+}

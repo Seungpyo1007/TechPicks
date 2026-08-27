@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		Sign in with Apple.
+
+		이 파일만으로는 안 된다. Apple Developer 의 App ID 에서 같은 기능을
+		켜야 서명이 통과한다. 시뮬레이터 빌드는 서명을 안 해서 그대로 뜬다.
+	-->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+</dict>
+</plist>

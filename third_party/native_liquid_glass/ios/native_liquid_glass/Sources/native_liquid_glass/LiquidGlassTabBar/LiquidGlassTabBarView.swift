@@ -1,0 +1,981 @@
+import Flutter
+import UIKit
+
+/// Hosts and configures a native `UITabBarController` for the Flutter platform view.
+///
+/// The view is responsible for:
+/// - applying tab appearance and layout options from `LiquidGlassTabBarConfig`
+/// - embedding the controller's view into this host view
+/// - forwarding selection changes back to Flutter
+final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDelegate {
+  private static let actionButtonTag = 9999
+  private static let tabIdentifierPrefix = "liquid-glass-tab-"
+
+  private let config: LiquidGlassTabBarConfig
+  let tabBarController = UITabBarController()
+  private let onTabSelected: (Int) -> Void
+  private let onActionButtonPressed: () -> Void
+  private let selectedItemColor: UIColor?
+  private let selectableTabCount: Int
+  private let tabSelectedColors: [UIColor?]
+  private var defaultTabBarTintColor: UIColor?
+
+  /// True when the bar was built with the iOS 18+ `UITab` API instead of the
+  /// legacy `UIViewController.tabBarItem` API. See `configureTabBarController`.
+  private var usesTabsAPI = false
+
+  /// Whether the selection now being reported came from a user tap.
+  ///
+  /// `didSelect` / `didSelectTab` also fire when the selection is set
+  /// programmatically — when the tabs are first installed, and every time
+  /// Flutter pushes a new `currentIndex`. Reporting those back to Dart makes
+  /// the host bounce to a tab nobody chose (on a five-tab bar, five callbacks
+  /// arrive in the same millisecond at build time, and one stale callback
+  /// follows every change).
+  ///
+  /// `shouldSelect` / `shouldSelectTab` only run for user-initiated
+  /// selection, so they are the signal for "a person did this".
+  private var selectionIsUserInitiated = false
+  /// Identifiers of the selectable tabs, in declaration order (excludes the
+  /// action button). Used to map `UITab` delegate callbacks back to indices.
+  private var tabIdentifiers: [String] = []
+  /// Identifier of the trailing action tab, when one is configured.
+  private var actionTabIdentifier: String?
+
+  init(
+    config: LiquidGlassTabBarConfig,
+    onTabSelected: @escaping (Int) -> Void,
+    onActionButtonPressed: @escaping () -> Void
+  ) {
+    self.config = config
+    self.onTabSelected = onTabSelected
+    self.onActionButtonPressed = onActionButtonPressed
+    self.selectedItemColor = config.selectedItemColor
+    self.selectableTabCount = config.tabs.count
+    self.tabSelectedColors = config.tabs.map { $0.selectedItemColor ?? config.selectedItemColor }
+    super.init(frame: .zero)
+
+    backgroundColor = .clear
+    clipsToBounds = false
+    isOpaque = false
+    layer.isOpaque = false
+    configureTabBarController(with: config)
+    applyUserInterfaceStyle()
+  }
+
+  /// Pins the bar to the Flutter app's brightness.
+  ///
+  /// `overrideUserInterfaceStyle` is a persistent property, but Flutter
+  /// navigation push/pop detaches and reattaches the platform view, which
+  /// makes UIKit re-resolve dynamic colors (background, labels, template icon
+  /// tints) against the *device* appearance — the "colors invert when I
+  /// navigate back" symptom. Setting it on the controller (which cascades to
+  /// the tab bar) and re-asserting it on reattach keeps the appearance stable.
+  private func applyUserInterfaceStyle() {
+    let style = config.userInterfaceStyle
+    tabBarController.overrideUserInterfaceStyle = style
+    overrideUserInterfaceStyle = style
+  }
+
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+    super.traitCollectionDidChange(previousTraitCollection)
+
+    guard previousTraitCollection != nil else {
+      return
+    }
+
+    refreshTabBarVisuals()
+  }
+
+  /// Re-apply the selected tint whenever this view (re)attaches to a window.
+  ///
+  /// Flutter navigation push/pop can cause UIKit to re-render the tab bar
+  /// using its baked-in `UITabBarAppearance.selected.iconColor`, which
+  /// overrides the dynamic per-tab `tintColor` we apply for tabs that set
+  /// their own `selectedItemColor`. Re-applying here keeps the per-tab
+  /// color stable after navigating away and coming back.
+  override func didMoveToWindow() {
+    super.didMoveToWindow()
+
+    guard window != nil else {
+      return
+    }
+
+    // Reattachment (e.g. Flutter pop) can let UIKit re-resolve appearance
+    // against the device style; re-assert the locked style first.
+    applyUserInterfaceStyle()
+    applyTintColorForSelectedIndex(
+      currentSelectedIndex,
+      tabBar: tabBarController.tabBar
+    )
+  }
+
+  /// Attaches the internal tab bar controller to a parent view controller.
+  ///
+  /// UIKit requires proper parent-child containment for embedded controllers.
+  func attach(to parentViewController: UIViewController?) {
+    guard let parentViewController else {
+      return
+    }
+
+    if tabBarController.parent === parentViewController {
+      return
+    }
+
+    if tabBarController.parent != nil {
+      tabBarController.willMove(toParent: nil)
+      tabBarController.removeFromParent()
+    }
+
+    parentViewController.addChild(tabBarController)
+    tabBarController.didMove(toParent: parentViewController)
+
+    // Re-apply tint after containment changes; iPad can recalculate tab bar
+    // rendering when the controller is attached to its final hierarchy.
+    applySelectedTintColorHierarchy(selectedItemColor, tabBar: tabBarController.tabBar)
+  }
+
+  /// Ensures controller containment is cleaned up when this host view is deallocated.
+  deinit {
+    if tabBarController.parent != nil {
+      tabBarController.willMove(toParent: nil)
+      tabBarController.removeFromParent()
+    }
+  }
+
+  /// Builds and applies native tab bar UI from parsed config.
+  ///
+  /// Order matters:
+  /// 1) create tab view controllers/items
+  /// 2) configure selection and layout behavior
+  /// 3) apply optional appearance customization
+  /// 4) embed the tab bar controller's view
+  private func configureTabBarController(with config: LiquidGlassTabBarConfig) {
+    tabBarController.delegate = self
+    tabBarController.view.backgroundColor = .clear
+    tabBarController.view.clipsToBounds = false
+    tabBarController.view.isOpaque = false
+    tabBarController.view.layer.isOpaque = false
+
+    // iOS 26+ builds tabs with the `UITab` API. The legacy path relied on
+    // UIKit's heuristic that splits a `.search` system item into the detached
+    // circular accessory; iOS 27 removed that heuristic, so the split must be
+    // requested explicitly (`UISearchTab` on 26, the prominent-tab API on 27).
+    if #available(iOS 26.0, *) {
+      usesTabsAPI = true
+      tabBarController.tabs = buildTabs(from: config)
+      applyProminentActionTabIfNeeded()
+    } else {
+      tabBarController.setViewControllers(buildViewControllers(from: config), animated: false)
+    }
+
+    configureSelectionAndMode(
+      currentIndex: config.currentIndex,
+      selectableTabCount: selectableTabCount
+    )
+
+    let tabBar = tabBarController.tabBar
+    tabBar.clipsToBounds = false
+    tabBar.layer.masksToBounds = false
+    if defaultTabBarTintColor == nil {
+      defaultTabBarTintColor = tabBar.tintColor
+    }
+    configureTabBarLayout(tabBar, with: config)
+    applyTabBarAppearanceIfNeeded(on: tabBar, with: config)
+
+    // Keep tint assignment deterministic after appearance configuration so
+    // iPad rendering paths don't fall back to default system blue.
+    applyTintColorForSelectedIndex(currentSelectedIndex, tabBar: tabBar)
+
+    embedTabBarControllerView()
+  }
+
+  /// Creates one child view controller per tab item.
+  private func buildViewControllers(from config: LiquidGlassTabBarConfig) -> [UIViewController] {
+    var viewControllers = config.tabs.map { tab in
+      let controller = UIViewController()
+      controller.view.backgroundColor = .clear
+      controller.tabBarItem = makeTabBarItem(from: tab, config: config)
+      return controller
+    }
+
+    if let actionButton = config.actionButton {
+      viewControllers.append(makeActionButtonController(from: actionButton, config: config))
+    }
+
+    return viewControllers
+  }
+
+  /// Builds a trailing action button controller rendered as a separate native pill.
+  private func makeActionButtonController(
+    from actionButton: LiquidGlassTabBarConfig.TabItem,
+    config: LiquidGlassTabBarConfig
+  ) -> UIViewController {
+    let controller = UIViewController()
+    controller.view.backgroundColor = .clear
+
+    let actionItem = UITabBarItem(tabBarSystemItem: .search, tag: Self.actionButtonTag)
+    actionItem.image = actionButton.image(forSelectedState: false, iconSize: config.iconSize)
+    actionItem.selectedImage = actionButton.image(forSelectedState: true, iconSize: config.iconSize)
+    actionItem.title = config.showLabels ? actionButton.label : nil
+    actionItem.accessibilityLabel = actionButton.label
+
+    applyBadgeConfiguration(from: actionButton, to: actionItem)
+    applyLabelTypographyIfNeeded(to: actionItem, labelStyle: config.labelStyle)
+
+    controller.tabBarItem = actionItem
+    return controller
+  }
+
+  /// Builds the tab list with the iOS 18+ `UITab` API: one `UITab` per
+  /// selectable tab, plus an optional trailing `UISearchTab` for the action
+  /// button. `UISearchTab` is what UIKit renders as the detached circular
+  /// accessory on iOS 26.
+  @available(iOS 26.0, *)
+  private func buildTabs(from config: LiquidGlassTabBarConfig) -> [UITab] {
+    var tabs = config.tabs.enumerated().map { index, tab in
+      makeTab(from: tab, index: index, config: config)
+    }
+    tabIdentifiers = tabs.map { $0.identifier }
+
+    if let actionButton = config.actionButton {
+      let actionTab = makeActionTab(from: actionButton, config: config)
+      actionTabIdentifier = actionTab.identifier
+      tabs.append(actionTab)
+    } else {
+      actionTabIdentifier = nil
+    }
+
+    return tabs
+  }
+
+  @available(iOS 26.0, *)
+  private func makeTab(
+    from tab: LiquidGlassTabBarConfig.TabItem,
+    index: Int,
+    config: LiquidGlassTabBarConfig
+  ) -> UITab {
+    let uiTab = UITab(
+      title: config.showLabels ? tab.label : "",
+      image: tab.image(forSelectedState: false, iconSize: config.iconSize),
+      identifier: "\(Self.tabIdentifierPrefix)\(index)"
+    ) { _ in
+      Self.makeTabContentController()
+    }
+
+    if #available(iOS 26.1, *) {
+      // `UITab.selectedImage` only exists in the iOS 26.1 SDK. Referencing it
+      // directly fails to COMPILE against older SDKs (the runtime #available
+      // check does not gate compilation). KVC avoids the compile-time symbol
+      // while still applying the image at runtime on iOS 26.1+ — same
+      // dynamic-fallback pattern as `prominentTabIdentifier` below.
+      uiTab.setValue(
+        tab.image(forSelectedState: true, iconSize: config.iconSize),
+        forKey: "selectedImage"
+      )
+    }
+    uiTab.badgeValue = tab.badgeValue
+    return uiTab
+  }
+
+  /// Builds the trailing action tab as a `UISearchTab` so UIKit renders it as
+  /// the detached circular accessory. Selection is intercepted in
+  /// `tabBarController(_:shouldSelectTab:)`, so the system search UI never
+  /// activates — the tap is forwarded to Flutter instead.
+  @available(iOS 26.0, *)
+  private func makeActionTab(
+    from actionButton: LiquidGlassTabBarConfig.TabItem,
+    config: LiquidGlassTabBarConfig
+  ) -> UITab {
+    let searchTab = UISearchTab { _ in
+      Self.makeTabContentController()
+    }
+
+    searchTab.automaticallyActivatesSearch = false
+    searchTab.title = config.showLabels ? actionButton.label : ""
+    if let image = actionButton.image(forSelectedState: false, iconSize: config.iconSize) {
+      searchTab.image = image
+    }
+    if #available(iOS 26.1, *),
+      let selectedImage = actionButton.image(forSelectedState: true, iconSize: config.iconSize)
+    {
+      // KVC instead of `UISearchTab.selectedImage`: the property only exists
+      // in the iOS 26.1 SDK and would break compilation on older toolchains.
+      searchTab.setValue(selectedImage, forKey: "selectedImage")
+    }
+    searchTab.badgeValue = actionButton.badgeValue
+    return searchTab
+  }
+
+  private static func makeTabContentController() -> UIViewController {
+    let controller = UIViewController()
+    controller.view.backgroundColor = .clear
+    return controller
+  }
+
+  /// iOS 27 no longer separates the search tab automatically; the detached
+  /// look is opt-in via `UITabBarController.prominentTabIdentifier`. The
+  /// direct call needs the iOS 27 SDK (Xcode 27 / Swift 6.4+); older
+  /// toolchains reach the setter dynamically so apps built with Xcode 26
+  /// still get the split when running on iOS 27.
+  private func applyProminentActionTabIfNeeded() {
+    guard let actionTabIdentifier else {
+      return
+    }
+
+    #if compiler(>=6.4)
+      if #available(iOS 27.0, *) {
+        tabBarController.setProminentTabIdentifier(actionTabIdentifier, animated: false)
+      }
+    #else
+      if tabBarController.responds(to: NSSelectorFromString("setProminentTabIdentifier:")) {
+        tabBarController.setValue(actionTabIdentifier, forKey: "prominentTabIdentifier")
+      }
+    #endif
+  }
+
+  /// Builds a native tab bar item with icon, label, badge, and selected title styling.
+  private func makeTabBarItem(
+    from tab: LiquidGlassTabBarConfig.TabItem,
+    config: LiquidGlassTabBarConfig
+  ) -> UITabBarItem {
+    let tabItem = UITabBarItem(
+      title: config.showLabels ? tab.label : nil,
+      image: tab.image(forSelectedState: false, iconSize: config.iconSize),
+      selectedImage: tab.image(forSelectedState: true, iconSize: config.iconSize)
+    )
+    tabItem.accessibilityLabel = tab.label
+
+    applyBadgeConfiguration(from: tab, to: tabItem)
+    applyLabelTypographyIfNeeded(to: tabItem, labelStyle: config.labelStyle)
+    let resolvedSelectedColor = tab.selectedItemColor ?? config.selectedItemColor
+    applySelectedTitleAttributesIfNeeded(to: tabItem, selectedColor: resolvedSelectedColor)
+
+    return tabItem
+  }
+
+  /// Applies optional font and letter spacing to tab labels.
+  private func applyLabelTypographyIfNeeded(
+    to tabItem: UITabBarItem,
+    labelStyle: LiquidGlassTabBarConfig.LabelStyle?
+  ) {
+    guard let labelStyle else {
+      return
+    }
+
+    var normalAttributes = tabItem.titleTextAttributes(for: .normal) ?? [:]
+    var selectedAttributes = tabItem.titleTextAttributes(for: .selected) ?? [:]
+
+    if let font = labelStyle.resolvedFont() {
+      normalAttributes[.font] = font
+      selectedAttributes[.font] = font
+    }
+
+    if let letterSpacing = labelStyle.letterSpacing {
+      normalAttributes[.kern] = letterSpacing
+      selectedAttributes[.kern] = letterSpacing
+    }
+
+    if !normalAttributes.isEmpty {
+      tabItem.setTitleTextAttributes(normalAttributes, for: .normal)
+    }
+
+    if !selectedAttributes.isEmpty {
+      tabItem.setTitleTextAttributes(selectedAttributes, for: .selected)
+    }
+  }
+
+  /// Applies badge value and colors for a tab item.
+  private func applyBadgeConfiguration(
+    from tab: LiquidGlassTabBarConfig.TabItem, to tabItem: UITabBarItem
+  ) {
+    tabItem.badgeValue = tab.badgeValue
+    if let badgeColor = tab.badgeColor {
+      tabItem.badgeColor = badgeColor
+    }
+    if let badgeTextColor = tab.badgeTextColor {
+      tabItem.setBadgeTextAttributes([.foregroundColor: badgeTextColor], for: .normal)
+    }
+  }
+
+  /// Applies per-item selected title attributes as a safeguard for iPad title color.
+  private func applySelectedTitleAttributesIfNeeded(
+    to tabItem: UITabBarItem, selectedColor: UIColor?
+  ) {
+    guard let selectedColor else {
+      return
+    }
+
+    var selectedAttributes = tabItem.titleTextAttributes(for: .selected) ?? [:]
+    selectedAttributes[.foregroundColor] = selectedColor
+    tabItem.setTitleTextAttributes(selectedAttributes, for: .selected)
+  }
+
+  /// Applies selected index and iOS 18+ tab-bar mode behavior.
+  private func configureSelectionAndMode(currentIndex: Int, selectableTabCount: Int) {
+    // Protect against invalid index when config and view-controller count diverge.
+    let clampedIndex = min(max(0, currentIndex), max(selectableTabCount - 1, 0))
+    selectTab(at: clampedIndex)
+
+    // On iPad, automatic mode can switch to tab/sidebar presentations where
+    // system styling may override item title colors. Keep native tab bar mode
+    // so appearance text colors apply consistently.
+    if #available(iOS 18.0, *) {
+      tabBarController.mode = .tabBar
+    }
+  }
+
+  /// Selects the tab at [index] through whichever API built the bar.
+  private func selectTab(at index: Int) {
+    if #available(iOS 26.0, *), usesTabsAPI {
+      guard index >= 0, index < tabIdentifiers.count,
+        let tab = tabBarController.tab(forIdentifier: tabIdentifiers[index])
+      else {
+        return
+      }
+      tabBarController.selectedTab = tab
+      return
+    }
+
+    tabBarController.selectedIndex = index
+  }
+
+  /// Index of the currently selected selectable tab, valid on both the legacy
+  /// and the `UITab` construction paths.
+  private var currentSelectedIndex: Int {
+    if #available(iOS 26.0, *), usesTabsAPI {
+      guard let identifier = tabBarController.selectedTab?.identifier,
+        let index = tabIdentifiers.firstIndex(of: identifier)
+      else {
+        return 0
+      }
+      return index
+    }
+
+    return tabBarController.selectedIndex
+  }
+
+  /// Applies layout options that control item positioning, spacing, and width.
+  private func configureTabBarLayout(_ tabBar: UITabBar, with config: LiquidGlassTabBarConfig) {
+    tabBar.itemPositioning = config.itemPositioning
+
+    if let itemSpacing = config.itemSpacing {
+      tabBar.itemSpacing = itemSpacing
+    }
+
+    if let itemWidth = config.itemWidth {
+      tabBar.itemWidth = itemWidth
+    }
+  }
+
+  /// Applies tab bar appearance when any appearance-related configuration is present.
+  private func applyTabBarAppearanceIfNeeded(
+    on tabBar: UITabBar, with config: LiquidGlassTabBarConfig
+  ) {
+    guard let appearance = makeTabBarAppearanceIfNeeded(from: config) else {
+      return
+    }
+
+    // Set standard appearance for baseline rendering and scroll-edge for modern iOS.
+    tabBar.standardAppearance = appearance
+    if #available(iOS 15.0, *) {
+      tabBar.scrollEdgeAppearance = appearance
+    }
+  }
+
+  private func refreshTabBarVisuals() {
+    let tabBar = tabBarController.tabBar
+    configureTabBarLayout(tabBar, with: config)
+    applyTabBarAppearanceIfNeeded(on: tabBar, with: config)
+    applyTintColorForSelectedIndex(currentSelectedIndex, tabBar: tabBar)
+  }
+
+  /// Builds appearance with selected, background, and shadow styling.
+  private func makeTabBarAppearanceIfNeeded(from config: LiquidGlassTabBarConfig)
+    -> UITabBarAppearance?
+  {
+    let badgeColor = config.resolvedBadgeColor
+    let badgeTextColor = config.resolvedBadgeTextColor
+
+    // Badge colors must be carried by the appearance because UIKit ignores the
+    // per-item `UITabBarItem.badgeColor` on the iOS 18+ appearance-driven path.
+    guard config.selectedItemColor != nil || config.labelStyle != nil
+      || badgeColor != nil || badgeTextColor != nil
+    else {
+      return nil
+    }
+
+    let appearance = UITabBarAppearance()
+    appearance.configureWithDefaultBackground()
+
+    // iPad/iPhone can use different tab item layout styles depending on context.
+    // Apply colors across all layout appearances to keep rendering consistent.
+    applyItemAppearance(
+      to: appearance.stackedLayoutAppearance,
+      selectedColor: config.selectedItemColor,
+      labelStyle: config.labelStyle,
+      badgeColor: badgeColor,
+      badgeTextColor: badgeTextColor
+    )
+    applyItemAppearance(
+      to: appearance.inlineLayoutAppearance,
+      selectedColor: config.selectedItemColor,
+      labelStyle: config.labelStyle,
+      badgeColor: badgeColor,
+      badgeTextColor: badgeTextColor
+    )
+    applyItemAppearance(
+      to: appearance.compactInlineLayoutAppearance,
+      selectedColor: config.selectedItemColor,
+      labelStyle: config.labelStyle,
+      badgeColor: badgeColor,
+      badgeTextColor: badgeTextColor
+    )
+
+    return appearance
+  }
+
+  /// Embeds the tab bar controller view to fill the host view.
+  private func embedTabBarControllerView() {
+    guard let controllerView = tabBarController.view else { return }
+    controllerView.translatesAutoresizingMaskIntoConstraints = false
+
+    addSubview(controllerView)
+    NSLayoutConstraint.activate([
+      controllerView.leadingAnchor.constraint(equalTo: leadingAnchor),
+      controllerView.trailingAnchor.constraint(equalTo: trailingAnchor),
+      controllerView.topAnchor.constraint(equalTo: topAnchor),
+      controllerView.bottomAnchor.constraint(equalTo: bottomAnchor),
+    ])
+  }
+
+  /// Propagates selected tint through the tab bar controller hierarchy.
+  ///
+  /// iPad tab rendering can source tint from multiple levels depending on
+  /// layout and trait environment, so we set it on all relevant views.
+  private func selectedColorForSelectableIndex(_ index: Int) -> UIColor? {
+    guard index >= 0, index < tabSelectedColors.count else {
+      return selectedItemColor
+    }
+
+    return tabSelectedColors[index]
+  }
+
+  private func applyTintColorForSelectedIndex(_ index: Int, tabBar: UITabBar) {
+    let selectedColor = selectedColorForSelectableIndex(index)
+    applySelectedTintColorHierarchy(selectedColor, tabBar: tabBar)
+  }
+
+  /// Content view controllers for every tab, valid on both construction paths.
+  private var allTabViewControllers: [UIViewController] {
+    if #available(iOS 26.0, *), usesTabsAPI {
+      return tabBarController.tabs.compactMap { $0.viewController }
+    }
+
+    return tabBarController.viewControllers ?? []
+  }
+
+  private func applySelectedTintColorHierarchy(_ selectedColor: UIColor?, tabBar: UITabBar) {
+    if let selectedColor {
+      tabBar.tintColor = selectedColor
+      tabBarController.view.tintColor = selectedColor
+      tintColor = selectedColor
+
+      for viewController in allTabViewControllers {
+        viewController.view.tintColor = selectedColor
+      }
+
+      // Keep the baked-in UITabBarAppearance in sync with the current
+      // selected color. Without this, UIKit's internal re-renders (e.g.
+      // after a Flutter navigation push/pop) fall back to the appearance's
+      // original `selected.iconColor` — which is the GLOBAL
+      // `config.selectedItemColor` — and the per-tab color appears to
+      // "reset" until the user taps a tab.
+      syncAppearanceSelectedColor(selectedColor, tabBar: tabBar)
+
+      return
+    }
+
+    tabBar.tintColor = defaultTabBarTintColor
+    tabBarController.view.tintColor = nil
+    tintColor = nil
+
+    for viewController in allTabViewControllers {
+      viewController.view.tintColor = nil
+    }
+  }
+
+  /// Updates the tab bar's appearance so its baked-in selected-state
+  /// `iconColor` and title color match [color]. Called whenever per-tab
+  /// tint changes so UIKit's internal re-renders don't revert to the
+  /// original global color.
+  private func syncAppearanceSelectedColor(_ color: UIColor, tabBar: UITabBar) {
+    // Copy to a fresh instance so UIKit reliably observes the change and
+    // triggers a redraw on all iOS versions.
+    guard let appearance = tabBar.standardAppearance.copy() as? UITabBarAppearance else {
+      return
+    }
+
+    let itemAppearances: [UITabBarItemAppearance] = [
+      appearance.stackedLayoutAppearance,
+      appearance.inlineLayoutAppearance,
+      appearance.compactInlineLayoutAppearance,
+    ]
+
+    for itemAppearance in itemAppearances {
+      itemAppearance.selected.iconColor = color
+
+      var selectedAttributes = itemAppearance.selected.titleTextAttributes
+      selectedAttributes[.foregroundColor] = color
+      itemAppearance.selected.titleTextAttributes = selectedAttributes
+
+      if #available(iOS 15.0, *) {
+        itemAppearance.focused.iconColor = color
+
+        var focusedAttributes = itemAppearance.focused.titleTextAttributes
+        focusedAttributes[.foregroundColor] = color
+        itemAppearance.focused.titleTextAttributes = focusedAttributes
+      }
+    }
+
+    tabBar.standardAppearance = appearance
+    if #available(iOS 15.0, *) {
+      tabBar.scrollEdgeAppearance = appearance
+    }
+  }
+
+  /// Updates the selected tab index without rebuilding the native controller.
+  func setSelectedIndex(_ index: Int) {
+    guard selectableTabCount > 0 else {
+      return
+    }
+
+    let clampedIndex = min(max(0, index), selectableTabCount - 1)
+    guard currentSelectedIndex != clampedIndex else {
+      return
+    }
+
+    selectTab(at: clampedIndex)
+    applyTintColorForSelectedIndex(clampedIndex, tabBar: tabBarController.tabBar)
+  }
+
+  /// Updates only the badge values on the existing tab items, without
+  /// rebuilding the native controller. Badge order matches the view
+  /// controllers: tabs first, then the optional trailing action button.
+  ///
+  /// Mirrors the creation-time convention in `LiquidGlassTabBarConfig`: a
+  /// non-empty string shows a text badge, an empty string shows a dot badge,
+  /// and `nil` clears the badge. Badge *colors* are intentionally not updated
+  /// here — they are baked into the bar-global appearance at creation.
+  func updateBadges(_ badges: [[String: Any]]) {
+    if #available(iOS 26.0, *), usesTabsAPI {
+      let tabs = tabBarController.tabs
+      for (index, badge) in badges.enumerated() {
+        guard index < tabs.count else {
+          break
+        }
+        tabs[index].badgeValue = Self.resolvedBadgeValue(from: badge)
+      }
+      return
+    }
+
+    guard let viewControllers = tabBarController.viewControllers else {
+      return
+    }
+
+    for (index, badge) in badges.enumerated() {
+      guard index < viewControllers.count else {
+        break
+      }
+
+      viewControllers[index].tabBarItem?.badgeValue = Self.resolvedBadgeValue(from: badge)
+    }
+  }
+
+  private static func resolvedBadgeValue(from badge: [String: Any]) -> String? {
+    let rawValue = badge["badgeValue"] as? String
+    let showBadge = badge["showBadge"] as? Bool ?? false
+
+    if let rawValue, !rawValue.isEmpty {
+      return rawValue
+    }
+    return showBadge ? "" : nil
+  }
+
+  func tabBarController(
+    _ tabBarController: UITabBarController, shouldSelect viewController: UIViewController
+  ) -> Bool {
+    // The UITab construction path is handled by tabBarController(_:shouldSelectTab:).
+    guard !usesTabsAPI else {
+      return true
+    }
+
+    if viewController.tabBarItem.tag == Self.actionButtonTag {
+      onActionButtonPressed()
+      return false
+    }
+
+    selectionIsUserInitiated = true
+    return true
+  }
+
+  func tabBarController(
+    _ tabBarController: UITabBarController, didSelect viewController: UIViewController
+  ) {
+    // The UITab construction path is handled by tabBarController(_:didSelectTab:previousTab:).
+    guard !usesTabsAPI else {
+      return
+    }
+
+    guard let viewControllers = tabBarController.viewControllers,
+      let index = viewControllers.firstIndex(where: { $0 === viewController }),
+      index < selectableTabCount
+    else {
+      return
+    }
+
+    applyTintColorForSelectedIndex(index, tabBar: tabBarController.tabBar)
+
+    guard selectionIsUserInitiated else {
+      return
+    }
+    selectionIsUserInitiated = false
+    onTabSelected(index)
+  }
+
+  @available(iOS 18.0, *)
+  func tabBarController(
+    _ tabBarController: UITabBarController, shouldSelectTab tab: UITab
+  ) -> Bool {
+    if tab.identifier == actionTabIdentifier {
+      onActionButtonPressed()
+      return false
+    }
+
+    selectionIsUserInitiated = true
+    return true
+  }
+
+  @available(iOS 18.0, *)
+  func tabBarController(
+    _ tabBarController: UITabBarController, didSelectTab selectedTab: UITab, previousTab: UITab?
+  ) {
+    guard let index = tabIdentifiers.firstIndex(of: selectedTab.identifier) else {
+      return
+    }
+
+    applyTintColorForSelectedIndex(index, tabBar: tabBarController.tabBar)
+
+    guard selectionIsUserInitiated else {
+      return
+    }
+    selectionIsUserInitiated = false
+    onTabSelected(index)
+  }
+
+  /// Applies selected icon/title colors and badge colors to one tab bar item
+  /// appearance style.
+  private func applyItemAppearance(
+    to appearance: UITabBarItemAppearance,
+    selectedColor: UIColor?,
+    labelStyle: LiquidGlassTabBarConfig.LabelStyle?,
+    badgeColor: UIColor?,
+    badgeTextColor: UIColor?
+  ) {
+    applyBadgeAppearance(
+      to: appearance.normal, badgeColor: badgeColor, badgeTextColor: badgeTextColor)
+    applyBadgeAppearance(
+      to: appearance.selected, badgeColor: badgeColor, badgeTextColor: badgeTextColor)
+    if #available(iOS 15.0, *) {
+      applyBadgeAppearance(
+        to: appearance.focused, badgeColor: badgeColor, badgeTextColor: badgeTextColor)
+    }
+
+    var normalAttributes = appearance.normal.titleTextAttributes
+    var selectedAttributes = appearance.selected.titleTextAttributes
+
+    if let font = labelStyle?.resolvedFont() {
+      normalAttributes[.font] = font
+      selectedAttributes[.font] = font
+    }
+
+    if let letterSpacing = labelStyle?.letterSpacing {
+      normalAttributes[.kern] = letterSpacing
+      selectedAttributes[.kern] = letterSpacing
+    }
+
+    appearance.normal.titleTextAttributes = normalAttributes
+    appearance.selected.titleTextAttributes = selectedAttributes
+
+    if let selectedColor {
+      appearance.selected.iconColor = selectedColor
+      selectedAttributes[.foregroundColor] = selectedColor
+      appearance.selected.titleTextAttributes = selectedAttributes
+
+      if #available(iOS 15.0, *) {
+        appearance.focused.iconColor = selectedColor
+        var focusedAttributes = appearance.focused.titleTextAttributes
+        if let font = labelStyle?.resolvedFont() {
+          focusedAttributes[.font] = font
+        }
+        if let letterSpacing = labelStyle?.letterSpacing {
+          focusedAttributes[.kern] = letterSpacing
+        }
+        focusedAttributes[.foregroundColor] = selectedColor
+        appearance.focused.titleTextAttributes = focusedAttributes
+      }
+    }
+  }
+
+  /// Applies badge background/text colors to a single tab bar item state
+  /// appearance. Unset colors are left untouched so UIKit keeps its system
+  /// defaults (red background, white text).
+  private func applyBadgeAppearance(
+    to stateAppearance: UITabBarItemStateAppearance,
+    badgeColor: UIColor?,
+    badgeTextColor: UIColor?
+  ) {
+    if let badgeColor {
+      stateAppearance.badgeBackgroundColor = badgeColor
+    }
+    if let badgeTextColor {
+      stateAppearance.badgeTextAttributes = [.foregroundColor: badgeTextColor]
+    }
+  }
+}
+
+// MARK: - Platform view bridge
+
+final class LiquidGlassTabBarPlatformView: NSObject, FlutterPlatformView {
+  private let containerView: UIView
+  private let channel: FlutterMethodChannel
+  private weak var hostViewController: UIViewController?
+  private var nativeTabBarControllerView: LiquidGlassNativeTabBarControllerView?
+  private var suppressObserver: GlassSuppressObserver?
+
+  init(
+    frame: CGRect,
+    viewIdentifier viewId: Int64,
+    arguments args: Any?,
+    messenger: FlutterBinaryMessenger,
+    hostViewController: UIViewController?
+  ) {
+    containerView = UIView(frame: frame)
+    self.hostViewController = hostViewController
+    channel = FlutterMethodChannel(
+      name: "liquid-glass-tab-bar-view/\(viewId)",
+      binaryMessenger: messenger
+    )
+
+    super.init()
+    suppressObserver = GlassSuppressObserver(view: containerView)
+    setupView(arguments: args as? [String: Any])
+    setupMethodChannelHandler()
+  }
+
+  deinit {
+    channel.setMethodCallHandler(nil)
+  }
+
+  func view() -> UIView {
+    containerView
+  }
+
+  private func setupView(arguments args: [String: Any]?) {
+    let config = LiquidGlassTabBarConfig(arguments: args)
+
+    let nativeView = LiquidGlassNativeTabBarControllerView(
+      config: config,
+      onTabSelected: { [weak self] index in
+        self?.channel.invokeMethod("onTabSelected", arguments: index)
+      },
+      onActionButtonPressed: { [weak self] in
+        self?.channel.invokeMethod("onActionButtonPressed", arguments: nil)
+      }
+    )
+    nativeView.translatesAutoresizingMaskIntoConstraints = false
+    nativeView.attach(to: hostViewController)
+
+    containerView.clipsToBounds = false
+    containerView.backgroundColor = .clear
+    containerView.isOpaque = false
+    containerView.layer.isOpaque = false
+    containerView.addSubview(nativeView)
+
+    // Constrain the native view to the bottom portion of the container.
+    // The top `glassOverflow` points stay empty so the glass effect can
+    // overflow into them via clipsToBounds = false without extending
+    // beyond the platform view frame that Flutter composites.
+    let glassOverflow = config.glassOverflow
+    NSLayoutConstraint.activate([
+      nativeView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+      nativeView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+      nativeView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: glassOverflow),
+      nativeView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+    ])
+
+    nativeTabBarControllerView = nativeView
+  }
+
+  private func setupMethodChannelHandler() {
+    channel.setMethodCallHandler { [weak self] call, result in
+      self?.handleMethodCall(call, result: result)
+    }
+  }
+
+  private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    switch call.method {
+    case "setSelectedIndex":
+      guard let index = parseSelectedIndex(from: call.arguments) else {
+        result(
+          FlutterError(
+            code: "invalid-arguments",
+            message: "Expected integer selected index.",
+            details: call.arguments
+          )
+        )
+        return
+      }
+
+      nativeTabBarControllerView?.setSelectedIndex(index)
+      result(nil)
+
+    case "updateBadges":
+      let rawBadges = call.arguments as? [[String: Any]] ?? []
+      nativeTabBarControllerView?.updateBadges(rawBadges)
+      result(nil)
+
+    case "setSuppressed":
+      let suppressed = (call.arguments as? [String: Any])?["suppressed"] as? Bool ?? false
+      suppressObserver?.setRouteSuppressed(suppressed)
+      result(nil)
+    default:
+      result(FlutterMethodNotImplemented)
+    }
+  }
+
+  private func parseSelectedIndex(from arguments: Any?) -> Int? {
+    if let index = arguments as? Int {
+      return index
+    }
+
+    if let number = arguments as? NSNumber {
+      return number.intValue
+    }
+
+    if let dictionary = arguments as? [String: Any] {
+      if let index = dictionary["index"] as? Int {
+        return index
+      }
+      if let number = dictionary["index"] as? NSNumber {
+        return number.intValue
+      }
+    }
+
+    return nil
+  }
+}

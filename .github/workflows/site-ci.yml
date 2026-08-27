@@ -1,0 +1,69 @@
+name: site-ci
+
+on:
+  # 사이트 검사는 Android 빌드가 없어 2분이면 끝난다. 릴리스 지점만 보는
+  # flutter-ci 와 달리 develop PR 에서도 돌려 웹 변경을 병합 전에 잡는다.
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'site/**'
+      - 'shared/**'
+      - 'assets/logo/**'
+      - '.github/workflows/site-ci.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'site/**'
+      - 'shared/**'
+      - 'assets/logo/**'
+      - '.github/workflows/site-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: site-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: lint, types, test & build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    env:
+      NEXT_PUBLIC_SITE_URL: https://techpicks.example
+      TECHAPI_BASE_URL: https://gettechapi.github.io/TechAPI
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+
+      - name: install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: catalog snapshot matches the application catalog
+        # site/ 는 배포 루트라 카탈로그 사본을 안에 들고 있다. 원본과 어긋나면
+        # 앱과 웹이 서로 다른 순위를 보여주게 되므로 여기서 막는다.
+        run: |
+          pnpm sync:catalog
+          git diff --exit-code -- data/catalog.json
+
+      - name: lint
+        run: pnpm lint
+
+      - name: typecheck
+        run: pnpm typecheck
+
+      - name: test
+        run: pnpm test
+
+      - name: production build
+        run: pnpm build

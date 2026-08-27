@@ -1,0 +1,5 @@
+{
+  "//": "프로덕션 빌드용. 테스트는 저장소 루트의 shared/contracts 픽스처를 읽는데, 배포는 site/ 만 올리므로 그 경로가 없다. 테스트 타입 검사는 pnpm typecheck 과 CI 가 맡는다.",
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", ".next", "tests"]
+}

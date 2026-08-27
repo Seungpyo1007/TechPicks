@@ -9,8 +9,26 @@ on:
   # Android 빌드가 8분대라 알림과 러너 시간이 계속 나간다.
   pull_request:
     branches: [main]
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'assets/**'
+      - 'shared/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/flutter-ci.yml'
   push:
     branches: [main]
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'assets/**'
+      - 'shared/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/flutter-ci.yml'
   # 그 외에는 필요할 때 브랜치를 지정해 직접 돌린다.
   #   gh workflow run flutter-ci.yml --ref <branch>
   workflow_dispatch:
@@ -82,32 +100,17 @@ jobs:
           cache: true
 
       - name: write Firebase Android config
-        # google-services.json은 gitignore 대상이라 저장소에 없다.
-        # 아래 값은 lib/firebase_options.dart에 이미 커밋된 공개 클라이언트
-        # 식별자와 동일하다. oauth_client가 비어 있어 Google 로그인은 되지
-        # 않지만, 빌드 검증에는 충분하다 (issue #12).
+        # Firebase Console에서 com.techpicks.app 앱을 등록한 뒤 내려받은 실제
+        # 설정만 쓴다. 임시 app id나 API key를 워크플로에 만들지 않는다.
+        env:
+          FIREBASE_ANDROID_CONFIG_BASE64: ${{ secrets.FIREBASE_ANDROID_CONFIG_BASE64 }}
         run: |
-          cat > android/app/google-services.json <<'JSON'
-          {
-            "project_info": {
-              "project_number": "746932050988",
-              "project_id": "techpicks-project",
-              "storage_bucket": "techpicks-project.appspot.com"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:746932050988:android:38c726866fc4693a8e8589",
-                  "android_client_info": { "package_name": "com.example.techpicks" }
-                },
-                "oauth_client": [],
-                "api_key": [ { "current_key": "AIzaSyCvUWkpyXTAkDNcv1F7o2z-QDRK-u_00f4" } ],
-                "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          JSON
+          if [ -z "$FIREBASE_ANDROID_CONFIG_BASE64" ]; then
+            echo "::error::Register com.techpicks.app in Firebase and set FIREBASE_ANDROID_CONFIG_BASE64."
+            exit 1
+          fi
+          printf '%s' "$FIREBASE_ANDROID_CONFIG_BASE64" | base64 --decode \
+            > android/app/google-services.json
 
       - name: install deps
         run: flutter pub get
@@ -121,3 +124,39 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 7
           if-no-files-found: error
+
+  build-ios:
+    name: ios release build & goldens
+    # iOS 를 먼저 낸다. 여기가 없으면 iOS 빌드를 아무도 안 본다.
+    # 골든도 macOS 밖에서는 건너뛰므로(test/golden/golden_harness.dart)
+    # 리눅스 잡에서는 한 장도 검사되지 않는다.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: install deps
+        run: flutter pub get
+
+      # GoogleService-Info.plist 는 저장소에 없다. firebase_options.dart 로
+      # 초기화하므로 빌드에는 필요 없다.
+      - name: build (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: goldens
+        # 러너의 렌더링이 개발 기계와 다르면 여기서 갈린다. 갈리면 실패한
+        # 그림을 받아 눈으로 보고 기준선을 어디서 구울지 정한다.
+        run: flutter test test/golden
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: golden-failures
+          path: test/golden/failures
+          retention-days: 7
+          if-no-files-found: ignore
