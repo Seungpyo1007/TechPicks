@@ -47,6 +47,7 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
     final type = context.tpText;
     final t = context.tp;
     final weights = ref.watch(weightsProvider);
+    final money = ref.watch(moneyProvider);
     // 줄 세우는 건 프로바이더가 한 번만 한다. 여기서는 거르기만 한다 —
     // 예전에는 한 글자 칠 때마다 154종을 다시 세웠다.
     final devices = DeviceSearch.filter(
@@ -135,7 +136,7 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   Text(
-                                    DeviceSpecs.formatPrice(d.msrpUsd),
+                                    money.format(d.msrpUsd),
                                     style: type.caption,
                                   ),
                                 ],

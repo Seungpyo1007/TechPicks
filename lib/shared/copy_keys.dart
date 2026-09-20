@@ -1,6 +1,7 @@
 import '../app/shell/tp_tab.dart';
 import '../domain/model/device_specs.dart';
 import '../domain/model/ranking.dart';
+import '../app/providers.dart' show TpCurrency;
 import '../domain/model/search_index.dart';
 import '../domain/model/tp_index.dart';
 
@@ -146,6 +147,21 @@ abstract final class K {
   static const String yourDeviceUnavailable = 'yourDeviceUnavailable';
 
   // 데이터 출처. CC-BY-SA 4.0 은 표기가 선택이 아니다.
+  // 통화. currency 키는 여태 죽어 있었다 — 값이 USD 하나뿐이라 고를 게
+  // 없어서 줄을 뺐었다. 원화가 들어오면서 되살아난다.
+  static const String currency = 'currency';
+  static const String currencyAuto = 'currencyAuto';
+  static const String currencyUsd = 'currencyUsd';
+  static const String currencyKrw = 'currencyKrw';
+  static const String fxNote = 'fxNote';
+  static const String fxNoteOffline = 'fxNoteOffline';
+
+  static String currencyOf(TpCurrency c) => switch (c) {
+    TpCurrency.auto => currencyAuto,
+    TpCurrency.usd => currencyUsd,
+    TpCurrency.krw => currencyKrw,
+  };
+
   // 통합 검색. 기존 searchHint 는 "기기 검색" 이라 폰 전용 문구다 —
   // 픽커와 랭킹이 쓴다. 세 갈래를 다 훑는 여기는 제 문구가 필요하다.
   static const String searchTitle = 'searchTitle';

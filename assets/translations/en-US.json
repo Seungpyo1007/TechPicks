@@ -245,5 +245,10 @@
   "searchKindPhone": "Phone",
   "searchKindCpu": "Processor",
   "searchKindLaptop": "Laptop",
-  "searchCount": "{} results"
+  "searchCount": "{} results",
+  "currencyAuto": "Match language",
+  "currencyUsd": "US dollar",
+  "currencyKrw": "Korean won",
+  "fxNote": "1 USD = ₩{} · as of {}",
+  "fxNoteOffline": "1 USD = ₩{} · as of {} (saved)"
 }

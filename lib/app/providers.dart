@@ -18,6 +18,8 @@ import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
 import '../data/repository/laptop_repository.dart';
+import '../data/service/fx_service.dart';
+import '../domain/model/tp_money.dart';
 import '../domain/model/build_estimate.dart';
 import '../domain/model/search_index.dart';
 import '../data/repository/parts_repository.dart';
@@ -572,7 +574,12 @@ final comparisonProvider = Provider<List<SpecPair>>((ref) {
   final a = find(slots.a);
   final b = find(slots.b);
   if (a == null || b == null) return const <SpecPair>[];
-  return DeviceComparison.of(a, b, ref.watch(weightsProvider));
+  return DeviceComparison.of(
+    a,
+    b,
+    ref.watch(weightsProvider),
+    ref.watch(moneyProvider),
+  );
 });
 
 /// 지난번에 본 TP Index 순위. Movers 를 내려면 비교 대상이 필요하다.
@@ -1089,6 +1096,82 @@ final guestProvider = NotifierProvider<GuestNotifier, bool>(GuestNotifier.new);
 
 /// 언어 전환. 앱은 화면에서 context 로 만들어 넣고, 테스트는 가짜를 끼운다.
 final localeControllerProvider = Provider<LocaleController?>((ref) => null);
+
+/// 가격을 어느 통화로 보여줄지.
+///
+/// `auto` 는 언어를 따라간다 — 한국어면 원, 아니면 달러. 언어 하나만 바꾸고
+/// 통화가 안 따라오면 한국어 화면에 달러가 남아 두 가지가 어긋난다.
+///
+/// 그래도 고를 수 있게 둔다. 국제 기준가로 보고 싶은 사람이 있고, 명세가
+/// 뺐던 통화 줄을 되살리는 자리이기도 하다.
+enum TpCurrency { auto, usd, krw }
+
+class CurrencyNotifier extends Notifier<TpCurrency> {
+  static const String key = 'currency_mode';
+
+  @override
+  TpCurrency build() {
+    unawaited(_restore());
+    return TpCurrency.auto;
+  }
+
+  Future<void> _restore() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(key);
+      if (saved == null) return;
+      for (final c in TpCurrency.values) {
+        if (c.name == saved) {
+          state = c;
+          return;
+        }
+      }
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'currency.restore');
+    }
+  }
+
+  Future<void> set(TpCurrency next) async {
+    state = next;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(key, next.name);
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'currency.save');
+    }
+  }
+}
+
+final currencyProvider = NotifierProvider<CurrencyNotifier, TpCurrency>(
+  CurrencyNotifier.new,
+);
+
+final fxServiceProvider = Provider<FxService>((ref) => ErApiFxService());
+
+/// 환율. **첫 프레임을 네트워크에 걸지 않는다.**
+///
+/// 박아둔 값으로 먼저 그리고 받아지면 갈아끼운다. 가격이 한 번 바뀌어
+/// 보이는 것이 로딩 스피너보다 낫다 — 값이 없는 게 아니라 덜 정확할 뿐이다.
+final fxRateProvider = FutureProvider<FxRate>(
+  (ref) => ref.watch(fxServiceProvider).read(),
+);
+
+/// 지금 쓸 통화. 화면이 이걸 [DeviceSpecs.of] 에 넘긴다.
+///
+/// 로케일은 easy_localization 이 들고 있어서 Riverpod 밖이다. 셸이
+/// [localeControllerProvider] 를 채워주므로 그걸 통해 읽는다.
+final moneyProvider = Provider<TpMoney>((ref) {
+  final mode = ref.watch(currencyProvider);
+  final krw = switch (mode) {
+    TpCurrency.usd => false,
+    TpCurrency.krw => true,
+    TpCurrency.auto =>
+      ref.watch(localeControllerProvider)?.current == TpLocale.ko,
+  };
+  if (!krw) return const TpMoney.usd();
+  // 아직 못 받았으면 박아둔 값으로 먼저 그린다.
+  return TpMoney.krw(ref.watch(fxRateProvider).value ?? FxRate.fallback);
+});
 
 /// 알림 켬/끔. 아직 실제 푸시에 연결돼 있지 않고 설정만 기억한다.
 class NotificationsNotifier extends Notifier<bool> with RestoreGuard {

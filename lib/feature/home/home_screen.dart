@@ -400,6 +400,7 @@ class _ShortlistRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final money = ref.watch(moneyProvider);
     final t = context.tp;
     final type = context.tpText;
     // 결론 카드와 같은 가중치로 센다. 기본값으로 세던 때는 같은 기기가 한
@@ -464,7 +465,7 @@ class _ShortlistRow extends ConsumerWidget {
                     // 스펙 줄은 길어지면 오른쪽으로 흐려지며 잘린다.
                     TpFadedLine(
                       text: <String>[
-                        DeviceSpecs.formatPrice(device.msrpUsd),
+                        money.format(device.msrpUsd),
                         if (device.soc?.name != null) device.soc!.name,
                       ].join('  ·  '),
                     ),

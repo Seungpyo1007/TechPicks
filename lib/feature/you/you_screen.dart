@@ -14,6 +14,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../app/locale_controller.dart';
 import '../../core/error_reporter.dart';
 import '../../data/service/link_opener.dart';
+import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
 import 'profile_edit_screen.dart';
 import 'sources_screen.dart';
@@ -93,6 +94,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     final weights = ref.watch(weightsProvider);
     final locale = ref.watch(localeControllerProvider);
     final notifications = ref.watch(notificationsProvider);
+    final currency = ref.watch(currencyProvider);
     final themeMode = ref.watch(themeModeProvider);
     final aiEngine = ref.watch(aiEngineProvider);
     final onDevice = ref.watch(onDeviceAiProvider).value;
@@ -186,10 +188,14 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                     onTap: () =>
                         _pickAiEngine(context, ref, aiEngine, onDevice),
                   ),
-                  // 통화 줄은 뺐다. `'USD'` 가 못박혀 있고 핸들러도 없고 이걸
-                  // 읽는 코드가 앱에 하나도 없었다 — 못 누르는 설정 줄은
-                  // 옆에 있는 진짜 설정들까지 못 미덥게 만든다. 값이 여러
-                  // 통화로 들어오면(명세 Data model 의 P4) 그때 되살린다.
+                  // 통화 줄은 한때 뺐었다. `'USD'` 가 못박혀 있고 핸들러도
+                  // 없어서, 못 누르는 설정 줄이 옆의 진짜 설정들까지 못
+                  // 미덥게 만들었다. 원화가 들어오면서 고를 것이 생겼다.
+                  _SettingRow(
+                    label: K.currency.tr(),
+                    value: K.currencyOf(currency).tr(),
+                    onTap: () => _pickCurrency(context, ref, currency),
+                  ),
                   _SettingRow(
                     label: K.notifications.tr(),
                     value: (notifications ? K.on : K.off).tr(),
@@ -458,6 +464,76 @@ String _themeLabel(ThemeMode mode) => switch (mode) {
 ///
 /// 언어 시트와 같은 모양이다 — 설정 안에서 고르는 방식이 줄마다 다르면
 /// 어느 줄이 시트를 여는지 눌러보기 전에는 모른다.
+/// 통화 고르기.
+///
+/// 시트 아래에 **환율이 어디서 왔는지** 적는다. 명세는 환율 환산을
+/// 금지했는데 그걸 뒤집는 것이라, 무슨 값을 언제 받아 쓰는지 보이지 않으면
+/// 지어낸 숫자와 구분이 안 된다.
+Future<void> _pickCurrency(
+  BuildContext context,
+  WidgetRef ref,
+  TpCurrency current,
+) async {
+  final type = context.tpText;
+  final rate = ref.read(fxRateProvider).value ?? FxRate.fallback;
+
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => TpSurface(
+      strong: true,
+      opaque: true,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(K.currency.tr(), style: type.cardTitle),
+          const SizedBox(height: 8),
+          for (final option in TpCurrency.values)
+            TpPress(
+              onTap: () async {
+                Navigator.of(sheetContext).pop();
+                await ref.read(currencyProvider.notifier).set(option);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(K.currencyOf(option).tr(), style: type.body),
+                    ),
+                    if (option == current)
+                      Icon(Icons.check, size: 18, color: context.tp.link)
+                    else
+                      const SizedBox(width: 18, height: 18),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 4),
+          Text(_fxLine(rate), style: type.caption),
+        ],
+      ),
+    ),
+  );
+}
+
+/// `1 USD = ₩1,373 · 2026-09-19 기준`.
+///
+/// 받아온 값이 아니면 그렇다고 덧붙인다 — 오늘 값인 줄 알면 오해다.
+String _fxLine(FxRate rate) {
+  final won = rate.krwPerUsd.round().toString();
+  final grouped = StringBuffer();
+  for (var i = 0; i < won.length; i++) {
+    if (i > 0 && (won.length - i) % 3 == 0) grouped.write(',');
+    grouped.write(won[i]);
+  }
+  final day = rate.asOf.toIso8601String().split('T').first;
+  final key = rate.origin == RateOrigin.live ? K.fxNote : K.fxNoteOffline;
+  return key.tr(args: <String>[grouped.toString(), day]);
+}
+
 Future<void> _pickTheme(
   BuildContext context,
   WidgetRef ref,
