@@ -16,6 +16,7 @@ import '../../core/error_reporter.dart';
 import '../../data/service/link_opener.dart';
 import '../../shared/copy_keys.dart';
 import 'profile_edit_screen.dart';
+import 'sources_screen.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -38,6 +39,7 @@ class YouScreen extends ConsumerStatefulWidget {
     this.onChangePassword,
     this.onLogout,
     this.onDeviceTap,
+    this.onSources,
   });
 
   final ValueChanged<TpTab>? onTabSelected;
@@ -52,6 +54,9 @@ class YouScreen extends ConsumerStatefulWidget {
 
   /// 내 기기가 카탈로그에 있으면 상세로 보낸다.
   final ValueChanged<String>? onDeviceTap;
+
+  /// 데이터 출처 화면으로. 라우팅은 바깥에서 한다.
+  final VoidCallback? onSources;
 
   /// 앱 버전. 명세의 푸터 문구 그대로.
   /// 명세 §13 의 확정 카피. 숫자는 pubspec 의 version 과 같아야 한다
@@ -222,6 +227,17 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 14),
+            // 출처는 설정이 아니라 고지다. 그래서 설정 카드가 아니라 버전·
+            // 라이선스 줄과 같은 묶음에 둔다.
+            TpSurface(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _SettingRow(
+                label: K.sources.tr(),
+                onTap: widget.onSources ?? _openSources,
+                last: true,
+              ),
+            ),
             if (_notice != null) ...<Widget>[
               const SizedBox(height: 8),
               Text(_notice!, style: type.caption),
@@ -274,6 +290,13 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     MaterialPageRoute<void>(
       builder: (context) =>
           ProfileEditScreen(onBack: () => Navigator.of(context).pop()),
+    ),
+  );
+
+  Future<void> _openSources() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (context) =>
+          SourcesScreen(onBack: () => Navigator.of(context).pop()),
     ),
   );
 

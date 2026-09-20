@@ -21,8 +21,8 @@ import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_score_strip.dart';
 import '../../shared/widgets/tp_surface.dart';
-import '../../shared/widgets/tp_tap_target.dart';
 import '../../shared/widgets/tp_error_state.dart';
+import '../../shared/widgets/tp_link_line.dart';
 import '../../shared/widgets/tp_button.dart';
 
 /// 기기 상세.
@@ -227,18 +227,16 @@ class _DetailBody extends ConsumerWidget {
           const SizedBox(height: 20),
           // CC-BY-SA 4.0 상 출처 표기는 선택이 아니고, 표기만으로도 모자란다.
           // 라이선스 본문과 원본에 닿을 수 있어야 한다.
-          _LinkLine(
+          TpLinkLine(
             label: K.dataSource.tr(),
             url: TpUrls.license,
             style: type.caption,
           ),
           for (final url in device.sourceUrls)
-            _LinkLine(
+            TpLinkLine(
               // 원문 주소는 한 줄을 다 먹는다. 보이는 건 도메인만, 열리는
               // 것은 원문 그대로 — 귀속에 필요한 건 링크가 살아 있는 것이다.
-              label: Uri.tryParse(url)?.host.isNotEmpty ?? false
-                  ? Uri.parse(url).host
-                  : url,
+              label: TpLinkLine.hostOf(url),
               url: Uri.tryParse(url),
               style: type.caption,
               topPadding: 2,
@@ -413,7 +411,7 @@ class _BrandCard extends ConsumerWidget {
             ],
             if (brand.website != null) ...<Widget>[
               const SizedBox(height: 2),
-              _LinkLine(
+              TpLinkLine(
                 label: K.brandSite.tr(),
                 url: Uri.tryParse(brand.website!),
                 style: type.caption,
@@ -423,63 +421,6 @@ class _BrandCard extends ConsumerWidget {
         ),
       ),
     );
-  }
-}
-
-/// 눌러서 여는 한 줄.
-///
-/// 밑줄이나 색을 넣지 않는다. 명세에 이 자리의 링크 스타일이 없고, 캡션
-/// 크기의 흐린 글자에 파란색을 얹으면 본문보다 눈에 띈다. 대신 히트 영역을
-/// 넓히고 스크린 리더에는 링크라고 알린다.
-class _LinkLine extends ConsumerWidget {
-  const _LinkLine({
-    required this.label,
-    required this.url,
-    required this.style,
-    this.topPadding = 0,
-  });
-
-  final String label;
-  final Uri? url;
-  final TextStyle style;
-  final double topPadding;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = context.tp;
-    final target = url;
-    // 눌리는 줄은 링크 색으로 둔다. 출처 줄이 본문과 같은 회색이던 때는
-    // 눌리는 줄인지 알 방법이 없었다.
-    final text = Padding(
-      padding: EdgeInsets.only(top: topPadding),
-      child: Text(
-        label,
-        style: target == null
-            ? style
-            : style.copyWith(color: t.link),
-        maxLines: 1,
-      ),
-    );
-    if (target == null) return text;
-
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TpTapTarget(
-        link: true,
-        minSize: 44,
-        onTap: () => unawaited(_open(ref, target)),
-        child: text,
-      ),
-    );
-  }
-
-  Future<void> _open(WidgetRef ref, Uri url) async {
-    try {
-      await ref.read(linkOpenerProvider).open(url);
-    } catch (e, s) {
-      // 열 앱이 없는 기기도 있다. 화면은 그대로 둔다.
-      TpErrors.record(e, s, reason: 'link.open');
-    }
   }
 }
 
