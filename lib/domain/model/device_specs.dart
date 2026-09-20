@@ -1,5 +1,6 @@
 import '../../data/dto/smartphone.dart';
 import 'tp_index.dart';
+import 'tp_money.dart';
 import 'tp_weights.dart';
 
 /// 상세와 비교가 같은 순서로 보여주는 속성.
@@ -71,6 +72,7 @@ abstract final class DeviceSpecs {
   static List<DeviceSpec> of(
     Smartphone d, [
     TpWeights weights = TpWeights.defaults,
+    TpMoney money = const TpMoney.usd(),
   ]) {
     final index = TpIndex.of(d.score, weights);
 
@@ -82,7 +84,9 @@ abstract final class DeviceSpecs {
       ),
       DeviceSpec(
         kind: SpecKind.price,
-        value: formatPrice(d.msrpUsd),
+        // 환산은 **보여줄 때만**. 아래 comparable 은 USD 그대로다 —
+        // 환율이 움직여도 어느 쪽이 싼지는 안 바뀌어야 한다.
+        value: money.format(d.msrpUsd),
         comparable: d.msrpUsd?.toDouble(),
         // 싼 쪽이 이긴다.
         higherIsBetter: false,
@@ -114,6 +118,9 @@ abstract final class DeviceSpecs {
   }
 
   /// `$1,299`. 값이 없으면 대시.
+  ///
+  /// 환율을 모르는 자리가 쓴다. 로케일을 아는 화면은 [TpMoney] 를 받아서
+  /// 쓴다 — 이건 그 기본값과 같다.
   static String formatPrice(int? usd) {
     if (usd == null) return empty;
     final s = usd.toString();
@@ -195,9 +202,10 @@ abstract final class DeviceComparison {
     Smartphone a,
     Smartphone b, [
     TpWeights weights = TpWeights.defaults,
+    TpMoney money = const TpMoney.usd(),
   ]) {
-    final left = DeviceSpecs.of(a, weights);
-    final right = DeviceSpecs.of(b, weights);
+    final left = DeviceSpecs.of(a, weights, money);
+    final right = DeviceSpecs.of(b, weights, money);
 
     return <SpecPair>[
       for (var i = 0; i < left.length; i++)

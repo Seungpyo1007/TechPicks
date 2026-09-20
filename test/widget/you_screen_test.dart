@@ -162,6 +162,9 @@ void main() {
       'Language',
       'Dark mode',
       'AI engine',
+      // 통화 줄은 한때 뺐었다 — 'USD' 가 못박혀 있고 핸들러도 없었다.
+      // 원화가 들어오면서 고를 것이 생겼다.
+      'Currency',
       'Notifications',
       // 계정이 없으면 마지막 줄은 로그인이다.
       'Sign in',
@@ -169,10 +172,29 @@ void main() {
       expect(find.text(label), findsOneWidget, reason: label);
     }
     expect(find.text(YouScreen.versionLine), findsOneWidget);
-    // 통화 줄은 뺐다. 'USD' 가 못박혀 있고 핸들러도 없고 이걸 읽는 코드가
-    // 앱에 하나도 없었다 — 못 누르는 설정 줄은 옆의 진짜 설정까지 못 미덥게
-    // 만든다.
-    expect(find.text('Currency'), findsNothing);
+  });
+
+  testWidgets('통화를 고르면 그 값이 남는다', (tester) async {
+    await _pump(tester);
+    final container = _container!;
+
+    await tester.tap(find.text('Currency'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Korean won'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(currencyProvider), TpCurrency.krw);
+  });
+
+  testWidgets('통화 시트가 환율이 어디서 왔는지 밝힌다', (tester) async {
+    // 명세는 환율 환산을 금지했다. 그걸 뒤집는 것이라, 무슨 값을 언제
+    // 받아 쓰는지 안 보이면 지어낸 숫자와 구분이 안 된다.
+    await _pump(tester);
+
+    await tester.tap(find.text('Currency'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('1 USD = ₩'), findsOneWidget);
   });
 
   testWidgets('비밀번호 줄은 메일 주소가 있을 때만 나온다', (tester) async {

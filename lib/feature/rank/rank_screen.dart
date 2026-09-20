@@ -10,6 +10,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import '../../domain/model/device_specs.dart';
+import '../../domain/model/tp_money.dart';
 import '../../domain/model/ranking.dart';
 import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_chip.dart';
@@ -59,6 +60,7 @@ class RankScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final money = ref.watch(moneyProvider);
     final axis = ref.watch(rankAxisProvider);
     final ranked = ref.watch(rankVisibleProvider);
     // 실패했을 때도 스켈레톤을 계속 돌리면 영원히 로딩처럼 보인다.
@@ -120,6 +122,7 @@ class RankScreen extends ConsumerWidget {
                       ),
                     )
                   : _RankList(
+                      money: money,
                       key: const ValueKey<String>('list'),
                       ranked: ranked.take(maxRows).toList(growable: false),
                       axis: axis,
@@ -330,11 +333,13 @@ class _RankList extends StatelessWidget {
     super.key,
     required this.ranked,
     required this.axis,
+    required this.money,
     this.onDeviceTap,
   });
 
   final List<RankedDevice> ranked;
   final RankAxis axis;
+  final TpMoney money;
   final ValueChanged<String>? onDeviceTap;
 
   @override
@@ -363,6 +368,7 @@ class _RankList extends StatelessWidget {
               right: 0,
               height: rowHeight,
               child: _RankRow(
+                money: money,
                 entry: r,
                 axis: axis,
                 last: i == ranked.length - 1,
@@ -382,12 +388,17 @@ class _RankRow extends StatelessWidget {
     required this.entry,
     required this.axis,
     required this.last,
+    required this.money,
     this.onTap,
   });
 
   final RankedDevice entry;
   final RankAxis axis;
   final bool last;
+
+  /// 위에서 받는다. 행마다 프로바이더를 읽으면 목록 길이만큼 읽는다.
+  final TpMoney money;
+
   final VoidCallback? onTap;
 
   /// 값이 아무리 길어도 이름을 밀어내지 못하는 한도.
@@ -429,10 +440,10 @@ class _RankRow extends StatelessWidget {
   /// 명세의 행은 한 줄이었는데, 순위·이름·점수만 있으면 목록이 숫자 표처럼
   /// 읽혔다. 값을 하나 더 얹는 대신 **이미 아는 것**을 놓는다.
   String get _sub {
-    final price = DeviceSpecs.formatPrice(entry.device.msrpUsd);
+    final price = money.format(entry.device.msrpUsd);
     return <String>[
       if (entry.device.brand?.name != null) entry.device.brand!.name,
-      if (price != DeviceSpecs.empty) price,
+      if (price != TpMoney.empty) price,
     ].join(' · ');
   }
 
@@ -504,7 +515,7 @@ class _RankRow extends StatelessWidget {
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: _valueWidth),
                     child: Text(
-                      formatAxisValue(axis, entry.axisValue),
+                      formatAxisValue(axis, entry.axisValue, money),
                       maxLines: 1,
                       softWrap: false,
                       overflow: TextOverflow.ellipsis,
@@ -619,17 +630,13 @@ class _RowSkeletons extends StatelessWidget {
 }
 
 /// 축에 맞는 표시 형식. 가격만 통화이고 나머지는 0–100 점수다.
-String formatAxisValue(RankAxis axis, double? value) {
-  if (value == null) return '—';
-  if (axis == RankAxis.price) {
-    final s = value.round().toString();
-    final buf = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
-      buf.write(s[i]);
-    }
-    return '\$$buf';
-  }
+String formatAxisValue(
+  RankAxis axis,
+  double? value, [
+  TpMoney money = const TpMoney.usd(),
+]) {
+  if (value == null) return TpMoney.empty;
+  if (axis == RankAxis.price) return money.format(value.round());
   return value.round().toString();
 }
 

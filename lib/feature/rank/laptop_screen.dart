@@ -10,6 +10,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../data/dto/laptop.dart';
 import '../../domain/model/device_specs.dart';
+import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_error_state.dart';
@@ -37,6 +38,7 @@ class LaptopScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final laptops = ref.watch(laptopsProvider);
+    final money = ref.watch(moneyProvider);
     final motion = context.motion;
     final items = laptops.value?.byPrice ?? const <Laptop>[];
 
@@ -70,7 +72,7 @@ class LaptopScreen extends ConsumerWidget {
                   : Column(
                       key: const ValueKey<String>('rows'),
                       children: <Widget>[
-                        for (final l in items) _LaptopCard(laptop: l),
+                        for (final l in items) _LaptopCard(laptop: l, money: money),
                       ],
                     ),
             ),
@@ -88,9 +90,12 @@ class LaptopScreen extends ConsumerWidget {
 /// 상세로 안 보낸다. 노트북 상세 화면이 없고, 누를 수 있어 보이는데 아무 데도
 /// 안 가는 것보다 안 눌리는 편이 낫다.
 class _LaptopCard extends StatelessWidget {
-  const _LaptopCard({required this.laptop});
+  const _LaptopCard({required this.laptop, required this.money});
 
   final Laptop laptop;
+
+  /// 위에서 받는다. 카드마다 프로바이더를 읽으면 아홉 번 같은 값을 읽는다.
+  final TpMoney money;
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +128,7 @@ class _LaptopCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
                     Text(
-                      DeviceSpecs.formatPrice(laptop.msrpUsd),
+                      money.format(laptop.msrpUsd),
                       style: type.cardTitle,
                       maxLines: 1,
                       softWrap: false,

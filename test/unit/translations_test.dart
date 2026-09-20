@@ -96,7 +96,6 @@ void main() {
 /// 요소에 붙는지가 확정이 아니다 — 프로토타입(`TechPicks-Web`)이 지워져서
 /// 바인딩을 확인할 수 없다. 임의로 정하지 않고 여기 적어둔다.
 const Map<String, String> _pending = <String, String>{
-  'currency': '통화 줄을 뺐다. 값이 USD 하나뿐이라 고를 것이 없다 — 여러 통화로 들어오면 되살린다',
   'rankBy': '정렬 축 줄의 눈썹이었다. 칩 라벨이 이미 정렬이라고 말해서 뺐다',
   'seeAll': '명세가 이 버튼을 어느 섹션 헤더에 두는지 안 적었다. Shortlist 는 Add 를 쓴다',
   'swap': '비교 화면 슬롯은 캡션 tapToChange 를 쓴다. Change 가 별도 버튼인지 불명',

@@ -245,5 +245,10 @@
   "searchKindPhone": "기기",
   "searchKindCpu": "프로세서",
   "searchKindLaptop": "노트북",
-  "searchCount": "{}건"
+  "searchCount": "{}건",
+  "currencyAuto": "언어 따름",
+  "currencyUsd": "US 달러",
+  "currencyKrw": "원",
+  "fxNote": "1 USD = ₩{} · {} 기준",
+  "fxNoteOffline": "1 USD = ₩{} · {} 기준 (저장된 값)"
 }

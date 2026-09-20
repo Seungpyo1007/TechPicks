@@ -123,6 +123,7 @@ class _DetailBody extends ConsumerWidget {
     final t = context.tp;
     final type = context.tpText;
     final weights = ref.watch(weightsProvider);
+    final money = ref.watch(moneyProvider);
     final shortlisted = ref.watch(shortlistProvider).contains(device.slug);
     final index = TpIndex.of(device.score, weights);
 
@@ -148,7 +149,7 @@ class _DetailBody extends ConsumerWidget {
           children: <Widget>[
             Expanded(
               child: Text(
-                DeviceSpecs.formatPrice(device.msrpUsd),
+                money.format(device.msrpUsd),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: type.body,
@@ -189,7 +190,7 @@ class _DetailBody extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Column(
             children: <Widget>[
-              for (final spec in DeviceSpecs.of(device, weights))
+              for (final spec in DeviceSpecs.of(device, weights, money))
                 _SpecRow(spec: spec),
             ],
           ),
