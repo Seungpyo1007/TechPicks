@@ -34,7 +34,7 @@
 			<dict>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<string>com.googleusercontent.apps.746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq</string>
+					<string>com.googleusercontent.apps.746932050988-gmv9q1o03iccpcj276o4tflfj8ogugo1</string>
 				</array>
 			</dict>
 			<dict>
@@ -49,7 +49,7 @@
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>GIDClientID</key>
-		<string>746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq.apps.googleusercontent.com</string>
+		<string>746932050988-gmv9q1o03iccpcj276o4tflfj8ogugo1.apps.googleusercontent.com</string>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 		<key>LSRequiresIPhoneOS</key>
