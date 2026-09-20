@@ -52,3 +52,8 @@ test/golden/failures/
 
 # 명세·인계·디자인 시안. 로컬에만 둔다.
 docs/
+
+# Xcode 가 프로젝트를 열 때마다 써넣는 개인 설정. 스킴을 접었는지 펼쳤는지
+# 같은 것이라 공유할 내용이 없는데, third_party/native_liquid_glass 안에
+# 들어 있어서 열 때마다 작업 트리가 더러워졌다.
+**/xcuserdata/
