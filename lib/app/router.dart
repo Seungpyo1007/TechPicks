@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../domain/model/device_specs.dart';
 import '../feature/ask/ask_screen.dart';
+import '../feature/build/build_screen.dart';
 import '../feature/compare/compare_screen.dart';
 import '../feature/compare/picker_screen.dart';
 import '../feature/detail/detail_screen.dart';
@@ -37,6 +38,9 @@ abstract final class TpRoute {
   /// 둘러보기의 카테고리 하나. `/browse` 는 폰과 같다.
   static String browseOf(RankCategory c) =>
       c == RankCategory.phones ? browse : '$browse/${c.key}';
+
+  /// 조립 견적.
+  static String get build => '$decide/build';
 
   /// 예전 주소. 공유된 링크가 아직 이걸 들고 있다.
   static const String legacyRank = '/rank';
@@ -172,6 +176,13 @@ GoRouter buildRouter(Ref ref) {
                 path: TpRoute.decide,
                 builder: (context, state) => const _Compare(),
                 routes: <RouteBase>[
+                  // 조립 견적. 한 칸짜리라 아래 `:a/:b`(두 칸) 와 안 부딪힌다.
+                  GoRoute(
+                    path: 'build',
+                    builder: (context, state) => BuildScreen(
+                      onTabSelected: (t) => context.go(TpRoute.of(t)),
+                    ),
+                  ),
                   // **`:a/:b` 보다 먼저** 와야 한다. 뒤에 두면
                   // `/compare/pick/a` 가 두 칸짜리 비교로 먼저 잡혀서
                   // a='pick', b='a' 인 비교를 열려고 한다.
@@ -333,6 +344,9 @@ class _Compare extends ConsumerWidget {
     onTabSelected: (t) => context.go(TpRoute.of(t)),
     onPick: (side) => context.push('${TpRoute.decide}/pick/${side.name}'),
     onAskWhy: () => _askAboutCompared(context, ref),
+    // 같은 탭 안의 이웃이라 push 가 아니라 go 다. 뒤로 가기가 안 쌓이고
+    // 탭 바의 선택도 그대로 남는다.
+    onBuild: () => context.go(TpRoute.build),
   );
 
   /// 비교 중인 두 기기를 그대로 상담으로 넘긴다.

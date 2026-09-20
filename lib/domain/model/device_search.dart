@@ -45,8 +45,6 @@ abstract final class DeviceSearch {
   /// 브랜드 이름 [brand] 인 기기만. null 이면 그대로.
   static List<Smartphone> byBrand(List<Smartphone> devices, String? brand) {
     if (brand == null) return devices;
-    return devices
-        .where((d) => d.brand?.name == brand)
-        .toList(growable: false);
+    return devices.where((d) => d.brand?.name == brand).toList(growable: false);
   }
 }

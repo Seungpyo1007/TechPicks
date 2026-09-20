@@ -229,6 +229,13 @@ Future<void> _pump(
         catalogRepositoryProvider.overrideWithValue(
           CatalogRepository(bundle: FileBundle(), assetPath: catalogAsset),
         ),
+        // 부품·노트북도 실제 애셋을 읽는다. rootBundle 은 테스트에서 안 된다.
+        partsRepositoryProvider.overrideWithValue(
+          PartsRepository(bundle: FileBundle()),
+        ),
+        laptopRepositoryProvider.overrideWithValue(
+          LaptopRepository(bundle: FileBundle()),
+        ),
         ...overrides,
       ],
       child: MaterialApp(

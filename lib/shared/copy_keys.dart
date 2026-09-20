@@ -145,6 +145,25 @@ abstract final class K {
   static const String yourDeviceUnavailable = 'yourDeviceUnavailable';
 
   // 데이터 출처. CC-BY-SA 4.0 은 표기가 선택이 아니다.
+  // 조립 견적. 용도 라벨과 요구사양 라벨은 BuildUseCase·RequirementKind 가
+  // 제 key 로 들고 있다 — 도메인이 문장을 안 만들되 키는 안다.
+  static const String buildTitle = 'buildTitle';
+  static const String buildBudget = 'buildBudget';
+  static const String buildEmpty = 'buildEmpty';
+  static const String buildReasonGpu = 'buildReasonGpu';
+  static const String buildReasonCpu = 'buildReasonCpu';
+  static const String buildHeadroom = 'buildHeadroom';
+  static const String buildTight = 'buildTight';
+  static const String buildPsu = 'buildPsu';
+  static const String buildReq = 'buildReq';
+  static const String buildReqNone = 'buildReqNone';
+  static const String buildReqNoIgpu = 'buildReqNoIgpu';
+  static const String buildWatts = 'buildWatts';
+  static const String buildBottleneckCpu = 'buildBottleneckCpu';
+  static const String buildBottleneckGpu = 'buildBottleneckGpu';
+  static const String buildScope = 'buildScope';
+  static const String buildPsuNote = 'buildPsuNote';
+
   // 노트북
   static const String laptopTitle = 'laptopTitle';
   static const String laptopNote = 'laptopNote';

@@ -96,7 +96,6 @@ void main() {
 /// 요소에 붙는지가 확정이 아니다 — 프로토타입(`TechPicks-Web`)이 지워져서
 /// 바인딩을 확인할 수 없다. 임의로 정하지 않고 여기 적어둔다.
 const Map<String, String> _pending = <String, String>{
-  'laptopTitle': 'Laptops 화면(명세 §6)이 아직 없다',
   'currency': '통화 줄을 뺐다. 값이 USD 하나뿐이라 고를 것이 없다 — 여러 통화로 들어오면 되살린다',
   'rankBy': '정렬 축 줄의 눈썹이었다. 칩 라벨이 이미 정렬이라고 말해서 뺐다',
   'seeAll': '명세가 이 버튼을 어느 섹션 헤더에 두는지 안 적었다. Shortlist 는 Add 를 쓴다',
@@ -110,11 +109,28 @@ const Map<String, String> _pending = <String, String>{
 
 /// 코드가 실제로 쓰는 번역 키.
 ///
-/// 키는 전부 [K] 를 거친다. 손으로 목록을 복사해두면 새 키를 넣을 때마다
-/// 같이 고쳐야 하고, 안 고쳐도 테스트가 통과한다. 그래서 파일을 읽는다.
+/// 대부분은 [K] 를 거치지만 전부는 아니다. 값마다 제 키를 들고 있는
+/// 열거형들이 있는데, 그쪽이 더 나은 자리다 — 예컨대 `BuildUseCase` 는
+/// 가중치와 라벨 키를 한 값에 묶어 두므로 둘이 따로 놀 수 없다. 그걸
+/// `K` 에도 복사해두면 그 복사본이 진짜 쓰이는지 아무도 모르게 된다.
+///
+/// 손으로 목록을 복사해두면 새 키를 넣을 때마다 같이 고쳐야 하고, 안 고쳐도
+/// 테스트가 통과한다. 그래서 파일을 읽는다.
 Set<String> _keysInCode() {
-  final src = File('lib/shared/copy_keys.dart').readAsStringSync();
-  return RegExp(
-    r"'([A-Za-z][A-Za-z0-9_]*)'",
-  ).allMatches(src).map((m) => m.group(1)!).toSet();
+  const sources = <String>[
+    'lib/shared/copy_keys.dart',
+    // 값이 제 번역 키를 들고 있는 열거형들.
+    'lib/domain/model/build_estimate.dart',
+    'lib/feature/rank/rank_category.dart',
+  ];
+  final keys = <String>{};
+  for (final path in sources) {
+    final src = File(path).readAsStringSync();
+    keys.addAll(
+      RegExp(
+        r"'([A-Za-z][A-Za-z0-9_]*)'",
+      ).allMatches(src).map((m) => m.group(1)!),
+    );
+  }
+  return keys;
 }

@@ -38,30 +38,43 @@ class BuildWeights {
 enum BuildUseCase {
   gaming(
     'buildUseGaming',
+    'buildUseGamingSub',
     BuildWeights(gpu: 0.7, cpuSingle: 0.25, cpuMulti: 0.05, vram: 0),
   ),
   creator(
     'buildUseCreator',
+    'buildUseCreatorSub',
     BuildWeights(gpu: 0.45, cpuSingle: 0.15, cpuMulti: 0.4, vram: 0),
   ),
   office(
     'buildUseOffice',
+    'buildUseOfficeSub',
     BuildWeights(gpu: 0.1, cpuSingle: 0.45, cpuMulti: 0.45, vram: 0),
     allowsIntegratedGpu: true,
   ),
   ai(
     'buildUseAi',
+    'buildUseAiSub',
     BuildWeights(gpu: 0.5, cpuSingle: 0.15, cpuMulti: 0.25, vram: 0.1),
   );
 
   const BuildUseCase(
     this.key,
+    this.subKey,
     this.weights, {
     this.allowsIntegratedGpu = false,
   });
 
-  /// 번역 키의 앞머리. 설명문은 `${key}Sub`.
+  /// 라벨의 번역 키.
   final String key;
+
+  /// 설명문의 번역 키.
+  ///
+  /// `'${key}Sub'` 로 조립하면 짧지만 **검사기가 못 본다.** 번역 키가 코드에
+  /// 문자열로 안 나오면 오타가 나도 컴파일도 테스트도 안 잡고 화면에 키가
+  /// 그대로 찍힌다. `test/unit/translations_test.dart` 가 그걸 막으려고
+  /// 있는데, 조립한 키는 그 그물을 빠져나간다.
+  final String subKey;
 
   final BuildWeights weights;
 
