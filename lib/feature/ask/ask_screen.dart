@@ -587,9 +587,13 @@ class _Composer extends StatelessWidget {
                         border: InputBorder.none,
                         // 이름은 Semantics 가 준다. 힌트까지 시맨틱에 들어가면
                         // 두 번 읽힌다.
+                        // 자리표시는 **무엇을 칠지** 말한다. "무엇이든
+                        // 물어보세요"(askHint)는 이름 자리에 두고, 빈 칸에는
+                        // 예시가 될 말을 둔다 — 빈 칸 앞에서 막히는 건
+                        // 물어봐도 되는지 몰라서가 아니라 뭘 쓸지 몰라서다.
                         hint: ExcludeSemantics(
                           child: Text(
-                            K.askHint.tr(),
+                            K.askPlaceholder.tr(),
                             style: type.body.copyWith(color: t.dim),
                           ),
                         ),

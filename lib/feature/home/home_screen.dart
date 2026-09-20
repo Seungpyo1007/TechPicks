@@ -158,7 +158,13 @@ class HomeScreen extends ConsumerWidget {
 
             if (movers.isNotEmpty) ...<Widget>[
               const SizedBox(height: 22),
-              _SectionHeader(title: K.movers.tr()),
+              // 행마다 눌러야 랭킹으로 가는 걸 알 길이 없었다. 헤더에
+              // 내놓으면 이 구역이 어디로 이어지는지 보인다.
+              _SectionHeader(
+                title: K.movers.tr(),
+                action: K.seeAll.tr(),
+                onAction: onMoversTap,
+              ),
               const SizedBox(height: 8),
               for (final m in movers) _MoverRow(mover: m, onTap: onMoversTap),
             ],

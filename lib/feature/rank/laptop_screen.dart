@@ -72,7 +72,8 @@ class LaptopScreen extends ConsumerWidget {
                   : Column(
                       key: const ValueKey<String>('rows'),
                       children: <Widget>[
-                        for (final l in items) _LaptopCard(laptop: l, money: money),
+                        for (final l in items)
+                          _LaptopCard(laptop: l, money: money),
                       ],
                     ),
             ),

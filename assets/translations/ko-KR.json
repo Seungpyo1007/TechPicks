@@ -133,7 +133,6 @@
   "pronounsLabel": "대명사",
   "pwResetFailed": "재설정 링크를 보내지 못했습니다.",
   "pwResetSent": "{} 로 비밀번호 재설정 링크를 보냈습니다.",
-  "rankBy": "정렬 기준",
   "rankCapped": "상위 {}만 보여줍니다. 나머지 {}종은 비교에서 찾을 수 있습니다.",
   "rankNote": "TechPicks 데이터로 앱 안에서 정렬합니다. 외부 웹페이지로 나가지 않습니다.",
   "rankTitle": "랭킹",
@@ -162,7 +161,6 @@
   "signupTitle": "계정\n만들기",
   "skip": "건너뛰기",
   "start": "시작하기",
-  "swap": "변경",
   "tabAsk": "질문",
   "tabDecide": "정하기",
   "tabHome": "홈",
@@ -177,10 +175,8 @@
   "verdict": "지금의 결론",
   "verdictNoData": "아직 점수를 낼 만큼 자료가 없습니다.",
   "verdictReason": "{} 항목이 끌어올려 목록에서 가장 앞섭니다.",
-  "version": "앱 버전",
   "view3d": "3D로 보기",
   "viewerNote": "부품 칩을 누르면 그 자리를 표시합니다. 실제 3D 모델은 아직 없습니다.",
-  "viewerTitle": "3D 뷰어",
   "welcome": "TechPicks에\n오신 것을 환영합니다",
   "welcomeSub": "로그인하면 관심 목록이 기기 간에 유지됩니다. 건너뛰고 바로 비교할 수도 있습니다.",
   "welcomeSubShort": "내 기준으로 모든 기기에 점수를 매기세요.",
@@ -250,5 +246,6 @@
   "currencyUsd": "US 달러",
   "currencyKrw": "원",
   "fxNote": "1 USD = ₩{} · {} 기준",
-  "fxNoteOffline": "1 USD = ₩{} · {} 기준 (저장된 값)"
+  "fxNoteOffline": "1 USD = ₩{} · {} 기준 (저장된 값)",
+  "indexNoteCustom": "TP 지수는 내 정보에서 정한 가중치로 계산됩니다."
 }

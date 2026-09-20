@@ -44,7 +44,6 @@ abstract final class K {
   static const String rankTitle = 'rankTitle';
   static const String cpus = 'cpus';
   static const String laptops = 'laptops';
-  static const String rankBy = 'rankBy';
   static const String rankNote = 'rankNote';
   static const String rankCapped = 'rankCapped';
   static const String scanCta = 'scanCta';
@@ -145,6 +144,14 @@ abstract final class K {
   static const String yourDevice = 'yourDevice';
   static const String yourDeviceUnknown = 'yourDeviceUnknown';
   static const String yourDeviceUnavailable = 'yourDeviceUnavailable';
+
+  static const String seeAll = 'seeAll';
+  static const String askPlaceholder = 'askPlaceholder';
+
+  /// TP 지수 설명. **기본 가중치일 때만** 쓴다 — 문구가 25/25/20/20/10 을
+  /// 못박고 있는데 그건 기본값일 뿐이고 You 에서 바꿀 수 있다.
+  static const String indexNote = 'indexNote';
+  static const String indexNoteCustom = 'indexNoteCustom';
 
   // 데이터 출처. CC-BY-SA 4.0 은 표기가 선택이 아니다.
   // 통화. currency 키는 여태 죽어 있었다 — 값이 USD 하나뿐이라 고를 게
