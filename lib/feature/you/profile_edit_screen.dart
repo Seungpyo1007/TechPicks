@@ -280,10 +280,7 @@ class _Field extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: <Widget>[
-          SizedBox(
-            width: 108,
-            child: Text(label, style: type.secondary),
-          ),
+          SizedBox(width: 108, child: Text(label, style: type.secondary)),
           Expanded(
             child: Semantics(
               label: label,

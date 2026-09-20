@@ -16,6 +16,7 @@ import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
 import '../data/repository/laptop_repository.dart';
+import '../domain/model/build_estimate.dart';
 import '../data/repository/parts_repository.dart';
 import '../data/repository/catalog_source.dart';
 import '../data/repository/catalog_store.dart';
@@ -91,6 +92,67 @@ final laptopsProvider = FutureProvider<Laptops>((ref) async {
   final result = await ref.watch(laptopRepositoryProvider).load();
   return result.fold((l) => l, (f) => throw f);
 }, retry: (_, _) => null);
+
+/// 견적기가 보고 있는 용도와 예산.
+///
+/// 둘을 한 덩어리로 든다. 따로 두면 한쪽이 바뀔 때마다 추천이 두 번 돈다.
+class BuildQuery {
+  const BuildQuery({required this.useCase, required this.budgetUsd});
+
+  final BuildUseCase useCase;
+  final int budgetUsd;
+
+  BuildQuery copyWith({BuildUseCase? useCase, int? budgetUsd}) => BuildQuery(
+    useCase: useCase ?? this.useCase,
+    budgetUsd: budgetUsd ?? this.budgetUsd,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is BuildQuery &&
+      other.useCase == useCase &&
+      other.budgetUsd == budgetUsd;
+
+  @override
+  int get hashCode => Object.hash(useCase, budgetUsd);
+}
+
+class BuildQueryNotifier extends Notifier<BuildQuery> {
+  @override
+  BuildQuery build() => const BuildQuery(
+    useCase: BuildUseCase.gaming,
+    budgetUsd: BuildEstimate.defaultBudget,
+  );
+
+  void set(BuildQuery query) => state = query;
+
+  void useCase(BuildUseCase value) => state = state.copyWith(useCase: value);
+
+  /// 공유된 링크가 아무 숫자나 들고 올 수 있다. 여기서 접는다.
+  void budget(int usd) =>
+      state = state.copyWith(budgetUsd: BuildEstimate.clampBudget(usd));
+}
+
+final buildQueryProvider = NotifierProvider<BuildQueryNotifier, BuildQuery>(
+  BuildQueryNotifier.new,
+);
+
+/// 추천 조합.
+///
+/// 예산 슬라이더는 드래그 프레임마다 다시 그린다. 여기서 캐시하지 않으면
+/// 한 번 끄는 동안 6,969 조합을 수십 번 다시 센다 — pickerRankedProvider 가
+/// 같은 이유로 랭킹을 밖에 둔 것과 같다.
+final buildPicksProvider = Provider<List<BuildCombo>>((ref) {
+  final parts = ref.watch(partsProvider).value;
+  if (parts == null) return const <BuildCombo>[];
+  final q = ref.watch(buildQueryProvider);
+  return BuildEstimate.recommend(
+    parts.cpus,
+    parts.gpus,
+    q.useCase,
+    q.budgetUsd,
+  );
+});
 
 /// 사용자 가중치.
 ///

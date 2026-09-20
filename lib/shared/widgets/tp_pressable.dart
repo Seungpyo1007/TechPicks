@@ -153,7 +153,10 @@ class _TpPressableState extends State<TpPressable>
     // 터치 쪽은 그대로 둔다 — iOS 는 비트 단위로 같아야 한다.
     _slop = event.kind == PointerDeviceKind.mouse
         ? kTouchSlop
-        : computeHitSlop(event.kind, MediaQuery.maybeGestureSettingsOf(context));
+        : computeHitSlop(
+            event.kind,
+            MediaQuery.maybeGestureSettingsOf(context),
+          );
     _held = true;
 
     if (_instant) {
