@@ -89,11 +89,11 @@ void main() {
   testWidgets('탭을 눌러 다섯 화면을 오간다', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
+    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
     expect(find.text('Rankings'), findsOneWidget);
 
-    await tester.tap(find.text(K.tab(TpTab.compare).tr()));
+    await tester.tap(find.text(K.tab(TpTab.decide).tr()));
     await tester.pumpAndSettle();
     expect(find.text('Compare'), findsWidgets);
 
@@ -110,7 +110,7 @@ void main() {
   testWidgets('랭킹에서 기기를 누르면 상세가 올라온다', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
+    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
     await tester.tap(find.text(readRanking().first.device.name));
     await tester.pumpAndSettle();
@@ -122,7 +122,7 @@ void main() {
   testWidgets('상세의 Compare 가 비교 탭으로 보내고 A 슬롯을 채운다', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
+    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
     await tester.tap(find.text('OnePlus 13'));
     await tester.pumpAndSettle();
@@ -137,7 +137,7 @@ void main() {
   testWidgets('비교 열 머리에서 선택 시트가 열린다', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text(K.tab(TpTab.compare).tr()));
+    await tester.tap(find.text(K.tab(TpTab.decide).tr()));
     await tester.pumpAndSettle();
     await tester.tap(find.text(readRanking()[0].device.name));
     await tester.pumpAndSettle();
@@ -149,7 +149,7 @@ void main() {
   testWidgets('랭킹에서 스캔을 연다', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
+    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
 
     // 랭킹 목록이 길어져 스캔 버튼이 화면 아래로 밀렸다.
@@ -173,7 +173,7 @@ void main() {
   testWidgets('Android 는 스캔이 FAB 로 나온다', (tester) async {
     await _pump(tester, chrome: TpChrome.android);
 
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
+    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
 
     // iOS 인라인 버튼은 없고 FAB 라벨만 있다.
@@ -274,7 +274,7 @@ void _askFromCompare() {
     await initLocalization();
     final container = await pumpApp(
       tester,
-      initialLocation: TpRoute.compare,
+      initialLocation: TpRoute.decide,
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -300,7 +300,7 @@ void _askFromCompare() {
     await initLocalization();
     final container = await pumpApp(
       tester,
-      initialLocation: TpRoute.compare,
+      initialLocation: TpRoute.decide,
       catalogAsset: missingCatalogAsset,
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
@@ -346,7 +346,7 @@ void _pickerSlots() {
     await initLocalization();
     final container = await pumpApp(
       tester,
-      initialLocation: TpRoute.compare,
+      initialLocation: TpRoute.decide,
       size: const Size(1200, 3200),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
@@ -366,7 +366,7 @@ void _pickerSlots() {
     await initLocalization();
     final container = await pumpApp(
       tester,
-      initialLocation: TpRoute.compare,
+      initialLocation: TpRoute.decide,
       size: const Size(1200, 3200),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
@@ -388,7 +388,7 @@ void _pushedScreens() {
     await initLocalization();
     await pumpApp(
       tester,
-      initialLocation: TpRoute.rank,
+      initialLocation: TpRoute.browse,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -413,7 +413,7 @@ void _pushedScreens() {
     await initLocalization();
     await pumpApp(
       tester,
-      initialLocation: TpRoute.rank,
+      initialLocation: TpRoute.browse,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -433,7 +433,7 @@ void _pushedScreens() {
     await initLocalization();
     await pumpApp(
       tester,
-      initialLocation: TpRoute.rank,
+      initialLocation: TpRoute.browse,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -470,7 +470,7 @@ void _systemBack() {
     await initLocalization();
     await pumpApp(
       tester,
-      initialLocation: TpRoute.rank,
+      initialLocation: TpRoute.browse,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),

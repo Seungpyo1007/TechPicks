@@ -164,9 +164,9 @@
   "start": "Get started",
   "swap": "Change",
   "tabAsk": "Ask",
-  "tabCmp": "Compare",
+  "tabDecide": "Decide",
   "tabHome": "Home",
-  "tabRank": "Rank",
+  "tabBrowse": "Browse",
   "tabYou": "You",
   "tapToChange": "Tap to change",
   "themeDark": "Dark",
@@ -200,5 +200,13 @@
   "sourcesBrands": "{} brands",
   "sourcesVersion": "Catalogue version {}",
   "sourcesPerDevice": "Per-device sources are listed at the bottom of each detail screen.",
-  "sourcesAppCode": "App code licence (Apache-2.0)"
+  "sourcesAppCode": "App code licence (Apache-2.0)",
+  "laptopNote": "No index — TechAPI carries no laptop benchmarks. Sorted by price, highest first.",
+  "laptopTierHigh": "High-end",
+  "laptopTierPerf": "Performance",
+  "laptopTierMain": "Mainstream",
+  "laptopNoScore": "No index",
+  "specRam": "Memory",
+  "specStorage": "Storage",
+  "specGpu": "Graphics"
 }

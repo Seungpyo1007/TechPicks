@@ -113,9 +113,7 @@ class SourcesScreen extends ConsumerWidget {
                       ),
                     const SizedBox(height: 6),
                     Text(
-                      K.sourcesVersion.tr(
-                        args: <String>['${catalog.version}'],
-                      ),
+                      K.sourcesVersion.tr(args: <String>['${catalog.version}']),
                       style: type.caption,
                     ),
                   ],

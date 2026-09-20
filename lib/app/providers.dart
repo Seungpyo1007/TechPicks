@@ -40,7 +40,6 @@ import '../domain/model/processor.dart';
 import '../domain/model/ranking.dart';
 import '../domain/model/tp_profile.dart';
 import '../domain/model/tp_weights.dart';
-import '../feature/rank/rank_category.dart';
 import '../feature/share/tp_link.dart';
 import '../shared/copy_keys.dart';
 import 'locale_controller.dart';
@@ -281,19 +280,6 @@ final rankVisibleProvider = Provider<List<RankedDevice>>((ref) {
       )
       .toList(growable: false);
 });
-
-/// 랭킹 탭 안에서 보고 있는 카테고리.
-class RankCategoryNotifier extends Notifier<RankCategory> {
-  @override
-  RankCategory build() => RankCategory.phones;
-
-  void set(RankCategory category) => state = category;
-}
-
-final rankCategoryProvider =
-    NotifierProvider<RankCategoryNotifier, RankCategory>(
-      RankCategoryNotifier.new,
-    );
 
 /// Processors 화면의 세그먼트.
 class ProcessorSegmentNotifier extends Notifier<ProcessorSegment> {

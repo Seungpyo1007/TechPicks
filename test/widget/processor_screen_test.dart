@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/domain/model/processor.dart';
 import 'package:techpicks/feature/cpu/processor_screen.dart';
 import 'package:techpicks/feature/rank/rank_category.dart';
+import 'package:techpicks/feature/rank/laptop_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
 import 'package:techpicks/feature/rank/rank_tab.dart';
 import 'package:techpicks/app/providers.dart';
@@ -42,26 +43,46 @@ void main() {
     expect(find.text('Snapdragon 8 Elite'), findsNothing);
   });
 
-  testWidgets('카테고리 칩으로 랭킹과 프로세서를 오간다', (tester) async {
-    final container = await pumpScreen(tester, const RankTab());
+  testWidgets('카테고리 칩이 어느 카테고리로 가려는지 알려준다', (tester) async {
+    // 카테고리는 이제 주소가 쥔다. 칩은 고르기만 하고 옮기는 건 라우터다.
+    RankCategory? picked;
+    await pumpScreen(
+      tester,
+      RankTab(category: RankCategory.phones, onCategory: (c) => picked = c),
+    );
 
     expect(find.byType(RankScreen), findsOneWidget);
 
     await tester.tap(find.text(K.cpus.tr()));
     await tester.pumpAndSettle();
 
-    expect(container.read(rankCategoryProvider), RankCategory.processors);
-    expect(find.byType(ProcessorScreen), findsOneWidget);
-    expect(find.byType(RankScreen), findsNothing);
+    expect(picked, RankCategory.processors);
   });
 
-  testWidgets('Laptops 칩은 아직 눌리지 않는다', (tester) async {
-    final container = await pumpScreen(tester, const RankTab());
+  testWidgets('Laptops 칩이 눌린다', (tester) async {
+    // 여태 눌러도 아무 일이 없었다. 화면이 없어서 막아뒀는데, 그 상태가
+    // 고장 난 앱처럼 보였다.
+    RankCategory? picked;
+    await pumpScreen(
+      tester,
+      RankTab(category: RankCategory.phones, onCategory: (c) => picked = c),
+    );
 
     await tester.tap(find.text(K.laptops.tr()));
     await tester.pumpAndSettle();
 
-    expect(container.read(rankCategoryProvider), RankCategory.phones);
+    expect(picked, RankCategory.laptops);
+  });
+
+  testWidgets('카테고리마다 제 화면이 열린다', (tester) async {
+    for (final (category, matcher) in <(RankCategory, Finder)>[
+      (RankCategory.phones, find.byType(RankScreen)),
+      (RankCategory.processors, find.byType(ProcessorScreen)),
+      (RankCategory.laptops, find.byType(LaptopScreen)),
+    ]) {
+      await pumpScreen(tester, RankTab(category: category));
+      expect(matcher, findsOneWidget, reason: category.name);
+    }
   });
 
   testWidgets('행은 순위·이름·지수를 한 문장으로 읽는다', (tester) async {

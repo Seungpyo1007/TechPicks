@@ -326,9 +326,7 @@ class _SpecRow extends StatelessWidget {
             child: Text(
               spec.value,
               textAlign: TextAlign.right,
-              style: type.body.copyWith(
-                color: spec.hasValue ? t.ink : t.dim,
-              ),
+              style: type.body.copyWith(color: spec.hasValue ? t.ink : t.dim),
             ),
           ),
         ],

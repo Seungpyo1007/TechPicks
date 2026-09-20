@@ -75,7 +75,7 @@ class CompareScreen extends ConsumerWidget {
 
     return TpShell(
       title: K.compareTitle.tr(),
-      tab: TpTab.compare,
+      tab: TpTab.decide,
       onTabSelected: onTabSelected,
       child: Builder(
         // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
@@ -125,7 +125,9 @@ class CompareScreen extends ConsumerWidget {
                     switchInCurve: motion.contentSwap.curve,
                     switchOutCurve: motion.contentSwap.curve,
                     child: loading
-                        ? const _TableSkeleton(key: ValueKey<String>('skeleton'))
+                        ? const _TableSkeleton(
+                            key: ValueKey<String>('skeleton'),
+                          )
                         // 못 읽은 것과 안 고른 것은 다른 일이다. 카탈로그가
                         // 없으면 고를 수도 없으니 "두 대를 고르세요"는 막다른
                         // 안내가 된다.
@@ -315,7 +317,9 @@ class _CompareRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       decoration: last
           ? null
-          : BoxDecoration(border: Border(bottom: BorderSide(color: t.hairline))),
+          : BoxDecoration(
+              border: Border(bottom: BorderSide(color: t.hairline)),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -351,9 +355,13 @@ class _CompareRow extends StatelessWidget {
             const SizedBox(height: 2),
             Row(
               children: <Widget>[
-                Expanded(child: _AxisBar(kind: axis, score: scoreA)),
+                Expanded(
+                  child: _AxisBar(kind: axis, score: scoreA),
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: _AxisBar(kind: axis, score: scoreB)),
+                Expanded(
+                  child: _AxisBar(kind: axis, score: scoreB),
+                ),
               ],
             ),
           ],
