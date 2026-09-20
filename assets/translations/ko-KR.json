@@ -187,5 +187,18 @@
   "you": "내 정보",
   "yourDevice": "내 기기",
   "yourDeviceUnavailable": "기기 정보를 읽지 못했습니다.",
-  "yourDeviceUnknown": "아직 카탈로그에 없습니다"
+  "yourDeviceUnknown": "아직 카탈로그에 없습니다",
+  "sources": "데이터 출처",
+  "sourcesIntro": "이 앱의 기기·부품 자료는 TechAPI 에서 옵니다. CC-BY-SA 4.0 라이선스라 출처를 밝히고 같은 조건으로 공유해야 합니다.",
+  "sourcesDataset": "데이터셋",
+  "sourcesLicense": "라이선스 전문 (CC-BY-SA 4.0)",
+  "sourcesRepo": "TechAPI 저장소",
+  "sourcesContents": "실려 있는 것",
+  "sourcesPhones": "스마트폰 {}종",
+  "sourcesCpus": "프로세서 {}종",
+  "sourcesSocs": "SoC {}종",
+  "sourcesBrands": "브랜드 {}곳",
+  "sourcesVersion": "카탈로그 버전 {}",
+  "sourcesPerDevice": "기기마다의 원문 출처는 각 상세 화면 아래에 있습니다.",
+  "sourcesAppCode": "앱 코드 라이선스 (Apache-2.0)"
 }

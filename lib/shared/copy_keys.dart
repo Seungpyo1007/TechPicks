@@ -144,6 +144,21 @@ abstract final class K {
   static const String yourDeviceUnknown = 'yourDeviceUnknown';
   static const String yourDeviceUnavailable = 'yourDeviceUnavailable';
 
+  // 데이터 출처. CC-BY-SA 4.0 은 표기가 선택이 아니다.
+  static const String sources = 'sources';
+  static const String sourcesIntro = 'sourcesIntro';
+  static const String sourcesDataset = 'sourcesDataset';
+  static const String sourcesLicense = 'sourcesLicense';
+  static const String sourcesRepo = 'sourcesRepo';
+  static const String sourcesContents = 'sourcesContents';
+  static const String sourcesPhones = 'sourcesPhones';
+  static const String sourcesCpus = 'sourcesCpus';
+  static const String sourcesSocs = 'sourcesSocs';
+  static const String sourcesBrands = 'sourcesBrands';
+  static const String sourcesVersion = 'sourcesVersion';
+  static const String sourcesPerDevice = 'sourcesPerDevice';
+  static const String sourcesAppCode = 'sourcesAppCode';
+
   // 온보딩
   static const String skip = 'skip';
   static const String next = 'next';

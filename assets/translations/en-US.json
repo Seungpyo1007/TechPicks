@@ -187,5 +187,18 @@
   "you": "You",
   "yourDevice": "Your device",
   "yourDeviceUnavailable": "Could not read this device.",
-  "yourDeviceUnknown": "Not in the catalogue yet"
+  "yourDeviceUnknown": "Not in the catalogue yet",
+  "sources": "Data sources",
+  "sourcesIntro": "Device and component data in this app comes from TechAPI. It is licensed CC-BY-SA 4.0, so it must be attributed and shared under the same terms.",
+  "sourcesDataset": "Dataset",
+  "sourcesLicense": "Full licence (CC-BY-SA 4.0)",
+  "sourcesRepo": "TechAPI repository",
+  "sourcesContents": "What's included",
+  "sourcesPhones": "{} phones",
+  "sourcesCpus": "{} processors",
+  "sourcesSocs": "{} SoCs",
+  "sourcesBrands": "{} brands",
+  "sourcesVersion": "Catalogue version {}",
+  "sourcesPerDevice": "Per-device sources are listed at the bottom of each detail screen.",
+  "sourcesAppCode": "App code licence (Apache-2.0)"
 }

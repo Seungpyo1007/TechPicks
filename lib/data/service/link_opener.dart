@@ -29,4 +29,8 @@ abstract final class TpUrls {
   static final Uri appLicense = Uri.parse(
     'https://www.apache.org/licenses/LICENSE-2.0',
   );
+
+  /// 카탈로그의 원본. CC-BY-SA 는 귀속이 "출처를 적는 것"에서 끝나지 않고
+  /// 원본에 닿을 수 있어야 한다 — 라이선스 본문과 이 주소가 한 쌍이다.
+  static final Uri techApi = Uri.parse('https://github.com/GetTechAPI/TechAPI');
 }
