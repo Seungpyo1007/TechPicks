@@ -133,7 +133,6 @@
   "pronounsLabel": "Pronouns",
   "pwResetFailed": "Could not send the reset link.",
   "pwResetSent": "Password reset link sent to {}.",
-  "rankBy": "Rank by",
   "rankCapped": "Showing the top {}. The other {} are in Compare.",
   "rankNote": "Ranked in-app from the TechPicks dataset — no webview, no handoff.",
   "rankTitle": "Rankings",
@@ -162,7 +161,6 @@
   "signupTitle": "Create an\naccount",
   "skip": "Skip",
   "start": "Get started",
-  "swap": "Change",
   "tabAsk": "Ask",
   "tabDecide": "Decide",
   "tabHome": "Home",
@@ -177,10 +175,8 @@
   "verdict": "Where this lands",
   "verdictNoData": "Not enough data to score this one yet.",
   "verdictReason": "Leads your shortlist, carried by {}.",
-  "version": "version",
   "view3d": "View in 3D",
   "viewerNote": "Tap a part to highlight where it sits. Real 3D models are not in yet.",
-  "viewerTitle": "3D viewer",
   "welcome": "Welcome to\nTechPicks",
   "welcomeSub": "Sign in to keep your shortlist across devices, or skip and start comparing now.",
   "welcomeSubShort": "Score every device the way you weigh it.",
@@ -250,5 +246,6 @@
   "currencyUsd": "US dollar",
   "currencyKrw": "Korean won",
   "fxNote": "1 USD = ₩{} · as of {}",
-  "fxNoteOffline": "1 USD = ₩{} · as of {} (saved)"
+  "fxNoteOffline": "1 USD = ₩{} · as of {} (saved)",
+  "indexNoteCustom": "TP Index uses the weights you set in You."
 }

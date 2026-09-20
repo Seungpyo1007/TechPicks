@@ -8,6 +8,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../data/repository/catalog_repository.dart';
 import '../../data/service/link_opener.dart';
+import '../../domain/model/tp_weights.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_link_line.dart';
 import '../../shared/widgets/tp_surface.dart';
@@ -34,6 +35,7 @@ class SourcesScreen extends ConsumerWidget {
     final type = context.tpText;
     final t = context.tp;
     final catalog = ref.watch(catalogProvider).value;
+    final weights = ref.watch(weightsProvider);
 
     return TpShell(
       mode: TpChromeMode.plain,
@@ -121,6 +123,19 @@ class SourcesScreen extends ConsumerWidget {
               ),
             ],
 
+            const SizedBox(height: 14),
+            // 자료가 어디서 왔는지 옆에 숫자가 어떻게 만들어지는지를 둔다.
+            // 출처를 밝히는 화면에서 제일 궁금한 다음 질문이다.
+            //
+            // **기본 가중치일 때만** 확정 문구를 쓴다. 그 문구가
+            // 25/25/20/20/10 을 못박는데 You 에서 바꿀 수 있어서, 슬라이더를
+            // 움직인 사람에게 그대로 보이면 거짓말이 된다.
+            Text(
+              weights == TpWeights.defaults
+                  ? K.indexNote.tr()
+                  : K.indexNoteCustom.tr(),
+              style: type.caption,
+            ),
             const SizedBox(height: 14),
             Text(K.sourcesPerDevice.tr(), style: type.caption),
             const SizedBox(height: 14),

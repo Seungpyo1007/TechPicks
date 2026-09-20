@@ -37,10 +37,7 @@ List<AskRow> askRowsFor(
     label: K.tpIndex.tr(),
     value: TpIndex.of(d.score, weights)?.toString() ?? DeviceSpecs.empty,
   ),
-  AskRow(
-    label: K.spec(SpecKind.price).tr(),
-    value: money.format(d.msrpUsd),
-  ),
+  AskRow(label: K.spec(SpecKind.price).tr(), value: money.format(d.msrpUsd)),
   AskRow(
     label: K.spec(SpecKind.battery).tr(),
     value: d.batteryMah == null ? DeviceSpecs.empty : '${d.batteryMah}mAh',
@@ -267,9 +264,7 @@ class LocalAskService implements AskService {
         pickSlug: best.slug,
         reason: budget == null
             ? K.askLocalTop.tr()
-            : K.askLocalBudget.tr(
-                args: <String>[money.format(budget)],
-              ),
+            : K.askLocalBudget.tr(args: <String>[money.format(budget)]),
         rows: askRowsFor(best, weights, money),
       ),
       // 모델을 한 번도 안 불렀다. 화면이 그렇다고 밝힌다.
