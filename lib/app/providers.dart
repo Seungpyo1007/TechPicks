@@ -12,11 +12,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/analytics.dart';
 import '../core/error_reporter.dart';
+import '../data/dto/cpu.dart';
+import '../data/dto/laptop.dart';
 import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
 import '../data/repository/laptop_repository.dart';
 import '../domain/model/build_estimate.dart';
+import '../domain/model/search_index.dart';
 import '../data/repository/parts_repository.dart';
 import '../data/repository/catalog_source.dart';
 import '../data/repository/catalog_store.dart';
@@ -92,6 +95,20 @@ final laptopsProvider = FutureProvider<Laptops>((ref) async {
   final result = await ref.watch(laptopRepositoryProvider).load();
   return result.fold((l) => l, (f) => throw f);
 }, retry: (_, _) => null);
+
+/// 검색 색인. 세 갈래를 한 목록으로 편다.
+///
+/// 한 번 짓고 캐시한다. 타건마다 194줄을 다시 만들 이유가 없다 —
+/// pickerRankedProvider 가 랭킹을 밖에 둔 것과 같은 이유다.
+final searchIndexProvider = Provider<List<SearchHit>>((ref) {
+  final catalog = ref.watch(catalogProvider).value;
+  final laptops = ref.watch(laptopsProvider).value;
+  return SearchIndex.of(
+    phones: catalog?.smartphones ?? const <Smartphone>[],
+    processors: catalog?.cpus ?? const <Cpu>[],
+    laptops: laptops?.items ?? const <Laptop>[],
+  );
+});
 
 /// 견적기가 보고 있는 용도와 예산.
 ///

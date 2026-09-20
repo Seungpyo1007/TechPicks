@@ -41,6 +41,7 @@ class HomeScreen extends ConsumerWidget {
     this.onCompareAll,
     this.onAskWhy,
     this.onMoversTap,
+    this.onSearch,
   });
 
   final ValueChanged<TpTab>? onTabSelected;
@@ -49,6 +50,10 @@ class HomeScreen extends ConsumerWidget {
   final VoidCallback? onCompareAll;
   final VoidCallback? onAskWhy;
   final VoidCallback? onMoversTap;
+
+  /// 통합 검색으로. 셸 헤더에 붙는다 — 한 화면 전용이 아니라 어디서 왔든
+  /// 같은 자리에 있어야 찾는다.
+  final VoidCallback? onSearch;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -69,6 +74,13 @@ class HomeScreen extends ConsumerWidget {
       title: t.isGlass ? null : K.homeTitle.tr(),
       tab: TpTab.home,
       onTabSelected: onTabSelected,
+      trailing: onSearch == null
+          ? null
+          : TpShellAction(
+              icon: Icons.search_rounded,
+              label: K.searchTitle.tr(),
+              onTap: onSearch,
+            ),
       child: Builder(
         // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
         // 크롬이 차지한 자리를 모르는 예전 값이 나온다.

@@ -238,5 +238,12 @@
   "buildBottleneckCpu": "CPU가 GPU를 따라가지 못합니다 (지수 차 {}). CPU를 올리거나 GPU를 한 단계 낮추세요.",
   "buildBottleneckGpu": "GPU가 CPU에 비해 약합니다 (지수 차 {}). 그래픽 작업이 많다면 GPU를 올리세요.",
   "buildScope": "TechAPI 에 메인보드·메모리·저장장치·파워·케이스가 없습니다. 실제 제품으로 고르는 것은 CPU 와 GPU 뿐이고, 예산은 이 두 부품의 기준가 합계이지 완제품 가격이 아닙니다.",
-  "buildPsuNote": "권장 파워는 CPU 최대 소비전력과 GPU 소비전력에 보드·메모리·저장장치·팬 몫 {}W 를 더해 50W 단위로 올린 값입니다."
+  "buildPsuNote": "권장 파워는 CPU 최대 소비전력과 GPU 소비전력에 보드·메모리·저장장치·팬 몫 {}W 를 더해 50W 단위로 올린 값입니다.",
+  "searchTitle": "검색",
+  "searchAllHint": "기기 · 프로세서 · 노트북",
+  "searchEmpty": "찾는 것을 입력하세요.",
+  "searchKindPhone": "기기",
+  "searchKindCpu": "프로세서",
+  "searchKindLaptop": "노트북",
+  "searchCount": "{}건"
 }

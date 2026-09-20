@@ -1,6 +1,7 @@
 import '../app/shell/tp_tab.dart';
 import '../domain/model/device_specs.dart';
 import '../domain/model/ranking.dart';
+import '../domain/model/search_index.dart';
 import '../domain/model/tp_index.dart';
 
 /// 번역 키.
@@ -145,6 +146,24 @@ abstract final class K {
   static const String yourDeviceUnavailable = 'yourDeviceUnavailable';
 
   // 데이터 출처. CC-BY-SA 4.0 은 표기가 선택이 아니다.
+  // 통합 검색. 기존 searchHint 는 "기기 검색" 이라 폰 전용 문구다 —
+  // 픽커와 랭킹이 쓴다. 세 갈래를 다 훑는 여기는 제 문구가 필요하다.
+  static const String searchTitle = 'searchTitle';
+  static const String searchAllHint = 'searchAllHint';
+  static const String searchEmpty = 'searchEmpty';
+  static const String searchKindPhone = 'searchKindPhone';
+  static const String searchKindCpu = 'searchKindCpu';
+  static const String searchKindLaptop = 'searchKindLaptop';
+  static const String searchCount = 'searchCount';
+
+  /// 갈래 라벨. SearchKind 가 아니라 여기 둔다 — 도메인 열거형이 화면
+  /// 문구까지 들면 두 관심사가 한 곳에 섞인다.
+  static String searchKind(SearchKind kind) => switch (kind) {
+    SearchKind.phone => searchKindPhone,
+    SearchKind.processor => searchKindCpu,
+    SearchKind.laptop => searchKindLaptop,
+  };
+
   // 조립 견적. 용도 라벨과 요구사양 라벨은 BuildUseCase·RequirementKind 가
   // 제 key 로 들고 있다 — 도메인이 문장을 안 만들되 키는 안다.
   static const String buildTitle = 'buildTitle';
