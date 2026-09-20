@@ -135,8 +135,8 @@ void main() {
           ),
         );
 
-        await tester.tap(find.text(K.tab(TpTab.compare).tr()));
-        expect(tapped, TpTab.compare);
+        await tester.tap(find.text(K.tab(TpTab.decide).tr()));
+        expect(tapped, TpTab.decide);
       });
 
       testWidgets('$chrome — takeover는 크롬을 그리지 않는다', (tester) async {
@@ -175,7 +175,7 @@ void main() {
         _host(
           TpChrome.android,
           const TpShell(
-            tab: TpTab.rank,
+            tab: TpTab.browse,
             floatingAction: fab,
             child: SizedBox.shrink(),
           ),

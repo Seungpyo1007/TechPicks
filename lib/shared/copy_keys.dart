@@ -14,8 +14,8 @@ import '../domain/model/tp_index.dart';
 abstract final class K {
   // 탭
   static const String tabHome = 'tabHome';
-  static const String tabRank = 'tabRank';
-  static const String tabCompare = 'tabCmp';
+  static const String tabBrowse = 'tabBrowse';
+  static const String tabDecide = 'tabDecide';
   static const String tabAsk = 'tabAsk';
   static const String tabYou = 'tabYou';
 
@@ -145,6 +145,17 @@ abstract final class K {
   static const String yourDeviceUnavailable = 'yourDeviceUnavailable';
 
   // 데이터 출처. CC-BY-SA 4.0 은 표기가 선택이 아니다.
+  // 노트북
+  static const String laptopTitle = 'laptopTitle';
+  static const String laptopNote = 'laptopNote';
+  static const String laptopTierHigh = 'laptopTierHigh';
+  static const String laptopTierPerf = 'laptopTierPerf';
+  static const String laptopTierMain = 'laptopTierMain';
+  static const String laptopNoScore = 'laptopNoScore';
+  static const String specRam = 'specRam';
+  static const String specStorage = 'specStorage';
+  static const String specGpu = 'specGpu';
+
   static const String sources = 'sources';
   static const String sourcesIntro = 'sourcesIntro';
   static const String sourcesDataset = 'sourcesDataset';
@@ -220,8 +231,8 @@ abstract final class K {
 
   static String tab(TpTab tab) => switch (tab) {
     TpTab.home => tabHome,
-    TpTab.rank => tabRank,
-    TpTab.compare => tabCompare,
+    TpTab.browse => tabBrowse,
+    TpTab.decide => tabDecide,
     TpTab.ask => tabAsk,
     TpTab.you => tabYou,
   };

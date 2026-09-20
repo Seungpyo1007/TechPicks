@@ -54,18 +54,22 @@ abstract final class TpLink {
   static const String scheme = 'techpicks';
 
   static const String _device = 'device';
-  static const String _compare = 'compare';
+  static const String _decide = 'decide';
+
+  /// 예전 낱말. 비교 탭이 `decide` 로 넓어지기 전에 나간 링크들이 이걸
+  /// 들고 있다. **받기만 하고 내보내지는 않는다.**
+  static const String _legacyCompare = 'compare';
 
   static Uri device(String slug) =>
       Uri(scheme: scheme, host: _device, pathSegments: <String>[slug]);
 
   static Uri compare(String a, String b) =>
-      Uri(scheme: scheme, host: _compare, pathSegments: <String>[a, b]);
+      Uri(scheme: scheme, host: _decide, pathSegments: <String>[a, b]);
 
   /// 라우터가 쓰는 경로. 주소창에 찍히는 것과 같은 문자열이다.
   static String path(TpLinkTarget target) => switch (target) {
     DeviceTarget(:final slug) => '/$_device/$slug',
-    CompareTarget(:final a, :final b) => '/$_compare/$a/$b',
+    CompareTarget(:final a, :final b) => '/$_decide/$a/$b',
   };
 
   /// 우리 링크가 아니거나 형태가 안 맞으면 null.
@@ -81,15 +85,16 @@ abstract final class TpLink {
         ...uri.pathSegments.where((s) => s.isNotEmpty),
       ],
       // 브라우저에서 오는 것. 여기서 host 는 도메인이지 우리 문법이 아니다.
-      'http' || 'https' || '' => <String>[
-        ...uri.pathSegments.where((s) => s.isNotEmpty),
-      ],
+      'http' ||
+      'https' ||
+      '' => <String>[...uri.pathSegments.where((s) => s.isNotEmpty)],
       _ => const <String>[],
     };
     if (parts.length == 2 && parts.first == _device) {
       return DeviceTarget(parts[1]);
     }
-    if (parts.length == 3 && parts.first == _compare) {
+    if (parts.length == 3 &&
+        (parts.first == _decide || parts.first == _legacyCompare)) {
       return CompareTarget(parts[1], parts[2]);
     }
     return null;

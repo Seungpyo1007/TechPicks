@@ -8,7 +8,6 @@ import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/ranking.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
-import 'package:techpicks/app/theme/tp_tokens.dart';
 import 'package:techpicks/feature/rank/category_chips.dart';
 import 'package:techpicks/shared/widgets/tp_chip.dart';
 
@@ -116,8 +115,10 @@ void main() {
     expect(find.text(formatAxisValue(RankAxis.price, cheapest)), findsWidgets);
   });
 
-  testWidgets('노트북 칩은 꺼져 있고 그렇게 보인다', (tester) async {
-    // 데이터가 없어 못 누른다. 켜진 것과 똑같이 생기면 눌러보고 만다.
+  testWidgets('세 칩 모두 눌린다', (tester) async {
+    // 노트북 칩은 여태 꺼져 있었다 — 화면이 없어서 막아뒀는데, 켜진 칩과
+    // 나란히 있으면서 아무 일도 안 일어나니 고장 난 앱처럼 보였다. 이제
+    // 셋 다 제 주소가 있다.
     await _pump(tester);
 
     final chips = tester.widgetList<TpChip>(
@@ -126,29 +127,11 @@ void main() {
         matching: find.byType(TpChip),
       ),
     );
-    final laptops = chips.firstWhere((c) => c.label == 'Laptops');
-    expect(laptops.onTap, isNull);
 
-    // 못 누르는 칩은 그렇게 보여야 한다. 켜진 칩과 같은 색이면 눌러 보고서야
-    // 안 된다는 걸 안다.
-    final off = tester.widget<Text>(
-      find.descendant(of: find.byWidget(laptops), matching: find.byType(Text)),
-    );
-    final on = tester.widget<Text>(
-      find.descendant(
-        of: find.byWidget(chips.firstWhere((c) => c.label == 'Processors')),
-        matching: find.byType(Text),
-      ),
-    );
-    expect(off.style!.color, isNot(on.style!.color));
-
-    final label = tester.widget<Text>(
-      find.descendant(
-        of: find.widgetWithText(TpChip, 'Laptops'),
-        matching: find.byType(Text),
-      ),
-    );
-    expect(label.style?.color, isNot(TpTokens.inkLight));
+    expect(chips, hasLength(3));
+    for (final chip in chips) {
+      expect(chip.onTap, isNotNull, reason: chip.label);
+    }
   });
 
   testWidgets('빈 값은 대시로 그린다', (tester) async {

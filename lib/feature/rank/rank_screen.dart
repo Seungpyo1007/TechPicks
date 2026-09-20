@@ -14,6 +14,7 @@ import '../../domain/model/ranking.dart';
 import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_chip.dart';
 import 'category_chips.dart';
+import 'rank_category.dart';
 import '../../shared/widgets/tp_search_field.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_error_state.dart';
@@ -30,7 +31,11 @@ class RankScreen extends ConsumerWidget {
     this.onTabSelected,
     this.onDeviceTap,
     this.onScan,
+    this.onCategory,
   });
+
+  /// 카테고리 칩을 누르면. 주소를 바꾸는 일이라 바깥이 한다.
+  final ValueChanged<RankCategory>? onCategory;
 
   /// 화면에 그리는 최대 행 수.
   ///
@@ -64,7 +69,7 @@ class RankScreen extends ConsumerWidget {
 
     return TpShell(
       title: K.rankTitle.tr(),
-      tab: TpTab.rank,
+      tab: TpTab.browse,
       onTabSelected: onTabSelected,
       floatingAction: onScan == null ? null : _ScanFab(onTap: onScan!),
       child: Builder(
@@ -75,7 +80,10 @@ class RankScreen extends ConsumerWidget {
               const EdgeInsets.fromLTRB(16, 4, 16, 24) +
               tpContentInset(context),
           children: <Widget>[
-            const CategoryChips(),
+            CategoryChips(
+              current: RankCategory.phones,
+              onSelect: onCategory ?? (_) {},
+            ),
             const SizedBox(height: _gap),
             // 검색과 브랜드가 한 줄이다. 브랜드가 17개짜리 칩 줄이던 때는
             // 컨트롤만으로 화면 절반이 찼고, 카탈로그가 읽힌 뒤에 그 줄이

@@ -13,6 +13,7 @@ import '../feature/home/home_screen.dart';
 import '../feature/login/email_login_screen.dart';
 import '../feature/login/login_screen.dart';
 import '../feature/onboarding/onboarding_screen.dart';
+import '../feature/rank/rank_category.dart';
 import '../feature/rank/rank_tab.dart';
 import '../feature/scan/scan_screen.dart';
 import '../feature/share/tp_link.dart';
@@ -28,10 +29,18 @@ import 'tab_host.dart';
 /// 스킴 `techpicks://device/x` 가 그냥 `/device/x` 가 된다.
 abstract final class TpRoute {
   static const String home = '/';
-  static const String rank = '/rank';
-  static const String compare = '/compare';
+  static const String browse = '/browse';
+  static const String decide = '/decide';
   static const String ask = '/ask';
   static const String you = '/you';
+
+  /// 둘러보기의 카테고리 하나. `/browse` 는 폰과 같다.
+  static String browseOf(RankCategory c) =>
+      c == RankCategory.phones ? browse : '$browse/${c.key}';
+
+  /// 예전 주소. 공유된 링크가 아직 이걸 들고 있다.
+  static const String legacyRank = '/rank';
+  static const String legacyCompare = '/compare';
 
   static const String onboarding = '/onboarding';
   static const String login = '/login';
@@ -41,8 +50,8 @@ abstract final class TpRoute {
   /// 탭 하나가 사는 자리.
   static String of(TpTab tab) => switch (tab) {
     TpTab.home => home,
-    TpTab.rank => rank,
-    TpTab.compare => compare,
+    TpTab.browse => browse,
+    TpTab.decide => decide,
     TpTab.ask => ask,
     TpTab.you => you,
   };
@@ -126,10 +135,10 @@ GoRouter buildRouter(Ref ref) {
                 builder: (context, state) => HomeScreen(
                   onTabSelected: (t) => context.go(TpRoute.of(t)),
                   onDeviceTap: (s) => context.push('/device/$s'),
-                  onAdd: () => context.go(TpRoute.rank),
-                  onCompareAll: () => context.go(TpRoute.compare),
+                  onAdd: () => context.go(TpRoute.browse),
+                  onCompareAll: () => context.go(TpRoute.decide),
                   onAskWhy: () => context.go(TpRoute.ask),
-                  onMoversTap: () => context.go(TpRoute.rank),
+                  onMoversTap: () => context.go(TpRoute.browse),
                 ),
               ),
             ],
@@ -138,12 +147,21 @@ GoRouter buildRouter(Ref ref) {
             preload: true,
             routes: <RouteBase>[
               GoRoute(
-                path: TpRoute.rank,
-                builder: (context, state) => RankTab(
-                  onTabSelected: (t) => context.go(TpRoute.of(t)),
-                  onDeviceTap: (s) => context.push('/device/$s'),
-                  onScan: () => context.push(TpRoute.scan),
-                ),
+                path: TpRoute.browse,
+                builder: (context, state) =>
+                    _browse(context, RankCategory.phones),
+                routes: <RouteBase>[
+                  // 카테고리가 진짜 주소다. 예전에는 프로바이더였고 `laptops`
+                  // 는 화면이 없어 조용히 폰으로 떨어졌다.
+                  GoRoute(
+                    path: ':category',
+                    builder: (context, state) => _browse(
+                      context,
+                      RankCategory.parse(state.pathParameters['category']) ??
+                          RankCategory.phones,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -151,7 +169,7 @@ GoRouter buildRouter(Ref ref) {
             preload: true,
             routes: <RouteBase>[
               GoRoute(
-                path: TpRoute.compare,
+                path: TpRoute.decide,
                 builder: (context, state) => const _Compare(),
                 routes: <RouteBase>[
                   // **`:a/:b` 보다 먼저** 와야 한다. 뒤에 두면
@@ -215,9 +233,40 @@ GoRouter buildRouter(Ref ref) {
         ],
       ),
       GoRoute(path: TpRoute.scan, builder: (context, state) => const _Scan()),
+
+      // 예전 주소. 공유된 링크와 저장된 딥링크가 아직 이걸 들고 있다.
+      // onException 이 TpLink 를 통해 건져내기는 하지만, 그건 "못 찾았다"
+      // 뒤의 회수 경로라 눈에 안 보이는 한 번의 실패를 거친다.
+      GoRoute(
+        path: TpRoute.legacyRank,
+        redirect: (context, state) => TpRoute.browse,
+      ),
+      GoRoute(
+        path: TpRoute.legacyCompare,
+        redirect: (context, state) => TpRoute.decide,
+        routes: <RouteBase>[
+          GoRoute(
+            path: ':a/:b',
+            redirect: (context, state) =>
+                '${TpRoute.decide}/${state.pathParameters['a']}'
+                '/${state.pathParameters['b']}',
+          ),
+        ],
+      ),
     ],
   );
 }
+
+/// 둘러보기 한 카테고리. 세 주소가 같은 배선을 쓴다.
+RankTab _browse(BuildContext context, RankCategory category) => RankTab(
+  category: category,
+  onTabSelected: (t) => context.go(TpRoute.of(t)),
+  onDeviceTap: (s) => context.push('/device/$s'),
+  onScan: () => context.push(TpRoute.scan),
+  // 칩은 같은 브랜치 안에서 주소만 바꾼다. push 가 아니라 go 라 뒤로 가기가
+  // 쌓이지 않는다 — 명세가 "교체지 푸시가 아니다" 라고 한 그대로다.
+  onCategory: (c) => context.go(TpRoute.browseOf(c)),
+);
 
 /// 게이트가 보는 값이 바뀌면 라우터를 깨운다.
 class _Gate extends ChangeNotifier {
@@ -282,7 +331,7 @@ class _Compare extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) => CompareScreen(
     onTabSelected: (t) => context.go(TpRoute.of(t)),
-    onPick: (side) => context.push('${TpRoute.compare}/pick/${side.name}'),
+    onPick: (side) => context.push('${TpRoute.decide}/pick/${side.name}'),
     onAskWhy: () => _askAboutCompared(context, ref),
   );
 
@@ -359,7 +408,7 @@ class _Detail extends ConsumerWidget {
     // 상세에서 넘어오면 A 슬롯에 그 기기를 넣고 비교 탭으로 간다.
     onCompare: (s) {
       ref.read(compareProvider.notifier).pick(CompareSide.a, s);
-      context.go(TpRoute.compare);
+      context.go(TpRoute.decide);
     },
     onView3D: (s) => context.push('/device/$s/3d'),
   );
@@ -393,7 +442,7 @@ class _Scan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ScanScreen(
-    onBack: () => context.canPop() ? context.pop() : context.go(TpRoute.rank),
+    onBack: () => context.canPop() ? context.pop() : context.go(TpRoute.browse),
     // 스캔 결과에서 상세로. 스캔은 이력에서 빠진다 — 뒤로 가면
     // 랭킹으로 돌아오는 게 맞다.
     onOpenDevice: (slug) => context.pushReplacement('/device/$slug'),

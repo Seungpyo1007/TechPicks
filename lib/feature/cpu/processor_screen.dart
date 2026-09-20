@@ -14,6 +14,7 @@ import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../rank/category_chips.dart';
+import '../rank/rank_category.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_press.dart';
 
@@ -22,9 +23,12 @@ import '../../shared/widgets/tp_press.dart';
 /// v1 의 `CPU.dart` 를 대체한다. 그 화면은 `device_info_plus` 로 읽은 내 기기
 /// 정보를 띄웠고, 그건 You 화면에 있다.
 class ProcessorScreen extends ConsumerWidget {
-  const ProcessorScreen({super.key, this.onTabSelected});
+  const ProcessorScreen({super.key, this.onTabSelected, this.onCategory});
 
   final ValueChanged<TpTab>? onTabSelected;
+
+  /// 카테고리 칩을 누르면. 주소를 바꾸는 일이라 바깥이 한다.
+  final ValueChanged<RankCategory>? onCategory;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,7 +39,7 @@ class ProcessorScreen extends ConsumerWidget {
 
     return TpShell(
       title: K.cpuTitle.tr(),
-      tab: TpTab.rank,
+      tab: TpTab.browse,
       onTabSelected: onTabSelected,
       child: Builder(
         // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
@@ -45,7 +49,10 @@ class ProcessorScreen extends ConsumerWidget {
               const EdgeInsets.fromLTRB(16, 4, 16, 24) +
               tpContentInset(context),
           children: <Widget>[
-            const CategoryChips(),
+            CategoryChips(
+              current: RankCategory.processors,
+              onSelect: onCategory ?? (_) {},
+            ),
             const SizedBox(height: 14),
             _Segmented(
               current: segment,
@@ -232,9 +239,7 @@ class _ProcessorRow extends StatelessWidget {
                     fontSize: 28,
                     fontWeight: t.isGlass ? FontWeight.w700 : FontWeight.w500,
                     // 랭킹과 같은 규칙 — 1–3 위만 파랗다.
-                    color: entry.position <= 3
-                        ? TpTokens.blue
-                        : t.mutedInk,
+                    color: entry.position <= 3 ? TpTokens.blue : t.mutedInk,
                   ),
                 ),
               ],

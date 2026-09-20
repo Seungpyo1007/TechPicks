@@ -164,9 +164,9 @@
   "start": "시작하기",
   "swap": "변경",
   "tabAsk": "질문",
-  "tabCmp": "비교",
+  "tabDecide": "정하기",
   "tabHome": "홈",
-  "tabRank": "랭킹",
+  "tabBrowse": "둘러보기",
   "tabYou": "내 정보",
   "tapToChange": "눌러서 변경",
   "themeDark": "어둡게",
@@ -200,5 +200,13 @@
   "sourcesBrands": "브랜드 {}곳",
   "sourcesVersion": "카탈로그 버전 {}",
   "sourcesPerDevice": "기기마다의 원문 출처는 각 상세 화면 아래에 있습니다.",
-  "sourcesAppCode": "앱 코드 라이선스 (Apache-2.0)"
+  "sourcesAppCode": "앱 코드 라이선스 (Apache-2.0)",
+  "laptopNote": "점수 없음 — TechAPI 에 노트북 벤치마크가 없습니다. 가격 높은 순으로 보여줍니다.",
+  "laptopTierHigh": "하이엔드",
+  "laptopTierPerf": "퍼포먼스",
+  "laptopTierMain": "메인스트림",
+  "laptopNoScore": "지수 없음",
+  "specRam": "메모리",
+  "specStorage": "저장장치",
+  "specGpu": "그래픽"
 }
