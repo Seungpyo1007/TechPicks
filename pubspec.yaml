@@ -82,6 +82,8 @@ flutter:
     - assets/logo/google_logo.png
     - assets/translations/
     - assets/catalog/
+    - assets/parts/
+    - assets/laptops/
 
 flutter_icons:
   android: true

@@ -15,6 +15,8 @@ import '../core/error_reporter.dart';
 import '../data/dto/smartphone.dart';
 
 import '../data/repository/catalog_repository.dart';
+import '../data/repository/laptop_repository.dart';
+import '../data/repository/parts_repository.dart';
 import '../data/repository/catalog_source.dart';
 import '../data/repository/catalog_store.dart';
 import '../data/repository/tech_api_repository.dart';
@@ -59,6 +61,16 @@ final techApiRepositoryProvider = Provider<TechApiRepository>(
   (ref) => TechApiRepository(),
 );
 
+/// 조립 PC 부품. 견적기가 쓴다.
+final partsRepositoryProvider = Provider<PartsRepository>(
+  (ref) => PartsRepository(),
+);
+
+/// 노트북 목록.
+final laptopRepositoryProvider = Provider<LaptopRepository>(
+  (ref) => LaptopRepository(),
+);
+
 final catalogProvider = FutureProvider<Catalog>(
   (ref) async {
     final result = await ref.watch(catalogRepositoryProvider).load();
@@ -69,6 +81,17 @@ final catalogProvider = FutureProvider<Catalog>(
   // 화면이 영원히 로딩으로 보인다.
   retry: (_, _) => null,
 );
+
+/// 데스크톱 부품. 애셋이라 재시도가 의미 없는 것은 카탈로그와 같다.
+final partsProvider = FutureProvider<DesktopParts>((ref) async {
+  final result = await ref.watch(partsRepositoryProvider).load();
+  return result.fold((p) => p, (f) => throw f);
+}, retry: (_, _) => null);
+
+final laptopsProvider = FutureProvider<Laptops>((ref) async {
+  final result = await ref.watch(laptopRepositoryProvider).load();
+  return result.fold((l) => l, (f) => throw f);
+}, retry: (_, _) => null);
 
 /// 사용자 가중치.
 ///
