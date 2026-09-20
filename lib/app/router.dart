@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/model/device_specs.dart';
+import '../domain/model/search_index.dart';
 import '../feature/ask/ask_screen.dart';
 import '../feature/build/build_screen.dart';
 import '../feature/compare/compare_screen.dart';
@@ -17,6 +18,7 @@ import '../feature/onboarding/onboarding_screen.dart';
 import '../feature/rank/rank_category.dart';
 import '../feature/rank/rank_tab.dart';
 import '../feature/scan/scan_screen.dart';
+import '../feature/search/search_screen.dart';
 import '../feature/share/tp_link.dart';
 import '../feature/viewer/viewer_screen.dart';
 import '../feature/you/you_screen.dart';
@@ -50,6 +52,7 @@ abstract final class TpRoute {
   static const String login = '/login';
   static const String emailLogin = '/login/email';
   static const String scan = '/scan';
+  static const String search = '/search';
 
   /// 탭 하나가 사는 자리.
   static String of(TpTab tab) => switch (tab) {
@@ -143,6 +146,7 @@ GoRouter buildRouter(Ref ref) {
                   onCompareAll: () => context.go(TpRoute.decide),
                   onAskWhy: () => context.go(TpRoute.ask),
                   onMoversTap: () => context.go(TpRoute.browse),
+                  onSearch: () => context.push(TpRoute.search),
                 ),
               ),
             ],
@@ -244,6 +248,14 @@ GoRouter buildRouter(Ref ref) {
         ],
       ),
       GoRoute(path: TpRoute.scan, builder: (context, state) => const _Scan()),
+      GoRoute(
+        path: TpRoute.search,
+        builder: (context, state) => SearchScreen(
+          onBack: () =>
+              context.canPop() ? context.pop() : context.go(TpRoute.home),
+          onHit: (hit) => _openHit(context, hit),
+        ),
+      ),
 
       // 예전 주소. 공유된 링크와 저장된 딥링크가 아직 이걸 들고 있다.
       // onException 이 TpLink 를 통해 건져내기는 하지만, 그건 "못 찾았다"
@@ -266,6 +278,21 @@ GoRouter buildRouter(Ref ref) {
       ),
     ],
   );
+}
+
+/// 검색 결과를 연다.
+///
+/// 노트북은 상세 화면이 없어 목록으로 보낸다. 없는 화면으로 보내 빈 자리를
+/// 그리느니, 그 기기가 있는 목록에 내려놓는 편이 낫다.
+void _openHit(BuildContext context, SearchHit hit) {
+  switch (hit.kind) {
+    case SearchKind.phone:
+      context.push('/device/${hit.slug}');
+    case SearchKind.processor:
+      context.go(TpRoute.browseOf(RankCategory.processors));
+    case SearchKind.laptop:
+      context.go(TpRoute.browseOf(RankCategory.laptops));
+  }
 }
 
 /// 둘러보기 한 카테고리. 세 주소가 같은 배선을 쓴다.

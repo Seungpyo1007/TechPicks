@@ -238,5 +238,12 @@
   "buildBottleneckCpu": "The CPU cannot keep the GPU fed (index gap {}). Move up a CPU, or down a GPU.",
   "buildBottleneckGpu": "The GPU is weak next to the CPU (index gap {}). Move up a GPU if graphics work matters.",
   "buildScope": "TechAPI carries no motherboards, memory, storage, power supplies or cases. Only the CPU and GPU are real products here, and the budget is those two list prices — not the price of a finished machine.",
-  "buildPsuNote": "The recommended wattage adds the CPU's peak draw, the GPU's draw, and {}W for the board, memory, storage and fans, rounded up to the next 50W."
+  "buildPsuNote": "The recommended wattage adds the CPU's peak draw, the GPU's draw, and {}W for the board, memory, storage and fans, rounded up to the next 50W.",
+  "searchTitle": "Search",
+  "searchAllHint": "Phones · processors · laptops",
+  "searchEmpty": "Type what you're looking for.",
+  "searchKindPhone": "Phone",
+  "searchKindCpu": "Processor",
+  "searchKindLaptop": "Laptop",
+  "searchCount": "{} results"
 }
