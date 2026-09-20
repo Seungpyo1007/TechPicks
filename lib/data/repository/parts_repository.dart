@@ -34,11 +34,14 @@ class DesktopParts {
 
   /// 값이 있는 것만. 견적기는 **가격 있는 조합만** 본다 — 값을 모르는 부품을
   /// 예산에 넣으면 합계가 거짓말이 된다.
+  ///
+  /// null 과 0 을 같이 뺀다. 0원은 "공짜"가 아니라 "안 적혔다"는 뜻이고,
+  /// 남겨두면 예산이 얼마든 그 부품이 1등으로 올라온다.
   List<Cpu> get pricedCpus =>
-      cpus.where((c) => c.msrpUsd != null).toList(growable: false);
+      cpus.where((c) => (c.msrpUsd ?? 0) > 0).toList(growable: false);
 
   List<Gpu> get pricedGpus =>
-      gpus.where((g) => g.msrpUsd != null).toList(growable: false);
+      gpus.where((g) => (g.msrpUsd ?? 0) > 0).toList(growable: false);
 
   Cpu? cpu(String slug) => cpus.where((c) => c.slug == slug).firstOrNull;
   Gpu? gpu(String slug) => gpus.where((g) => g.slug == slug).firstOrNull;
