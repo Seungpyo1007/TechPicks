@@ -30,7 +30,11 @@ class TpSheet extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: glass ? t.cardStrong : t.card,
-          borderRadius: BorderRadius.circular(glass ? 36 : t.rCard),
+          // iOS 는 떠 있어서 네 모서리가 다 둥글다. Android 는 화면 바닥에
+          // 붙으니 위만 둥글다.
+          borderRadius: glass
+              ? BorderRadius.circular(36)
+              : BorderRadius.vertical(top: Radius.circular(t.rCard)),
           border: glass ? Border.all(color: t.hairline) : null,
           boxShadow: t.cardShadow,
         ),
