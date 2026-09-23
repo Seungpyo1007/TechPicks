@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
-import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../data/repository/catalog_repository.dart';
 import '../../data/service/link_opener.dart';
@@ -12,7 +11,6 @@ import '../../domain/model/tp_weights.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_link_line.dart';
 import '../../shared/widgets/tp_surface.dart';
-import '../../shared/widgets/tp_tap_target.dart';
 
 /// 데이터 출처.
 ///
@@ -33,12 +31,11 @@ class SourcesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final type = context.tpText;
-    final t = context.tp;
     final catalog = ref.watch(catalogProvider).value;
     final weights = ref.watch(weightsProvider);
 
+    // 밀려 들어온 화면이다. 뒤로 버튼은 다른 푸시 화면처럼 헤더 왼쪽에 둔다.
     return TpShell(
-      mode: TpChromeMode.plain,
       onBack: onBack,
       child: Builder(
         builder: (context) => ListView(
@@ -46,19 +43,7 @@ class SourcesScreen extends ConsumerWidget {
               const EdgeInsets.fromLTRB(16, 8, 16, 24) +
               tpContentInset(context),
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(child: Text(K.sources.tr(), style: type.largeTitle)),
-                if (onBack != null)
-                  TpTapTarget(
-                    onTap: onBack,
-                    child: Text(
-                      K.back.tr(),
-                      style: type.body.copyWith(color: t.link),
-                    ),
-                  ),
-              ],
-            ),
+            Text(K.sources.tr(), style: type.largeTitle),
             const SizedBox(height: 10),
             Text(K.sourcesIntro.tr(), style: type.secondary),
             const SizedBox(height: 18),
