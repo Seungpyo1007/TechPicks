@@ -1,6 +1,7 @@
 import '../theme/tp_motion.dart';
 import '../theme/tp_native_glass.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -104,6 +105,7 @@ class TpShell extends StatelessWidget {
     this.onTabSelected,
     this.trailing,
     this.floatingAction,
+    this.scrollTitle,
   });
 
   final Widget child;
@@ -123,6 +125,15 @@ class TpShell extends StatelessWidget {
 
   /// Android 확장 FAB. iOS 는 콘텐츠 안 인라인 버튼을 쓰므로 무시한다.
   final Widget? floatingAction;
+
+  /// iOS 에서 큰 제목이 콘텐츠 안에 있는 화면의 제목.
+  ///
+  /// 큰 제목이 스크롤로 사라지면 헤더 알약에 작은 제목으로 떠오른다. 안
+  /// 그러면 스크롤한 홈은 이름 없는 화면이 된다. [title] 이 있으면 무시한다.
+  final String? scrollTitle;
+
+  /// 큰 제목(34pt)이 헤더 밑으로 다 들어갔다고 보는 스크롤 양.
+  static const double _scrollTitleAfter = 44;
 
   static const double iosTabHeight = 62;
 
@@ -225,13 +236,74 @@ class TpShell extends StatelessWidget {
     );
   }
 
+  /// 이 화면의 목록을 맨 위로 올린다. 상태 바를 누르거나 지금 탭을 다시
+  /// 누를 때. iOS 에서는 Scaffold 가 해주던 일인데 이 앱은 Scaffold 가 없다.
+  static void _scrollToTop(BuildContext context) {
+    final controller = PrimaryScrollController.maybeOf(context);
+    if (controller == null) return;
+    final move = context.motion.reveal;
+    for (final position in controller.positions.toList()) {
+      if (move.duration == Duration.zero) {
+        position.jumpTo(0);
+      } else {
+        position.animateTo(
+          0,
+          duration: const Duration(milliseconds: 380),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    }
+  }
+
+  /// 지금 탭을 다시 누르면 이동 대신 맨 위로 올린다. iOS 의 탭 바 규칙이다.
+  void _selectTab(BuildContext context, TpTab picked) {
+    if (picked == tab) {
+      _scrollToTop(context);
+    } else {
+      onTabSelected!(picked);
+    }
+  }
+
+  /// [past] 가 있으면 켜질 때만 보인다. 숨은 동안은 트리에 없다 — 누를
+  /// 수도, 스크린 리더가 큰 제목과 두 번 읽을 수도 없다.
+  Widget _fadeIn(
+    BuildContext context,
+    ValueListenable<bool>? past,
+    Widget child,
+  ) {
+    if (past == null) return child;
+    final move = context.motion.selection;
+    return ValueListenableBuilder<bool>(
+      valueListenable: past,
+      child: child,
+      builder: (context, shown, child) => AnimatedSwitcher(
+        duration: move.duration,
+        switchInCurve: move.curve,
+        switchOutCurve: move.curve,
+        child: shown ? child : const SizedBox.shrink(),
+      ),
+    );
+  }
+
   // ── iOS 26 Liquid Glass ──────────────────────────────────────
   Widget _buildIos(BuildContext context) {
+    if (title == null && scrollTitle != null && mode == TpChromeMode.full) {
+      return _ScrollPast(
+        after: _scrollTitleAfter,
+        builder: (context, past) => _buildIosChrome(context, past),
+      );
+    }
+    return _buildIosChrome(context, null);
+  }
+
+  Widget _buildIosChrome(BuildContext context, ValueListenable<bool>? past) {
     final t = context.tp;
     final type = context.tpText;
     final safe = MediaQuery.viewPaddingOf(context);
     final showChrome = mode == TpChromeMode.full;
     final takeover = mode == TpChromeMode.takeover;
+    // 헤더 알약에 들어갈 글자. 스크롤 제목은 [past] 가 켜질 때만 보인다.
+    final pillTitle = title ?? (past == null ? null : scrollTitle);
 
     final topInset = switch (mode) {
       TpChromeMode.full => safe.top + _iosContentTop,
@@ -294,7 +366,8 @@ class TpShell extends StatelessWidget {
             ),
           ),
 
-        if (showChrome && (onBack != null || title != null || trailing != null))
+        if (showChrome &&
+            (onBack != null || pillTitle != null || trailing != null))
           Positioned(
             top: safe.top,
             left: 12,
@@ -317,26 +390,35 @@ class TpShell extends StatelessWidget {
                     ),
                   )
                 // 오른쪽에만 버튼이 있으면 제목이 왼쪽으로 밀린다.
-                else if (trailing != null && title != null)
+                else if (trailing != null && pillTitle != null)
                   const SizedBox(width: 48),
                 // 제목이 없는 화면(상세)은 밀어줄 것이 없어 오른쪽 버튼이
                 // 왼쪽에 붙는다.
-                if (title == null && trailing != null) const Spacer(),
-                if (title != null) ...<Widget>[
+                if (pillTitle == null && trailing != null) const Spacer(),
+                if (pillTitle != null) ...<Widget>[
                   const Spacer(),
-                  TpSurface.chrome(
-                    radius: TpTokens.rControl,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 11,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        const _AppMark(width: 13, height: 19),
-                        const SizedBox(width: 8),
-                        Text(title!, style: type.appBarTitle),
-                      ],
+                  _fadeIn(
+                    context,
+                    past,
+                    TpSurface.chrome(
+                      radius: TpTokens.rControl,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 11,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          const _AppMark(width: 13, height: 19),
+                          const SizedBox(width: 8),
+                          // 시스템 바처럼 글자 확대에 상한을 둔다. 알약 높이가
+                          // 고정이라 넘치면 잘린다.
+                          MediaQuery.withClampedTextScaling(
+                            maxScaleFactor: 1.2,
+                            child: Text(pillTitle, style: type.appBarTitle),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -355,9 +437,23 @@ class TpShell extends StatelessWidget {
                     ),
                   )
                 // 뒤로 버튼과 좌우 균형을 맞춘다.
-                else if (onBack != null && title != null)
+                else if (onBack != null && pillTitle != null)
                   const SizedBox(width: 48),
               ],
+            ),
+          ),
+
+        // 상태 바를 누르면 맨 위로. iOS 는 그 자리의 탭을 앱에 넘겨준다.
+        if (!takeover)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: safe.top,
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              excludeFromSemantics: true,
+              onTap: () => _scrollToTop(context),
             ),
           ),
 
@@ -378,7 +474,7 @@ class TpShell extends StatelessWidget {
                     index: TpTab.values.indexOf(tab!),
                     onSelected: onTabSelected == null
                         ? null
-                        : (i) => onTabSelected!(TpTab.values[i]),
+                        : (i) => _selectTab(context, TpTab.values[i]),
                     height: iosTabHeight,
                     tint: TpTokens.blue,
                     // 아이콘 크기도 라벨 타이포도 안 넘긴다. 우리 값을 얹는
@@ -398,7 +494,9 @@ class TpShell extends StatelessWidget {
                     radius: TpTokens.rControl,
                     child: _IosTabBar(
                       current: tab!,
-                      onSelected: onTabSelected,
+                      onSelected: onTabSelected == null
+                          ? null
+                          : (t) => _selectTab(context, t),
                       tokens: t,
                       type: type,
                     ),
@@ -897,6 +995,42 @@ class _TabBodyState extends State<_TabBody>
         );
       },
       child: widget.child,
+    );
+  }
+}
+
+/// 세로 스크롤이 [after] 를 넘었는지 알려준다. 넘나들 때만 다시 그린다.
+class _ScrollPast extends StatefulWidget {
+  const _ScrollPast({required this.after, required this.builder});
+
+  final double after;
+  final Widget Function(BuildContext context, ValueListenable<bool> past)
+  builder;
+
+  @override
+  State<_ScrollPast> createState() => _ScrollPastState();
+}
+
+class _ScrollPastState extends State<_ScrollPast> {
+  final ValueNotifier<bool> _past = ValueNotifier<bool>(false);
+
+  @override
+  void dispose() {
+    _past.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollUpdateNotification>(
+      onNotification: (n) {
+        // 안쪽의 가로 목록(칩 줄)이 굴러도 제목이 깜빡이면 안 된다.
+        if (n.depth == 0 && n.metrics.axis == Axis.vertical) {
+          _past.value = n.metrics.pixels > widget.after;
+        }
+        return false;
+      },
+      child: widget.builder(context, _past),
     );
   }
 }
