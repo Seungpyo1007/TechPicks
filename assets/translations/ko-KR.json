@@ -97,6 +97,7 @@
   "loadFailed": "기기를 불러오지 못했습니다.",
   "loadFailedBody": "이 기기의 정보를 받지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
   "logout": "로그아웃",
+  "logoutConfirm": "이 기기에서 로그아웃합니다. 관심 목록은 계정에 남아 있습니다.",
   "movers": "이번 주 변동",
   "nameLabel": "이름",
   "next": "다음",

@@ -344,6 +344,29 @@ void main() {
       expect(find.text('You'), findsWidgets);
     }
   });
+
+  testWidgets('로그아웃은 시트에서 한 번 더 묻는다', (tester) async {
+    var logouts = 0;
+    await pumpScreen(
+      tester,
+      YouScreen(email: 'a@b.c', onLogout: () => logouts++),
+      size: const Size(1200, 3600),
+    );
+
+    await tester.tap(find.text('Log out'));
+    await tester.pumpAndSettle();
+    expect(logouts, 0);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(logouts, 0);
+
+    await tester.tap(find.text('Log out'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log out').last);
+    await tester.pumpAndSettle();
+    expect(logouts, 1);
+  });
 }
 
 /// 기기 정보를 정해서 넣는 가짜.

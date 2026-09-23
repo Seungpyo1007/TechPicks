@@ -97,6 +97,7 @@
   "loadFailed": "Could not load this device.",
   "loadFailedBody": "Could not fetch this device. Try again in a moment.",
   "logout": "Log out",
+  "logoutConfirm": "You’ll be signed out on this device. Your shortlist stays with your account.",
   "movers": "Movers this week",
   "nameLabel": "Name",
   "next": "Next",
