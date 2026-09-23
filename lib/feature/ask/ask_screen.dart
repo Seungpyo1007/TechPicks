@@ -140,6 +140,9 @@ class _AskScreenState extends ConsumerState<AskScreen>
             children: <Widget>[
               ListView.builder(
                 controller: _scroll,
+                // 대화를 거슬러 올리면 키보드가 내려간다. iOS 메시지와 같다.
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 // 입력 바는 이 영역 바닥에 붙는다. 그만큼 아래를 비워둬야
                 // 마지막 말풍선이 그 뒤로 숨지 않는다.
                 padding: EdgeInsets.fromLTRB(
@@ -573,6 +576,7 @@ class _Composer extends StatelessWidget {
                     label: K.askHint.tr(),
                     child: TextField(
                       controller: controller,
+                      onTapOutside: (_) => FocusScope.of(context).unfocus(),
                       onSubmitted: onSend,
                       // 한 줄짜리 입력이라 Enter 가 곧 보내기다. 명시해 두면
                       // 화면 키보드도 줄바꿈 대신 보내기를 그린다.
