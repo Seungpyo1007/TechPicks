@@ -1,6 +1,7 @@
 import '../../app/theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
@@ -17,10 +18,11 @@ import '../../shared/widgets/tp_chip.dart';
 import 'category_chips.dart';
 import 'rank_category.dart';
 import '../../shared/widgets/tp_search_field.dart';
-import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_button.dart';
 import '../../shared/widgets/tp_press.dart';
+import '../../shared/widgets/tp_pressable.dart';
+import '../../shared/widgets/tp_sheet.dart';
 
 /// 랭킹. v1 의 `RankingCPU/Phone/Laptop.dart` 웹뷰 세 개를 대체한다.
 ///
@@ -77,81 +79,86 @@ class RankScreen extends ConsumerWidget {
       child: Builder(
         // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
         // 크롬이 차지한 자리를 모르는 예전 값이 나온다.
-        builder: (context) => ListView(
-          padding:
-              const EdgeInsets.fromLTRB(16, 4, 16, 24) +
-              tpContentInset(context),
-          children: <Widget>[
-            CategoryChips(
-              current: RankCategory.phones,
-              onSelect: onCategory ?? (_) {},
-            ),
-            const SizedBox(height: _gap),
-            // 검색과 브랜드가 한 줄이다. 브랜드가 17개짜리 칩 줄이던 때는
-            // 컨트롤만으로 화면 절반이 찼고, 카탈로그가 읽힌 뒤에 그 줄이
-            // 생겨나면서 목록이 56pt 씩 아래로 밀렸다.
-            const _RankControls(),
-            const SizedBox(height: _gap),
-            // "정렬 기준" 눈썹은 뺐다. 칩 라벨이 이미 정렬이라고 말한다.
-            _ChipRow(
-              labels: RankAxis.values.map((a) => K.rankAxis(a).tr()).toList(),
-              selectedIndex: RankAxis.values.indexOf(axis),
-              onSelected: (i) =>
-                  ref.read(rankAxisProvider.notifier).set(RankAxis.values[i]),
-            ),
-            const SizedBox(height: _gap),
-            // 스켈레톤에서 목록으로 하드컷이면 화면이 튄다.
-            AnimatedSwitcher(
-              duration: motion.contentSwap.duration,
-              switchInCurve: motion.contentSwap.curve,
-              switchOutCurve: motion.contentSwap.curve,
-              child: loading
-                  ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
-                  // 못 읽은 것을 "기기가 없다"로 그리면 사용자가 할 수 있는 게
-                  // 없다. 다시 시도할 자리를 준다.
-                  : catalog.hasError
-                  ? const TpCatalogError(key: ValueKey<String>('error'))
-                  // 걸러서 아무것도 안 남으면 빈 목록 대신 그렇게 말한다.
-                  : ranked.isEmpty
-                  ? Padding(
-                      key: const ValueKey<String>('empty'),
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Text(
-                        K.noMatches.tr(),
-                        style: context.tpText.secondary,
-                      ),
-                    )
-                  : _RankList(
-                      money: money,
-                      key: const ValueKey<String>('list'),
-                      ranked: ranked.take(maxRows).toList(growable: false),
-                      axis: axis,
-                      onDeviceTap: onDeviceTap,
-                    ),
-            ),
-            // 잘린 것을 말해준다. 랭킹이 조용히 끊기면 가격순으로 봤을 때
-            // 제일 싼 기기가 왜 없는지 알 방법이 없다.
-            if (ranked.length > maxRows) ...<Widget>[
-              const SizedBox(height: _gap),
-              Text(
-                K.rankCapped.tr(
-                  args: <String>['$maxRows', '${ranked.length - maxRows}'],
-                ),
-                style: context.tpText.caption,
+        builder: (context) {
+          final list = ListView(
+            padding:
+                const EdgeInsets.fromLTRB(16, 4, 16, 24) +
+                tpContentInset(context),
+            children: <Widget>[
+              CategoryChips(
+                current: RankCategory.phones,
+                onSelect: onCategory ?? (_) {},
               ),
+              const SizedBox(height: _gap),
+              // 검색과 브랜드가 한 줄이다. 브랜드가 17개짜리 칩 줄이던 때는
+              // 컨트롤만으로 화면 절반이 찼고, 카탈로그가 읽힌 뒤에 그 줄이
+              // 생겨나면서 목록이 56pt 씩 아래로 밀렸다.
+              const _RankControls(),
+              const SizedBox(height: _gap),
+              // "정렬 기준" 눈썹은 뺐다. 칩 라벨이 이미 정렬이라고 말한다.
+              _ChipRow(
+                labels: RankAxis.values.map((a) => K.rankAxis(a).tr()).toList(),
+                selectedIndex: RankAxis.values.indexOf(axis),
+                onSelected: (i) =>
+                    ref.read(rankAxisProvider.notifier).set(RankAxis.values[i]),
+              ),
+              const SizedBox(height: _gap),
+              // 스켈레톤에서 목록으로 하드컷이면 화면이 튄다.
+              AnimatedSwitcher(
+                duration: motion.contentSwap.duration,
+                switchInCurve: motion.contentSwap.curve,
+                switchOutCurve: motion.contentSwap.curve,
+                child: loading
+                    ? const _RowSkeletons(key: ValueKey<String>('skeleton'))
+                    // 못 읽은 것을 "기기가 없다"로 그리면 사용자가 할 수 있는 게
+                    // 없다. 다시 시도할 자리를 준다.
+                    : catalog.hasError
+                    ? const TpCatalogError(key: ValueKey<String>('error'))
+                    // 걸러서 아무것도 안 남으면 빈 목록 대신 그렇게 말한다.
+                    : ranked.isEmpty
+                    ? Padding(
+                        key: const ValueKey<String>('empty'),
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Text(
+                          K.noMatches.tr(),
+                          style: context.tpText.secondary,
+                        ),
+                      )
+                    : _RankList(
+                        money: money,
+                        key: const ValueKey<String>('list'),
+                        ranked: ranked.take(maxRows).toList(growable: false),
+                        axis: axis,
+                        onDeviceTap: onDeviceTap,
+                      ),
+              ),
+              // 잘린 것을 말해준다. 랭킹이 조용히 끊기면 가격순으로 봤을 때
+              // 제일 싼 기기가 왜 없는지 알 방법이 없다.
+              if (ranked.length > maxRows) ...<Widget>[
+                const SizedBox(height: _gap),
+                Text(
+                  K.rankCapped.tr(
+                    args: <String>['$maxRows', '${ranked.length - maxRows}'],
+                  ),
+                  style: context.tpText.caption,
+                ),
+              ],
+              if (onScan != null && context.tp.isGlass) ...<Widget>[
+                const SizedBox(height: 16),
+                _ScanInlineButton(onTap: onScan!),
+              ],
+              // 순위를 어떻게 냈는지는 순위가 있을 때 할 말이다. 오류 화면과
+              // "맞는 게 없습니다" 아래에도 붙어 있었다.
+              if (hasList) ...<Widget>[
+                const SizedBox(height: 18),
+                Text(K.rankNote.tr(), style: context.tpText.caption),
+              ],
             ],
-            if (onScan != null && context.tp.isGlass) ...<Widget>[
-              const SizedBox(height: 16),
-              _ScanInlineButton(onTap: onScan!),
-            ],
-            // 순위를 어떻게 냈는지는 순위가 있을 때 할 말이다. 오류 화면과
-            // "맞는 게 없습니다" 아래에도 붙어 있었다.
-            if (hasList) ...<Widget>[
-              const SizedBox(height: 18),
-              Text(K.rankNote.tr(), style: context.tpText.caption),
-            ],
-          ],
-        ),
+          );
+          return context.tp.isGlass
+              ? CupertinoScrollbar(child: list)
+              : Scrollbar(child: list);
+        },
       ),
     );
   }
@@ -241,15 +248,11 @@ Future<void> _pickBrand(
   // 열일곱 개가 넘어서 시트가 화면을 넘는다.
   final maxHeight = MediaQuery.sizeOf(context).height * 0.6;
 
-  await showModalBottomSheet<void>(
+  await showTpSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (sheetContext) => TpSurface(
-      strong: true,
-      // 랭킹 오십 줄 위에 뜬다. 비치면 못 읽는다.
-      opaque: true,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,25 +266,29 @@ Future<void> _pickBrand(
               children: <Widget>[
                 for (final option in <String?>[null, ...brands])
                   TpPress(
+                    haptic: TpHaptic.selection,
                     onTap: () {
                       Navigator.of(sheetContext).pop();
                       ref.read(rankBrandProvider.notifier).set(option);
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              option ?? K.allBrands.tr(),
-                              style: type.body,
+                    child: Semantics(
+                      selected: option == current,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                option ?? K.allBrands.tr(),
+                                style: type.body,
+                              ),
                             ),
-                          ),
-                          if (option == current)
-                            Icon(Icons.check, size: 18, color: t.link)
-                          else
-                            const SizedBox(width: 18, height: 18),
-                        ],
+                            if (option == current)
+                              Icon(Icons.check, size: 18, color: t.link)
+                            else
+                              const SizedBox(width: 18, height: 18),
+                          ],
+                        ),
                       ),
                     ),
                   ),

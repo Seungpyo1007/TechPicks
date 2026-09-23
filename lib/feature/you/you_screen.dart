@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_gemma_builtin_ai/flutter_gemma_builtin_ai.dart'
     show BuiltInAiAvailability;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,13 +24,12 @@ import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../shared/widgets/tp_press.dart';
+import '../../shared/widgets/tp_pressable.dart';
+import '../../shared/widgets/tp_sheet.dart';
+import '../../shared/widgets/tp_slider.dart';
+import '../../shared/widgets/tp_switch.dart';
 
 /// 내 정보.
-///
-/// v1 의 Profile / EditProfileScreen / ChangePassword / PhoneSetting 네 화면을
-/// 하나로 합친다.
-///
-/// 카피는 아직 하드코딩이다.
 class YouScreen extends ConsumerStatefulWidget {
   const YouScreen({
     super.key,
@@ -75,14 +75,6 @@ class _YouScreenState extends ConsumerState<YouScreen> {
   /// SnackBar 를 쓸 수 없다. 이 앱은 Scaffold 를 안 쓰고 TpShell 이 크롬을
   /// 직접 그린다. 로그인 화면도 같은 방식으로 오류를 본문에 붙인다.
   String? _notice;
-
-  /// 이름 입력칸. 다이얼로그가 닫히는 애니메이션 중에도 살아 있어야 한다 —
-  /// 닫자마자 버리면 사라지는 프레임에서 이미 버린 컨트롤러를 읽는다.
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   String? get name => widget.name;
   String? get email => widget.email;
@@ -198,7 +190,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                   ),
                   _SettingRow(
                     label: K.notifications.tr(),
-                    value: (notifications ? K.on : K.off).tr(),
+                    switchValue: notifications,
                     // 켜고 끄는 줄이다. 스크린 리더에 "버튼"이라고 하면 눌러야
                     // 무엇이 되는지 알 수 없다.
                     toggled: notifications,
@@ -409,15 +401,12 @@ Future<void> _pickAiEngine(
   final type = context.tpText;
   final note = _onDeviceNote(status);
 
-  await showModalBottomSheet<void>(
+  await showTpSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    builder: (sheetContext) => TpSurface(
-      strong: true,
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       // 유리는 자기 레이어에서 그려진다. 라우트 위에 뜬 시트에는 흐릴 대상이
       // 없어서, 72% 흰 면 아래로 아래 화면 글자가 그대로 읽혔다.
-      opaque: true,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -430,20 +419,24 @@ Future<void> _pickAiEngine(
           const SizedBox(height: 8),
           for (final option in TpAiEngine.values)
             TpPress(
+              haptic: TpHaptic.selection,
               onTap: () async {
                 Navigator.of(sheetContext).pop();
                 await ref.read(aiEngineProvider.notifier).set(option);
               },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(child: Text(option.key.tr(), style: type.body)),
-                    if (option == current)
-                      Icon(Icons.check, size: 18, color: context.tp.link)
-                    else
-                      const SizedBox(width: 18, height: 18),
-                  ],
+              child: Semantics(
+                selected: option == current,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(child: Text(option.key.tr(), style: type.body)),
+                      if (option == current)
+                        Icon(Icons.check, size: 18, color: context.tp.link)
+                      else
+                        const SizedBox(width: 18, height: 18),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -477,13 +470,10 @@ Future<void> _pickCurrency(
   final type = context.tpText;
   final rate = ref.read(fxRateProvider).value ?? FxRate.fallback;
 
-  await showModalBottomSheet<void>(
+  await showTpSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    builder: (sheetContext) => TpSurface(
-      strong: true,
-      opaque: true,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,22 +482,29 @@ Future<void> _pickCurrency(
           const SizedBox(height: 8),
           for (final option in TpCurrency.values)
             TpPress(
+              haptic: TpHaptic.selection,
               onTap: () async {
                 Navigator.of(sheetContext).pop();
                 await ref.read(currencyProvider.notifier).set(option);
               },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(K.currencyOf(option).tr(), style: type.body),
-                    ),
-                    if (option == current)
-                      Icon(Icons.check, size: 18, color: context.tp.link)
-                    else
-                      const SizedBox(width: 18, height: 18),
-                  ],
+              child: Semantics(
+                selected: option == current,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          K.currencyOf(option).tr(),
+                          style: type.body,
+                        ),
+                      ),
+                      if (option == current)
+                        Icon(Icons.check, size: 18, color: context.tp.link)
+                      else
+                        const SizedBox(width: 18, height: 18),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -541,15 +538,12 @@ Future<void> _pickTheme(
 ) async {
   final type = context.tpText;
 
-  await showModalBottomSheet<void>(
+  await showTpSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    builder: (sheetContext) => TpSurface(
-      strong: true,
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       // 유리는 자기 레이어에서 그려진다. 라우트 위에 뜬 시트에는 흐릴 대상이
       // 없어서, 72% 흰 면 아래로 아래 화면 글자가 그대로 읽혔다.
-      opaque: true,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -558,22 +552,26 @@ Future<void> _pickTheme(
           const SizedBox(height: 8),
           for (final option in ThemeMode.values)
             TpPress(
+              haptic: TpHaptic.selection,
               onTap: () async {
                 Navigator.of(sheetContext).pop();
                 await ref.read(themeModeProvider.notifier).set(option);
               },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(_themeLabel(option).tr(), style: type.body),
-                    ),
-                    if (option == current)
-                      Icon(Icons.check, size: 18, color: context.tp.link)
-                    else
-                      const SizedBox(width: 18, height: 18),
-                  ],
+              child: Semantics(
+                selected: option == current,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(_themeLabel(option).tr(), style: type.body),
+                      ),
+                      if (option == current)
+                        Icon(Icons.check, size: 18, color: context.tp.link)
+                      else
+                        const SizedBox(width: 18, height: 18),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -591,15 +589,12 @@ Future<void> _pickLanguage(
   final t = context.tp;
   final type = context.tpText;
 
-  await showModalBottomSheet<void>(
+  await showTpSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    builder: (sheetContext) => TpSurface(
-      strong: true,
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       // 유리는 자기 레이어에서 그려진다. 라우트 위에 뜬 시트에는 흐릴 대상이
       // 없어서, 72% 흰 면 아래로 아래 화면 글자가 그대로 읽혔다.
-      opaque: true,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -608,24 +603,30 @@ Future<void> _pickLanguage(
           const SizedBox(height: 8),
           for (final option in TpLocale.values)
             TpPress(
+              haptic: TpHaptic.selection,
               onTap: () async {
                 Navigator.of(sheetContext).pop();
                 await controller.set(option);
               },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(child: Text(option.label, style: type.body)),
-                    if (option == controller.current)
-                      Icon(Icons.check, size: 18, color: context.tp.link)
-                    else
-                      SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: ColoredBox(color: t.track.withValues(alpha: 0)),
-                      ),
-                  ],
+              child: Semantics(
+                selected: option == controller.current,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(child: Text(option.label, style: type.body)),
+                      if (option == controller.current)
+                        Icon(Icons.check, size: 18, color: context.tp.link)
+                      else
+                        SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: ColoredBox(
+                            color: t.track.withValues(alpha: 0),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -796,33 +797,20 @@ class _WeightSlider extends StatelessWidget {
               ),
             ],
           ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 4,
-              activeTrackColor: TpTokens.blue,
-              inactiveTrackColor: t.track,
-              thumbColor: Colors.white,
-              overlayShape: SliderComponentShape.noOverlay,
-              // 걸음이 보이면 슬라이더가 자기 눈금을 그린다. 명세의 트랙은
-              // 민짜다.
-              showValueIndicator: ShowValueIndicator.never,
-              tickMarkShape: SliderTickMarkShape.noTickMark,
-            ),
-            child: Slider(
-              value: value.clamp(0, 1),
-              // **걸음을 준다.** 연속이면 손가락이 지나는 픽셀마다 onChanged 가
-              // 울리고, 그때마다 카탈로그 154종이 다시 줄 세워진다. 탭 다섯이
-              // IndexedStack 안에 다 살아 있어서 랭킹·비교·홈이 같이 돈다.
-              // 5% 걸음이면 명세의 "손가락을 따라 지수가 다시 계산된다"는
-              // 그대로 유지하면서 한 번 끄는 동안 300번이 20번이 된다.
-              divisions: steps,
-              // 축 이름이 옆줄에 따로 있어서, 스크린 리더는 그냥 퍼센트만
-              // 읽었다 — 어느 축인지 알 수 없었다.
-              label: '${SpecLabels.axis(kind)} ${(value * 100).round()}',
-              semanticFormatterCallback: (v) =>
-                  '${SpecLabels.axis(kind)} ${(v * 100).round()}',
-              onChanged: onChanged,
-            ),
+          TpSlider(
+            value: value.clamp(0, 1),
+            // **걸음을 준다.** 연속이면 손가락이 지나는 픽셀마다 onChanged 가
+            // 울리고, 그때마다 카탈로그 154종이 다시 줄 세워진다. 탭 다섯이
+            // IndexedStack 안에 다 살아 있어서 랭킹·비교·홈이 같이 돈다.
+            // 5% 걸음이면 명세의 "손가락을 따라 지수가 다시 계산된다"는
+            // 그대로 유지하면서 한 번 끄는 동안 300번이 20번이 된다.
+            divisions: steps,
+            // 축 이름이 옆줄에 따로 있어서, 스크린 리더는 그냥 퍼센트만
+            // 읽었다 — 어느 축인지 알 수 없었다.
+            label: '${SpecLabels.axis(kind)} ${(value * 100).round()}',
+            semanticFormatterCallback: (v) =>
+                '${SpecLabels.axis(kind)} ${(v * 100).round()}',
+            onChanged: onChanged,
           ),
         ],
       ),
@@ -836,6 +824,7 @@ class _SettingRow extends StatelessWidget {
     this.value,
     this.onTap,
     this.toggled,
+    this.switchValue,
     this.last = false,
   });
 
@@ -845,6 +834,7 @@ class _SettingRow extends StatelessWidget {
 
   /// 켜고 끄는 줄이면 지금 상태. 시트를 여는 줄은 null 이다.
   final bool? toggled;
+  final bool? switchValue;
 
   final bool last;
 
@@ -885,7 +875,9 @@ class _SettingRow extends StatelessWidget {
                       : type.body,
                 ),
               ),
-              if (value != null) ...<Widget>[
+              if (switchValue != null)
+                TpSwitch(value: switchValue!, onChanged: (_) => onTap?.call())
+              else if (value != null) ...<Widget>[
                 const SizedBox(width: 12),
                 // 유연하지 않은 자식이면 폭을 먼저 다 가져가 라벨을 굶긴다.
                 // "On this phone only" 나 "시스템 설정" 이 그렇다.
@@ -898,6 +890,16 @@ class _SettingRow extends StatelessWidget {
                     textAlign: TextAlign.end,
                   ),
                 ),
+                if (onTap != null) ...<Widget>[
+                  const SizedBox(width: 8),
+                  Icon(
+                    context.tp.isGlass
+                        ? CupertinoIcons.chevron_forward
+                        : Icons.chevron_right,
+                    size: 16,
+                    color: t.dim,
+                  ),
+                ],
               ] else
                 Icon(Icons.chevron_right, size: 18, color: t.dim),
             ],
