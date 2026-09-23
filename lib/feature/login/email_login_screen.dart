@@ -137,17 +137,36 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
           ),
           const SizedBox(height: 24),
 
-          _Field(
-            controller: _email,
-            label: K.emailLabel.tr(),
-            keyboardType: TextInputType.emailAddress,
-          ),
-          const SizedBox(height: 12),
-          _Field(
-            controller: _password,
-            label: K.passwordLabel.tr(),
-            obscure: true,
-            onSubmitted: (_) => _submit(),
+          // 한 묶음이어야 iCloud 키체인이 아이디와 암호를 같이 채워 준다.
+          AutofillGroup(
+            child: Column(
+              children: <Widget>[
+                _Field(
+                  controller: _email,
+                  label: K.emailLabel.tr(),
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const <String>[
+                    AutofillHints.username,
+                    AutofillHints.email,
+                  ],
+                  action: TextInputAction.next,
+                ),
+                const SizedBox(height: 12),
+                _Field(
+                  controller: _password,
+                  label: K.passwordLabel.tr(),
+                  obscure: true,
+                  // 가입이면 강력한 암호를 제안하고, 로그인이면 저장된 걸 채운다.
+                  autofillHints: <String>[
+                    _signingUp
+                        ? AutofillHints.newPassword
+                        : AutofillHints.password,
+                  ],
+                  action: TextInputAction.done,
+                  onSubmitted: (_) => _submit(),
+                ),
+              ],
+            ),
           ),
 
           if (_error != null) ...<Widget>[
@@ -196,6 +215,8 @@ class _Field extends StatelessWidget {
     required this.label,
     this.obscure = false,
     this.keyboardType,
+    this.autofillHints,
+    this.action,
     this.onSubmitted,
   });
 
@@ -203,6 +224,8 @@ class _Field extends StatelessWidget {
   final String label;
   final bool obscure;
   final TextInputType? keyboardType;
+  final Iterable<String>? autofillHints;
+  final TextInputAction? action;
   final ValueChanged<String>? onSubmitted;
 
   @override
@@ -227,6 +250,12 @@ class _Field extends StatelessWidget {
           controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
+          autofillHints: autofillHints,
+          textInputAction: action,
+          // 주소와 암호를 사전이 고치면 로그인이 안 된다.
+          autocorrect: false,
+          enableSuggestions: !obscure && keyboardType == null,
+          onTapOutside: (_) => FocusScope.of(context).unfocus(),
           onSubmitted: onSubmitted,
           style: type.body,
           decoration: InputDecoration(
