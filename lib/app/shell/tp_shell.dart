@@ -160,7 +160,7 @@ class TpShell extends StatelessWidget {
         // 배경은 위 DecoratedBox 가 그리므로 여기서는 투명하게 둔다.
         child: Material(
           type: MaterialType.transparency,
-          child: _Reselect(
+          child: TpReselect(
             tab: tab,
             onReselect: _scrollToTop,
             child: Builder(
@@ -641,8 +641,9 @@ class _ScrollPastState extends State<_ScrollPast> {
 }
 
 /// 지금 탭을 다시 누르면 [TabHost] 가 알린다. 이 셸의 탭이면 맨 위로.
-class _Reselect extends StatefulWidget {
-  const _Reselect({
+class TpReselect extends StatefulWidget {
+  const TpReselect({
+    super.key,
     required this.tab,
     required this.onReselect,
     required this.child,
@@ -653,10 +654,10 @@ class _Reselect extends StatefulWidget {
   final Widget child;
 
   @override
-  State<_Reselect> createState() => _ReselectState();
+  State<TpReselect> createState() => TpReselectState();
 }
 
-class _ReselectState extends State<_Reselect> {
+class TpReselectState extends State<TpReselect> {
   TpTabReselectNotifier? _bus;
   final GlobalKey _inner = GlobalKey();
 

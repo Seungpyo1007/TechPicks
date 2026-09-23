@@ -1,0 +1,465 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+import '../../app/theme/tp_sys.dart';
+import '../../app/theme/tp_tokens.dart';
+
+/// iOS inset grouped 목록의 한 묶음. 위 레이블, 칸들, 아래 설명.
+///
+/// Android 는 카드 없이 섹션 제목 + 행.
+class TpGroup extends StatelessWidget {
+  const TpGroup({
+    super.key,
+    required this.children,
+    this.header,
+    this.footer,
+    this.headerAction,
+    this.big = false,
+    this.padding,
+  });
+
+  final List<Widget> children;
+  final String? header;
+  final String? footer;
+
+  /// 헤더 오른쪽 글자 버튼("추가").
+  final Widget? headerAction;
+
+  /// 헤더를 Title 3(20 Bold)로. "관심 목록"처럼 섹션 제목 역할일 때.
+  final bool big;
+
+  /// 칸 안쪽 여백. 카드처럼 쓰는 묶음(판정 카드)에 준다.
+  final EdgeInsets? padding;
+
+  static const double radius = 26;
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    final glass = context.tp.isGlass;
+    final rows = <Widget>[
+      for (var i = 0; i < children.length; i++)
+        _Separated(last: i == children.length - 1, child: children[i]),
+    ];
+    final head = header == null
+        ? null
+        : Padding(
+            padding: EdgeInsets.fromLTRB(
+              glass ? 16 : 0,
+              big ? 12 : 0,
+              glass ? 16 : 0,
+              big ? 4 : 7,
+            ),
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    header!,
+                    style: big
+                        ? TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: sys.label,
+                          )
+                        : glass
+                        ? TextStyle(fontSize: 13, color: sys.label2)
+                        : TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: sys.accentText,
+                          ),
+                  ),
+                ),
+                ?headerAction,
+              ],
+            ),
+          );
+    final body = glass
+        ? DecoratedBox(
+            decoration: BoxDecoration(
+              color: sys.cell,
+              borderRadius: BorderRadius.circular(radius),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(radius),
+              child: Padding(
+                padding: padding ?? EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: rows,
+                ),
+              ),
+            ),
+          )
+        : Padding(
+            padding: padding ?? EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: children,
+            ),
+          );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          ?head,
+          body,
+          if (footer != null)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                glass ? 16 : 0,
+                7,
+                glass ? 16 : 0,
+                0,
+              ),
+              child: Text(
+                footer!,
+                style: TextStyle(fontSize: 13, height: 1.38, color: sys.label2),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 긴 목록(랭킹)용. 화면에 보이는 행만 짓는다.
+class TpGroupSliver extends StatelessWidget {
+  const TpGroupSliver({
+    super.key,
+    required this.count,
+    required this.builder,
+    this.header,
+    this.footer,
+  });
+
+  final int count;
+  final IndexedWidgetBuilder builder;
+  final String? header;
+  final String? footer;
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    final glass = context.tp.isGlass;
+    return SliverMainAxisGroup(
+      slivers: <Widget>[
+        if (header != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(glass ? 32 : 16, 0, 32, 7),
+              child: Text(
+                header!,
+                style: TextStyle(fontSize: 13, color: sys.label2),
+              ),
+            ),
+          ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: DecoratedSliver(
+            decoration: BoxDecoration(
+              color: glass ? sys.cell : Colors.transparent,
+              borderRadius: BorderRadius.circular(TpGroup.radius),
+            ),
+            sliver: SliverList.builder(
+              itemCount: count,
+              itemBuilder: (context, i) => glass
+                  ? _Separated(last: i == count - 1, child: builder(context, i))
+                  : builder(context, i),
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(glass ? 32 : 16, 7, 32, 24),
+            child: footer == null
+                ? const SizedBox.shrink()
+                : Text(
+                    footer!,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.38,
+                      color: sys.label2,
+                    ),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 행 아래 구분선. 행이 [TpRow] 면 그 들여쓰기를 따른다.
+class _Separated extends StatelessWidget {
+  const _Separated({required this.last, required this.child});
+
+  final bool last;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (last) return child;
+    final indent = child is TpRow ? (child as TpRow).separatorIndent : 16.0;
+    return Stack(
+      children: <Widget>[
+        child,
+        Positioned(
+          left: indent,
+          right: 0,
+          bottom: 0,
+          height: 0.5,
+          child: ColoredBox(color: context.sys.separator),
+        ),
+      ],
+    );
+  }
+}
+
+/// 목록 한 줄.
+///
+/// 누르면 배경색만 바뀐다. 행마다 애니메이션 빌더나 색 필터를 달지 않는다.
+class TpRow extends StatefulWidget {
+  const TpRow({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.value,
+    this.leading,
+    this.trailing,
+    this.onTap,
+    this.chevron,
+    this.checked = false,
+    this.destructive = false,
+    this.dimmed = false,
+    this.semanticsLabel,
+    this.titleStyle,
+    this.valueStyle,
+    this.below,
+  });
+
+  final String title;
+  final String? subtitle;
+
+  /// 오른쪽 값(보조 글자색).
+  final String? value;
+  final Widget? leading;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+
+  /// null 이면 [onTap] 이 있을 때만 보인다.
+  final bool? chevron;
+  final bool checked;
+  final bool destructive;
+
+  /// 고를 수 없는 선택지.
+  final bool dimmed;
+  final String? semanticsLabel;
+  final TextStyle? titleStyle;
+  final TextStyle? valueStyle;
+
+  /// 제목 줄 아래에 붙는 것(순위 행의 트랙).
+  final Widget? below;
+
+  double get separatorIndent => leading == null ? 16 : 60;
+
+  @override
+  State<TpRow> createState() => _TpRowState();
+}
+
+class _TpRowState extends State<TpRow> {
+  bool _down = false;
+
+  void _set(bool v) {
+    if (widget.onTap != null && v != _down) setState(() => _down = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    final w = widget;
+    final glass = context.tp.isGlass;
+    final titleColor = w.destructive
+        ? sys.destructive
+        : w.dimmed
+        ? sys.label3
+        : sys.label;
+    final chevron = w.chevron ?? (w.onTap != null && !w.checked);
+    final centred = w.destructive && w.leading == null && w.value == null;
+
+    final text = Column(
+      crossAxisAlignment: centred
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Text(
+          w.title,
+          style: TextStyle(
+            fontSize: 17,
+            height: 1.29,
+            color: titleColor,
+          ).merge(w.titleStyle),
+        ),
+        if (w.subtitle != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Text(
+              w.subtitle!,
+              style: TextStyle(fontSize: 13, height: 1.38, color: sys.label2),
+            ),
+          ),
+        ?w.below,
+      ],
+    );
+
+    final row = Container(
+      constraints: BoxConstraints(minHeight: w.subtitle == null ? 48 : 60),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: _down
+          ? (glass ? sys.fill3 : sys.fill.withValues(alpha: .4))
+          : Colors.transparent,
+      child: Row(
+        children: <Widget>[
+          if (w.leading != null) ...<Widget>[
+            w.leading!,
+            const SizedBox(width: 12),
+          ],
+          Expanded(child: text),
+          if (w.value != null) ...<Widget>[
+            const SizedBox(width: 12),
+            Text(
+              w.value!,
+              style: TextStyle(
+                fontSize: 17,
+                color: sys.label2,
+                fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+              ).merge(w.valueStyle),
+            ),
+          ],
+          if (w.trailing != null) ...<Widget>[
+            const SizedBox(width: 8),
+            w.trailing!,
+          ],
+          if (w.checked) ...<Widget>[
+            const SizedBox(width: 8),
+            Icon(
+              glass ? CupertinoIcons.check_mark : Icons.check,
+              size: 20,
+              color: TpSys.accent,
+            ),
+          ],
+          if (chevron && glass) ...<Widget>[
+            const SizedBox(width: 6),
+            Icon(CupertinoIcons.chevron_forward, size: 16, color: sys.label3),
+          ],
+        ],
+      ),
+    );
+
+    return Semantics(
+      button: w.onTap != null,
+      selected: w.checked,
+      label: w.semanticsLabel,
+      excludeSemantics: w.semanticsLabel != null,
+      onTap: w.onTap,
+      child: w.onTap == null
+          ? row
+          : GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: w.onTap,
+              onTapDown: (_) => _set(true),
+              onTapUp: (_) => _set(false),
+              onTapCancel: () => _set(false),
+              child: row,
+            ),
+    );
+  }
+}
+
+/// 설정 행 앞의 색 아이콘 타일. 설정 앱과 같은 30pt, 모서리 8.
+class TpIconTile extends StatelessWidget {
+  const TpIconTile({super.key, required this.icon, this.color = TpSys.accent});
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 30,
+    height: 30,
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Icon(icon, size: 18, color: Colors.white),
+  );
+}
+
+/// 1–3위 액센트 원, 그 뒤로는 보조 글자 숫자.
+class TpRankBadge extends StatelessWidget {
+  const TpRankBadge({super.key, required this.rank});
+
+  final int rank;
+
+  @override
+  Widget build(BuildContext context) {
+    if (rank <= 3) {
+      return Container(
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: TpSys.accent,
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          '$rank',
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
+    return SizedBox(
+      width: 28,
+      child: Text(
+        '$rank',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          color: context.sys.label2,
+        ),
+      ),
+    );
+  }
+}
+
+/// 값 막대. 순위 행 3pt, 점수 6pt.
+class TpTrack extends StatelessWidget {
+  const TpTrack({super.key, required this.value, this.height = 3});
+
+  /// 0–1.
+  final double value;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(height / 2),
+    child: SizedBox(
+      height: height,
+      child: Stack(
+        children: <Widget>[
+          Positioned.fill(child: ColoredBox(color: context.sys.fill)),
+          FractionallySizedBox(
+            widthFactor: value.clamp(0.0, 1.0),
+            child: const ColoredBox(color: TpSys.accent),
+          ),
+        ],
+      ),
+    ),
+  );
+}
