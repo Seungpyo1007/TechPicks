@@ -13,6 +13,7 @@ import '../../shared/copy_keys.dart';
 import 'tp_tab.dart';
 import 'tp_window.dart';
 import '../../shared/widgets/tp_press.dart';
+import '../theme/tp_icons.dart';
 
 /// 셸이 크롬에 내준 자리.
 ///
@@ -380,12 +381,12 @@ class TpShell extends StatelessWidget {
                   TpTapTarget(
                     onTap: onBack,
                     label: K.back.tr(),
-                    child: const TpSurface.chrome(
+                    child: TpSurface.chrome(
                       radius: TpTokens.rControl,
                       child: SizedBox(
                         width: 42,
                         height: 42,
-                        child: Icon(Icons.chevron_left, size: 24),
+                        child: Icon(TpIcons.ios.back, size: 22),
                       ),
                     ),
                   )
@@ -784,7 +785,7 @@ class _IosTabBar extends StatelessWidget {
                               duration: motion.selection.duration,
                               curve: motion.selection.curve,
                               builder: (context, value, _) => Icon(
-                                active ? t.activeIcon : t.icon,
+                                TpIcons.iosTab(t, active: active),
                                 size: 22,
                                 color: value,
                               ),

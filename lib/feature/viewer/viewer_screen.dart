@@ -8,6 +8,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_press.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../app/theme/tp_icons.dart';
 
 /// 3D 뷰어.
 ///
@@ -124,8 +125,8 @@ class _ViewerScreenState extends State<ViewerScreen> {
                   TpTapTarget(
                     onTap: widget.onBack,
                     label: K.back.tr(),
-                    child: const Icon(
-                      Icons.chevron_left,
+                    child: Icon(
+                      context.icons.back,
                       color: Colors.white,
                       size: 26,
                     ),

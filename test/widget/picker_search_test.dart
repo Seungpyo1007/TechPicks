@@ -10,6 +10,7 @@ import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/widgets/tp_surface.dart';
 
 import '../support/harness.dart';
+import 'package:techpicks/app/theme/tp_icons.dart';
 
 /// 비교 선택 시트의 검색.
 ///
@@ -98,9 +99,9 @@ void main() {
 
     await tester.enterText(find.byType(TextField), 'galaxy');
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.close), findsOneWidget);
+    expect(_icon((i) => i.close), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.close));
+    await tester.tap(_icon((i) => i.close));
     await tester.pumpAndSettle();
 
     expect(find.text(readCatalog().smartphones.first.name), findsOneWidget);
@@ -163,3 +164,10 @@ void main() {
     expect(list.padding, const EdgeInsets.fromLTRB(16, 0, 16, 360));
   });
 }
+
+/// 크롬마다 아이콘이 다르다. 어느 쪽이든 찾는다.
+Finder _icon(IconData Function(TpIcons) pick) => find.byWidgetPredicate(
+  (w) =>
+      w is Icon &&
+      (w.icon == pick(TpIcons.ios) || w.icon == pick(TpIcons.android)),
+);

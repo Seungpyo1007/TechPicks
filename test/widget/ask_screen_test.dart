@@ -12,6 +12,7 @@ import 'package:techpicks/data/dto/smartphone.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/domain/model/ask_answer.dart';
 import 'package:techpicks/feature/ask/ask_screen.dart';
+import 'package:techpicks/app/theme/tp_icons.dart';
 
 /// 모델을 부르지 않는 가짜. 화면만 검사한다.
 class _StubAsk implements AskService {
@@ -235,7 +236,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '두 번째');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.tap(_icon((i) => i.send));
     await tester.pump();
 
     // 두 번째 질문은 안 나갔고,
@@ -290,3 +291,10 @@ class _SlowAsk implements AskService {
     return answer;
   }
 }
+
+/// 크롬마다 아이콘이 다르다. 어느 쪽이든 찾는다.
+Finder _icon(IconData Function(TpIcons) pick) => find.byWidgetPredicate(
+  (w) =>
+      w is Icon &&
+      (w.icon == pick(TpIcons.ios) || w.icon == pick(TpIcons.android)),
+);
