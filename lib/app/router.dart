@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart' show CupertinoPage;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +26,7 @@ import '../feature/you/you_screen.dart';
 import 'providers.dart';
 import 'shell/tp_tab.dart';
 import 'tab_host.dart';
+import 'theme/tp_tokens.dart';
 
 /// 주소 문법.
 ///
@@ -192,10 +194,14 @@ GoRouter buildRouter(Ref ref) {
                   // a='pick', b='a' 인 비교를 열려고 한다.
                   GoRoute(
                     path: 'pick/:side',
-                    builder: (context, state) => _Picker(
-                      side: state.pathParameters['side'] == 'b'
-                          ? CompareSide.b
-                          : CompareSide.a,
+                    pageBuilder: (context, state) => _modal(
+                      context,
+                      state,
+                      _Picker(
+                        side: state.pathParameters['side'] == 'b'
+                            ? CompareSide.b
+                            : CompareSide.a,
+                      ),
                     ),
                   ),
                   // 링크로 들어온 비교. 두 슬롯을 채우고 같은 화면을 그린다.
@@ -247,13 +253,20 @@ GoRouter buildRouter(Ref ref) {
           ),
         ],
       ),
-      GoRoute(path: TpRoute.scan, builder: (context, state) => const _Scan()),
+      GoRoute(
+        path: TpRoute.scan,
+        pageBuilder: (context, state) => _modal(context, state, const _Scan()),
+      ),
       GoRoute(
         path: TpRoute.search,
-        builder: (context, state) => SearchScreen(
-          onBack: () =>
-              context.canPop() ? context.pop() : context.go(TpRoute.home),
-          onHit: (hit) => _openHit(context, hit),
+        pageBuilder: (context, state) => _modal(
+          context,
+          state,
+          SearchScreen(
+            onBack: () =>
+                context.canPop() ? context.pop() : context.go(TpRoute.home),
+            onHit: (hit) => _openHit(context, hit),
+          ),
         ),
       ),
 
@@ -488,4 +501,19 @@ class _Scan extends StatelessWidget {
     // 랭킹으로 돌아오는 게 맞다.
     onOpenDevice: (slug) => context.pushReplacement('/device/$slug'),
   );
+}
+
+/// 취소로 닫는 화면(검색·스캔·기기 고르기).
+///
+/// iOS 는 아래에서 올라오는 모달이다. 옆에서 밀려 들어오면 뒤로 가기처럼
+/// 보이는데 버튼은 "취소"라 어긋났다. Android 는 보통 페이지 그대로 둔다.
+Page<void> _modal(BuildContext context, GoRouterState state, Widget child) {
+  if (context.tp.isGlass) {
+    return CupertinoPage<void>(
+      key: state.pageKey,
+      fullscreenDialog: true,
+      child: child,
+    );
+  }
+  return MaterialPage<void>(key: state.pageKey, child: child);
 }
