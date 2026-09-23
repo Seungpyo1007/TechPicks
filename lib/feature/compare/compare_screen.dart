@@ -35,23 +35,12 @@ double _lines(BuildContext context, TextStyle style, int lines) =>
 /// v1 은 레이더 차트 하나로 이걸 대신했다. 축 다섯 개를 겹쳐 그리면 어느
 /// 쪽이 무엇에서 이겼는지 읽히지 않는다.
 class CompareScreen extends ConsumerWidget {
-  const CompareScreen({
-    super.key,
-    this.onTabSelected,
-    this.onPick,
-    this.onAskWhy,
-    this.onBuild,
-  });
-
-  final ValueChanged<TpTab>? onTabSelected;
+  const CompareScreen({super.key, this.onPick, this.onAskWhy});
 
   /// 열 머리를 누르면 어느 슬롯을 고르는지 알려준다.
   final ValueChanged<CompareSide>? onPick;
 
   final VoidCallback? onAskWhy;
-
-  /// 조립 견적으로. 같은 탭의 이웃 화면이라 탭은 그대로 남는다.
-  final VoidCallback? onBuild;
 
   /// 바닥에 붙인 버튼이 먹는 자리. 목록 패딩에 더해 마지막 줄이 안 숨는다.
   static const double _actionBand = 68;
@@ -79,17 +68,7 @@ class CompareScreen extends ConsumerWidget {
 
     return TpShell(
       title: K.compareTitle.tr(),
-      tab: TpTab.decide,
-      onTabSelected: onTabSelected,
-      // 견적기로 가는 유일한 문이다. 같은 탭 안에 있는데 들어갈 길이 없으면
-      // 만들어둔 화면이 아무도 못 보는 곳에 있는 셈이다.
-      trailing: onBuild == null
-          ? null
-          : TpShellAction(
-              icon: Icons.memory_rounded,
-              label: K.buildTitle.tr(),
-              onTap: onBuild,
-            ),
+      tab: TpTab.compare,
       child: Builder(
         // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
         // 크롬이 차지한 자리를 모르는 예전 값이 나온다.

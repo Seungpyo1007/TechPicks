@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
+import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../domain/model/search_index.dart';
@@ -53,8 +54,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final typing = _query.text.trim().isNotEmpty;
 
     return TpShell(
-      mode: TpChromeMode.plain,
-      onBack: widget.onBack,
+      tab: TpTab.search,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[

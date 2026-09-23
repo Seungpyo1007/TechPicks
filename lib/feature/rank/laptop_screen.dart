@@ -30,9 +30,8 @@ import 'rank_category.dart';
 /// 칩은 여태 눌러도 아무 일이 없었다. 화면이 없으니 눌리지 않게 막아뒀고,
 /// 그 상태가 "고장 난 앱"처럼 보였다. 아홉 대뿐이어도 진짜 화면이 낫다.
 class LaptopScreen extends ConsumerWidget {
-  const LaptopScreen({super.key, this.onTabSelected, this.onCategory});
+  const LaptopScreen({super.key, this.onCategory});
 
-  final ValueChanged<TpTab>? onTabSelected;
   final ValueChanged<RankCategory>? onCategory;
 
   @override
@@ -45,7 +44,6 @@ class LaptopScreen extends ConsumerWidget {
     return TpShell(
       title: K.laptopTitle.tr(),
       tab: TpTab.browse,
-      onTabSelected: onTabSelected,
       child: Builder(
         builder: (context) => ListView(
           padding:

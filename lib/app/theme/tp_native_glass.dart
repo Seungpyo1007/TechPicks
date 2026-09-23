@@ -113,6 +113,8 @@ class TpNativeTabBar extends StatelessWidget {
     required this.onSelected,
     required this.height,
     required this.tint,
+    this.onSearch,
+    this.searchLabel,
     this.labelStyle,
     this.iconSize,
   });
@@ -124,6 +126,10 @@ class TpNativeTabBar extends StatelessWidget {
 
   /// 고른 칸의 강조색.
   final Color tint;
+
+  /// 바 오른쪽 검색 원. iOS 26 은 이걸 `UISearchTab` 으로 그린다.
+  final VoidCallback? onSearch;
+  final String? searchLabel;
 
   /// 라벨 타이포. null 이면 시스템 기본.
   ///
@@ -147,8 +153,14 @@ class TpNativeTabBar extends StatelessWidget {
     height: height,
     selectedItemColor: tint,
     iconSize: iconSize,
-    // 칸이 다섯이라 꽉 채운다. 가운데 모으기는 두세 칸짜리 바의 모양이다.
     iosItemPositioning: LiquidGlassTabBarItemPositioning.fill,
+    iosActionButton: onSearch == null
+        ? null
+        : LiquidGlassTabItem(
+            label: searchLabel ?? '',
+            icon: NativeLiquidGlassIcon.sfSymbol('magnifyingglass'),
+          ),
+    onActionButtonPressed: onSearch,
     labelTextStyle: labelStyle,
     items: <LiquidGlassTabItem>[
       for (final item in items)

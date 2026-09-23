@@ -21,7 +21,7 @@ import '../support/harness.dart';
 
 final _screens = <String, Widget>{
   'home': const HomeScreen(),
-  'rank': RankScreen(onScan: () {}),
+  'rank': const RankScreen(),
   'cpu': const ProcessorScreen(),
   'compare': const CompareScreen(),
   'detail': const DetailScreen(slug: 'galaxy-s25'),

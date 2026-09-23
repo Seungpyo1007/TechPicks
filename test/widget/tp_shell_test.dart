@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/app/shell/tp_shell.dart';
 import 'package:techpicks/app/shell/tp_tab.dart';
+import 'package:techpicks/app/shell/tp_tab_bar.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/app/theme/tp_tokens.dart';
 import 'package:techpicks/app/theme/tp_typography.dart';
@@ -103,13 +104,13 @@ void main() {
 
   group('셸', () {
     for (final chrome in TpChrome.values) {
-      testWidgets('$chrome — 탭 5개와 콘텐츠를 그린다', (tester) async {
+      testWidgets('$chrome — 셸은 콘텐츠만, 탭 바는 따로 그린다', (tester) async {
         await tester.pumpWidget(
           _host(
             chrome,
             const TpShell(
               title: 'Today',
-              tab: TpTab.home,
+              tab: TpTab.today,
               child: Center(child: Text('본문')),
             ),
           ),
@@ -117,26 +118,31 @@ void main() {
 
         expect(find.text('본문'), findsOneWidget);
         expect(find.text('Today'), findsOneWidget);
-        for (final t in TpTab.values) {
-          expect(find.text(K.tab(t).tr()), findsOneWidget);
-        }
+        expect(find.text(K.tab(TpTab.compare).tr()), findsNothing);
       });
 
-      testWidgets('$chrome — 탭을 누르면 콜백이 온다', (tester) async {
+      testWidgets('$chrome — 탭 바를 누르면 콜백이 온다', (tester) async {
         TpTab? tapped;
         await tester.pumpWidget(
           _host(
             chrome,
-            TpShell(
-              tab: TpTab.home,
-              onTabSelected: (t) => tapped = t,
-              child: const SizedBox.shrink(),
-            ),
+            TpTabBar(current: TpTab.today, onSelected: (t) => tapped = t),
           ),
         );
 
-        await tester.tap(find.text(K.tab(TpTab.decide).tr()));
-        expect(tapped, TpTab.decide);
+        for (final t in TpTab.bar) {
+          expect(find.text(K.tab(t).tr()), findsOneWidget);
+        }
+        await tester.tap(find.text(K.tab(TpTab.compare).tr()));
+        expect(tapped, TpTab.compare);
+
+        // 검색은 iOS 에서 바 옆의 원이라 글자가 없다. Android 는 한 칸이다.
+        await tester.tap(
+          chrome == TpChrome.ios
+              ? find.bySemanticsLabel(K.tab(TpTab.search).tr()).last
+              : find.text(K.tab(TpTab.search).tr()),
+        );
+        expect(tapped, TpTab.search);
       });
 
       testWidgets('$chrome — takeover는 크롬을 그리지 않는다', (tester) async {

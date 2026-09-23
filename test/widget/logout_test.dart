@@ -101,8 +101,8 @@ void main() {
       ],
     );
 
-    // 탭 바에서 You 로 간다.
-    await tester.tap(find.text(K.tabYou.tr()));
+    // 오늘 오른쪽 위 프로필 버튼으로 내 정보 시트를 연다.
+    await tester.tap(find.bySemanticsLabel(K.you.tr()).first);
     await tester.pumpAndSettle();
 
     // 익명 계정에는 이름도 메일도 없다. 그 줄은 "로그인"으로 적힌다.
@@ -128,7 +128,7 @@ void main() {
       ],
     );
 
-    await tester.tap(find.text(K.tabYou.tr()));
+    await tester.tap(find.bySemanticsLabel(K.you.tr()).first);
     await tester.pumpAndSettle();
     // 익명 계정에는 이름도 메일도 없다. 그 줄은 "로그인"으로 적힌다.
     await tester.tap(find.text(K.signIn.tr()));

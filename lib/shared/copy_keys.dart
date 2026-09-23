@@ -15,11 +15,11 @@ import '../domain/model/tp_index.dart';
 /// 번역 파일에 있는지 테스트가 한 곳에서 확인할 수 있게 하려는 것이다.
 abstract final class K {
   // 탭
-  static const String tabHome = 'tabHome';
+  static const String tabToday = 'tabToday';
   static const String tabBrowse = 'tabBrowse';
-  static const String tabDecide = 'tabDecide';
-  static const String tabAsk = 'tabAsk';
-  static const String tabYou = 'tabYou';
+  static const String tabCompare = 'tabCompare';
+  static const String tabSearch = 'tabSearch';
+  static const String askTitle = 'askTitle';
 
   // 홈
   static const String homeTitle = 'homeTitle';
@@ -292,11 +292,10 @@ abstract final class K {
   static const String a11yWinner = 'a11yWinner';
 
   static String tab(TpTab tab) => switch (tab) {
-    TpTab.home => tabHome,
+    TpTab.today => tabToday,
     TpTab.browse => tabBrowse,
-    TpTab.decide => tabDecide,
-    TpTab.ask => tabAsk,
-    TpTab.you => tabYou,
+    TpTab.compare => tabCompare,
+    TpTab.search => tabSearch,
   };
 
   static String axis(TpAxisKind kind) => switch (kind) {

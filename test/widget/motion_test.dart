@@ -1,7 +1,6 @@
 import 'package:riverpod/misc.dart' show Override;
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/app/shell/tp_tab.dart';
-import 'package:techpicks/app/shell/tp_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
@@ -275,23 +274,6 @@ void _homeMotion() {
     expect(tester.takeException(), isNull);
   });
 
-  // 같은 동작이 두 크롬에서 정반대였다 — iOS 는 선택만 움직이고 눌림이 없었고,
-  // 안드로이드는 눌림만 있고 선택이 툭 바뀌었다.
-  testWidgets('안드로이드 탭도 선택이 움직인다', (tester) async {
-    await pumpScreen(
-      tester,
-      HomeScreen(onTabSelected: (_) {}),
-      chrome: TpChrome.android,
-    );
-
-    final labels = find.descendant(
-      of: find.byType(TpShell),
-      matching: find.byType(AnimatedDefaultTextStyle),
-    );
-    // 탭 다섯 개 + 앱 바 제목. 여섯 개면 다섯 개가 다 감싸졌다는 뜻이다.
-    expect(labels, findsNWidgets(TpTab.values.length + 1));
-  });
-
   // 알약이 칸마다 따로 있어 색만 교차하던 때는 **아무것도 움직이지 않았다**.
   // 이제 한 장이 칸에서 칸으로 미끄러진다.
   testWidgets('iOS 탭 알약은 한 장이고 고른 칸으로 옮겨간다', (tester) async {
@@ -314,51 +296,11 @@ void _homeMotion() {
 
     final home = tester.getRect(pill);
 
-    await tester.tap(find.text(K.tab(TpTab.you).tr()));
+    await tester.tap(find.text(K.tab(TpTab.compare).tr()));
     await tester.pumpAndSettle();
 
     expect(tester.getRect(pill).left, greaterThan(home.left));
     expect(find.byKey(const ValueKey<String>('tab-pill')), findsOneWidget);
   });
 
-  // 알약은 미끄러지는데 그 아래 본문은 툭 갈렸다. 한 동작 안에서 한쪽만
-  // 움직이면 나머지가 고장 난 것처럼 읽힌다.
-  testWidgets('탭을 바꾸면 본문이 옅게 들어오고 크롬은 안 움직인다', (tester) async {
-    await pumpApp(
-      tester,
-      size: const Size(402, 874),
-      overrides: <Override>[
-        askServiceProvider.overrideWithValue(const LocalAskService()),
-      ],
-    );
-    await tester.pumpAndSettle();
-
-    final pill = find.byKey(const ValueKey<String>('tab-pill'));
-    Rect chrome() => tester.getRect(
-      find.ancestor(of: pill, matching: find.byType(Stack)).first,
-    );
-    final before = chrome();
-
-    await tester.tap(find.text(K.tab(TpTab.you).tr()));
-    // 한 프레임은 티커를 시작만 한다. 그 다음 프레임이 전환의 한가운데다.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 60));
-
-    final fading = tester.widgetList<Opacity>(find.byType(Opacity));
-    expect(
-      fading.any((o) => o.opacity > 0 && o.opacity < 1),
-      isTrue,
-      reason: '본문이 옅게 들어와야 한다',
-    );
-    // 크롬은 자기 자리에 그대로 있다.
-    expect(chrome(), before);
-
-    await tester.pumpAndSettle();
-    expect(
-      tester
-          .widgetList<Opacity>(find.byType(Opacity))
-          .every((o) => o.opacity == 1),
-      isTrue,
-    );
-  });
 }
