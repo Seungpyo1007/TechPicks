@@ -73,6 +73,7 @@ class HomeScreen extends ConsumerWidget {
       // Android 는 large app bar 가 제목을 갖고, iOS 는 콘텐츠 안 큰 제목이
       // 그 역할을 한다. 둘 다 그리면 같은 글자가 두 번 나온다.
       title: t.isGlass ? null : K.homeTitle.tr(),
+      scrollTitle: K.homeTitle.tr(),
       tab: TpTab.home,
       onTabSelected: onTabSelected,
       trailing: onSearch == null
