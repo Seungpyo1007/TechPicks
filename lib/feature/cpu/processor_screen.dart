@@ -8,6 +8,7 @@ import '../../app/shell/tp_shell.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../shared/widgets/tp_pressable.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/processor.dart';
 import '../../shared/copy_keys.dart';
@@ -156,6 +157,7 @@ class _SegmentedCell extends StatelessWidget {
       child: TpPress(
         onTap: onTap,
         semanticsButton: false,
+        haptic: TpHaptic.selection,
         child: AnimatedContainer(
           duration: context.motion.selection.duration,
           curve: context.motion.selection.curve,

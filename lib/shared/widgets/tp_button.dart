@@ -36,6 +36,7 @@ class TpButton extends StatefulWidget {
     this.height = 52,
     this.expand = true,
     this.alignStart = false,
+    this.haptic = TpHaptic.impact,
   });
 
   final String label;
@@ -53,6 +54,10 @@ class TpButton extends StatefulWidget {
 
   /// 라벨을 왼쪽에 붙일지. 로그인 버튼은 명세가 왼쪽 정렬 + 왼쪽 마크다.
   final bool alignStart;
+
+  /// 누르면 울리는 촉각. 대부분 가벼운 충격이고, 결과가 남는 동작(담기)은
+  /// 한 단계 무겁게 준다.
+  final TpHaptic haptic;
 
   @override
   State<TpButton> createState() => _TpButtonState();
@@ -92,7 +97,7 @@ class _TpButtonState extends State<TpButton> {
           // 바깥 Semantics 가 버튼·이름·액션을 다 들고 있다.
           semantics: false,
           onTap: widget.onTap,
-          haptic: TpHaptic.impact,
+          haptic: widget.haptic,
           child: AnimatedContainer(
             // 상태가 바뀌어 색이 갈릴 때(담기 → 담김)는 선택 박자를 쓴다.
             duration: context.motion.selection.duration,

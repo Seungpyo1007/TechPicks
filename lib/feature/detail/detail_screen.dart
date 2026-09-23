@@ -24,6 +24,7 @@ import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_link_line.dart';
 import '../../shared/widgets/tp_button.dart';
+import '../../shared/widgets/tp_pressable.dart';
 
 /// 기기 상세.
 ///
@@ -207,6 +208,7 @@ class _DetailBody extends ConsumerWidget {
           label: (shortlisted ? K.inShortlist : K.addShortlist).tr(),
           // 담기면 채움이 풀린다. 이미 담긴 것을 또 권하지 않는다.
           kind: shortlisted ? TpButtonKind.secondary : TpButtonKind.primary,
+          haptic: shortlisted ? TpHaptic.impact : TpHaptic.commit,
           onTap: () => ref.read(shortlistProvider.notifier).toggle(device.slug),
         ),
         const SizedBox(height: 10),
