@@ -14,6 +14,7 @@ import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_chip.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_surface.dart';
+import '../../shared/widgets/tp_slider.dart';
 
 /// 조립 PC 견적.
 ///
@@ -169,7 +170,7 @@ class _Budget extends StatelessWidget {
               Text(DeviceSpecs.formatPrice(usd), style: type.cardTitle),
             ],
           ),
-          Slider(
+          TpSlider(
             value: usd.toDouble(),
             min: BuildEstimate.minBudget.toDouble(),
             max: BuildEstimate.maxBudget.toDouble(),
