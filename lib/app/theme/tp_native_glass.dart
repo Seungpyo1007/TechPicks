@@ -172,3 +172,42 @@ class TpNativeTabBar extends StatelessWidget {
     ],
   );
 }
+
+/// OS 가 그리는 유리 검색 바. 펼친 채로 두고 취소 버튼은 안 쓴다.
+class TpNativeSearchBar extends StatelessWidget {
+  const TpNativeSearchBar({
+    super.key,
+    required this.placeholder,
+    required this.height,
+    this.onChanged,
+    this.onSubmitted,
+    this.tint,
+    this.textColor,
+    this.placeholderColor,
+    this.iconColor,
+  });
+
+  final String placeholder;
+  final double height;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final Color? tint;
+  final Color? textColor;
+  final Color? placeholderColor;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassSearchBar(
+    placeholder: placeholder,
+    onChanged: onChanged,
+    onSubmitted: onSubmitted,
+    expandable: false,
+    initiallyExpanded: true,
+    expandedHeight: height,
+    showCancelButton: false,
+    tint: tint,
+    textColor: textColor,
+    placeholderColor: placeholderColor,
+    iconColor: iconColor,
+  );
+}

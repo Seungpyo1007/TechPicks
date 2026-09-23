@@ -6,6 +6,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../app/theme/tp_glass.dart';
 import '../../app/theme/tp_native_glass.dart';
+import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import 'tp_press.dart';
 
@@ -129,6 +130,24 @@ class TpSurface extends StatelessWidget {
         );
       }
       return glass;
+    }
+
+    // v3: 카드는 유리가 아니다. iOS 는 불투명한 시스템 셀 색, 셰이더·흐림·
+    // 그림자 없음. 유리는 크롬에만 남는다.
+    if (!chrome && t.isGlass) {
+      Widget card = DecoratedBox(
+        decoration: BoxDecoration(color: context.sys.cell, borderRadius: r),
+        child: content,
+      );
+      if (onTap != null || onLongPress != null) {
+        card = TpPress(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          semanticsLabel: semanticsLabel,
+          child: card,
+        );
+      }
+      return card;
     }
 
     if (t.hasSpecular) {
