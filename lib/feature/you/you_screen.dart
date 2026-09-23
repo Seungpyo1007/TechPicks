@@ -24,6 +24,7 @@ import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../shared/widgets/tp_press.dart';
+import '../../shared/widgets/tp_button.dart';
 import '../../shared/widgets/tp_pressable.dart';
 import '../../shared/widgets/tp_sheet.dart';
 import '../../shared/widgets/tp_slider.dart';
@@ -95,6 +96,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
 
     return TpShell(
       title: t.isGlass ? null : K.you.tr(),
+      scrollTitle: K.you.tr(),
       tab: TpTab.you,
       onTabSelected: widget.onTabSelected,
       child: Builder(
@@ -219,7 +221,15 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                     // 손님에게 "로그아웃"은 나갈 곳이 없다는 뜻으로 읽힌다.
                     // 누르면 로그인 화면으로 가니 그렇게 적는다.
                     label: (hasAccount ? K.logout : K.signIn).tr(),
-                    onTap: widget.onLogout,
+                    // 계정이 있을 때만 묻는다. iOS 는 되돌릴 수 없는 일을 시트로
+                    // 한 번 더 확인한다. 손님은 로그인 화면으로 갈 뿐이다.
+                    onTap: widget.onLogout == null
+                        ? null
+                        : hasAccount
+                        ? () => unawaited(
+                            _confirmLogout(context, widget.onLogout!),
+                          )
+                        : widget.onLogout,
                     last: true,
                   ),
                 ],
@@ -908,4 +918,39 @@ class _SettingRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 로그아웃 확인. 경고색이 없는 팔레트라 버튼 순서와 문구로 구분한다.
+Future<void> _confirmLogout(BuildContext context, VoidCallback onLogout) async {
+  final type = context.tpText;
+  final confirmed = await showTpSheet<bool>(
+    context: context,
+    builder: (sheetContext) => Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            K.logoutConfirm.tr(),
+            style: type.secondary,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          TpButton(
+            label: K.logout.tr(),
+            kind: TpButtonKind.secondary,
+            onTap: () => Navigator.of(sheetContext).pop(true),
+          ),
+          const SizedBox(height: 8),
+          TpButton(
+            label: K.cancel.tr(),
+            kind: TpButtonKind.plain,
+            haptic: TpHaptic.none,
+            onTap: () => Navigator.of(sheetContext).pop(false),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (confirmed ?? false) onLogout();
 }

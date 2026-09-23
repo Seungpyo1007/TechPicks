@@ -138,6 +138,7 @@ abstract final class K {
   static const String profileFailed = 'profileFailed';
   static const String save = 'save';
   static const String logout = 'logout';
+  static const String logoutConfirm = 'logoutConfirm';
   static const String on = 'on';
   static const String off = 'off';
   static const String noAccountYet = 'noAccountYet';
