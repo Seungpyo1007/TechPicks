@@ -103,6 +103,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                 label: K.scanFieldLabel.tr(),
                 child: TextField(
                   controller: _text,
+                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
                   autofocus: true,
                   onChanged: (_) => setState(() {}),
                   textInputAction: TextInputAction.search,

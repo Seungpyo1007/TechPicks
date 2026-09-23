@@ -47,6 +47,7 @@ class TpSearchField extends StatelessWidget {
         label: label,
         child: TextField(
           controller: controller,
+          onTapOutside: (_) => FocusScope.of(context).unfocus(),
           onChanged: onChanged,
           textInputAction: TextInputAction.search,
           style: type.body,

@@ -99,6 +99,8 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
                     ),
                   )
                 : ListView.separated(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     // 키보드가 올라오면 그만큼 더 비운다. 안 그러면 마지막
                     // 기기들이 키보드 뒤에 깔려 못 고른다.
                     padding: EdgeInsets.fromLTRB(

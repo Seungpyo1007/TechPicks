@@ -106,6 +106,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     child: Text(K.noMatches.tr(), style: type.secondary),
                   )
                 : ListView.separated(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: EdgeInsets.fromLTRB(
                       16,
                       0,
