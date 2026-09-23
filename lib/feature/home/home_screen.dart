@@ -26,6 +26,7 @@ import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_button.dart';
+import '../../app/theme/tp_icons.dart';
 
 /// 홈.
 ///
@@ -79,7 +80,7 @@ class HomeScreen extends ConsumerWidget {
       trailing: onSearch == null
           ? null
           : TpShellAction(
-              icon: Icons.search_rounded,
+              icon: context.icons.search,
               label: K.searchTitle.tr(),
               onTap: onSearch,
             ),
@@ -223,7 +224,7 @@ class _VerdictCard extends ConsumerWidget {
                 label: K.share.tr(),
                 // 44 로 좁혀 뒀는데 안드로이드 탭 타깃 기준은 48 이다. 링크가
                 // 아니라 버튼이라 기준에서 빠지지도 않는다.
-                child: const Icon(Icons.share, size: 20),
+                child: Icon(context.icons.share, size: 20),
               ),
             ],
           ),
@@ -510,7 +511,7 @@ class _ShortlistRow extends ConsumerWidget {
                 TpTapTarget(
                   onTap: onRemove,
                   label: K.remove.tr(),
-                  child: Icon(Icons.close, size: 18, color: t.dim),
+                  child: Icon(context.icons.close, size: 18, color: t.dim),
                 ),
             ],
           ),

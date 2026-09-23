@@ -9,6 +9,7 @@ import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
 
 import '../support/harness.dart';
+import 'package:techpicks/app/theme/tp_icons.dart';
 
 /// 무엇을 보내는지만 받아 적는다. 시트는 안 띄운다.
 class _StubShare implements ShareService {
@@ -55,7 +56,7 @@ void main() {
     testWidgets('이름·지수·링크를 보낸다', (tester) async {
       final stub = await _pump(tester, const DetailScreen(slug: 'galaxy-s25'));
 
-      await tester.tap(find.byIcon(Icons.share));
+      await tester.tap(_icon((i) => i.share));
       await tester.pumpAndSettle();
 
       expect(stub.sent, hasLength(1));
@@ -72,7 +73,7 @@ techpicks://device/galaxy-s25''');
           const DetailScreen(slug: 'galaxy-s25'),
           chrome: chrome,
         );
-        await tester.tap(find.byIcon(Icons.share));
+        await tester.tap(_icon((i) => i.share));
         await tester.pumpAndSettle();
         expect(stub.sent, hasLength(1), reason: chrome.name);
       }
@@ -99,7 +100,7 @@ techpicks://device/galaxy-s25''');
     testWidgets('못 불러온 기기는 공유 버튼이 없다', (tester) async {
       await _pump(tester, const DetailScreen(slug: '없는-기기'));
 
-      expect(find.byIcon(Icons.share), findsNothing);
+      expect(_icon((i) => i.share), findsNothing);
     });
 
     testWidgets('시트가 실패해도 화면이 죽지 않는다', (tester) async {
@@ -109,7 +110,7 @@ techpicks://device/galaxy-s25''');
         service: _ThrowingShare(),
       );
 
-      await tester.tap(find.byIcon(Icons.share));
+      await tester.tap(_icon((i) => i.share));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -124,7 +125,7 @@ techpicks://device/galaxy-s25''');
       });
       final stub = await _pump(tester, const HomeScreen());
 
-      await tester.tap(find.byIcon(Icons.share));
+      await tester.tap(_icon((i) => i.share));
       await tester.pumpAndSettle();
 
       expect(stub.sent.single.text, '''
@@ -136,7 +137,14 @@ techpicks://device/oneplus-13''');
     testWidgets('shortlist 가 비면 공유할 결론도 없다', (tester) async {
       await _pump(tester, const HomeScreen());
 
-      expect(find.byIcon(Icons.share), findsNothing);
+      expect(_icon((i) => i.share), findsNothing);
     });
   });
 }
+
+/// 크롬마다 아이콘이 다르다. 어느 쪽이든 찾는다.
+Finder _icon(IconData Function(TpIcons) pick) => find.byWidgetPredicate(
+  (w) =>
+      w is Icon &&
+      (w.icon == pick(TpIcons.ios) || w.icon == pick(TpIcons.android)),
+);

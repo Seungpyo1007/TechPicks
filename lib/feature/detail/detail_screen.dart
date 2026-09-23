@@ -25,6 +25,7 @@ import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_link_line.dart';
 import '../../shared/widgets/tp_button.dart';
 import '../../shared/widgets/tp_pressable.dart';
+import '../../app/theme/tp_icons.dart';
 
 /// 기기 상세.
 ///
@@ -55,7 +56,7 @@ class DetailScreen extends ConsumerWidget {
       trailing: loaded == null
           ? null
           : TpShellAction(
-              icon: Icons.share,
+              icon: context.icons.share,
               label: K.share.tr(),
               onTap: () => unawaited(_share(ref, loaded)),
             ),
@@ -300,7 +301,7 @@ class _Placeholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Icon(Icons.image_outlined, size: 34, color: tokens.dim);
+      Icon(context.icons.image, size: 34, color: tokens.dim);
 }
 
 class _SpecRow extends StatelessWidget {

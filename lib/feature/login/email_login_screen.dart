@@ -10,6 +10,7 @@ import '../../data/service/auth_service.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_tap_target.dart';
 import '../../shared/widgets/tp_button.dart';
+import '../../app/theme/tp_icons.dart';
 
 /// 이메일 로그인·가입.
 ///
@@ -128,7 +129,7 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
               child: TpTapTarget(
                 onTap: widget.onBack,
                 label: K.back.tr(),
-                child: const Icon(Icons.chevron_left, size: 26),
+                child: Icon(context.icons.back, size: 26),
               ),
             ),
           Text(

@@ -19,6 +19,7 @@ import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
 import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
+import 'package:techpicks/app/theme/tp_icons.dart';
 
 class _NoAuth implements AuthService {
   @override
@@ -447,7 +448,7 @@ void _pushedScreens() {
     await tester.pumpAndSettle();
     expect(find.byType(DetailScreen), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.chevron_left).first);
+    await tester.tap(_icon((i) => i.back).first);
     await tester.pumpAndSettle();
 
     // 명세의 back stack 은 한 단계다 — 랭킹으로 돌아온다.
@@ -504,3 +505,10 @@ void _systemBack() {
     expect(scope.canPop, isTrue);
   });
 }
+
+/// 크롬마다 아이콘이 다르다. 어느 쪽이든 찾는다.
+Finder _icon(IconData Function(TpIcons) pick) => find.byWidgetPredicate(
+  (w) =>
+      w is Icon &&
+      (w.icon == pick(TpIcons.ios) || w.icon == pick(TpIcons.android)),
+);

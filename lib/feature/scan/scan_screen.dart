@@ -13,6 +13,7 @@ import '../../shared/widgets/tp_tap_target.dart';
 import '../../domain/model/scan_match.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/widgets/tp_button.dart';
+import '../../app/theme/tp_icons.dart';
 
 /// 이름으로 기기 찾기.
 ///
@@ -112,7 +113,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
                     border: InputBorder.none,
-                    icon: Icon(Icons.search, size: 20, color: t.dim),
+                    icon: Icon(context.icons.search, size: 20, color: t.dim),
                     hint: ExcludeSemantics(
                       child: Text(
                         K.scanFieldHint.tr(),

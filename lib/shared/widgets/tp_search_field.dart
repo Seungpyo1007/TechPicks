@@ -5,6 +5,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../copy_keys.dart';
 import 'tp_tap_target.dart';
+import '../../app/theme/tp_icons.dart';
 
 /// 알약 하나짜리 검색 줄.
 ///
@@ -55,7 +56,7 @@ class TpSearchField extends StatelessWidget {
             // isDense 를 켜면 히트 영역이 접근성 기준에 못 미친다.
             contentPadding: const EdgeInsets.symmetric(vertical: 14),
             border: InputBorder.none,
-            icon: Icon(Icons.search, size: 20, color: t.dim),
+            icon: Icon(context.icons.search, size: 20, color: t.dim),
             // 이름은 Semantics 가 준다. 힌트까지 들어가면 두 번 읽힌다.
             hint: ExcludeSemantics(
               child: Text(label, style: type.body.copyWith(color: t.dim)),
@@ -68,7 +69,7 @@ class TpSearchField extends StatelessWidget {
                       controller.clear();
                       onChanged('');
                     },
-                    child: Icon(Icons.close, size: 18, color: t.dim),
+                    child: Icon(context.icons.close, size: 18, color: t.dim),
                   ),
           ),
         ),

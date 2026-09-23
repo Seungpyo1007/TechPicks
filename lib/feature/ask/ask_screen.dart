@@ -17,6 +17,7 @@ import '../../shared/widgets/tp_button.dart';
 import '../../shared/widgets/tp_chip.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../app/theme/tp_icons.dart';
 
 /// AI 상담.
 ///
@@ -622,7 +623,7 @@ class _Composer extends StatelessWidget {
                     boxShadow: busy ? null : t.buttonShadow,
                   ),
                   child: Icon(
-                    Icons.arrow_upward,
+                    context.icons.send,
                     color: busy ? t.dim : Colors.white,
                     size: 20,
                   ),
