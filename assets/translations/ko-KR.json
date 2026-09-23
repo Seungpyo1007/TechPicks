@@ -162,11 +162,7 @@
   "signupTitle": "계정\n만들기",
   "skip": "건너뛰기",
   "start": "시작하기",
-  "tabAsk": "질문",
-  "tabDecide": "정하기",
-  "tabHome": "홈",
   "tabBrowse": "둘러보기",
-  "tabYou": "내 정보",
   "tapToChange": "눌러서 변경",
   "themeDark": "어둡게",
   "themeLight": "밝게",
@@ -248,5 +244,9 @@
   "currencyKrw": "원",
   "fxNote": "1 USD = ₩{} · {} 기준",
   "fxNoteOffline": "1 USD = ₩{} · {} 기준 (저장된 값)",
-  "indexNoteCustom": "TP 지수는 내 정보에서 정한 가중치로 계산됩니다."
+  "indexNoteCustom": "TP 지수는 내 정보에서 정한 가중치로 계산됩니다.",
+  "tabToday": "오늘",
+  "tabCompare": "비교",
+  "tabSearch": "검색",
+  "askTitle": "질문"
 }

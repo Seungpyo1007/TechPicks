@@ -3,12 +3,12 @@ import 'dart:math' as math;
 
 import '../../app/theme/tp_motion.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
-import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
@@ -24,10 +24,12 @@ import '../../app/theme/tp_icons.dart';
 /// v1 의 ChatAI 는 모델 답을 문단 그대로 뿌렸다. 명세는 고른 기기 하나,
 /// 한 줄 근거, 4줄 표로 나눠 받으라고 못박았고 마크다운 렌더링을 금지한다.
 class AskScreen extends ConsumerStatefulWidget {
-  const AskScreen({super.key, this.onTabSelected, this.onDeviceTap});
+  const AskScreen({super.key, this.onDeviceTap, this.onClose});
 
-  final ValueChanged<TpTab>? onTabSelected;
   final ValueChanged<String>? onDeviceTap;
+
+  /// 시트 닫기.
+  final VoidCallback? onClose;
 
   /// 기다리는 동안 답 자리에 놓이는 뼈대.
   @visibleForTesting
@@ -115,9 +117,14 @@ class _AskScreenState extends ConsumerState<AskScreen>
     final busy = ref.watch(askBusyProvider);
 
     return TpShell(
-      title: K.tabAsk.tr(),
-      tab: TpTab.ask,
-      onTabSelected: widget.onTabSelected,
+      title: K.askTitle.tr(),
+      trailing: widget.onClose == null
+          ? null
+          : TpShellAction(
+              icon: context.tp.isGlass ? CupertinoIcons.xmark : Icons.close,
+              label: K.cancel.tr(),
+              onTap: widget.onClose,
+            ),
       // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면 크롬이
       // 차지한 자리를 모르는 예전 값이 나온다.
       child: Builder(

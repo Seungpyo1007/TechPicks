@@ -52,15 +52,13 @@ class TpIcons {
   /// 네이티브 바가 쓰는 심볼([TpTab.symbol])과 같은 모양으로 맞췄다. 저울은
   /// CupertinoIcons 에 없어서 Material 것을 그대로 쓴다.
   static IconData iosTab(TpTab tab, {required bool active}) => switch (tab) {
-    TpTab.home => active ? CupertinoIcons.house_fill : CupertinoIcons.house,
+    TpTab.today => active ? CupertinoIcons.house_fill : CupertinoIcons.house,
     TpTab.browse =>
       active
           ? CupertinoIcons.square_grid_2x2_fill
           : CupertinoIcons.square_grid_2x2,
-    TpTab.decide => active ? tab.activeIcon : tab.icon,
-    TpTab.ask =>
-      active ? CupertinoIcons.chat_bubble_2_fill : CupertinoIcons.chat_bubble_2,
-    TpTab.you => active ? CupertinoIcons.person_fill : CupertinoIcons.person,
+    TpTab.compare => active ? tab.activeIcon : tab.icon,
+    TpTab.search => CupertinoIcons.search,
   };
 }
 

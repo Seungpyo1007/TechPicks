@@ -97,29 +97,8 @@ void main() {
     expect(taps, 4);
   });
 
-  testWidgets('랭킹 인라인 찾기 버튼', (tester) async {
-    var taps = 0;
-    await pumpScreen(tester, RankScreen(onScan: () => taps++));
-
-    // 50행 아래라 화면 밖이다. 끌어와서 누른다.
-    await tester.scrollUntilVisible(
-      find.text(K.scanCta.tr()),
-      400,
-      scrollable: find
-          .descendant(
-            of: find.byType(RankScreen),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-
-    await _tapCorners(tester, K.scanCta.tr());
-
-    expect(taps, 4);
-  });
-
   testWidgets('랭킹 축 칩', (tester) async {
-    final container = await pumpScreen(tester, RankScreen(onScan: () {}));
+    final container = await pumpScreen(tester, const RankScreen());
 
     // 칩은 한 번만 누른다. 두 번 누르면 축이 다시 바뀐다.
     final battery = _pill(tester, K.rankAxis(RankAxis.battery).tr());

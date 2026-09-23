@@ -33,7 +33,7 @@ import '../support/harness.dart';
 
 Map<String, Widget> _screens() => <String, Widget>{
   'home': HomeScreen(onDeviceTap: (_) {}, onAdd: () {}),
-  'rank': RankScreen(onDeviceTap: (_) {}, onScan: () {}),
+  'rank': RankScreen(onDeviceTap: (_) {}),
   'cpu': const ProcessorScreen(),
   'compare': CompareScreen(onPick: (_) {}),
   'picker': PickerScreen(onDone: () {}),

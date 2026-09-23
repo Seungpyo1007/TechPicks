@@ -16,10 +16,9 @@ import 'package:techpicks/data/service/auth_service.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
-import 'package:techpicks/feature/rank/rank_screen.dart';
-import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
 import 'package:techpicks/app/theme/tp_icons.dart';
+import 'package:techpicks/feature/you/you_screen.dart';
 
 class _NoAuth implements AuthService {
   @override
@@ -84,28 +83,32 @@ void main() {
 
   testWidgets('홈으로 시작한다', (tester) async {
     await _pump(tester);
-    expect(find.text('Today'), findsOneWidget);
+    // 화면 제목과 탭 라벨이 같은 단어다.
+    expect(find.text('Today'), findsWidgets);
   });
 
-  testWidgets('탭을 눌러 다섯 화면을 오간다', (tester) async {
+  testWidgets('탭을 눌러 네 화면을 오간다', (tester) async {
     await _pump(tester);
 
     await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
     expect(find.text('Rankings'), findsOneWidget);
 
-    await tester.tap(find.text(K.tab(TpTab.decide).tr()));
+    await tester.tap(find.text(K.tab(TpTab.compare).tr()));
     await tester.pumpAndSettle();
     expect(find.text('Compare'), findsWidgets);
 
-    await tester.tap(find.text(K.tab(TpTab.ask).tr()));
+    await tester.tap(find.bySemanticsLabel(K.tab(TpTab.search).tr()).last);
     await tester.pumpAndSettle();
-    expect(find.textContaining('Give me a budget'), findsOneWidget);
+    expect(find.text(K.searchTitle.tr()), findsWidgets);
+  });
 
-    await tester.tap(find.text(K.tab(TpTab.you).tr()));
+  testWidgets('프로필 버튼이 내 정보 시트를 연다', (tester) async {
+    await _pump(tester);
+
+    await tester.tap(find.bySemanticsLabel(K.you.tr()).first);
     await tester.pumpAndSettle();
-    // 탭 라벨과 화면 제목이 같은 단어다.
-    expect(find.text('You'), findsWidgets);
+    expect(find.byType(YouScreen), findsOneWidget);
   });
 
   testWidgets('랭킹에서 기기를 누르면 상세가 올라온다', (tester) async {
@@ -138,7 +141,7 @@ void main() {
   testWidgets('비교 열 머리에서 선택 시트가 열린다', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text(K.tab(TpTab.decide).tr()));
+    await tester.tap(find.text(K.tab(TpTab.compare).tr()));
     await tester.pumpAndSettle();
     await tester.tap(find.text(readRanking()[0].device.name));
     await tester.pumpAndSettle();
@@ -147,42 +150,7 @@ void main() {
     expect(_container!.read(pickSlotProvider), CompareSide.a);
   });
 
-  testWidgets('랭킹에서 스캔을 연다', (tester) async {
-    await _pump(tester);
-
-    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
-    await tester.pumpAndSettle();
-
-    // 랭킹 목록이 길어져 스캔 버튼이 화면 아래로 밀렸다.
-    await tester.scrollUntilVisible(
-      find.text('Find a device by name'),
-      400,
-      scrollable: find
-          .descendant(
-            of: find.byType(RankScreen),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await tester.tap(find.text('Find a device by name'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.byType(ScanScreen), findsOneWidget);
-  });
-
-  testWidgets('Android 는 스캔이 FAB 로 나온다', (tester) async {
-    await _pump(tester, chrome: TpChrome.android);
-
-    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
-    await tester.pumpAndSettle();
-
-    // iOS 인라인 버튼은 없고 FAB 라벨만 있다.
-    expect(find.text('Find a device by name'), findsNothing);
-    expect(find.text('Find device'), findsOneWidget);
-  });
-
-  testWidgets('홈의 Ask why 가 상담 탭으로 간다', (tester) async {
+  testWidgets('홈의 Ask why 가 질문 시트를 연다', (tester) async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'shortlist_slugs': <String>['galaxy-s25'],
     });
@@ -275,7 +243,7 @@ void _askFromCompare() {
     await initLocalization();
     final container = await pumpApp(
       tester,
-      initialLocation: TpRoute.decide,
+      initialLocation: TpRoute.compare,
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
         askServiceProvider.overrideWithValue(const LocalAskService()),
@@ -301,7 +269,7 @@ void _askFromCompare() {
     await initLocalization();
     final container = await pumpApp(
       tester,
-      initialLocation: TpRoute.decide,
+      initialLocation: TpRoute.compare,
       catalogAsset: missingCatalogAsset,
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
@@ -347,7 +315,7 @@ void _pickerSlots() {
     await initLocalization();
     final container = await pumpApp(
       tester,
-      initialLocation: TpRoute.decide,
+      initialLocation: TpRoute.compare,
       size: const Size(1200, 3200),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
@@ -367,7 +335,7 @@ void _pickerSlots() {
     await initLocalization();
     final container = await pumpApp(
       tester,
-      initialLocation: TpRoute.decide,
+      initialLocation: TpRoute.compare,
       size: const Size(1200, 3200),
       overrides: <Override>[
         authServiceProvider.overrideWithValue(_NoAuth()),
@@ -408,26 +376,6 @@ void _pushedScreens() {
     expect(find.byType(ViewerScreen), findsOneWidget);
     // 뷰어 머리에는 기기 이름이 붙는다.
     expect(find.text(readRanking().first.device.name), findsWidgets);
-  });
-
-  testWidgets('스캔 결과에서 상세로 넘어간다', (tester) async {
-    await initLocalization();
-    await pumpApp(
-      tester,
-      initialLocation: TpRoute.browse,
-      // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
-      // 화면을 그만큼 키워야 한다.
-      size: const Size(1200, 4400),
-      overrides: <Override>[
-        authServiceProvider.overrideWithValue(_NoAuth()),
-        askServiceProvider.overrideWithValue(const LocalAskService()),
-      ],
-    );
-
-    await tester.tap(find.text(K.scanCta.tr()));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byType(ScanScreen), findsOneWidget);
   });
 
   testWidgets('뒤로 가면 원래 탭으로 돌아온다', (tester) async {

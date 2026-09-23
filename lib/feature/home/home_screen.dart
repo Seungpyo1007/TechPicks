@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,25 +38,22 @@ import '../../app/theme/tp_icons.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({
     super.key,
-    this.onTabSelected,
     this.onDeviceTap,
     this.onAdd,
     this.onCompareAll,
     this.onAskWhy,
     this.onMoversTap,
-    this.onSearch,
+    this.onYou,
   });
 
-  final ValueChanged<TpTab>? onTabSelected;
   final ValueChanged<String>? onDeviceTap;
   final VoidCallback? onAdd;
   final VoidCallback? onCompareAll;
   final VoidCallback? onAskWhy;
   final VoidCallback? onMoversTap;
 
-  /// 통합 검색으로. 셸 헤더에 붙는다 — 한 화면 전용이 아니라 어디서 왔든
-  /// 같은 자리에 있어야 찾는다.
-  final VoidCallback? onSearch;
+  /// 내 정보 시트. 오른쪽 위 프로필 버튼.
+  final VoidCallback? onYou;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -75,14 +73,15 @@ class HomeScreen extends ConsumerWidget {
       // 그 역할을 한다. 둘 다 그리면 같은 글자가 두 번 나온다.
       title: t.isGlass ? null : K.homeTitle.tr(),
       scrollTitle: K.homeTitle.tr(),
-      tab: TpTab.home,
-      onTabSelected: onTabSelected,
-      trailing: onSearch == null
+      tab: TpTab.today,
+      trailing: onYou == null
           ? null
           : TpShellAction(
-              icon: context.icons.search,
-              label: K.searchTitle.tr(),
-              onTap: onSearch,
+              icon: context.tp.isGlass
+                  ? CupertinoIcons.person_crop_circle
+                  : Icons.account_circle_outlined,
+              label: K.you.tr(),
+              onTap: onYou,
             ),
       child: Builder(
         // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면

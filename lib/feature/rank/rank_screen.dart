@@ -19,7 +19,6 @@ import 'category_chips.dart';
 import 'rank_category.dart';
 import '../../shared/widgets/tp_search_field.dart';
 import '../../shared/widgets/tp_error_state.dart';
-import '../../shared/widgets/tp_button.dart';
 import '../../shared/widgets/tp_press.dart';
 import '../../shared/widgets/tp_pressable.dart';
 import '../../shared/widgets/tp_sheet.dart';
@@ -29,13 +28,7 @@ import '../../shared/widgets/tp_sheet.dart';
 /// 그 화면들은 nanoreview.net 을 띄우고 JS 로 헤더를 지웠고, 그 과정에서
 /// 필요도 없는 위치 권한을 요청했다. 셋 다 사라진다.
 class RankScreen extends ConsumerWidget {
-  const RankScreen({
-    super.key,
-    this.onTabSelected,
-    this.onDeviceTap,
-    this.onScan,
-    this.onCategory,
-  });
+  const RankScreen({super.key, this.onDeviceTap, this.onCategory});
 
   /// 카테고리 칩을 누르면. 주소를 바꾸는 일이라 바깥이 한다.
   final ValueChanged<RankCategory>? onCategory;
@@ -53,12 +46,7 @@ class RankScreen extends ConsumerWidget {
   /// 컨트롤 사이 간격. 예전에는 12/10/10/8/16 이 섞여 있었다.
   static const double _gap = 12;
 
-  final ValueChanged<TpTab>? onTabSelected;
   final ValueChanged<String>? onDeviceTap;
-
-  /// 뒷면을 찍어 기기를 찾는다. 명세의 chrome geometry 표대로 Android 는
-  /// 확장 FAB, iOS 는 콘텐츠 안 인라인 버튼이다.
-  final VoidCallback? onScan;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -74,8 +62,6 @@ class RankScreen extends ConsumerWidget {
     return TpShell(
       title: K.rankTitle.tr(),
       tab: TpTab.browse,
-      onTabSelected: onTabSelected,
-      floatingAction: onScan == null ? null : _ScanFab(onTap: onScan!),
       child: Builder(
         // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
         // 크롬이 차지한 자리를 모르는 예전 값이 나온다.
@@ -142,10 +128,6 @@ class RankScreen extends ConsumerWidget {
                   ),
                   style: context.tpText.caption,
                 ),
-              ],
-              if (onScan != null && context.tp.isGlass) ...<Widget>[
-                const SizedBox(height: 16),
-                _ScanInlineButton(onTap: onScan!),
               ],
               // 순위를 어떻게 냈는지는 순위가 있을 때 할 말이다. 오류 화면과
               // "맞는 게 없습니다" 아래에도 붙어 있었다.
@@ -645,35 +627,4 @@ String formatAxisValue(
   if (value == null) return TpMoney.empty;
   if (axis == RankAxis.price) return money.format(value.round());
   return value.round().toString();
-}
-
-/// Android 확장 FAB. 랭킹에서 기기 찾기로 간다.
-class _ScanFab extends StatelessWidget {
-  const _ScanFab({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => TpButton(
-    label: K.scanShort.tr(),
-    height: 56,
-    expand: false,
-    icon: const Icon(Icons.search, color: Colors.white, size: 20),
-    onTap: onTap,
-  );
-}
-
-/// iOS 는 FAB 가 없다. 콘텐츠 안에 버튼으로 둔다.
-class _ScanInlineButton extends StatelessWidget {
-  const _ScanInlineButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => TpButton(
-    label: K.scanCta.tr(),
-    kind: TpButtonKind.secondary,
-    icon: const Icon(Icons.search, size: 18),
-    onTap: onTap,
-  );
 }

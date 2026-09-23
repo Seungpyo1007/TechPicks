@@ -69,7 +69,7 @@ abstract final class TpLink {
   /// 라우터가 쓰는 경로. 주소창에 찍히는 것과 같은 문자열이다.
   static String path(TpLinkTarget target) => switch (target) {
     DeviceTarget(:final slug) => '/$_device/$slug',
-    CompareTarget(:final a, :final b) => '/$_decide/$a/$b',
+    CompareTarget(:final a, :final b) => '/$_legacyCompare/$a/$b',
   };
 
   /// 우리 링크가 아니거나 형태가 안 맞으면 null.

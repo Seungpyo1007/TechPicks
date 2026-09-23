@@ -24,12 +24,13 @@ import '../../shared/widgets/tp_press.dart';
 /// v1 의 `CPU.dart` 를 대체한다. 그 화면은 `device_info_plus` 로 읽은 내 기기
 /// 정보를 띄웠고, 그건 You 화면에 있다.
 class ProcessorScreen extends ConsumerWidget {
-  const ProcessorScreen({super.key, this.onTabSelected, this.onCategory});
-
-  final ValueChanged<TpTab>? onTabSelected;
+  const ProcessorScreen({super.key, this.onCategory, this.onBuild});
 
   /// 카테고리 칩을 누르면. 주소를 바꾸는 일이라 바깥이 한다.
   final ValueChanged<RankCategory>? onCategory;
+
+  /// 조립 견적. 목록 맨 위 행.
+  final VoidCallback? onBuild;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -41,7 +42,6 @@ class ProcessorScreen extends ConsumerWidget {
     return TpShell(
       title: K.cpuTitle.tr(),
       tab: TpTab.browse,
-      onTabSelected: onTabSelected,
       child: Builder(
         // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
         // 크롬이 차지한 자리를 모르는 예전 값이 나온다.
@@ -54,6 +54,29 @@ class ProcessorScreen extends ConsumerWidget {
               current: RankCategory.processors,
               onSelect: onCategory ?? (_) {},
             ),
+            if (onBuild != null) ...<Widget>[
+              const SizedBox(height: 14),
+              TpSurface(
+                onTap: onBuild,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    const Icon(Icons.build_outlined, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        K.buildTitle.tr(),
+                        style: context.tpText.cardTitle,
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             _Segmented(
               current: segment,

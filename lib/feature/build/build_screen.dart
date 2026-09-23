@@ -26,9 +26,9 @@ import '../../shared/widgets/tp_slider.dart';
 /// 두 부품에서 도출되는 요구사양으로만 내놓고, 예산이 완제품 값이 아니라는
 /// 것도 화면에 적는다 — 안 적으면 "$1,500 짜리 PC" 로 읽힌다.
 class BuildScreen extends ConsumerWidget {
-  const BuildScreen({super.key, this.onTabSelected});
+  const BuildScreen({super.key, this.onBack});
 
-  final ValueChanged<TpTab>? onTabSelected;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,8 +40,8 @@ class BuildScreen extends ConsumerWidget {
 
     return TpShell(
       title: K.buildTitle.tr(),
-      tab: TpTab.decide,
-      onTabSelected: onTabSelected,
+      tab: TpTab.browse,
+      onBack: onBack,
       child: Builder(
         builder: (context) => ListView(
           padding:

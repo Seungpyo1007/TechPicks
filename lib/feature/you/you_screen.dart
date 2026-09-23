@@ -9,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
-import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../app/locale_controller.dart';
@@ -34,7 +33,6 @@ import '../../shared/widgets/tp_switch.dart';
 class YouScreen extends ConsumerStatefulWidget {
   const YouScreen({
     super.key,
-    this.onTabSelected,
     this.name,
     this.email,
     this.onEditProfile,
@@ -42,9 +40,11 @@ class YouScreen extends ConsumerStatefulWidget {
     this.onLogout,
     this.onDeviceTap,
     this.onSources,
+    this.onClose,
   });
 
-  final ValueChanged<TpTab>? onTabSelected;
+  /// 시트 닫기.
+  final VoidCallback? onClose;
 
   /// 로그인 전에는 둘 다 null 이다. 인증 연결은 로그인 화면에서 한다.
   final String? name;
@@ -97,8 +97,13 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     return TpShell(
       title: t.isGlass ? null : K.you.tr(),
       scrollTitle: K.you.tr(),
-      tab: TpTab.you,
-      onTabSelected: widget.onTabSelected,
+      trailing: widget.onClose == null
+          ? null
+          : TpShellAction(
+              icon: t.isGlass ? CupertinoIcons.xmark : Icons.close,
+              label: K.cancel.tr(),
+              onTap: widget.onClose,
+            ),
       child: Builder(
         // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
         // 크롬이 차지한 자리를 모르는 예전 값이 나온다.

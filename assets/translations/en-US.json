@@ -162,11 +162,7 @@
   "signupTitle": "Create an\naccount",
   "skip": "Skip",
   "start": "Get started",
-  "tabAsk": "Ask",
-  "tabDecide": "Decide",
-  "tabHome": "Home",
   "tabBrowse": "Browse",
-  "tabYou": "You",
   "tapToChange": "Tap to change",
   "themeDark": "Dark",
   "themeLight": "Light",
@@ -248,5 +244,9 @@
   "currencyKrw": "Korean won",
   "fxNote": "1 USD = ₩{} · as of {}",
   "fxNoteOffline": "1 USD = ₩{} · as of {} (saved)",
-  "indexNoteCustom": "TP Index uses the weights you set in You."
+  "indexNoteCustom": "TP Index uses the weights you set in You.",
+  "tabToday": "Today",
+  "tabCompare": "Compare",
+  "tabSearch": "Search",
+  "askTitle": "Ask"
 }

@@ -59,7 +59,7 @@ void main() {
     // 명세가 짚은 예시들. 그대로 옮기지 않고 뜻으로 옮겼는지 본다.
     expect(ko['verdict'], '지금의 결론');
     expect(ko['movers'], '이번 주 변동');
-    expect(ko['tabYou'], '내 정보');
+    expect(ko['tabCompare'], '비교');
   });
 
   test('K 가 쓰는 키가 전부 번역 파일에 있다', () {
