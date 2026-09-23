@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -274,7 +275,11 @@ void main() {
     await tester.tap(find.text('Notifications'));
     await tester.pumpAndSettle();
     expect(_container!.read(notificationsProvider), isFalse);
-    expect(find.text('Off'), findsWidgets);
+    expect(find.byType(CupertinoSwitch), findsOneWidget);
+    expect(
+      tester.widget<CupertinoSwitch>(find.byType(CupertinoSwitch)).value,
+      isFalse,
+    );
   });
 
   group('내 기기', () {
