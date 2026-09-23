@@ -2,6 +2,7 @@ import 'dart:async' show unawaited;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
@@ -419,7 +420,30 @@ class _ShortlistRow extends ConsumerWidget {
         key: ValueKey<String>('shortlist-${device.slug}'),
         direction: DismissDirection.endToStart,
         onDismissed: (_) => onRemove?.call(),
-        background: const SizedBox.shrink(),
+        // 문턱을 넘는 순간 한 번 울린다. 손을 떼면 지워진다는 신호다.
+        onUpdate: (d) {
+          if (d.reached && !d.previousReached) HapticFeedback.mediumImpact();
+        },
+        // 밀었을 때 무엇이 일어날지 보여준다. 팔레트에 빨강이 없어 흑연색이다.
+        background: DecoratedBox(
+          decoration: BoxDecoration(
+            color: TpTokens.graphite,
+            borderRadius: BorderRadius.circular(t.rCard),
+          ),
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Padding(
+              padding: const EdgeInsetsDirectional.only(end: 20),
+              child: Text(
+                K.remove.tr(),
+                style: type.body.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ),
         child: TpSurface(
           onTap: onTap,
           // 명세 §3 은 스와이프와 길게 누르기 둘 다 지우기다. 스와이프는

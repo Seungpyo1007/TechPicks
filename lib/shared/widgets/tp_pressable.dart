@@ -17,6 +17,9 @@ enum TpHaptic {
 
   /// 무언가 일어나는 것 — 버튼.
   impact,
+
+  /// 결과가 남는 것 — 관심 목록에 담기.
+  commit,
 }
 
 /// 손가락이 닿은 순간부터 뗄 때까지를 0–1 하나로 내주는 위젯.
@@ -199,6 +202,8 @@ class _TpPressableState extends State<TpPressable>
         HapticFeedback.selectionClick();
       case TpHaptic.impact:
         HapticFeedback.lightImpact();
+      case TpHaptic.commit:
+        HapticFeedback.mediumImpact();
     }
     widget.onTap?.call();
   }
