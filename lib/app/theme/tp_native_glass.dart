@@ -264,3 +264,61 @@ class TpNativeSegmented extends StatelessWidget {
     height: height,
   );
 }
+
+/// 풀다운 메뉴 한 줄(네이티브용).
+class TpNativeMenuEntry {
+  const TpNativeMenuEntry({
+    required this.label,
+    this.checked = false,
+    this.destructive = false,
+  });
+
+  final String label;
+  final bool checked;
+  final bool destructive;
+}
+
+/// iOS 26 툴바의 메뉴 버튼. 유리 원을 누르면 `UIMenu` 가 펼쳐진다.
+///
+/// Flutter 의 `CupertinoMenuAnchor` 는 iOS 13 메뉴 모양이다. 이건 시스템 것이라
+/// 유리 번짐, 체크 표시, 여는 모션이 전부 OS 그대로다.
+class TpNativeMenuButton extends StatelessWidget {
+  const TpNativeMenuButton({
+    super.key,
+    required this.symbol,
+    required this.label,
+    required this.entries,
+    required this.onSelected,
+    this.tint,
+  });
+
+  /// SF Symbol 이름.
+  final String symbol;
+
+  /// 스크린 리더 이름.
+  final String label;
+  final List<TpNativeMenuEntry> entries;
+  final ValueChanged<int> onSelected;
+
+  /// 아이콘 색. 필터가 걸려 있을 때 액센트.
+  final Color? tint;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassMenu.icon(
+    icon: NativeLiquidGlassIcon.sfSymbol(symbol),
+    glass: true,
+    accessibilityLabel: label,
+    color: tint,
+    height: 44,
+    items: <LiquidGlassMenuItem>[
+      for (var i = 0; i < entries.length; i++)
+        LiquidGlassMenuItem(
+          id: '$i',
+          title: entries[i].label,
+          isChecked: entries[i].checked,
+          isDestructive: entries[i].destructive,
+        ),
+    ],
+    onItemSelected: (id) => onSelected(int.parse(id)),
+  );
+}

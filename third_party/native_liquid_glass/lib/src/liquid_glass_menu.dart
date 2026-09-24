@@ -15,8 +15,8 @@ import 'utils/text_style_utils.dart';
 /// forwarding from swallowing or delaying those gestures.
 final Set<Factory<OneSequenceGestureRecognizer>> _menuGestureRecognizers =
     <Factory<OneSequenceGestureRecognizer>>{
-  Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-  Factory<LongPressGestureRecognizer>(() => LongPressGestureRecognizer()),
+  // TechPicks 패치: 손이 닿는 즉시 UIKit 에 넘긴다(누르는 유리 반응이 바로 보이게).
+  Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer()),
 };
 
 /// A single menu item for [LiquidGlassMenu].
@@ -39,7 +39,10 @@ class LiquidGlassMenuItem {
   /// Nested submenu items.
   final List<LiquidGlassMenuItem>? children;
 
-  const LiquidGlassMenuItem({required this.id, required this.title, this.icon, this.isDestructive = false, this.isDisabled = false, this.children});
+  /// TechPicks 패치: 체크 표시(UIAction.state = .on).
+  final bool isChecked;
+
+  const LiquidGlassMenuItem({required this.id, required this.title, this.icon, this.isDestructive = false, this.isDisabled = false, this.isChecked = false, this.children});
 
   Map<String, Object?> toMap() {
     return <String, Object?>{
@@ -48,6 +51,7 @@ class LiquidGlassMenuItem {
       'sfSymbol': icon?.sfSymbolName,
       'isDestructive': isDestructive,
       'isDisabled': isDisabled,
+      'isChecked': isChecked,
       'children': children?.map((c) => c.toMap()).toList(),
     };
   }
@@ -89,6 +93,12 @@ class LiquidGlassMenu extends StatefulWidget {
   /// Height of the trigger button. Defaults to 44.
   final double height;
 
+  /// TechPicks 패치: iOS 26 유리 버튼(`UIButton.Configuration.glass`)으로 그린다.
+  final bool glass;
+
+  /// 스크린 리더 이름. 아이콘만 있는 버튼에 준다.
+  final String? accessibilityLabel;
+
   /// Named constructor for icon-only menu triggers.
   const LiquidGlassMenu.icon({
     super.key,
@@ -99,6 +109,8 @@ class LiquidGlassMenu extends StatefulWidget {
     this.iconSize,
     this.menuTitle,
     this.height = 44,
+    this.glass = false,
+    this.accessibilityLabel,
   }) : label = null,
        labelTextStyle = null;
 
@@ -113,6 +125,8 @@ class LiquidGlassMenu extends StatefulWidget {
     this.labelTextStyle,
     this.menuTitle,
     this.height = 44,
+    this.glass = false,
+    this.accessibilityLabel,
   });
 
   @override
@@ -195,6 +209,7 @@ class _LiquidGlassMenuState extends State<LiquidGlassMenu> with LiquidGlassRoute
       item.icon?.sfSymbolName,
       item.isDestructive,
       item.isDisabled,
+      item.isChecked,
       children == null ? 0 : Object.hashAll(children.map(_itemSignature)),
     );
   }
@@ -208,6 +223,8 @@ class _LiquidGlassMenuState extends State<LiquidGlassMenu> with LiquidGlassRoute
       widget.iconSize,
       textStyleSignature(widget.labelTextStyle),
       widget.menuTitle,
+      widget.glass,
+      widget.accessibilityLabel,
     ]);
   }
 
@@ -232,6 +249,8 @@ class _LiquidGlassMenuState extends State<LiquidGlassMenu> with LiquidGlassRoute
       'iconSize': widget.iconSize,
       'labelStyle': textStylePayload(widget.labelTextStyle),
       'menuTitle': widget.menuTitle,
+      'glass': widget.glass,
+      'accessibilityLabel': widget.accessibilityLabel,
     };
   }
 

@@ -74,12 +74,21 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
   /// 정렬·필터·카테고리가 바뀐 시각. 이때 위쪽 행이 다시 들어온다.
   DateTime? _changedAt;
 
-  void _changed() => setState(() => _changedAt = DateTime.now());
+  /// 들어오는 방향. 카테고리를 바꾸면 고른 쪽에서 옆으로, 정렬·필터는 아래에서.
+  Offset _from = TpArriveScope.up;
+
+  void _changed() => setState(() {
+    _changedAt = DateTime.now();
+    _from = TpArriveScope.up;
+  });
 
   @override
   void didUpdateWidget(BrowseScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.category != widget.category) _changedAt = DateTime.now();
+    if (oldWidget.category == widget.category) return;
+    _changedAt = DateTime.now();
+    final right = widget.category.index > oldWidget.category.index;
+    _from = Offset(right ? 0.3 : -0.3, 0);
   }
 
   @override
@@ -94,6 +103,10 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
 
     final glass = context.tp.isGlass;
     final sys = context.sys;
+    final arriveAt = TpArriveScope.latest(
+      TpArriveScope.of(context),
+      _changedAt,
+    );
     final parts = switch (widget.category) {
       RankCategory.phones => _phones(context),
       RankCategory.processors => _processors(context),
@@ -110,6 +123,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
           TpBarAction(
             label: K.sort.tr(),
             icon: CupertinoIcons.arrow_up_arrow_down,
+            symbol: 'arrow.up.arrow.down',
             menu: parts.sort,
           ),
       ],
@@ -125,63 +139,58 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
           ),
         ),
         if (!glass) SliverToBoxAdapter(child: _SortChips(items: parts.sort)),
-        ...parts.top,
+        for (final top in parts.top)
+          TpArriveScope(at: arriveAt, from: _from, child: top),
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(32, 12, 24, 7),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    parts.status,
-                    style: TextStyle(fontSize: 13, color: sys.label2),
-                  ),
-                ),
-                if (parts.onClear != null)
-                  GestureDetector(
-                    onTap: parts.onClear,
-                    child: Text(
-                      K.clear.tr(),
-                      style: TextStyle(fontSize: 13, color: sys.accentText),
+          child: TpArriveScope(
+            at: arriveAt,
+            from: _from,
+            child: TpArrive(
+              index: 0,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(32, 12, 24, 7),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        parts.status,
+                        style: TextStyle(fontSize: 13, color: sys.label2),
+                      ),
                     ),
-                  ),
-              ],
+                    if (parts.onClear != null)
+                      GestureDetector(
+                        onTap: parts.onClear,
+                        child: Text(
+                          K.clear.tr(),
+                          style: TextStyle(fontSize: 13, color: sys.accentText),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-        TpArriveScope(
-          at: TpArriveScope.latest(TpArriveScope.of(context), _changedAt),
-          child: parts.list,
-        ),
+        TpArriveScope(at: arriveAt, from: _from, child: parts.list),
       ],
     );
   }
 
-  /// 필터가 걸려 있으면 그 값이 채운 캡슐로, 아니면 아이콘.
+  /// 필터 버튼. 걸려 있어도 모양은 같고 아이콘만 액센트가 된다 — 무엇이
+  /// 걸렸는지는 상태 줄이 말한다.
   TpBarAction _filterAction({
-    required String? active,
+    required bool active,
+    required List<TpMenuItem> menu,
     String? label,
-    List<TpMenuItem>? menu,
-    VoidCallback? onTap,
-  }) {
-    if (active != null) {
-      return TpBarAction(
-        label: active,
-        text: true,
-        filled: true,
-        menu: menu,
-        onTap: onTap,
-      );
-    }
-    return TpBarAction(
-      label: label ?? K.filter.tr(),
-      icon: context.tp.isGlass
-          ? CupertinoIcons.line_horizontal_3_decrease
-          : Icons.filter_list,
-      menu: menu,
-      onTap: onTap,
-    );
-  }
+  }) => TpBarAction(
+    label: label ?? K.filter.tr(),
+    icon: context.tp.isGlass
+        ? CupertinoIcons.line_horizontal_3_decrease
+        : Icons.filter_list,
+    symbol: 'line.3.horizontal.decrease',
+    active: active,
+    menu: menu,
+  );
 
   Widget _message(String text) => SliverToBoxAdapter(
     child: Padding(
@@ -224,11 +233,16 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
 
     return _Parts(
       filter: _filterAction(
-        active: brand,
+        active: brand != null,
         label: K.brand.tr(),
-        onTap: brands.isEmpty
-            ? null
-            : () => pickBrand(context, ref, brands, brand),
+        menu: <TpMenuItem>[
+          for (final option in <String?>[null, ...brands])
+            TpMenuItem(
+              label: option ?? K.allBrands.tr(),
+              checked: option == brand,
+              onTap: () => ref.read(rankBrandProvider.notifier).set(option),
+            ),
+        ],
       ),
       sort: <TpMenuItem>[
         for (final a in RankAxis.values)
@@ -281,7 +295,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
 
     return _Parts(
       filter: _filterAction(
-        active: segment == ProcessorSegment.mobile ? null : segment.key.tr(),
+        active: segment != ProcessorSegment.mobile,
         menu: <TpMenuItem>[
           for (final s in ProcessorSegment.values)
             TpMenuItem(
@@ -395,7 +409,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
 
     return _Parts(
       filter: _filterAction(
-        active: tier?.tr(),
+        active: tier != null,
         menu: <TpMenuItem>[
           TpMenuItem(
             label: K.allPrices.tr(),

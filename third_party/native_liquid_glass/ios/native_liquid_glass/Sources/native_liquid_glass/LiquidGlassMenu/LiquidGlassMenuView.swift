@@ -70,10 +70,14 @@ final class LiquidGlassMenuPlatformView: NSObject, FlutterPlatformView {
       if isDisabled { attributes.insert(.disabled) }
 
       let image = sfSymbol != nil ? UIImage(systemName: sfSymbol!) : nil
+      let isChecked = (item["isChecked"] as? Bool) ?? false
 
-      return UIAction(title: title, image: image, attributes: attributes) { [weak self] _ in
+      let action = UIAction(title: title, image: image, attributes: attributes) { [weak self] _ in
         self?.methodChannel.invokeMethod("itemSelected", arguments: id)
       }
+      // TechPicks 패치: 고른 항목에 체크.
+      action.state = isChecked ? .on : .off
+      return action
     }
   }
 
@@ -127,6 +131,27 @@ final class LiquidGlassMenuPlatformView: NSObject, FlutterPlatformView {
     let menuElements = buildMenuItems(from: itemDicts)
     button.menu = UIMenu(title: menuTitle, children: menuElements)
 
+    // TechPicks 패치: iOS 26 은 유리 버튼(툴바 버튼과 같은 모양)으로, 칸을 꽉 채운다.
+    if #available(iOS 26.0, *), args?["glass"] as? Bool == true {
+      var config = UIButton.Configuration.glass()
+      config.cornerStyle = .capsule
+      config.image = button.image(for: .normal)
+      if let label { config.title = label }
+      config.baseForegroundColor = color ?? .label
+      config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
+      button.configuration = config
+      if let label { button.accessibilityLabel = label }
+      if let a11y = args?["accessibilityLabel"] as? String { button.accessibilityLabel = a11y }
+      containerView.addSubview(button)
+      NSLayoutConstraint.activate([
+        button.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+        button.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+        button.topAnchor.constraint(equalTo: containerView.topAnchor),
+        button.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+      ])
+      return
+    }
+
     containerView.addSubview(button)
     NSLayoutConstraint.activate([
       button.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
@@ -152,6 +177,10 @@ final class LiquidGlassMenuPlatformView: NSObject, FlutterPlatformView {
         self.button.menu = UIMenu(title: menuTitle, children: menuElements)
         if let color {
           self.button.tintColor = color
+          if #available(iOS 26.0, *), var config = self.button.configuration {
+            config.baseForegroundColor = color
+            self.button.configuration = config
+          }
         }
         result(nil)
 
