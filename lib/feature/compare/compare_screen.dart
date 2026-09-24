@@ -42,7 +42,6 @@ class CompareScreen extends ConsumerWidget {
     final slots = ref.watch(compareProvider);
     final pairs = ref.watch(comparisonProvider);
     final weights = ref.watch(weightsProvider);
-    final glass = context.tp.isGlass;
 
     Smartphone? find(String? slug) {
       final devices = catalog.value?.smartphones;
@@ -81,24 +80,6 @@ class CompareScreen extends ConsumerWidget {
     return TpPage(
       title: K.compareTitle.tr(),
       tab: TpTab.compare,
-      floating: pairs.isEmpty
-          ? null
-          : glass
-          ? TpPill(
-              label: K.askWhy.tr(),
-              icon: CupertinoIcons.sparkles,
-              expand: false,
-              onTap: onAskWhy,
-            )
-          : FloatingActionButton.extended(
-              // 탭마다 FAB 가 살아 있어서 기본 hero 태그가 겹친다.
-              heroTag: null,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              onPressed: onAskWhy,
-              icon: const Icon(Icons.auto_awesome),
-              label: Text(K.askWhy.tr()),
-            ),
       slivers: <Widget>[
         SliverToBoxAdapter(
           child: Padding(

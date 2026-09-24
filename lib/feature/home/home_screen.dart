@@ -83,24 +83,12 @@ class HomeScreen extends ConsumerWidget {
         ref.invalidate(catalogProvider);
         await ref.read(catalogProvider.future);
       },
-      // Android 는 질문을 확장 FAB 가 맡는다.
-      floating: glass || onAskWhy == null || verdict == null
-          ? null
-          : FloatingActionButton.extended(
-              heroTag: null,
-              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-              foregroundColor: Theme.of(
-                context,
-              ).colorScheme.onSecondaryContainer,
-              onPressed: onAskWhy,
-              icon: const Icon(Icons.auto_awesome),
-              label: Text(K.askWhy.tr()),
-            ),
       actions: <TpBarAction>[
-        if (onAsk != null && glass)
+        if (onAsk != null)
           TpBarAction(
             label: K.askTitle.tr(),
             icon: glass ? CupertinoIcons.sparkles : Icons.auto_awesome,
+            symbol: 'sparkles',
             onTap: onAsk,
           ),
         if (onYou != null)
@@ -109,6 +97,7 @@ class HomeScreen extends ConsumerWidget {
             icon: glass
                 ? CupertinoIcons.person_crop_circle
                 : Icons.account_circle_outlined,
+            symbol: 'person.crop.circle',
             onTap: onYou,
           ),
       ],
@@ -353,6 +342,8 @@ class _VerdictCard extends ConsumerWidget {
                   const SizedBox(height: 14),
                   TpScoreStrip(axes: TpIndex.axes(device.score)),
                   const SizedBox(height: 8),
+                  // 질문은 툴바의 반짝이 버튼이 맡는다. 여기에는 비교와(Android 는)
+                  // 가중치만.
                   Row(
                     children: <Widget>[
                       Expanded(
@@ -362,25 +353,18 @@ class _VerdictCard extends ConsumerWidget {
                           onTap: onCompareAll,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      // Android 는 질문이 FAB 로 빠지고 그 자리에 가중치.
-                      Expanded(
-                        child: glass
-                            ? TpPill(
-                                label: K.askWhy.tr(),
-                                kind: TpPillKind.tinted,
-                                height: 44,
-                                icon: CupertinoIcons.sparkles,
-                                onTap: onAskWhy,
-                              )
-                            : TpPill(
-                                label: K.weights.tr(),
-                                kind: TpPillKind.tinted,
-                                height: 44,
-                                icon: Icons.tune,
-                                onTap: onWeights,
-                              ),
-                      ),
+                      if (!glass) ...<Widget>[
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TpPill(
+                            label: K.weights.tr(),
+                            kind: TpPillKind.tinted,
+                            height: 44,
+                            icon: Icons.tune,
+                            onTap: onWeights,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -595,15 +579,6 @@ class _ShortlistRow extends ConsumerWidget {
                 onCompare!();
               },
               child: Text(K.compareButton.tr()),
-            ),
-          if (onAskWhy != null)
-            CupertinoContextMenuAction(
-              trailingIcon: CupertinoIcons.sparkles,
-              onPressed: () {
-                Navigator.of(context, rootNavigator: true).pop();
-                onAskWhy!();
-              },
-              child: Text(K.askWhy.tr()),
             ),
           CupertinoContextMenuAction(
             isDestructiveAction: true,
