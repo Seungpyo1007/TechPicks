@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -114,8 +116,11 @@ class TpPage extends StatelessWidget {
     final sys = context.sys;
     final safe = MediaQuery.viewPaddingOf(context);
     // 떠 있는 버튼이 있으면 마지막 행이 그 뒤로 숨지 않게 더 비운다.
+    // 키보드가 올라와 있으면(네이티브 검색창) 마지막 행을 그 위까지 올릴 수
+    // 있어야 한다.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     final bottom =
-        safe.bottom +
+        math.max(safe.bottom, keyboard) +
         (tab != null ? TpTabBar.coverOf(context) : 0) +
         (floating != null ? 80 : 24);
     final glass = context.tp.isGlass;

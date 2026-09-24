@@ -7,7 +7,9 @@ import UIKit
 /// - applying tab appearance and layout options from `LiquidGlassTabBarConfig`
 /// - embedding the controller's view into this host view
 /// - forwarding selection changes back to Flutter
-final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDelegate {
+final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDelegate,
+  UISearchBarDelegate
+{
   private static let actionButtonTag = 9999
   private static let tabIdentifierPrefix = "liquid-glass-tab-"
 
@@ -15,6 +17,13 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
   let tabBarController = UITabBarController()
   private let onTabSelected: (Int) -> Void
   private let onActionButtonPressed: () -> Void
+  /// TechPicks 패치: 검색 탭이 켜지고 꺼질 때, 글자가 바뀔 때.
+  var onSearchActive: (Bool) -> Void = { _ in }
+  var onSearchChanged: (String) -> Void = { _ in }
+  var onSearchSubmitted: (String) -> Void = { _ in }
+  private var searchController: UISearchController?
+  /// 검색 탭을 켜기 전에 고르고 있던 칸. 검색을 끄면 여기로 돌아간다.
+  private var lastSelectableIndex = 0
   private let selectedItemColor: UIColor?
   private let selectableTabCount: Int
   private let tabSelectedColors: [UIColor?]
@@ -291,11 +300,15 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
     from actionButton: LiquidGlassTabBarConfig.TabItem,
     config: LiquidGlassTabBarConfig
   ) -> UITab {
-    let searchTab = UISearchTab { _ in
-      Self.makeTabContentController()
+    let nativeSearch = config.nativeSearch
+    let placeholder = config.searchPlaceholder
+    let searchTab = UISearchTab { [weak self] _ in
+      guard nativeSearch, let self else { return Self.makeTabContentController() }
+      return self.makeSearchContent(placeholder: placeholder)
     }
 
-    searchTab.automaticallyActivatesSearch = false
+    // 네이티브 검색이면 누르자마자 검색창이 펼쳐지고 키보드가 올라온다.
+    searchTab.automaticallyActivatesSearch = nativeSearch
     searchTab.title = config.showLabels ? actionButton.label : ""
     if let image = actionButton.image(forSelectedState: false, iconSize: config.iconSize) {
       searchTab.image = image
@@ -309,6 +322,68 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
     }
     searchTab.badgeValue = actionButton.badgeValue
     return searchTab
+  }
+
+  /// 검색 탭의 내용. 투명한 화면에 검색 컨트롤러만 붙인다 — 결과는 Flutter 가
+  /// 그 뒤에 그린다.
+  private func makeSearchContent(placeholder: String?) -> UIViewController {
+    let root = UIViewController()
+    root.view.backgroundColor = .clear
+    let search = UISearchController(searchResultsController: nil)
+    search.searchBar.placeholder = placeholder
+    search.searchBar.delegate = self
+    search.obscuresBackgroundDuringPresentation = false
+    search.hidesNavigationBarDuringPresentation = false
+    root.navigationItem.searchController = search
+    root.navigationItem.hidesSearchBarWhenScrolling = false
+    searchController = search
+
+    let nav = UINavigationController(rootViewController: root)
+    nav.view.backgroundColor = .clear
+    let appearance = UINavigationBarAppearance()
+    appearance.configureWithTransparentBackground()
+    nav.navigationBar.standardAppearance = appearance
+    nav.navigationBar.scrollEdgeAppearance = appearance
+    nav.navigationBar.compactAppearance = appearance
+    return nav
+  }
+
+  private var isSearchSelected: Bool {
+    if #available(iOS 26.0, *), usesTabsAPI, let actionTabIdentifier {
+      return tabBarController.selectedTab?.identifier == actionTabIdentifier
+    }
+    return false
+  }
+
+  /// Flutter 가 검색을 켜고 끈다(다른 화면에서 검색으로 왔을 때 등).
+  func setSearchActive(_ active: Bool) {
+    guard #available(iOS 26.0, *), usesTabsAPI, config.nativeSearch,
+      let actionTabIdentifier
+    else { return }
+    if active {
+      guard !isSearchSelected,
+        let tab = tabBarController.tab(forIdentifier: actionTabIdentifier)
+      else { return }
+      tabBarController.selectedTab = tab
+    } else if isSearchSelected {
+      selectTab(at: lastSelectableIndex)
+    }
+  }
+
+  /// 키보드를 내린다. 결과 목록을 스크롤할 때.
+  func dismissSearchKeyboard() {
+    searchController?.searchBar.resignFirstResponder()
+  }
+
+  // MARK: - UISearchBarDelegate
+
+  func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+    onSearchChanged(searchText)
+  }
+
+  func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+    onSearchSubmitted(searchBar.text ?? "")
+    searchBar.resignFirstResponder()
   }
 
   private static func makeTabContentController() -> UIViewController {
@@ -655,7 +730,10 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
     }
 
     let clampedIndex = min(max(0, index), selectableTabCount - 1)
-    guard currentSelectedIndex != clampedIndex else {
+    lastSelectableIndex = clampedIndex
+    // 검색 탭이 켜져 있으면 currentSelectedIndex 가 0 으로 읽힌다. 그대로 두면
+    // 0 번 칸으로 돌아가라는 요청을 무시한다.
+    guard currentSelectedIndex != clampedIndex || isSearchSelected else {
       return
     }
 
@@ -752,6 +830,11 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
     _ tabBarController: UITabBarController, shouldSelectTab tab: UITab
   ) -> Bool {
     if tab.identifier == actionTabIdentifier {
+      // 네이티브 검색: 진짜로 고르게 둔다. 그래야 UIKit 이 바를 검색창으로 바꾼다.
+      if config.nativeSearch {
+        selectionIsUserInitiated = true
+        return true
+      }
       onActionButtonPressed()
       return false
     }
@@ -764,9 +847,18 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
   func tabBarController(
     _ tabBarController: UITabBarController, didSelectTab selectedTab: UITab, previousTab: UITab?
   ) {
+    if selectedTab.identifier == actionTabIdentifier {
+      if selectionIsUserInitiated {
+        selectionIsUserInitiated = false
+        onSearchActive(true)
+      }
+      return
+    }
+
     guard let index = tabIdentifiers.firstIndex(of: selectedTab.identifier) else {
       return
     }
+    lastSelectableIndex = index
 
     applyTintColorForSelectedIndex(index, tabBar: tabBarController.tabBar)
 
@@ -774,6 +866,10 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
       return
     }
     selectionIsUserInitiated = false
+    // 접힌 원을 눌러 검색에서 돌아온 것.
+    if previousTab?.identifier == actionTabIdentifier {
+      onSearchActive(false)
+    }
     onTabSelected(index)
   }
 
@@ -897,6 +993,15 @@ final class LiquidGlassTabBarPlatformView: NSObject, FlutterPlatformView {
         self?.channel.invokeMethod("onActionButtonPressed", arguments: nil)
       }
     )
+    nativeView.onSearchActive = { [weak self] active in
+      self?.channel.invokeMethod("onSearchActive", arguments: active)
+    }
+    nativeView.onSearchChanged = { [weak self] text in
+      self?.channel.invokeMethod("onSearchChanged", arguments: text)
+    }
+    nativeView.onSearchSubmitted = { [weak self] text in
+      self?.channel.invokeMethod("onSearchSubmitted", arguments: text)
+    }
     nativeView.translatesAutoresizingMaskIntoConstraints = false
     nativeView.attach(to: hostViewController)
 
@@ -942,6 +1047,15 @@ final class LiquidGlassTabBarPlatformView: NSObject, FlutterPlatformView {
       }
 
       nativeTabBarControllerView?.setSelectedIndex(index)
+      result(nil)
+
+    case "setSearchActive":
+      let active = (call.arguments as? [String: Any])?["active"] as? Bool ?? false
+      nativeTabBarControllerView?.setSearchActive(active)
+      result(nil)
+
+    case "dismissSearchKeyboard":
+      nativeTabBarControllerView?.dismissSearchKeyboard()
       result(nil)
 
     case "updateBadges":
