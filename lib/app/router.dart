@@ -272,18 +272,13 @@ GoRouter buildRouter(Ref ref) {
       ),
 
       // 시트. iOS 는 뒤 화면이 줄어들며 위에 남는 큰 시트다.
+      // 질문도 내 정보처럼 옆에서 밀려 들어오는 화면이다.
       GoRoute(
         path: TpRoute.ask,
-        pageBuilder: (context, state) => _sheet(
-          context,
-          state,
-          AskScreen(
-            onDeviceTap: (s) {
-              context.pop();
-              context.push('/device/$s');
-            },
-            onClose: () => context.pop(),
-          ),
+        builder: (context, state) => AskScreen(
+          onDeviceTap: (s) => context.push('/device/$s'),
+          onBack: () =>
+              context.canPop() ? context.pop() : context.go(TpRoute.home),
         ),
       ),
       // 내 정보는 시트가 아니라 옆에서 밀려 들어오는 화면이다.

@@ -23,12 +23,15 @@ import '../../shared/widgets/tp_shimmer.dart';
 /// v1 의 ChatAI 는 모델 답을 문단 그대로 뿌렸다. 명세는 고른 기기 하나,
 /// 한 줄 근거, 4줄 표로 나눠 받으라고 못박았고 마크다운 렌더링을 금지한다.
 class AskScreen extends ConsumerStatefulWidget {
-  const AskScreen({super.key, this.onDeviceTap, this.onClose});
+  const AskScreen({super.key, this.onDeviceTap, this.onClose, this.onBack});
 
   final ValueChanged<String>? onDeviceTap;
 
   /// 시트 닫기.
   final VoidCallback? onClose;
+
+  /// 밀려 들어온 화면에서 뒤로.
+  final VoidCallback? onBack;
 
   /// 기다리는 동안 답 자리에 놓이는 뼈대.
   @visibleForTesting
@@ -131,7 +134,7 @@ class _AskScreenState extends ConsumerState<AskScreen>
         type: MaterialType.transparency,
         child: Column(
           children: <Widget>[
-            _Header(onClose: widget.onClose),
+            _Header(onClose: widget.onClose, onBack: widget.onBack),
             Expanded(
               child: Stack(
                 children: <Widget>[
@@ -216,9 +219,10 @@ const Key askComposerKey = ValueKey<String>('ask-composer');
 
 /// 시트 머리. 가운데 제목, 오른쪽 닫기.
 class _Header extends StatelessWidget {
-  const _Header({this.onClose});
+  const _Header({this.onClose, this.onBack});
 
   final VoidCallback? onClose;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -236,6 +240,13 @@ class _Header extends StatelessWidget {
     if (!context.tp.isGlass) {
       return AppBar(
         automaticallyImplyLeading: false,
+        leading: onBack == null
+            ? null
+            : IconButton(
+                onPressed: onBack,
+                tooltip: K.back.tr(),
+                icon: const Icon(Icons.arrow_back),
+              ),
         title: title,
         actions: <Widget>[
           if (onClose != null)
@@ -258,6 +269,16 @@ class _Header extends StatelessWidget {
       child: SizedBox(
         height: 44,
         child: NavigationToolbar(
+          leading: onBack == null
+              ? null
+              : TpBarButton(
+                  action: TpBarAction(
+                    label: K.back.tr(),
+                    icon: CupertinoIcons.chevron_back,
+                    symbol: 'chevron.backward',
+                    onTap: onBack,
+                  ),
+                ),
           middle: title,
           trailing: onClose == null
               ? null
@@ -265,6 +286,7 @@ class _Header extends StatelessWidget {
                   action: TpBarAction(
                     label: K.close.tr(),
                     icon: CupertinoIcons.xmark,
+                    symbol: 'xmark',
                     onTap: onClose,
                   ),
                 ),
