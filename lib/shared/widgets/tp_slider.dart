@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../app/theme/tp_tokens.dart';
+import '../tp_haptics.dart';
 
 /// 모양과 눈금 햅틱을 통일한 Material 슬라이더.
 class TpSlider extends StatefulWidget {
@@ -74,7 +74,7 @@ class _TpSliderState extends State<TpSlider> {
           if (divisions != null && divisions > 0) {
             final division = _divisionFor(value)!;
             if (_lastDivision != null && division != _lastDivision) {
-              HapticFeedback.selectionClick();
+              TpHaptics.selection();
             }
             _lastDivision = division;
           }

@@ -3,7 +3,6 @@ import 'dart:async' show unawaited;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
@@ -26,6 +25,7 @@ import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_score_strip.dart';
 import '../share/share_text.dart';
+import '../../shared/tp_haptics.dart';
 
 /// 오늘. 관심 목록과 그 결론.
 class HomeScreen extends ConsumerWidget {
@@ -496,7 +496,7 @@ class _ShortlistRow extends ConsumerWidget {
       direction: DismissDirection.endToStart,
       onDismissed: (_) => onRemove?.call(),
       onUpdate: (d) {
-        if (d.reached && !d.previousReached) HapticFeedback.lightImpact();
+        if (d.reached && !d.previousReached) TpHaptics.impact();
       },
       background: ColoredBox(
         color: sys.destructive,
