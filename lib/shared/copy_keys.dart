@@ -73,6 +73,7 @@ abstract final class K {
   static const String compareTitle = 'cmpTitle';
   static const String choose = 'choose';
   static const String cancel = 'cancel';
+  static const String close = 'close';
   static const String back = 'back';
   static const String chooseTwo = 'chooseTwo';
   static const String searchHint = 'searchHint';

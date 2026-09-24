@@ -904,8 +904,23 @@ class AskNotifier extends Notifier<List<AskMessage>> {
   ///
   /// 질문만 올려두면 답 없는 말풍선이 남는다. [send] 를 그대로 태워서
   /// 사용자가 직접 친 것과 같은 흐름으로 만든다.
-  Future<void> askAbout(String a, String b) => send('$a or $b?');
+  Future<void> askAbout(String a, String b) {
+    ref.read(askTopicProvider.notifier).set('$a vs $b');
+    return send('$a or $b?');
+  }
 }
+
+/// 질문 시트 위의 맥락 알약. 비교에서 넘어오면 두 기기, 오늘 툴바에서 열면 없다.
+class AskTopicNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void set(String? value) => state = value;
+}
+
+final askTopicProvider = NotifierProvider<AskTopicNotifier, String?>(
+  AskTopicNotifier.new,
+);
 
 final askProvider = NotifierProvider<AskNotifier, List<AskMessage>>(
   AskNotifier.new,
