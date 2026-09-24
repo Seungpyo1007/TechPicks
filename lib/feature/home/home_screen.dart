@@ -27,6 +27,9 @@ import '../../shared/widgets/tp_score_strip.dart';
 import '../share/share_text.dart';
 import '../../shared/tp_haptics.dart';
 import '../../shared/widgets/tp_number.dart';
+import '../../shared/figures/tp_figure.dart';
+import '../../shared/figures/tp_figures.dart';
+import '../../shared/widgets/tp_shimmer.dart';
 
 /// 오늘. 관심 목록과 그 결론.
 class HomeScreen extends ConsumerWidget {
@@ -433,6 +436,8 @@ class _EmptyShortlist extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            const TpFigure(height: 84, paint: TpFigures.shortlist),
+            const SizedBox(height: 14),
             Text(
               K.emptyShortlist.tr(),
               style: TextStyle(
@@ -666,20 +671,22 @@ class _HomeSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Column(
-      children: <Widget>[
-        for (final height in <double>[260, 60, 60, 60])
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Container(
-              height: height,
-              decoration: BoxDecoration(
-                color: context.sys.fill3,
-                borderRadius: BorderRadius.circular(TpGroup.radius),
+    child: TpShimmer(
+      child: Column(
+        children: <Widget>[
+          for (final height in <double>[260, 60, 60, 60])
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Container(
+                height: height,
+                decoration: BoxDecoration(
+                  color: context.sys.fill3,
+                  borderRadius: BorderRadius.circular(TpGroup.radius),
+                ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     ),
   );
 }

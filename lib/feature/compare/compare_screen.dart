@@ -21,6 +21,8 @@ import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_number.dart';
+import '../../shared/widgets/tp_pop_in.dart';
+import '../../shared/widgets/tp_shimmer.dart';
 
 double _lines(BuildContext context, TextStyle style, int lines) =>
     MediaQuery.textScalerOf(context).scale(style.fontSize!) *
@@ -180,16 +182,18 @@ class _ColumnHead extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: sys.tint,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    glass ? CupertinoIcons.add : Icons.add,
-                    color: sys.accentText,
+                TpPopIn(
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: sys.tint,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      glass ? CupertinoIcons.add : Icons.add,
+                      color: sys.accentText,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -501,20 +505,22 @@ class _TableSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
-    return Column(
-      children: <Widget>[
-        for (var i = 0; i < 6; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Container(
-              height: 64,
-              decoration: BoxDecoration(
-                color: t.track,
-                borderRadius: BorderRadius.circular(t.rInner),
+    return TpShimmer(
+      child: Column(
+        children: <Widget>[
+          for (var i = 0; i < 6; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Container(
+                height: 64,
+                decoration: BoxDecoration(
+                  color: t.track,
+                  borderRadius: BorderRadius.circular(t.rInner),
+                ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }

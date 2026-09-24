@@ -6,6 +6,8 @@ import '../../app/providers.dart';
 import '../../app/theme/tp_typography.dart';
 import '../copy_keys.dart';
 import 'tp_button.dart';
+import '../figures/tp_figure.dart';
+import '../figures/tp_figures.dart';
 
 /// 못 읽었다고 말하고, 다시 시도할 자리를 준다.
 ///
@@ -33,6 +35,8 @@ class TpErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
+            const TpFigure(height: 40, paint: TpFigures.offline),
+            const SizedBox(height: 12),
             Text(title, style: type.cardTitle, textAlign: TextAlign.center),
             const SizedBox(height: 6),
             Text(body, style: type.caption, textAlign: TextAlign.center),
