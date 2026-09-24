@@ -261,6 +261,8 @@
   "laptopStatus": "{} · {} · {}종",
   "clear": "지우기",
   "recent": "최근",
+  "searchTry": "이렇게 찾아보세요",
+  "searchTryMore": "{} 외 {}개",
   "rankStatus": "{}순 · {} · {}종",
   "buildRowSub": "예산에 맞는 CPU와 GPU 조합",
   "weights": "가중치",

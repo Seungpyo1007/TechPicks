@@ -36,6 +36,8 @@ abstract final class K {
   static const String removeShort = 'removeShort';
   static const String browseByKind = 'browseByKind';
   static const String recent = 'recent';
+  static const String searchTry = 'searchTry';
+  static const String searchTryMore = 'searchTryMore';
   static const String done = 'done';
   static const String buildUse = 'buildUse';
 
