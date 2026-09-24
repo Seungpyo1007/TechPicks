@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:motor/motor.dart';
 
+import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
+import 'tp_number.dart';
 import 'tp_pressable.dart';
 
 /// iOS inset grouped 목록의 한 묶음. 위 레이블, 칸들, 아래 설명.
@@ -236,6 +239,7 @@ class TpRow extends StatefulWidget {
     this.semanticsLabel,
     this.titleStyle,
     this.valueStyle,
+    this.numeric = false,
     this.below,
     this.toggled,
   });
@@ -262,6 +266,9 @@ class TpRow extends StatefulWidget {
   final String? semanticsLabel;
   final TextStyle? titleStyle;
   final TextStyle? valueStyle;
+
+  /// 값이 숫자라 바뀔 때 자리마다 굴러간다([TpNumber]).
+  final bool numeric;
 
   /// 제목 줄 아래에 붙는 것(순위 행의 트랙).
   final Widget? below;
@@ -338,17 +345,26 @@ class _TpRowState extends State<TpRow> {
             // 값은 오른쪽 끝에 붙고, 길면 행의 60% 까지만 쓰고 줄바꿈한다.
             ConstrainedBox(
               constraints: BoxConstraints(maxWidth: maxValue),
-              child: Text(
-                w.value!,
-                textAlign: TextAlign.end,
-                style: TextStyle(
-                  fontSize: 17,
-                  color: sys.label2,
-                  fontFeatures: const <FontFeature>[
-                    FontFeature.tabularFigures(),
-                  ],
-                ).merge(w.valueStyle),
-              ),
+              child: w.numeric
+                  ? TpNumber(
+                      w.value!,
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: sys.label2,
+                      ).merge(w.valueStyle),
+                    )
+                  : Text(
+                      w.value!,
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: sys.label2,
+                        fontFeatures: const <FontFeature>[
+                          FontFeature.tabularFigures(),
+                        ],
+                      ).merge(w.valueStyle),
+                    ),
             ),
           ],
           if (w.trailing != null) ...<Widget>[
@@ -471,13 +487,18 @@ class TpTrack extends StatelessWidget {
         children: <Widget>[
           Positioned.fill(child: ColoredBox(color: context.sys.fill)),
           Positioned.fill(
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: FractionallySizedBox(
-                widthFactor: value.clamp(0.0, 1.0),
-                heightFactor: 1,
-                child: const ColoredBox(color: TpSys.accent),
+            child: SingleMotionBuilder(
+              value: value.clamp(0.0, 1.0),
+              motion: context.motion.smooth,
+              builder: (context, v, child) => Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FractionallySizedBox(
+                  widthFactor: v.clamp(0.0, 1.0),
+                  heightFactor: 1,
+                  child: child,
+                ),
               ),
+              child: const ColoredBox(color: TpSys.accent),
             ),
           ),
         ],

@@ -28,6 +28,7 @@ import '../../shared/widgets/tp_pressable.dart';
 import '../../shared/widgets/tp_sheet.dart';
 import '../../shared/widgets/tp_slider.dart';
 import '../../shared/widgets/tp_switch.dart';
+import '../../shared/widgets/tp_number.dart';
 
 /// 내 정보.
 class YouScreen extends ConsumerStatefulWidget {
@@ -358,6 +359,7 @@ class _YourDevice extends ConsumerWidget {
         color: const Color(0xFF8E8E93),
       ),
       value: index?.toString(),
+      numeric: true,
       valueStyle: const TextStyle(fontWeight: FontWeight.w600),
       onTap: match == null || onTap == null
           ? null
@@ -560,12 +562,10 @@ class _WeightSlider extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Text(
+                TpNumber(
                   // 0.25 -> 25%. 합이 1 이 아니어도 되니 비율이 아니라 비중이다.
                   '${(value * 100).round()}',
                   maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
                   style: type.body.copyWith(fontWeight: t.boldWeight),
                 ),
               ],

@@ -26,6 +26,48 @@ class TpMove {
   String toString() => 'TpMove(${duration.inMilliseconds}ms, $curve)';
 }
 
+/// 바로 끝값으로 가는 모션. 동작 줄이기용.
+///
+/// motor 의 `NoMotion` 은 **시작값**에 머문다. 그걸 쓰면 값이 아예 안 바뀐다.
+@immutable
+class TpInstantMotion extends Motion {
+  const TpInstantMotion();
+
+  @override
+  Simulation createSimulation({
+    double start = 0,
+    double end = 1,
+    double velocity = 0,
+  }) => _Instant(end);
+
+  @override
+  bool get needsSettle => false;
+
+  @override
+  bool get unboundedWillSettle => true;
+
+  @override
+  bool operator ==(Object other) => other is TpInstantMotion;
+
+  @override
+  int get hashCode => (TpInstantMotion).hashCode;
+}
+
+class _Instant extends Simulation {
+  _Instant(this.end);
+
+  final double end;
+
+  @override
+  double x(double time) => end;
+
+  @override
+  double dx(double time) => 0;
+
+  @override
+  bool isDone(double time) => true;
+}
+
 /// 앱의 모션 토큰.
 ///
 /// 색·반지름과 같은 취급이다. 화면은 숫자를 안 들고 역할 이름만 부른다 —
@@ -139,9 +181,9 @@ class TpMotion extends ThemeExtension<TpMotion> {
     valueChange: valueChange.instant,
     contentSwap: contentSwap.instant,
     listItem: listItem.instant,
-    snappy: const NoMotion(),
-    bouncy: const NoMotion(),
-    smooth: const NoMotion(),
+    snappy: const TpInstantMotion(),
+    bouncy: const TpInstantMotion(),
+    smooth: const TpInstantMotion(),
     loops: false,
   );
 

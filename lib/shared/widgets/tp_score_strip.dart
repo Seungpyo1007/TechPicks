@@ -7,6 +7,7 @@ import '../../app/theme/tp_typography.dart';
 import '../../domain/model/tp_index.dart';
 import '../copy_keys.dart';
 import '../spec_labels.dart';
+import 'tp_number.dart';
 
 /// 점수 5개 축을 각자 트랙 위에 그린다.
 ///
@@ -57,10 +58,9 @@ class TpScoreStrip extends StatelessWidget {
                           softWrap: false,
                         ),
                       ),
-                      Text(
+                      TpNumber(
                         axis.hasData ? axis.score!.round().toString() : '—',
                         maxLines: 1,
-                        softWrap: false,
                         style: type.secondary.copyWith(
                           color: axis.hasData ? t.ink : t.dim,
                           fontWeight: t.boldWeight,
