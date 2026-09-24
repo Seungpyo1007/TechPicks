@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/app/theme/tp_motion.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
+import 'package:motor/motor.dart';
 
 import '../support/harness.dart';
 
@@ -151,6 +152,44 @@ void main() {
         disableAnimations: true,
       );
       expect(m.reorder.curve, const Cubic(.2, .8, .2, 1));
+    });
+  });
+
+  group('스프링', () {
+    test('iOS 는 SwiftUI 프리셋과 같다', () {
+      final m = motionOf(TpChrome.ios);
+      expect(m.bouncy, const CupertinoMotion.bouncy());
+      expect(m.smooth, const CupertinoMotion.smooth());
+      expect((m.snappy as CupertinoMotion).bounce, closeTo(.15, 1e-9));
+    });
+
+    test('Android 는 M3 Expressive 토큰', () {
+      final m = motionOf(TpChrome.android);
+      expect(m.snappy, const MaterialSpringMotion.standardSpatialFast());
+      expect(m.bouncy, const MaterialSpringMotion.expressiveSpatialFast());
+      expect(m.smooth, const MaterialSpringMotion.standardSpatialDefault());
+    });
+
+    for (final chrome in TpChrome.values) {
+      testWidgets('$chrome — 동작 줄이기면 스프링이 없고 반복도 멈춘다', (tester) async {
+        TpMotion.loopsAllowed = true;
+        addTearDown(() => TpMotion.loopsAllowed = false);
+        final m = await readMotion(
+          tester,
+          chrome: chrome,
+          disableAnimations: true,
+        );
+        for (final spring in <Motion>[m.snappy, m.bouncy, m.smooth]) {
+          expect(spring, isA<NoMotion>());
+        }
+        expect(m.loops, isFalse);
+        expect((await readMotion(tester, chrome: chrome)).loops, isTrue);
+      });
+    }
+
+    test('테스트에서는 반복이 꺼져 있다', () {
+      // test/flutter_test_config.dart. 켜져 있으면 pumpAndSettle 이 안 끝난다.
+      expect(motionOf(TpChrome.ios).loops, isFalse);
     });
   });
 
