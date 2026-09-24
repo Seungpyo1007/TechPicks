@@ -3,7 +3,6 @@ import 'dart:async' show unawaited;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
@@ -26,6 +25,7 @@ import '../../shared/widgets/tp_link_line.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_score_strip.dart';
 import '../share/share_text.dart';
+import '../../shared/tp_haptics.dart';
 
 /// 기기 상세. 이름이 large title 이고, 스크롤하면 바의 작은 제목이 된다.
 class DetailScreen extends ConsumerWidget {
@@ -190,7 +190,7 @@ class _DetailBody extends ConsumerWidget {
                     ? (glass ? CupertinoIcons.check_mark : Icons.check)
                     : (glass ? CupertinoIcons.add : Icons.add),
                 onTap: () {
-                  HapticFeedback.mediumImpact();
+                  TpHaptics.commit();
                   ref.read(shortlistProvider.notifier).toggle(device.slug);
                 },
               ),

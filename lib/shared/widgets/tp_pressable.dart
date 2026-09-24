@@ -5,22 +5,10 @@ import '../../app/theme/tp_tokens.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../app/theme/tp_motion.dart';
+import '../tp_haptics.dart';
 import 'tp_press.dart';
 
-/// 눌림에 붙는 촉각 신호.
-enum TpHaptic {
-  /// 없음. 목록 안에서 수십 번 울릴 자리에 쓴다.
-  none,
-
-  /// 고르는 것 — 칩, 탭, 설정 줄.
-  selection,
-
-  /// 무언가 일어나는 것 — 버튼.
-  impact,
-
-  /// 결과가 남는 것 — 관심 목록에 담기.
-  commit,
-}
+export '../tp_haptics.dart' show TpHaptic;
 
 /// 손가락이 닿은 순간부터 뗄 때까지를 0–1 하나로 내주는 위젯.
 ///
@@ -195,16 +183,7 @@ class _TpPressableState extends State<TpPressable>
   }
 
   void _tapped() {
-    switch (widget.haptic) {
-      case TpHaptic.none:
-        break;
-      case TpHaptic.selection:
-        HapticFeedback.selectionClick();
-      case TpHaptic.impact:
-        HapticFeedback.lightImpact();
-      case TpHaptic.commit:
-        HapticFeedback.mediumImpact();
-    }
+    TpHaptics.play(widget.haptic);
     widget.onTap?.call();
   }
 
