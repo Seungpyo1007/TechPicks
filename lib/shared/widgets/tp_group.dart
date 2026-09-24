@@ -5,6 +5,7 @@ import 'package:motor/motor.dart';
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
+import 'tp_arrive.dart';
 import 'tp_number.dart';
 import 'tp_pressable.dart';
 
@@ -42,8 +43,12 @@ class TpGroup extends StatelessWidget {
     final sys = context.sys;
     final glass = context.tp.isGlass;
     final rows = <Widget>[
+      // 화면이 나타날 때 행이 차례로 들어온다(TpArrive).
       for (var i = 0; i < children.length; i++)
-        _Separated(last: i == children.length - 1, child: children[i]),
+        TpArrive(
+          index: i,
+          child: _Separated(last: i == children.length - 1, child: children[i]),
+        ),
     ];
     final head = header == null
         ? null
@@ -168,9 +173,15 @@ class TpGroupSliver extends StatelessWidget {
             ),
             sliver: SliverList.builder(
               itemCount: count,
-              itemBuilder: (context, i) => glass
-                  ? _Separated(last: i == count - 1, child: builder(context, i))
-                  : builder(context, i),
+              itemBuilder: (context, i) => TpArrive(
+                index: i,
+                child: glass
+                    ? _Separated(
+                        last: i == count - 1,
+                        child: builder(context, i),
+                      )
+                    : builder(context, i),
+              ),
             ),
           ),
         ),
@@ -487,7 +498,10 @@ class TpTrack extends StatelessWidget {
         children: <Widget>[
           Positioned.fill(child: ColoredBox(color: context.sys.fill)),
           Positioned.fill(
+            // 화면이 나타나면 0 에서부터 찬다. 등장 신호가 바뀔 때마다 새로.
             child: SingleMotionBuilder(
+              key: ValueKey<DateTime?>(TpArriveScope.of(context)),
+              from: TpArriveScope.freshOf(context) == null ? null : 0,
               value: value.clamp(0.0, 1.0),
               motion: context.motion.smooth,
               builder: (context, v, child) => Align(

@@ -7,12 +7,12 @@ import '../../app/providers.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
-import '../../app/theme/tp_motion.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/ranking.dart';
 import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_error_state.dart';
+import '../../shared/widgets/tp_arrive.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_menu.dart';
 import '../../shared/widgets/tp_page.dart';
@@ -35,15 +35,11 @@ class RankScreen extends ConsumerStatefulWidget {
 }
 
 class _RankScreenState extends ConsumerState<RankScreen> {
-  /// 정렬이나 브랜드가 바뀐 횟수와 시각. 이때 새로 지어진 위쪽 행만 들어온다 —
-  /// 스크롤로 다시 지어지는 행은 가만히 있어야 한다.
-  int _generation = 0;
+  /// 정렬이나 브랜드가 바뀐 시각. 이때 지어져 있던 위쪽 행만 들어온다 —
+  /// 스크롤로 나중에 지어지는 행은 가만히 있어야 한다.
   DateTime? _changedAt;
 
-  void _changed() => setState(() {
-    _generation++;
-    _changedAt = DateTime.now();
-  });
+  void _changed() => setState(() => _changedAt = DateTime.now());
 
   @override
   Widget build(BuildContext context) {
@@ -83,15 +79,14 @@ class _RankScreenState extends ConsumerState<RankScreen> {
         ),
       );
     } else {
-      final changedAt = _changedAt;
-      list = TpGroupSliver(
-        key: ValueKey<int>(_generation),
-        count: ranked.length,
-        footer: K.rankNote.tr(),
-        builder: (context, i) => _Arrive(
-          index: i,
-          changedAt: changedAt,
-          child: _RankRow(
+      // 정렬·브랜드를 바꾸면 등장 신호를 새로 찍는다. 행은 TpGroupSliver 가
+      // 차례로 들여보낸다.
+      list = TpArriveScope(
+        at: TpArriveScope.latest(TpArriveScope.of(context), _changedAt),
+        child: TpGroupSliver(
+          count: ranked.length,
+          footer: K.rankNote.tr(),
+          builder: (context, i) => _RankRow(
             entry: ranked[i],
             axis: axis,
             money: money,
@@ -314,83 +309,4 @@ String formatAxisValue(
   if (value == null) return TpMoney.empty;
   if (axis == RankAxis.price) return money.format(value.round());
   return value.round().toString();
-}
-
-/// 재정렬 직후에 지어진 위쪽 행이 차례로 들어온다. `motion.reorder`(220ms).
-class _Arrive extends StatefulWidget {
-  const _Arrive({
-    required this.index,
-    required this.changedAt,
-    required this.child,
-  });
-
-  final int index;
-  final DateTime? changedAt;
-  final Widget child;
-
-  /// 이만큼만 움직인다. 화면 밖 행까지 기다리게 하면 느려 보인다.
-  static const int rows = 12;
-
-  /// 행 사이 간격.
-  static const Duration step = Duration(milliseconds: 18);
-
-  @override
-  State<_Arrive> createState() => _ArriveState();
-}
-
-class _ArriveState extends State<_Arrive> with SingleTickerProviderStateMixin {
-  AnimationController? _c;
-  CurvedAnimation? _t;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_c != null) return;
-    final at = widget.changedAt;
-    final move = context.motion.reorder;
-    final fresh =
-        at != null &&
-        DateTime.now().difference(at) < const Duration(milliseconds: 300);
-    if (!fresh ||
-        widget.index >= _Arrive.rows ||
-        move.duration == Duration.zero) {
-      return;
-    }
-    final delay = _Arrive.step * widget.index;
-    final total = move.duration + delay;
-    final c = AnimationController(vsync: this, duration: total);
-    _c = c;
-    _t = CurvedAnimation(
-      parent: c,
-      curve: Interval(
-        delay.inMicroseconds / total.inMicroseconds,
-        1,
-        curve: move.curve,
-      ),
-    );
-    c.forward();
-  }
-
-  @override
-  void dispose() {
-    _t?.dispose();
-    _c?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = _t;
-    if (t == null) return widget.child;
-    return FadeTransition(
-      opacity: t,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.25),
-          end: Offset.zero,
-        ).animate(t),
-        child: widget.child,
-      ),
-    );
-  }
 }

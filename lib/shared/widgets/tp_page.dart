@@ -13,6 +13,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../copy_keys.dart';
 import 'tp_group.dart';
 import 'tp_menu.dart';
+import 'tp_arrive.dart';
 import 'tp_surface.dart';
 
 /// 툴바 버튼 하나.
@@ -157,9 +158,12 @@ class TpPage extends StatelessWidget {
             child: Stack(
               children: <Widget>[
                 Positioned.fill(
-                  child: onRefresh != null && !glass
-                      ? RefreshIndicator(onRefresh: onRefresh!, child: body)
-                      : body,
+                  child: _Stamp(
+                    tab: tab,
+                    child: onRefresh != null && !glass
+                        ? RefreshIndicator(onRefresh: onRefresh!, child: body)
+                        : body,
+                  ),
                 ),
                 if (floating != null)
                   Positioned(
@@ -300,6 +304,47 @@ class TpPage extends StatelessWidget {
       actions: acts,
     );
   }
+}
+
+/// 화면이 보이게 된 순간을 찍는다. 탭 화면은 그 탭이 켜질 때마다, 나머지는
+/// 처음 지어질 때 한 번.
+class _Stamp extends StatefulWidget {
+  const _Stamp({required this.tab, required this.child});
+
+  final TpTab? tab;
+  final Widget child;
+
+  @override
+  State<_Stamp> createState() => _StampState();
+}
+
+class _StampState extends State<_Stamp> {
+  DateTime? _at;
+  TpTab? _active;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final tab = widget.tab;
+    if (tab == null) {
+      _at ??= DateTime.now();
+      return;
+    }
+    final active = TpActiveTab.maybeOf(context);
+    // 탭 호스트 밖(테스트, 단독 화면)이면 처음 한 번.
+    if (active == null) {
+      _at ??= DateTime.now();
+      return;
+    }
+    if (active == tab && _active != tab) _at = DateTime.now();
+    _active = active;
+  }
+
+  @override
+  Widget build(BuildContext context) => TpArriveScope(
+    at: TpArriveScope.latest(TpArriveScope.of(context), _at),
+    child: widget.child,
+  );
 }
 
 class _SmallBar extends SliverPersistentHeaderDelegate {
