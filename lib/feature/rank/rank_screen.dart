@@ -31,6 +31,7 @@ class RankScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sys = context.sys;
+    final glass = context.tp.isGlass;
     final money = ref.watch(moneyProvider);
     final axis = ref.watch(rankAxisProvider);
     final ranked = ref.watch(rankVisibleProvider);
@@ -96,13 +97,13 @@ class RankScreen extends ConsumerWidget {
                 ? null
                 : () => _pickBrand(context, ref, brands, brand),
           ),
-        TpBarAction(
-          label: K.sort.tr(),
-          icon: context.tp.isGlass
-              ? CupertinoIcons.arrow_up_arrow_down
-              : Icons.sort,
-          menu: sortItems,
-        ),
+        // Android 는 정렬을 칩 줄로 보여준다(M3 에서는 칩이 표준).
+        if (glass)
+          TpBarAction(
+            label: K.sort.tr(),
+            icon: CupertinoIcons.arrow_up_arrow_down,
+            menu: sortItems,
+          ),
       ],
       slivers: <Widget>[
         SliverToBoxAdapter(
@@ -114,6 +115,27 @@ class RankScreen extends ConsumerWidget {
             ),
           ),
         ),
+        if (!glass)
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 56,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                itemCount: RankAxis.values.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, i) {
+                  final a = RankAxis.values[i];
+                  return FilterChip(
+                    label: Text(K.rankAxis(a).tr()),
+                    selected: a == axis,
+                    onSelected: (_) =>
+                        ref.read(rankAxisProvider.notifier).set(a),
+                  );
+                },
+              ),
+            ),
+          ),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(32, 12, 24, 7),

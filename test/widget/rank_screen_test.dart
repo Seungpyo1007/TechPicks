@@ -51,7 +51,7 @@ void main() {
   });
 
   for (final chrome in TpChrome.values) {
-    testWidgets('$chrome — 정렬 메뉴로 축을 바꾼다', (tester) async {
+    testWidgets('$chrome — 정렬로 축을 바꾼다', (tester) async {
       final container = await pumpScreen(
         tester,
         const RankScreen(),
@@ -59,8 +59,13 @@ void main() {
         size: const Size(700, 3000),
       );
 
-      await tester.tap(_button(chrome, K.sort.tr()));
-      await tester.pumpAndSettle();
+      // iOS 는 정렬 메뉴, Android 는 칩 줄.
+      if (chrome == TpChrome.ios) {
+        await tester.tap(_button(chrome, K.sort.tr()));
+        await tester.pumpAndSettle();
+      } else {
+        expect(_button(chrome, K.sort.tr()), findsNothing);
+      }
       await tester.tap(find.text(K.rankAxis(RankAxis.battery).tr()).last);
       await tester.pumpAndSettle();
 
