@@ -79,8 +79,21 @@ class HomeScreen extends ConsumerWidget {
         ref.invalidate(catalogProvider);
         await ref.read(catalogProvider.future);
       },
+      // Android 는 질문을 확장 FAB 가 맡는다.
+      floating: glass || onAskWhy == null || verdict == null
+          ? null
+          : FloatingActionButton.extended(
+              heroTag: null,
+              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+              foregroundColor: Theme.of(
+                context,
+              ).colorScheme.onSecondaryContainer,
+              onPressed: onAskWhy,
+              icon: const Icon(Icons.auto_awesome),
+              label: Text(K.askWhy.tr()),
+            ),
       actions: <TpBarAction>[
-        if (onAsk != null)
+        if (onAsk != null && glass)
           TpBarAction(
             label: K.askTitle.tr(),
             icon: glass ? CupertinoIcons.sparkles : Icons.auto_awesome,
@@ -245,7 +258,7 @@ class _VerdictCard extends ConsumerWidget {
                     ),
                   ),
                 ),
-                if (onWeights != null)
+                if (onWeights != null && glass)
                   _TextButton(
                     label: K.weights.tr(),
                     icon: glass
@@ -335,16 +348,23 @@ class _VerdictCard extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 10),
+                      // Android 는 질문이 FAB 로 빠지고 그 자리에 가중치.
                       Expanded(
-                        child: TpPill(
-                          label: K.askWhy.tr(),
-                          kind: TpPillKind.tinted,
-                          height: 44,
-                          icon: glass
-                              ? CupertinoIcons.sparkles
-                              : Icons.auto_awesome,
-                          onTap: onAskWhy,
-                        ),
+                        child: glass
+                            ? TpPill(
+                                label: K.askWhy.tr(),
+                                kind: TpPillKind.tinted,
+                                height: 44,
+                                icon: CupertinoIcons.sparkles,
+                                onTap: onAskWhy,
+                              )
+                            : TpPill(
+                                label: K.weights.tr(),
+                                kind: TpPillKind.tinted,
+                                height: 44,
+                                icon: Icons.tune,
+                                onTap: onWeights,
+                              ),
                       ),
                     ],
                   ),

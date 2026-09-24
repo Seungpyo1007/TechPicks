@@ -105,8 +105,11 @@ class TpPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final sys = context.sys;
     final safe = MediaQuery.viewPaddingOf(context);
+    // 떠 있는 버튼이 있으면 마지막 행이 그 뒤로 숨지 않게 더 비운다.
     final bottom =
-        safe.bottom + (tab != null ? TpTabBar.coverOf(context) : 0) + 24;
+        safe.bottom +
+        (tab != null ? TpTabBar.coverOf(context) : 0) +
+        (floating != null ? 80 : 24);
     final glass = context.tp.isGlass;
 
     final body = CustomScrollView(
@@ -159,7 +162,13 @@ class TpPage extends StatelessWidget {
                         safe.bottom +
                         (tab != null ? TpTabBar.coverOf(context) : 0) +
                         12,
-                    child: Center(child: floating),
+                    // iOS 는 가운데 캡슐, Android 는 오른쪽 아래 확장 FAB.
+                    child: Align(
+                      alignment: glass
+                          ? Alignment.center
+                          : AlignmentDirectional.centerEnd,
+                      child: floating,
+                    ),
                   ),
               ],
             ),

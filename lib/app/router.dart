@@ -543,13 +543,24 @@ class _Viewer extends ConsumerWidget {
 ///
 /// iOS 는 `CupertinoSheetRoute`: 뒤 화면이 줄어들며 위에 남고, 목록이 맨
 /// 위일 때 끌어내리면 닫힌다. 그래서 시트가 준 컨트롤러를 목록의 기본
-/// 컨트롤러로 넘긴다. Android 는 전체 화면 대화 상자.
+/// 컨트롤러로 넘긴다. Android 는 전체 높이 M3 바텀 시트(드래그 핸들, 모서리 28).
 Page<void> _sheet(BuildContext context, GoRouterState state, Widget child) {
   if (context.tp.isGlass) return _SheetPage(key: state.pageKey, child: child);
-  return MaterialPage<void>(
-    key: state.pageKey,
-    fullscreenDialog: true,
-    child: child,
+  return _BottomSheetPage(key: state.pageKey, child: child);
+}
+
+class _BottomSheetPage extends Page<void> {
+  const _BottomSheetPage({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Route<void> createRoute(BuildContext context) => ModalBottomSheetRoute<void>(
+    settings: this,
+    isScrollControlled: true,
+    useSafeArea: true,
+    showDragHandle: true,
+    builder: (context) => child,
   );
 }
 
