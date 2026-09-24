@@ -1,91 +1,24 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/providers.dart';
-import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../data/dto/laptop.dart';
+import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
-import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_group.dart';
-import '../../shared/widgets/tp_page.dart';
-import 'category_chips.dart';
+import 'browse_screen.dart';
 import 'rank_category.dart';
 
-/// 둘러보기 · 노트북. 점수가 없어 가격대로 묶는다.
-class LaptopScreen extends ConsumerWidget {
+/// 둘러보기 · 노트북. 뼈대는 [BrowseScreen] 이 그린다. 점수가 없어 가격으로 줄 세운다.
+class LaptopScreen extends StatelessWidget {
   const LaptopScreen({super.key, this.onCategory});
 
   final ValueChanged<RankCategory>? onCategory;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final laptops = ref.watch(laptopsProvider);
-    final money = ref.watch(moneyProvider);
-    final items = laptops.value?.byPrice ?? const <Laptop>[];
-    final tiers = <String, List<Laptop>>{};
-    for (final l in items) {
-      tiers
-          .putIfAbsent(tierOf(l.msrpUsd) ?? K.laptopNoScore, () => <Laptop>[])
-          .add(l);
-    }
+  Widget build(BuildContext context) =>
+      BrowseScreen(category: RankCategory.laptops, onCategory: onCategory);
 
-    return TpPage(
-      title: K.tab(TpTab.browse).tr(),
-      tab: TpTab.browse,
-      slivers: <Widget>[
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-            child: CategoryChips(
-              current: RankCategory.laptops,
-              onSelect: onCategory ?? (_) {},
-            ),
-          ),
-        ),
-        if (laptops.hasError)
-          const SliverToBoxAdapter(child: TpCatalogError())
-        else if (items.isEmpty)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Text(
-                K.noDevices.tr(),
-                style: TextStyle(color: context.sys.label2),
-              ),
-            ),
-          )
-        else
-          for (final e in tiers.entries)
-            SliverToBoxAdapter(
-              child: TpGroup(
-                header: e.key.tr(),
-                children: <Widget>[
-                  for (final l in e.value)
-                    TpRow(
-                      title: l.name,
-                      subtitle: _sub(l),
-                      value: money.format(l.msrpUsd),
-                      chevron: false,
-                    ),
-                ],
-              ),
-            ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(32, 0, 32, 0),
-            child: Text(
-              K.laptopNote.tr(),
-              style: TextStyle(fontSize: 13, color: context.sys.label2),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  static String _sub(Laptop l) => <String>[
+  static String sub(Laptop l) => <String>[
     if (l.cpuName case final v? when v.isNotEmpty) v,
     if (l.gpuName case final v? when v.isNotEmpty) v,
     if (l.display?.sizeInch case final v?)
@@ -99,4 +32,38 @@ class LaptopScreen extends ConsumerWidget {
     >= 1500 => K.laptopTierPerf,
     _ => K.laptopTierMain,
   };
+}
+
+/// 노트북 한 줄. 폰·프로세서 행과 같은 모양 — 순위, 이름, 보조 줄, 막대, 값.
+/// 막대는 가장 비싼 기종 대비 가격이다.
+class LaptopRow extends StatelessWidget {
+  const LaptopRow({
+    super.key,
+    required this.laptop,
+    required this.position,
+    required this.fraction,
+    required this.money,
+  });
+
+  final Laptop laptop;
+  final int position;
+  final double fraction;
+  final TpMoney money;
+
+  @override
+  Widget build(BuildContext context) => TpRow(
+    title: laptop.name,
+    subtitle: LaptopScreen.sub(laptop),
+    leading: TpRankBadge(rank: position),
+    value: money.format(laptop.msrpUsd),
+    valueStyle: TextStyle(
+      fontWeight: FontWeight.w600,
+      color: context.sys.label,
+    ),
+    chevron: false,
+    below: Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: TpTrack(value: fraction),
+    ),
+  );
 }

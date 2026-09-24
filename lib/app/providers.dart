@@ -375,6 +375,47 @@ final processorSegmentProvider =
       ProcessorSegmentNotifier.new,
     );
 
+/// 둘러보기 · 프로세서의 정렬.
+enum ProcessorSort { score, name }
+
+class ProcessorSortNotifier extends Notifier<ProcessorSort> {
+  @override
+  ProcessorSort build() => ProcessorSort.score;
+
+  void set(ProcessorSort value) => state = value;
+}
+
+final processorSortProvider =
+    NotifierProvider<ProcessorSortNotifier, ProcessorSort>(
+      ProcessorSortNotifier.new,
+    );
+
+/// 둘러보기 · 노트북의 정렬과 가격대.
+enum LaptopSort { priceHigh, priceLow }
+
+class LaptopSortNotifier extends Notifier<LaptopSort> {
+  @override
+  LaptopSort build() => LaptopSort.priceHigh;
+
+  void set(LaptopSort value) => state = value;
+}
+
+final laptopSortProvider = NotifierProvider<LaptopSortNotifier, LaptopSort>(
+  LaptopSortNotifier.new,
+);
+
+/// 가격대 번역 키. null 이면 전체.
+class LaptopTierNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void set(String? value) => state = value;
+}
+
+final laptopTierProvider = NotifierProvider<LaptopTierNotifier, String?>(
+  LaptopTierNotifier.new,
+);
+
 /// 현재 세그먼트의 프로세서 순위.
 final rankedProcessorsProvider = Provider<List<RankedProcessor>>(
   (ref) => ref.watch(processorsInProvider(ref.watch(processorSegmentProvider))),

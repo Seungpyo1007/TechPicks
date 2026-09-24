@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import 'rank_category.dart';
@@ -29,6 +30,22 @@ class CategoryChips extends StatelessWidget {
         ],
         selected: <RankCategory>{current},
         onSelectionChanged: (s) => onSelect(s.first),
+      );
+    }
+    if (TpNativeGlass.enabled) {
+      return Semantics(
+        container: true,
+        child: SizedBox(
+          width: double.infinity,
+          child: TpNativeSegmented(
+            labels: <String>[for (final c in RankCategory.values) c.key.tr()],
+            index: RankCategory.values.indexOf(current),
+            onChanged: (i) {
+              final c = RankCategory.values[i];
+              if (c != current) onSelect(c);
+            },
+          ),
+        ),
       );
     }
     final sys = context.sys;

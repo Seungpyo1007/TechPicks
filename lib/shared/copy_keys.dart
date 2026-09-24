@@ -21,6 +21,14 @@ abstract final class K {
   static const String tabSearch = 'tabSearch';
   static const String askTitle = 'askTitle';
   static const String sort = 'sort';
+  static const String filter = 'filter';
+  static const String sortScore = 'sortScore';
+  static const String sortName = 'sortName';
+  static const String sortPriceHigh = 'sortPriceHigh';
+  static const String sortPriceLow = 'sortPriceLow';
+  static const String allPrices = 'allPrices';
+  static const String cpuStatus = 'cpuStatus';
+  static const String laptopStatus = 'laptopStatus';
   static const String clear = 'clear';
   static const String rankStatus = 'rankStatus';
   static const String buildRowSub = 'buildRowSub';

@@ -44,8 +44,12 @@ abstract final class TpRoute {
   static const String you = '/you';
 
   /// 둘러보기의 카테고리 하나. `/browse` 는 폰과 같다.
+  ///
+  /// 카테고리는 쿼리다. 하위 경로(`/browse/cpus`)이던 때는 세그먼트를 누를
+  /// 때마다 새 화면이 위로 밀려 들어왔다 — 같은 페이지 안에서 내용만
+  /// 바뀌어야 한다.
   static String browseOf(RankCategory c) =>
-      c == RankCategory.phones ? browse : '$browse/${c.key}';
+      c == RankCategory.phones ? browse : '$browse?c=${c.key}';
 
   /// 조립 견적. 프로세서 목록 맨 위 행에서 들어간다.
   static const String build = '/browse/cpus/build';
@@ -173,8 +177,11 @@ GoRouter buildRouter(Ref ref) {
             routes: <RouteBase>[
               GoRoute(
                 path: TpRoute.browse,
-                builder: (context, state) =>
-                    _browse(context, RankCategory.phones),
+                builder: (context, state) => _browse(
+                  context,
+                  RankCategory.parse(state.uri.queryParameters['c']) ??
+                      RankCategory.phones,
+                ),
                 routes: <RouteBase>[
                   // `:category` 보다 먼저 와야 한다.
                   GoRoute(
@@ -202,12 +209,10 @@ GoRouter buildRouter(Ref ref) {
                             ),
                     ),
                   ),
-                  // 카테고리가 진짜 주소다. 예전에는 프로바이더였고 `laptops`
-                  // 는 화면이 없어 조용히 폰으로 떨어졌다.
+                  // 예전 주소(`/browse/cpus`). 공유된 링크가 들고 있을 수 있다.
                   GoRoute(
                     path: ':category',
-                    builder: (context, state) => _browse(
-                      context,
+                    redirect: (context, state) => TpRoute.browseOf(
                       RankCategory.parse(state.pathParameters['category']) ??
                           RankCategory.phones,
                     ),
@@ -361,7 +366,8 @@ void _openHit(BuildContext context, SearchHit hit) {
 RankTab _browse(BuildContext context, RankCategory category) => RankTab(
   category: category,
   onDeviceTap: (s) => context.push('/device/$s'),
-  onBuild: () => context.go(TpRoute.build),
+  // push 라야 뒤로 갔을 때 프로세서 화면이 그대로 남아 있다.
+  onBuild: () => context.push(TpRoute.build),
   onAllProcessors: (s) => context.go('${TpRoute.browse}/cpus/all/${s.name}'),
   // 칩은 같은 브랜치 안에서 주소만 바꾼다. push 가 아니라 go 라 뒤로 가기가
   // 쌓이지 않는다 — 명세가 "교체지 푸시가 아니다" 라고 한 그대로다.

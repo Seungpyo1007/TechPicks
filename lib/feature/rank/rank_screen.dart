@@ -4,196 +4,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
-import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_sys.dart';
-import '../../app/theme/tp_tokens.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/ranking.dart';
 import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
-import '../../shared/widgets/tp_error_state.dart';
-import '../../shared/widgets/tp_arrive.dart';
 import '../../shared/widgets/tp_group.dart';
-import '../../shared/widgets/tp_menu.dart';
-import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_sheet.dart';
-import 'category_chips.dart';
+import 'browse_screen.dart';
 import 'rank_category.dart';
 import '../../shared/widgets/tp_shimmer.dart';
 
-/// 둘러보기 · 스마트폰.
-///
-/// 세그먼트로 카테고리, 툴바로 브랜드와 정렬. 목록은 보이는 행만 짓는다.
-class RankScreen extends ConsumerStatefulWidget {
+/// 둘러보기 · 스마트폰. 뼈대는 [BrowseScreen] 이 그린다.
+class RankScreen extends StatelessWidget {
   const RankScreen({super.key, this.onDeviceTap, this.onCategory});
 
   final ValueChanged<RankCategory>? onCategory;
   final ValueChanged<String>? onDeviceTap;
 
   @override
-  ConsumerState<RankScreen> createState() => _RankScreenState();
+  Widget build(BuildContext context) => BrowseScreen(
+    category: RankCategory.phones,
+    onDeviceTap: onDeviceTap,
+    onCategory: onCategory,
+  );
 }
 
-class _RankScreenState extends ConsumerState<RankScreen> {
-  /// 정렬이나 브랜드가 바뀐 시각. 이때 지어져 있던 위쪽 행만 들어온다 —
-  /// 스크롤로 나중에 지어지는 행은 가만히 있어야 한다.
-  DateTime? _changedAt;
-
-  void _changed() => setState(() => _changedAt = DateTime.now());
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen(rankAxisProvider, (_, _) => _changed());
-    ref.listen(rankBrandProvider, (_, _) => _changed());
-    final onCategory = widget.onCategory;
-    final onDeviceTap = widget.onDeviceTap;
-    final sys = context.sys;
-    final glass = context.tp.isGlass;
-    final money = ref.watch(moneyProvider);
-    final axis = ref.watch(rankAxisProvider);
-    final ranked = ref.watch(rankVisibleProvider);
-    final catalog = ref.watch(catalogProvider);
-    final brands = ref.watch(rankBrandsProvider);
-    final brand = ref.watch(rankBrandProvider);
-    final loading = catalog is AsyncLoading && !catalog.hasError;
-
-    final sortItems = <TpMenuItem>[
-      for (final a in RankAxis.values)
-        TpMenuItem(
-          label: K.rankAxis(a).tr(),
-          checked: a == axis,
-          onTap: () => ref.read(rankAxisProvider.notifier).set(a),
-        ),
-    ];
-
-    final Widget list;
-    if (loading) {
-      list = const SliverToBoxAdapter(child: _Skeleton());
-    } else if (catalog.hasError) {
-      list = const SliverToBoxAdapter(child: TpCatalogError());
-    } else if (ranked.isEmpty) {
-      list = SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text(K.noMatches.tr(), style: TextStyle(color: sys.label2)),
-        ),
-      );
-    } else {
-      // 정렬·브랜드를 바꾸면 등장 신호를 새로 찍는다. 행은 TpGroupSliver 가
-      // 차례로 들여보낸다.
-      list = TpArriveScope(
-        at: TpArriveScope.latest(TpArriveScope.of(context), _changedAt),
-        child: TpGroupSliver(
-          count: ranked.length,
-          footer: K.rankNote.tr(),
-          builder: (context, i) => _RankRow(
-            entry: ranked[i],
-            axis: axis,
-            money: money,
-            onTap: onDeviceTap == null
-                ? null
-                : () => onDeviceTap(ranked[i].device.slug),
-          ),
-        ),
-      );
-    }
-
-    return TpPage(
-      title: K.tab(TpTab.browse).tr(),
-      tab: TpTab.browse,
-      actions: <TpBarAction>[
-        if (brand != null)
-          TpBarAction(
-            label: brand,
-            text: true,
-            filled: true,
-            onTap: () => _pickBrand(context, ref, brands, brand),
-          )
-        else
-          TpBarAction(
-            label: K.brand.tr(),
-            icon: context.tp.isGlass
-                ? CupertinoIcons.line_horizontal_3_decrease
-                : Icons.filter_list,
-            onTap: brands.isEmpty
-                ? null
-                : () => _pickBrand(context, ref, brands, brand),
-          ),
-        // Android 는 정렬을 칩 줄로 보여준다(M3 에서는 칩이 표준).
-        if (glass)
-          TpBarAction(
-            label: K.sort.tr(),
-            icon: CupertinoIcons.arrow_up_arrow_down,
-            menu: sortItems,
-          ),
-      ],
-      slivers: <Widget>[
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-            child: CategoryChips(
-              current: RankCategory.phones,
-              onSelect: onCategory ?? (_) {},
-            ),
-          ),
-        ),
-        if (!glass)
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 56,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                itemCount: RankAxis.values.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, i) {
-                  final a = RankAxis.values[i];
-                  return FilterChip(
-                    label: Text(K.rankAxis(a).tr()),
-                    selected: a == axis,
-                    onSelected: (_) =>
-                        ref.read(rankAxisProvider.notifier).set(a),
-                  );
-                },
-              ),
-            ),
-          ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(32, 12, 24, 7),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    K.rankStatus.tr(
-                      args: <String>[
-                        K.rankAxis(axis).tr(),
-                        brand ?? K.allBrands.tr(),
-                        '${ranked.length}',
-                      ],
-                    ),
-                    style: TextStyle(fontSize: 13, color: sys.label2),
-                  ),
-                ),
-                if (brand != null)
-                  GestureDetector(
-                    onTap: () => ref.read(rankBrandProvider.notifier).set(null),
-                    child: Text(
-                      K.clear.tr(),
-                      style: TextStyle(fontSize: 13, color: sys.accentText),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        list,
-      ],
-    );
-  }
-}
-
-Future<void> _pickBrand(
+/// 브랜드 고르기 시트.
+Future<void> pickBrand(
   BuildContext context,
   WidgetRef ref,
   List<String> brands,
@@ -229,8 +67,9 @@ Future<void> _pickBrand(
   );
 }
 
-class _RankRow extends StatelessWidget {
-  const _RankRow({
+class RankRow extends StatelessWidget {
+  const RankRow({
+    super.key,
     required this.entry,
     required this.axis,
     required this.money,
@@ -276,8 +115,8 @@ class _RankRow extends StatelessWidget {
   }
 }
 
-class _Skeleton extends StatelessWidget {
-  const _Skeleton();
+class RankSkeleton extends StatelessWidget {
+  const RankSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) => TpShimmer(

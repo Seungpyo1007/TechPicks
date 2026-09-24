@@ -4,8 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/domain/model/processor.dart';
 import 'package:techpicks/feature/cpu/processor_screen.dart';
 import 'package:techpicks/feature/rank/rank_category.dart';
-import 'package:techpicks/feature/rank/laptop_screen.dart';
-import 'package:techpicks/feature/rank/rank_screen.dart';
+import 'package:techpicks/feature/rank/browse_screen.dart';
 import 'package:techpicks/feature/rank/rank_tab.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
@@ -16,31 +15,47 @@ import '../support/harness.dart';
 void main() {
   setUp(initLocalization);
 
-  testWidgets('모바일과 노트북을 같이 보여준다', (tester) async {
+  testWidgets('필터로 모바일과 노트북을 오간다', (tester) async {
     final container = await pumpScreen(
       tester,
       const ProcessorScreen(),
       size: const Size(700, 3000),
     );
-
-    expect(find.text(K.cpuMobile.tr()), findsOneWidget);
-    expect(find.text(K.cpuLaptop.tr()), findsOneWidget);
-    for (final s in ProcessorSegment.values) {
-      final top = container.read(processorsInProvider(s)).first;
-      expect(find.text(top.processor.name), findsOneWidget);
-    }
+    final mobile = container.read(
+      processorsInProvider(ProcessorSegment.mobile),
+    );
+    final laptop = container.read(
+      processorsInProvider(ProcessorSegment.laptop),
+    );
+    expect(find.text(mobile.first.processor.name), findsOneWidget);
+    expect(find.text(laptop.first.processor.name), findsNothing);
     expect(find.text(K.cpuNote.tr()), findsOneWidget);
+
+    container
+        .read(processorSegmentProvider.notifier)
+        .set(ProcessorSegment.laptop);
+    await tester.pumpAndSettle();
+    expect(find.text(laptop.first.processor.name), findsOneWidget);
+    expect(find.text(mobile.first.processor.name), findsNothing);
   });
 
-  testWidgets('모두 보기가 어느 구간인지 알려준다', (tester) async {
-    ProcessorSegment? opened;
-    await pumpScreen(
+  testWidgets('이름순으로 줄 세운다', (tester) async {
+    final container = await pumpScreen(
       tester,
-      ProcessorScreen(onAll: (s) => opened = s),
+      const ProcessorScreen(),
       size: const Size(700, 3000),
     );
-    await tester.tap(find.text(K.seeAll.tr()).last);
-    expect(opened, ProcessorSegment.laptop);
+    container.read(processorSortProvider.notifier).set(ProcessorSort.name);
+    await tester.pumpAndSettle();
+    final names =
+        container
+            .read(processorsInProvider(ProcessorSegment.mobile))
+            .map((r) => r.processor.name)
+            .toList()
+          ..sort();
+    final first = tester.getTopLeft(find.text(names.first)).dy;
+    final second = tester.getTopLeft(find.text(names[1])).dy;
+    expect(first, lessThan(second));
   });
 
   testWidgets('조립 견적 행이 맨 위에 있다', (tester) async {
@@ -62,7 +77,7 @@ void main() {
       RankTab(category: RankCategory.phones, onCategory: (c) => picked = c),
     );
 
-    expect(find.byType(RankScreen), findsOneWidget);
+    expect(find.byType(BrowseScreen), findsOneWidget);
 
     await tester.tap(find.text(K.cpus.tr()));
     await tester.pumpAndSettle();
@@ -85,14 +100,11 @@ void main() {
     expect(picked, RankCategory.laptops);
   });
 
-  testWidgets('카테고리마다 제 화면이 열린다', (tester) async {
-    for (final (category, matcher) in <(RankCategory, Finder)>[
-      (RankCategory.phones, find.byType(RankScreen)),
-      (RankCategory.processors, find.byType(ProcessorScreen)),
-      (RankCategory.laptops, find.byType(LaptopScreen)),
-    ]) {
+  testWidgets('카테고리가 바뀌어도 같은 둘러보기 화면이다', (tester) async {
+    for (final category in RankCategory.values) {
       await pumpScreen(tester, RankTab(category: category));
-      expect(matcher, findsOneWidget, reason: category.name);
+      final browse = tester.widget<BrowseScreen>(find.byType(BrowseScreen));
+      expect(browse.category, category);
     }
   });
 

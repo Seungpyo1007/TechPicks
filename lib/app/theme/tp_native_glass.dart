@@ -211,3 +211,30 @@ class TpNativeSearchBar extends StatelessWidget {
     iconColor: iconColor,
   );
 }
+
+/// iOS 26 의 `UISegmentedControl`. 고른 칸이 유리 캡슐로 미끄러진다.
+///
+/// Flutter 의 `CupertinoSlidingSegmentedControl` 은 iOS 13 모양이다 — 모서리가
+/// 각지고 두껍다. 26 에서는 캡슐이고 32pt 다.
+class TpNativeSegmented extends StatelessWidget {
+  const TpNativeSegmented({
+    super.key,
+    required this.labels,
+    required this.index,
+    required this.onChanged,
+  });
+
+  final List<String> labels;
+  final int index;
+  final ValueChanged<int> onChanged;
+
+  static const double height = 32;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassSegmentedControl(
+    labels: labels,
+    selectedIndex: index,
+    onValueChanged: onChanged,
+    height: height,
+  );
+}
