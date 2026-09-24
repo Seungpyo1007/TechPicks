@@ -550,26 +550,53 @@ class CompareSlots {
 class CompareNotifier extends Notifier<CompareSlots> {
   @override
   CompareSlots build() {
-    // 카탈로그가 오면 지수 1·2위로 채운다. 빈 비교 화면부터 보여주는 것보다
-    // 뭔가 비교하고 있는 상태로 시작하는 편이 낫다. 애셋 순서(원점수)로
-    // 채우면 화면에 찍히는 지수와 어긋난 둘이 올라온다.
+    // 관심 목록에 둘 이상 있으면 그 둘(지수 높은 순), 모자라면 전체 순위로
+    // 채운다. 오늘 화면에서 "전체 비교"를 누르고 들어왔는데 목록에 없는 1·2위가
+    // 떠 있으면 무엇을 비교하는지 모른다.
     //
     // watch 로 읽으면 카탈로그가 도착할 때 이 노티파이어가 통째로 다시
     // 만들어져 **그 사이에 고른 것이 지워진다.** 딥링크로 연 비교가 몇
-    // 프레임 뒤 기본값으로 덮였다. 그래서 읽기만 하고, 나중 도착은 아직
-    // 아무것도 안 골랐을 때만 채운다.
-    ref.listen(indexRankingProvider, (_, next) {
-      if (state.isComplete) return;
-      state = _defaults(next);
-    });
-    return _defaults(ref.read(indexRankingProvider));
+    // 프레임 뒤 기본값으로 덮였다. 그래서 읽기만 하고, 사람이 고르기 전까지만
+    // 기본값을 다시 채운다.
+    void refill() {
+      if (_picked) return;
+      state = _defaults(
+        ref.read(indexRankingProvider),
+        ref.read(shortlistProvider),
+      );
+    }
+
+    ref
+      ..listen(indexRankingProvider, (_, _) => refill())
+      ..listen(shortlistProvider, (_, _) => refill());
+    return _defaults(
+      ref.read(indexRankingProvider),
+      ref.read(shortlistProvider),
+    );
   }
 
-  static CompareSlots _defaults(List<RankedDevice> ranked) => ranked.length < 2
-      ? const CompareSlots()
-      : CompareSlots(a: ranked[0].device.slug, b: ranked[1].device.slug);
+  /// 사람이 한 칸이라도 골랐는가. 그 뒤로는 기본값이 덮지 않는다.
+  bool _picked = false;
+
+  static CompareSlots _defaults(
+    List<RankedDevice> ranked,
+    List<String> shortlist,
+  ) {
+    final picks = <String>[
+      for (final r in ranked)
+        if (shortlist.contains(r.device.slug)) r.device.slug,
+    ];
+    for (final r in ranked) {
+      if (picks.length >= 2) break;
+      if (!picks.contains(r.device.slug)) picks.add(r.device.slug);
+    }
+    return picks.length < 2
+        ? const CompareSlots()
+        : CompareSlots(a: picks[0], b: picks[1]);
+  }
 
   void pick(CompareSide side, String slug) {
+    _picked = true;
     final other = side == CompareSide.a ? CompareSide.b : CompareSide.a;
     // 비교가 실제로 쓰이는지 세는 유일한 자리다. 이벤트만 만들어 두고
     // 아무 데서도 안 불러서 사용량이 영원히 0 으로 보고되고 있었다.
