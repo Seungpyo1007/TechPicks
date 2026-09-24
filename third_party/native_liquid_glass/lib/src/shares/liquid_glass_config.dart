@@ -54,15 +54,20 @@ sealed class LiquidGlassPathOp {
 
   /// Cubic Bézier to (x, y) with control points (c1x, c1y) and (c2x, c2y).
   const factory LiquidGlassPathOp.cubicTo(
-    double c1x, double c1y,
-    double c2x, double c2y,
-    double x, double y,
+    double c1x,
+    double c1y,
+    double c2x,
+    double c2y,
+    double x,
+    double y,
   ) = _CubicTo;
 
   /// Quadratic Bézier to (x, y) with control point (cx, cy).
   const factory LiquidGlassPathOp.quadTo(
-    double cx, double cy,
-    double x, double y,
+    double cx,
+    double cy,
+    double x,
+    double y,
   ) = _QuadTo;
 
   /// Close the current sub-path.
@@ -180,10 +185,10 @@ class LiquidGlassConfig {
     this.border,
     this.backgroundColor,
   }) : assert(
-          shape != LiquidGlassEffectShape.custom ||
-              (customPath != null && customPathSize != null),
-          'customPath and customPathSize are required when shape is custom',
-        );
+         shape != LiquidGlassEffectShape.custom ||
+             (customPath != null && customPathSize != null),
+         'customPath and customPathSize are required when shape is custom',
+       );
 
   Map<String, Object?> toCreationParams() {
     return <String, Object?>{

@@ -15,8 +15,8 @@ import 'utils/native_liquid_glass_utils.dart';
 /// The native `UITabBarController` + search tab takes taps on tab items,
 /// search field, and action button; declaring the recognizer up-front
 /// keeps Flutter's lazy forwarding from delaying or cancelling them.
-final Set<Factory<OneSequenceGestureRecognizer>> _searchScaffoldGestureRecognizers =
-    <Factory<OneSequenceGestureRecognizer>>{
+final Set<Factory<OneSequenceGestureRecognizer>>
+_searchScaffoldGestureRecognizers = <Factory<OneSequenceGestureRecognizer>>{
   Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
 };
 
@@ -114,15 +114,21 @@ class LiquidGlassSearchScaffold extends StatefulWidget {
     this.iosItemPositioning = LiquidGlassTabBarItemPositioning.automatic,
     this.iosItemSpacing,
     this.iosItemWidth,
-  }) : assert(tabs.length == tabBuilders.length, 'tabs and tabBuilders must have the same length.');
+  }) : assert(
+         tabs.length == tabBuilders.length,
+         'tabs and tabBuilders must have the same length.',
+       );
 
   @override
-  State<LiquidGlassSearchScaffold> createState() => _LiquidGlassSearchScaffoldState();
+  State<LiquidGlassSearchScaffold> createState() =>
+      _LiquidGlassSearchScaffoldState();
 }
 
-class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> with LiquidGlassRouteSuppression {
+class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   List<Map<String, Object?>>? _nativeTabs;
   Map<String, Object?>? _nativeActionButton;
   int _nativePayloadRequestId = 0;
@@ -136,7 +142,9 @@ class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> w
   /// keystrokes so [LiquidGlassSearchScaffold.onSearchChanged] is not called
   /// on every character.
   Timer? _searchChangedDebounce;
-  static const Duration _searchChangedDebounceDuration = Duration(milliseconds: 200);
+  static const Duration _searchChangedDebounceDuration = Duration(
+    milliseconds: 200,
+  );
 
   @override
   void initState() {
@@ -153,10 +161,14 @@ class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> w
       _prepareNativeTabsPayloads();
     }
     if (oldWidget.searchEnabled != widget.searchEnabled) {
-      _nativeChannel?.invokeMethod('setSearchEnabled', {'enabled': widget.searchEnabled});
+      _nativeChannel?.invokeMethod('setSearchEnabled', {
+        'enabled': widget.searchEnabled,
+      });
     }
     if (oldWidget.selectedIndex != widget.selectedIndex) {
-      _nativeChannel?.invokeMethod('setSelectedTab', {'index': widget.selectedIndex});
+      _nativeChannel?.invokeMethod('setSelectedTab', {
+        'index': widget.selectedIndex,
+      });
     }
     _syncStyleToNativeIfNeeded();
   }
@@ -219,8 +231,12 @@ class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> w
       });
     }
 
-    final payload = await Future.wait<Map<String, Object?>>(widget.tabs.map(_buildNativeTabPayload));
-    final actionButtonPayload = widget.iosActionButton == null ? null : await _buildNativeTabPayload(widget.iosActionButton!);
+    final payload = await Future.wait<Map<String, Object?>>(
+      widget.tabs.map(_buildNativeTabPayload),
+    );
+    final actionButtonPayload = widget.iosActionButton == null
+        ? null
+        : await _buildNativeTabPayload(widget.iosActionButton!);
 
     if (!mounted || requestId != _nativePayloadRequestId) return;
 
@@ -231,7 +247,9 @@ class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> w
     });
   }
 
-  Future<Map<String, Object?>> _buildNativeTabPayload(LiquidGlassTabItem item) async {
+  Future<Map<String, Object?>> _buildNativeTabPayload(
+    LiquidGlassTabItem item,
+  ) async {
     final resolvedIcon = item.icon;
     final resolvedSelectedIcon = item.selectedIcon ?? item.icon;
 
@@ -248,9 +266,13 @@ class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> w
       'selectedAssetIconPng': selectedPayload.assetIconPng,
       'badgeValue': item.iosBadgeValue,
       'showBadge': item.iosShowBadge || item.iosBadgeValue != null,
-      if (item.iosBadgeColor != null) 'badgeColor': item.iosBadgeColor!.toARGB32(),
-      if (item.iosBadgeTextColor != null) 'badgeTextColor': item.iosBadgeTextColor!.toARGB32(),
-      ...?(item.iconSize == null ? null : <String, Object?>{'iconSize': item.iconSize}),
+      if (item.iosBadgeColor != null)
+        'badgeColor': item.iosBadgeColor!.toARGB32(),
+      if (item.iosBadgeTextColor != null)
+        'badgeTextColor': item.iosBadgeTextColor!.toARGB32(),
+      ...?(item.iconSize == null
+          ? null
+          : <String, Object?>{'iconSize': item.iconSize}),
       'selectedItemColor': item.selectedItemColor?.toARGB32(),
     };
   }
@@ -274,10 +296,20 @@ class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> w
   Map<String, Object?>? _buildLabelStylePayload(TextStyle? style) {
     if (style == null) return null;
     final payload = <String, Object?>{
-      ...?(style.fontSize == null ? null : <String, Object?>{'fontSize': style.fontSize}),
-      ...?(_fontWeightToInt(style.fontWeight) == null ? null : <String, Object?>{'fontWeight': _fontWeightToInt(style.fontWeight)}),
-      ...?(style.fontFamily?.isNotEmpty == true ? <String, Object?>{'fontFamily': style.fontFamily} : null),
-      ...?(style.letterSpacing == null ? null : <String, Object?>{'letterSpacing': style.letterSpacing}),
+      ...?(style.fontSize == null
+          ? null
+          : <String, Object?>{'fontSize': style.fontSize}),
+      ...?(_fontWeightToInt(style.fontWeight) == null
+          ? null
+          : <String, Object?>{
+              'fontWeight': _fontWeightToInt(style.fontWeight),
+            }),
+      ...?(style.fontFamily?.isNotEmpty == true
+          ? <String, Object?>{'fontFamily': style.fontFamily}
+          : null),
+      ...?(style.letterSpacing == null
+          ? null
+          : <String, Object?>{'letterSpacing': style.letterSpacing}),
     };
     return payload.isEmpty ? null : payload;
   }
@@ -325,7 +357,9 @@ class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> w
     super.dispose();
   }
 
-  Map<String, Object?> _creationParamsCached(List<Map<String, Object?>> nativeTabs) {
+  Map<String, Object?> _creationParamsCached(
+    List<Map<String, Object?>> nativeTabs,
+  ) {
     // `nativeTabs` is produced by `_prepareNativeTabsPayloads` via setState,
     // so a new list identity indicates fresh tab payloads. Combining its
     // identity hash with the style config hash and widget-local props that
@@ -348,7 +382,9 @@ class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> w
     return params;
   }
 
-  Map<String, Object?> _buildCreationParams(List<Map<String, Object?>> nativeTabs) {
+  Map<String, Object?> _buildCreationParams(
+    List<Map<String, Object?>> nativeTabs,
+  ) {
     final labelStylePayload = _buildLabelStylePayload(widget.labelTextStyle);
 
     return <String, Object?>{
@@ -356,12 +392,22 @@ class _LiquidGlassSearchScaffoldState extends State<LiquidGlassSearchScaffold> w
       'currentIndex': widget.selectedIndex,
       'showLabels': widget.showLabels,
       'selectedItemColor': widget.selectedItemColor?.toARGB32(),
-      ...?(widget.iconSize == null ? null : <String, Object?>{'iconSize': widget.iconSize}),
-      ...?(labelStylePayload == null ? null : <String, Object?>{'labelStyle': labelStylePayload}),
+      ...?(widget.iconSize == null
+          ? null
+          : <String, Object?>{'iconSize': widget.iconSize}),
+      ...?(labelStylePayload == null
+          ? null
+          : <String, Object?>{'labelStyle': labelStylePayload}),
       'itemPositioning': widget.iosItemPositioning.name,
-      ...?(widget.iosItemSpacing == null ? null : <String, Object?>{'itemSpacing': widget.iosItemSpacing}),
-      ...?(widget.iosItemWidth == null ? null : <String, Object?>{'itemWidth': widget.iosItemWidth}),
-      ...?(_nativeActionButton == null ? null : <String, Object?>{'actionButton': _nativeActionButton}),
+      ...?(widget.iosItemSpacing == null
+          ? null
+          : <String, Object?>{'itemSpacing': widget.iosItemSpacing}),
+      ...?(widget.iosItemWidth == null
+          ? null
+          : <String, Object?>{'itemWidth': widget.iosItemWidth}),
+      ...?(_nativeActionButton == null
+          ? null
+          : <String, Object?>{'actionButton': _nativeActionButton}),
       'searchHint': widget.searchHint,
       'searchEnabled': widget.searchEnabled,
     };

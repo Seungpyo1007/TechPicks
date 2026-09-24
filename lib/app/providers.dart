@@ -1006,6 +1006,36 @@ final searchKeyboardHeightProvider =
       SearchKeyboardHeightNotifier.new,
     );
 
+/// 네이티브 검색창에 보내는 명령. 토큰이 바뀔 때마다 탭 바가 그대로 한다.
+typedef SearchCommand = ({String text, int textToken, int focusToken});
+
+class SearchCommandNotifier extends Notifier<SearchCommand> {
+  @override
+  SearchCommand build() => (text: '', textToken: 0, focusToken: 0);
+
+  /// 검색창 글자를 바꾼다(예시 검색어). 결과도 같이 바뀌도록 검색어도 넣는다.
+  void setText(String text) {
+    state = (
+      text: text,
+      textToken: state.textToken + 1,
+      focusToken: state.focusToken,
+    );
+    ref.read(searchQueryProvider.notifier).set(text);
+  }
+
+  /// 검색창에 초점(키보드).
+  void focus() => state = (
+    text: state.text,
+    textToken: state.textToken,
+    focusToken: state.focusToken + 1,
+  );
+}
+
+final searchCommandProvider =
+    NotifierProvider<SearchCommandNotifier, SearchCommand>(
+      SearchCommandNotifier.new,
+    );
+
 /// 올릴 때마다 네이티브 검색창 키보드가 내려간다.
 class SearchKeyboardNotifier extends Notifier<int> {
   @override

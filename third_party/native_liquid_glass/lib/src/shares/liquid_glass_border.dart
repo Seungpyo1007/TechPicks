@@ -29,10 +29,8 @@ class LiquidGlassBorder {
   /// Stroke width in logical pixels. `0` renders no stroke.
   final double width;
 
-  const LiquidGlassBorder({
-    required this.color,
-    this.width = 1.0,
-  }) : assert(width >= 0, 'width must be >= 0.');
+  const LiquidGlassBorder({required this.color, this.width = 1.0})
+    : assert(width >= 0, 'width must be >= 0.');
 
   /// Serialises to the platform-channel payload shape shared by every
   /// widget that accepts a border.

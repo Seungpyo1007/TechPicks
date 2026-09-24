@@ -3,7 +3,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'liquid_glass_button.dart' show LiquidGlassImagePlacement, LiquidGlassButtonStyle;
+import 'liquid_glass_button.dart'
+    show LiquidGlassImagePlacement, LiquidGlassButtonStyle;
 import 'shares/liquid_glass_icon.dart';
 import 'utils/native_liquid_glass_utils.dart';
 import 'utils/liquid_glass_route_suppression.dart';
@@ -15,8 +16,8 @@ import 'utils/text_style_utils.dart';
 /// declaring the recognizer up-front keeps Flutter's lazy forwarding from
 /// buffering/cancelling the touch mid-press (same symptom we saw on the
 /// standalone button — glass effect scaled up and never returned).
-final Set<Factory<OneSequenceGestureRecognizer>> _buttonGroupGestureRecognizers =
-    <Factory<OneSequenceGestureRecognizer>>{
+final Set<Factory<OneSequenceGestureRecognizer>>
+_buttonGroupGestureRecognizers = <Factory<OneSequenceGestureRecognizer>>{
   Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
 };
 
@@ -169,16 +170,23 @@ class LiquidGlassButtonGroup extends StatefulWidget {
   /// Spacing used for glass effect blending (should be > [spacing]).
   final double spacingForGlass;
 
-  const LiquidGlassButtonGroup({super.key, required this.buttons, this.axis = Axis.horizontal, this.spacing = 8.0, this.spacingForGlass = 40.0})
-    : assert(buttons.length > 0, 'At least one button is required.');
+  const LiquidGlassButtonGroup({
+    super.key,
+    required this.buttons,
+    this.axis = Axis.horizontal,
+    this.spacing = 8.0,
+    this.spacingForGlass = 40.0,
+  }) : assert(buttons.length > 0, 'At least one button is required.');
 
   @override
   State<LiquidGlassButtonGroup> createState() => _LiquidGlassButtonGroupState();
 }
 
-class _LiquidGlassButtonGroupState extends State<LiquidGlassButtonGroup> with LiquidGlassRouteSuppression {
+class _LiquidGlassButtonGroupState extends State<LiquidGlassButtonGroup>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   final Map<int, NativeLiquidGlassIconPayload> _iconPayloads = {};
   int _payloadRequestId = 0;
   bool _payloadsResolved = false;
@@ -210,7 +218,9 @@ class _LiquidGlassButtonGroupState extends State<LiquidGlassButtonGroup> with Li
   }
 
   int _computeIconSignature() {
-    return Object.hashAll(widget.buttons.map((b) => b.icon?.nativeSignature ?? 0));
+    return Object.hashAll(
+      widget.buttons.map((b) => b.icon?.nativeSignature ?? 0),
+    );
   }
 
   @override
@@ -243,7 +253,9 @@ class _LiquidGlassButtonGroupState extends State<LiquidGlassButtonGroup> with Li
       });
     }
 
-    final payloads = await Future.wait(widget.buttons.map((b) => resolveIconPayload(b.icon)));
+    final payloads = await Future.wait(
+      widget.buttons.map((b) => resolveIconPayload(b.icon)),
+    );
 
     if (!mounted || requestId != _payloadRequestId) return;
 
@@ -367,7 +379,9 @@ class _LiquidGlassButtonGroupState extends State<LiquidGlassButtonGroup> with Li
     final ch = _nativeChannel;
     if (ch == null || !mounted) return;
     try {
-      final size = await ch.invokeMethod<Map<Object?, Object?>>('getIntrinsicSize');
+      final size = await ch.invokeMethod<Map<Object?, Object?>>(
+        'getIntrinsicSize',
+      );
       final h = (size?['height'] as num?)?.toDouble();
       if (mounted && h != null && h > 0) setState(() => _nativeHeight = h);
     } catch (_) {}
@@ -376,7 +390,8 @@ class _LiquidGlassButtonGroupState extends State<LiquidGlassButtonGroup> with Li
   List<Map<String, Object?>> _buildButtonParams() {
     return List.generate(widget.buttons.length, (i) {
       final b = widget.buttons[i];
-      final iconMap = b.icon?.toNativeMap(_iconPayloads[i]) ?? <String, Object?>{};
+      final iconMap =
+          b.icon?.toNativeMap(_iconPayloads[i]) ?? <String, Object?>{};
       final p = b.padding;
       return <String, Object?>{
         'label': b.label,
@@ -392,19 +407,26 @@ class _LiquidGlassButtonGroupState extends State<LiquidGlassButtonGroup> with Li
         'badgeValue': b.badgeValue,
         'showBadge': b.showBadge || b.badgeValue != null,
         if (b.badgeColor != null) 'badgeColor': b.badgeColor!.toARGB32(),
-        if (b.badgeTextColor != null) 'badgeTextColor': b.badgeTextColor!.toARGB32(),
+        if (b.badgeTextColor != null)
+          'badgeTextColor': b.badgeTextColor!.toARGB32(),
         if (b.badgeSize != null) 'badgeSize': b.badgeSize,
         'imagePlacement': b.imagePlacement.name,
         'imagePadding': b.imagePadding,
         if (b.borderRadius != null) 'borderRadius': b.borderRadius,
-        if (p != null) ...{'paddingTop': p.top, 'paddingBottom': p.bottom, 'paddingLeft': p.left, 'paddingRight': p.right},
+        if (p != null) ...{
+          'paddingTop': p.top,
+          'paddingBottom': p.bottom,
+          'paddingLeft': p.left,
+          'paddingRight': p.right,
+        },
         if (b.width != null) 'width': b.width,
         if (b.height != null) 'height': b.height,
         'style': b.style.name,
         'interactive': b.interactive,
         'interaction': b.interaction,
         if (b.maxLines != null) 'maxLines': b.maxLines,
-        if (b.glassEffectUnionId != null) 'glassEffectUnionId': b.glassEffectUnionId,
+        if (b.glassEffectUnionId != null)
+          'glassEffectUnionId': b.glassEffectUnionId,
         if (b.glassEffectId != null) 'glassEffectId': b.glassEffectId,
       };
     });

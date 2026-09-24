@@ -12,7 +12,10 @@ class LiquidGlassSliderController extends ChangeNotifier {
 
   /// Set the slider value programmatically.
   Future<void> setValue(double value, {bool animated = false}) async {
-    await _channel?.invokeMethod<void>('setValue', {'value': value, 'animated': animated});
+    await _channel?.invokeMethod<void>('setValue', {
+      'value': value,
+      'animated': animated,
+    });
   }
 
   /// Update the slider range.
@@ -90,9 +93,11 @@ class LiquidGlassSlider extends StatefulWidget {
   State<LiquidGlassSlider> createState() => _LiquidGlassSliderState();
 }
 
-class _LiquidGlassSliderState extends State<LiquidGlassSlider> with LiquidGlassRouteSuppression {
+class _LiquidGlassSliderState extends State<LiquidGlassSlider>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   double? _lastValue;
   double? _lastMin;
   double? _lastMax;
@@ -127,7 +132,10 @@ class _LiquidGlassSliderState extends State<LiquidGlassSlider> with LiquidGlassR
     if (ch == null) return;
 
     if (_lastValue != widget.value) {
-      await ch.invokeMethod('setValue', {'value': widget.value, 'animated': false});
+      await ch.invokeMethod('setValue', {
+        'value': widget.value,
+        'animated': false,
+      });
       _lastValue = widget.value;
     }
     if (_lastMin != widget.min || _lastMax != widget.max) {
@@ -147,8 +155,16 @@ class _LiquidGlassSliderState extends State<LiquidGlassSlider> with LiquidGlassR
     final thumbColor = widget.thumbColor?.toARGB32();
     final trackColor = widget.trackColor?.toARGB32();
     final trackBgColor = widget.trackBackgroundColor?.toARGB32();
-    if (_lastColor != color || _lastThumbColor != thumbColor || _lastTrackColor != trackColor || _lastTrackBgColor != trackBgColor) {
-      await ch.invokeMethod('setStyle', {'color': color, 'thumbColor': thumbColor, 'trackColor': trackColor, 'trackBackgroundColor': trackBgColor});
+    if (_lastColor != color ||
+        _lastThumbColor != thumbColor ||
+        _lastTrackColor != trackColor ||
+        _lastTrackBgColor != trackBgColor) {
+      await ch.invokeMethod('setStyle', {
+        'color': color,
+        'thumbColor': thumbColor,
+        'trackColor': trackColor,
+        'trackBackgroundColor': trackBgColor,
+      });
       _lastColor = color;
       _lastThumbColor = thumbColor;
       _lastTrackColor = trackColor;
@@ -217,7 +233,9 @@ class _LiquidGlassSliderState extends State<LiquidGlassSlider> with LiquidGlassR
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: _onPlatformViewCreated,
           gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-            Factory<HorizontalDragGestureRecognizer>(() => HorizontalDragGestureRecognizer()),
+            Factory<HorizontalDragGestureRecognizer>(
+              () => HorizontalDragGestureRecognizer(),
+            ),
             Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
           },
         ),

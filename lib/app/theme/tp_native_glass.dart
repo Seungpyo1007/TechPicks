@@ -123,7 +123,21 @@ class TpNativeTabBar extends StatelessWidget {
     this.onSearchChanged,
     this.onSearchKeyboard,
     this.keyboardDismissToken = 0,
+    this.searchText = '',
+    this.searchTextToken = 0,
+    this.searchFocusToken = 0,
+    this.hitTestTransparent = false,
   });
+
+  /// 뷰 뒤의 Flutter 위젯도 누를 수 있게.
+  final bool hitTestTransparent;
+
+  /// [searchTextToken] 이 바뀔 때 검색창 글자를 이걸로.
+  final String searchText;
+  final int searchTextToken;
+
+  /// 바뀔 때 검색창에 초점.
+  final int searchFocusToken;
 
   /// 검색 중 키보드의 최종 높이. 움직이기 시작할 때 온다.
   final ValueChanged<double>? onSearchKeyboard;
@@ -192,6 +206,10 @@ class TpNativeTabBar extends StatelessWidget {
     onSearchSubmitted: onSearchChanged,
     onSearchKeyboard: onSearchKeyboard,
     searchKeyboardDismissToken: keyboardDismissToken,
+    searchText: searchText,
+    searchTextToken: searchTextToken,
+    searchFocusToken: searchFocusToken,
+    iosHitTestTransparent: hitTestTransparent,
     labelTextStyle: labelStyle,
     items: <LiquidGlassTabItem>[
       for (final item in items)

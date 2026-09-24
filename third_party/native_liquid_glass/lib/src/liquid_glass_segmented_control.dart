@@ -39,15 +39,22 @@ class LiquidGlassSegmentedControl extends StatefulWidget {
     this.color,
     this.height = 32,
   }) : assert(labels.length > 0, 'At least one label is required.'),
-       assert(selectedIndex >= 0 && selectedIndex < labels.length, 'selectedIndex must be within [0, labels.length).');
+       assert(
+         selectedIndex >= 0 && selectedIndex < labels.length,
+         'selectedIndex must be within [0, labels.length).',
+       );
 
   @override
-  State<LiquidGlassSegmentedControl> createState() => _LiquidGlassSegmentedControlState();
+  State<LiquidGlassSegmentedControl> createState() =>
+      _LiquidGlassSegmentedControlState();
 }
 
-class _LiquidGlassSegmentedControlState extends State<LiquidGlassSegmentedControl> with LiquidGlassRouteSuppression {
+class _LiquidGlassSegmentedControlState
+    extends State<LiquidGlassSegmentedControl>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
 
   // Incremental prop tracking
   int? _lastSelectedIndex;
@@ -82,7 +89,10 @@ class _LiquidGlassSegmentedControlState extends State<LiquidGlassSegmentedContro
     if (ch == null) return;
 
     if (_lastSelectedIndex != widget.selectedIndex) {
-      await ch.invokeMethod('setSelectedIndex', {'index': widget.selectedIndex, 'animated': true});
+      await ch.invokeMethod('setSelectedIndex', {
+        'index': widget.selectedIndex,
+        'animated': true,
+      });
       _lastSelectedIndex = widget.selectedIndex;
     }
     if (_lastEnabled != widget.enabled) {
@@ -107,7 +117,9 @@ class _LiquidGlassSegmentedControlState extends State<LiquidGlassSegmentedContro
 
   void _onPlatformViewCreated(int viewId) {
     _nativeChannel?.setMethodCallHandler(null);
-    final channel = MethodChannel('liquid-glass-segmented-control-view/$viewId');
+    final channel = MethodChannel(
+      'liquid-glass-segmented-control-view/$viewId',
+    );
     channel.setMethodCallHandler(_handleNativeMethodCall);
     _nativeChannel = channel;
     _lastSelectedIndex = widget.selectedIndex;
@@ -123,7 +135,12 @@ class _LiquidGlassSegmentedControlState extends State<LiquidGlassSegmentedContro
   }
 
   Map<String, Object?> _buildCreationParams() {
-    return <String, Object?>{..._buildSegmentParams(), 'selectedIndex': widget.selectedIndex, 'enabled': widget.enabled, 'color': widget.color?.toARGB32()};
+    return <String, Object?>{
+      ..._buildSegmentParams(),
+      'selectedIndex': widget.selectedIndex,
+      'enabled': widget.enabled,
+      'color': widget.color?.toARGB32(),
+    };
   }
 
   @override
@@ -138,7 +155,9 @@ class _LiquidGlassSegmentedControlState extends State<LiquidGlassSegmentedContro
           onPlatformViewCreated: _onPlatformViewCreated,
           // TechPicks 패치: 손이 닿는 즉시 UIKit 에 넘긴다. Tap 으로 두면 스크롤 안에서
           // 손을 뗄 때까지 터치가 묶여 눌림도, 칸이 미끄러지는 것도 안 보였다.
-          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer())},
+          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+            Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer()),
+          },
         ),
       );
     }

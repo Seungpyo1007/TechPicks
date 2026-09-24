@@ -12,7 +12,10 @@ class LiquidGlassToggleController extends ChangeNotifier {
 
   /// Set the toggle value programmatically.
   Future<void> setValue(bool value, {bool animated = false}) async {
-    await _channel?.invokeMethod<void>('setValue', {'value': value, 'animated': animated});
+    await _channel?.invokeMethod<void>('setValue', {
+      'value': value,
+      'animated': animated,
+    });
   }
 
   /// Enable or disable the toggle.
@@ -45,15 +48,25 @@ class LiquidGlassToggle extends StatefulWidget {
   /// Optional controller for imperative updates.
   final LiquidGlassToggleController? controller;
 
-  const LiquidGlassToggle({super.key, required this.value, required this.onChanged, this.enabled = true, this.color, this.height = 44, this.controller});
+  const LiquidGlassToggle({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.enabled = true,
+    this.color,
+    this.height = 44,
+    this.controller,
+  });
 
   @override
   State<LiquidGlassToggle> createState() => _LiquidGlassToggleState();
 }
 
-class _LiquidGlassToggleState extends State<LiquidGlassToggle> with LiquidGlassRouteSuppression {
+class _LiquidGlassToggleState extends State<LiquidGlassToggle>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   bool? _lastValue;
   bool? _lastEnabled;
   int? _lastColor;
@@ -82,7 +95,10 @@ class _LiquidGlassToggleState extends State<LiquidGlassToggle> with LiquidGlassR
     if (ch == null) return;
 
     if (_lastValue != widget.value) {
-      await ch.invokeMethod('setValue', {'value': widget.value, 'animated': true});
+      await ch.invokeMethod('setValue', {
+        'value': widget.value,
+        'animated': true,
+      });
       _lastValue = widget.value;
     }
     if (_lastEnabled != widget.enabled) {
@@ -124,7 +140,11 @@ class _LiquidGlassToggleState extends State<LiquidGlassToggle> with LiquidGlassR
   }
 
   Map<String, Object?> _buildCreationParams() {
-    return <String, Object?>{'value': widget.value, 'enabled': widget.enabled, 'color': widget.color?.toARGB32()};
+    return <String, Object?>{
+      'value': widget.value,
+      'enabled': widget.enabled,
+      'color': widget.color?.toARGB32(),
+    };
   }
 
   @override
@@ -138,7 +158,9 @@ class _LiquidGlassToggleState extends State<LiquidGlassToggle> with LiquidGlassR
           creationParams: _buildCreationParams(),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: _onPlatformViewCreated,
-          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{Factory<TapGestureRecognizer>(() => TapGestureRecognizer())},
+          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+            Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+          },
         ),
       );
     }

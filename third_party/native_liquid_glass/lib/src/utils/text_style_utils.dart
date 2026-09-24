@@ -11,10 +11,16 @@ Map<String, Object?>? textStylePayload(TextStyle? style) {
   if (style == null) return null;
   final weight = _fontWeightValue(style.fontWeight);
   final payload = <String, Object?>{
-    ...?(style.fontSize == null ? null : <String, Object?>{'fontSize': style.fontSize}),
+    ...?(style.fontSize == null
+        ? null
+        : <String, Object?>{'fontSize': style.fontSize}),
     ...?(weight == null ? null : <String, Object?>{'fontWeight': weight}),
-    ...?(style.fontFamily?.isNotEmpty == true ? <String, Object?>{'fontFamily': style.fontFamily} : null),
-    ...?(style.letterSpacing == null ? null : <String, Object?>{'letterSpacing': style.letterSpacing}),
+    ...?(style.fontFamily?.isNotEmpty == true
+        ? <String, Object?>{'fontFamily': style.fontFamily}
+        : null),
+    ...?(style.letterSpacing == null
+        ? null
+        : <String, Object?>{'letterSpacing': style.letterSpacing}),
   };
   return payload.isEmpty ? null : payload;
 }
@@ -25,7 +31,9 @@ int textStyleSignature(TextStyle? style) {
   if (style == null) return 0;
   final payload = textStylePayload(style);
   if (payload == null) return 0;
-  return Object.hashAllUnordered(payload.entries.map((e) => Object.hash(e.key, e.value)));
+  return Object.hashAllUnordered(
+    payload.entries.map((e) => Object.hash(e.key, e.value)),
+  );
 }
 
 int? _fontWeightValue(FontWeight? fontWeight) {
