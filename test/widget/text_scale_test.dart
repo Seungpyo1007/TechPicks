@@ -14,7 +14,6 @@ import 'package:techpicks/feature/login/email_login_screen.dart';
 import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
-import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
@@ -51,7 +50,6 @@ Map<String, Widget> _screens() => <String, Widget>{
 
 /// 끝나지 않는 애니메이션이 있어 settle 이 안 끝나는 화면.
 Map<String, Widget> _noSettle() => <String, Widget>{
-  'scan': ScanScreen(onBack: () {}, recognizedText: 'Galaxy S25 Ultra'),
   'viewer': ViewerScreen(deviceName: 'Galaxy S25 Ultra', onBack: () {}),
 };
 

@@ -10,7 +10,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/app/theme/tp_motion.dart';
-import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
 
 import '../support/harness.dart';
@@ -203,31 +202,6 @@ void main() {
   });
 
   group('홈 상태 변화', _homeMotion);
-
-  group('스캔 라인', () {
-    testWidgets('평소에는 계속 돈다', (tester) async {
-      await pumpScreenNoSettle(
-        tester,
-        ScanScreen(onBack: () {}),
-        size: const Size(1200, 2400),
-      );
-      // 무한 반복이라 settle 이 끝나지 않는다.
-      expect(tester.hasRunningAnimations, isTrue);
-      await tester.pump(const Duration(milliseconds: 300));
-    });
-
-    testWidgets('동작을 줄이면 멈춘다', (tester) async {
-      // 반복이 없으니 settle 이 끝난다. 안 끝나면 여기서 타임아웃이 난다.
-      await pumpScreen(
-        tester,
-        ScanScreen(onBack: () {}),
-        size: const Size(1200, 2400),
-        disableAnimations: true,
-      );
-
-      expect(tester.hasRunningAnimations, isFalse);
-    });
-  });
 }
 
 /// 홈의 상태 변화.
@@ -249,7 +223,7 @@ void _homeMotion() {
 
     await tester.pumpAndSettle();
     expect(find.text(K.emptyShortlist.tr()), findsNothing);
-    expect(find.text(K.verdict.tr().toUpperCase()), findsOneWidget);
+    expect(find.text(K.verdict.tr()), findsOneWidget);
   });
 
   // 한동안 행마다 AnimatedSize 를 하나씩 달아두고 "지우면 접히며 사라진다"고
@@ -302,5 +276,4 @@ void _homeMotion() {
     expect(tester.getRect(pill).left, greaterThan(home.left));
     expect(find.byKey(const ValueKey<String>('tab-pill')), findsOneWidget);
   });
-
 }

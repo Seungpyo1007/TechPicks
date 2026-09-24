@@ -306,6 +306,8 @@ class _TpRowState extends State<TpRow> {
             padding: const EdgeInsets.only(top: 1),
             child: Text(
               w.subtitle!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 13, height: 1.38, color: sys.label2),
             ),
           ),
@@ -380,16 +382,7 @@ class _TpRowState extends State<TpRow> {
       label: label,
       excludeSemantics: true,
       onTap: w.onTap,
-      child: w.onTap == null
-          ? row
-          : GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: w.onTap,
-              onTapDown: (_) => _set(true),
-              onTapUp: (_) => _set(false),
-              onTapCancel: () => _set(false),
-              child: row,
-            ),
+      child: TpTappable(onTap: w.onTap, onDown: _set, child: row),
     );
   }
 }
@@ -485,4 +478,45 @@ class TpTrack extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// 누를 수 있는 것. 손가락, Tab + Enter/Space 둘 다 받는다.
+class TpTappable extends StatelessWidget {
+  const TpTappable({
+    super.key,
+    required this.onTap,
+    required this.child,
+    this.onDown,
+  });
+
+  final VoidCallback? onTap;
+  final Widget child;
+
+  /// 눌림 표시. true 로 들어왔다가 false 로 나간다.
+  final ValueChanged<bool>? onDown;
+
+  @override
+  Widget build(BuildContext context) {
+    if (onTap == null) return child;
+    return FocusableActionDetector(
+      actions: <Type, Action<Intent>>{
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (_) {
+            onTap!();
+            return null;
+          },
+        ),
+      },
+      onShowFocusHighlight: onDown,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
+        onTap: onTap,
+        onTapDown: onDown == null ? null : (_) => onDown!(true),
+        onTapUp: onDown == null ? null : (_) => onDown!(false),
+        onTapCancel: onDown == null ? null : () => onDown!(false),
+        child: child,
+      ),
+    );
+  }
 }

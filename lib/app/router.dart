@@ -151,6 +151,14 @@ GoRouter buildRouter(Ref ref) {
                   onAskWhy: () => context.push(TpRoute.ask),
                   onMoversTap: () => context.go(TpRoute.browse),
                   onYou: () => context.push(TpRoute.you),
+                  onAsk: () => context.push(TpRoute.ask),
+                  onWeights: () => context.push(TpRoute.you),
+                  onCompareDevice: (slug) {
+                    ProviderScope.containerOf(
+                      context,
+                    ).read(compareProvider.notifier).pick(CompareSide.a, slug);
+                    context.go(TpRoute.compare);
+                  },
                 ),
               ),
             ],
@@ -243,8 +251,10 @@ GoRouter buildRouter(Ref ref) {
             routes: <RouteBase>[
               GoRoute(
                 path: TpRoute.search,
-                builder: (context, state) =>
-                    SearchScreen(onHit: (hit) => _openHit(context, hit)),
+                builder: (context, state) => SearchScreen(
+                  onHit: (hit) => _openHit(context, hit),
+                  onKind: (c) => context.go(TpRoute.browseOf(c)),
+                ),
               ),
             ],
           ),

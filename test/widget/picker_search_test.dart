@@ -131,10 +131,7 @@ void main() {
     final ranked = readRanking();
     final shown = tester
         .widgetList<Text>(
-          find.descendant(
-            of: find.byType(TpRow),
-            matching: find.byType(Text),
-          ),
+          find.descendant(of: find.byType(TpRow), matching: find.byType(Text)),
         )
         .map((t) => t.data)
         .whereType<String>()
@@ -152,7 +149,6 @@ void main() {
 
     expect(drawnInOrder, names);
   });
-
 }
 
 /// 크롬마다 아이콘이 다르다. 어느 쪽이든 찾는다.

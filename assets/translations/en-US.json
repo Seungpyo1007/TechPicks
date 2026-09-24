@@ -252,5 +252,8 @@
   "sort": "Sort",
   "clear": "Clear",
   "rankStatus": "By {} · {} · {} phones",
-  "buildRowSub": "CPU and GPU pairs for a budget"
+  "buildRowSub": "CPU and GPU pairs for a budget",
+  "weights": "Weights",
+  "removeShort": "Remove from shortlist",
+  "browseByKind": "Browse by kind"
 }

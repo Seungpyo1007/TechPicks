@@ -10,6 +10,7 @@ import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../copy_keys.dart';
+import 'tp_group.dart';
 import 'tp_menu.dart';
 import 'tp_surface.dart';
 
@@ -299,7 +300,10 @@ class _SmallBar extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlaps) =>
-      SizedBox(height: height, child: Align(alignment: Alignment.bottomCenter, child: bar));
+      SizedBox(
+        height: height,
+        child: Align(alignment: Alignment.bottomCenter, child: bar),
+      );
 
   @override
   bool shouldRebuild(_SmallBar old) => old.height != height || old.bar != bar;
@@ -368,11 +372,7 @@ class TpBarButton extends StatelessWidget {
       label: a.label,
       excludeSemantics: true,
       onTap: onTap,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: face,
-      ),
+      child: TpTappable(onTap: onTap, child: face),
     );
     if (a.menu != null) {
       return TpMenu(items: a.menu!, builder: (context, open) => tappable(open));
@@ -446,11 +446,7 @@ class TpPill extends StatelessWidget {
       label: label,
       excludeSemantics: true,
       onTap: onTap,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: face,
-      ),
+      child: TpTappable(onTap: onTap, child: face),
     );
   }
 }
