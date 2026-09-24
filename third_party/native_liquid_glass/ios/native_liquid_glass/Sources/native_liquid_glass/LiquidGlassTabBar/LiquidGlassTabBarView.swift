@@ -307,8 +307,8 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
       return self.makeSearchContent(placeholder: placeholder)
     }
 
-    // 네이티브 검색이면 누르자마자 검색창이 펼쳐지고 키보드가 올라온다.
-    searchTab.automaticallyActivatesSearch = nativeSearch
+    // 누르면 검색창만 펼쳐진다. 키보드는 검색창을 한 번 더 눌렀을 때.
+    searchTab.automaticallyActivatesSearch = false
     searchTab.title = config.showLabels ? actionButton.label : ""
     if let image = actionButton.image(forSelectedState: false, iconSize: config.iconSize) {
       searchTab.image = image
