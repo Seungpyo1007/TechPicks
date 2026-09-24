@@ -44,6 +44,15 @@ class TpTabBar extends ConsumerWidget {
 
   static const double androidHeight = 80;
 
+  /// 바·검색창이 실제로 있는 자리. 플랫폼 뷰는 이 안의 터치만 받는다.
+  static final GlobalKey _barArea = GlobalKey(debugLabel: 'tab-bar-area');
+
+  static bool _inBarArea(Offset global) {
+    final box = _barArea.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return true;
+    return (Offset.zero & box.size).contains(box.globalToLocal(global));
+  }
+
   /// iOS 26 탭 바 플랫폼 뷰가 미리 잡아 두는 키보드 자리. 세로 키보드(예측 줄
   /// 포함) 보다 넉넉하게.
   static const double keyboardRoom = 420;
@@ -101,7 +110,7 @@ class TpTabBar extends ConsumerWidget {
               right: 0,
               bottom: 0,
               height: iosHeight + math.max(safe.bottom, keyboard),
-              child: const _Absorb(),
+              child: _Absorb(key: _barArea),
             ),
             Positioned.fill(
               child: TpNativeTabBar(
@@ -121,6 +130,8 @@ class TpTabBar extends ConsumerWidget {
                 searchTextToken: command.textToken,
                 searchFocusToken: command.focusToken,
                 hitTestTransparent: true,
+                // 바·검색창 자리의 터치만 네이티브가 받는다.
+                acceptsAt: _inBarArea,
                 height: iosHeight + safe.bottom + keyboardRoom,
                 tint: TpTokens.blue,
                 items: <TpNativeTabItem>[
@@ -410,7 +421,7 @@ class TpTabReselectNotifier extends ChangeNotifier {
 
 /// 이 자리의 터치를 뒤 화면에 안 넘긴다. 앞의 플랫폼 뷰는 그대로 받는다.
 class _Absorb extends StatelessWidget {
-  const _Absorb();
+  const _Absorb({super.key});
 
   @override
   Widget build(BuildContext context) => const Listener(

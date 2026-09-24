@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:native_liquid_glass/native_liquid_glass.dart';
 
@@ -127,10 +128,14 @@ class TpNativeTabBar extends StatelessWidget {
     this.searchTextToken = 0,
     this.searchFocusToken = 0,
     this.hitTestTransparent = false,
+    this.acceptsAt,
   });
 
-  /// 뷰 뒤의 Flutter 위젯도 누를 수 있게.
+  /// 뷰 뒤의 Flutter 위젯도 히트되게.
   final bool hitTestTransparent;
+
+  /// 이 전역 좌표의 터치를 네이티브 바가 받을지. null 이면 전부 받는다.
+  final bool Function(Offset global)? acceptsAt;
 
   /// [searchTextToken] 이 바뀔 때 검색창 글자를 이걸로.
   final String searchText;
@@ -210,6 +215,13 @@ class TpNativeTabBar extends StatelessWidget {
     searchTextToken: searchTextToken,
     searchFocusToken: searchFocusToken,
     iosHitTestTransparent: hitTestTransparent,
+    iosGestureRecognizers: acceptsAt == null
+        ? null
+        : <Factory<OneSequenceGestureRecognizer>>{
+            Factory<OneSequenceGestureRecognizer>(
+              () => _RegionEager(acceptsAt!),
+            ),
+          },
     labelTextStyle: labelStyle,
     items: <LiquidGlassTabItem>[
       for (final item in items)
@@ -344,4 +356,16 @@ class TpNativeMenuButton extends StatelessWidget {
     ],
     onItemSelected: (id) => onSelected(int.parse(id)),
   );
+}
+
+/// 정해진 자리의 터치만 곧바로 네이티브에 넘긴다. 나머지는 참가하지 않아서
+/// 뒤의 Flutter 위젯이 받는다.
+class _RegionEager extends EagerGestureRecognizer {
+  _RegionEager(this.acceptsAt);
+
+  final bool Function(Offset global) acceptsAt;
+
+  @override
+  bool isPointerAllowed(PointerDownEvent event) =>
+      acceptsAt(event.position) && super.isPointerAllowed(event);
 }
