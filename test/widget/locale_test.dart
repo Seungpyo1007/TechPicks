@@ -12,14 +12,11 @@ void main() {
     await initLocalization(locale: const Locale('ko', 'KR'));
     await pumpScreen(tester, const RankScreen());
 
-    expect(find.text('랭킹'), findsWidgets);
+    expect(find.text('둘러보기'), findsWidgets);
     expect(find.text('스마트폰'), findsOneWidget);
-    // "정렬 기준" 눈썹은 빠졌다. 그 자리에 브랜드 칩이 있다.
-    expect(find.text('브랜드'), findsOneWidget);
-    expect(find.text('TP 지수'), findsWidgets);
+    expect(find.textContaining('TP 지수순'), findsOneWidget);
     // 영어 문구가 남아 있으면 하드코딩이 덜 걷힌 것이다.
-    expect(find.text('Rankings'), findsNothing);
-    expect(find.text('Rank by'), findsNothing);
+    expect(find.text('Browse'), findsNothing);
   });
 
   testWidgets('온보딩 제목의 줄바꿈이 한국어에서도 유지된다', (tester) async {
@@ -36,7 +33,7 @@ void main() {
     await initLocalization();
     await pumpScreen(tester, const RankScreen());
 
-    expect(find.text('Rankings'), findsWidgets);
-    expect(find.text('랭킹'), findsNothing);
+    expect(find.text('Browse'), findsWidgets);
+    expect(find.text('둘러보기'), findsNothing);
   });
 }

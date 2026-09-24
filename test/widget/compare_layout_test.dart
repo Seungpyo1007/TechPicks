@@ -7,8 +7,8 @@ import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/spec_labels.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
-import 'package:techpicks/shared/widgets/tp_button.dart';
 
+import 'package:techpicks/shared/widgets/tp_page.dart';
 import '../support/harness.dart';
 
 /// 비교 화면의 자리 배치.
@@ -88,14 +88,14 @@ void main() {
       size: const Size(1200, 3200),
     );
 
-    // 열 머리 둘 + (화면·프로세서·카메라) × 두 열.
-    expect(find.byType(TpBar), findsNWidgets(2 + 6));
+    // (화면·프로세서·카메라) × 두 열. 열 머리는 TpTrack 이다.
+    expect(find.byType(TpBar), findsNWidgets(6));
   });
 
   testWidgets('이유 물어보기가 표를 안 지나고 화면 안에 있다', (tester) async {
     await pumpScreen(tester, const CompareScreen(), size: const Size(402, 874));
 
-    final button = tester.getRect(find.byType(TpButton));
+    final button = tester.getRect(find.byType(TpPill));
     expect(button.bottom, lessThanOrEqualTo(874));
     expect(button.top, greaterThan(0));
   });
@@ -116,7 +116,7 @@ void main() {
     await tester.fling(list, const Offset(0, -600), 2000);
     await tester.pumpAndSettle();
 
-    final button = tester.getRect(find.byType(TpButton));
+    final button = tester.getRect(find.byType(TpPill));
     final released = tester.getRect(
       find.text(SpecLabels.of(SpecKind.released)),
     );

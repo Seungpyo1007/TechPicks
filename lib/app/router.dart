@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart' show CupertinoPage, CupertinoSheetRoute;
+import 'package:flutter/cupertino.dart' show CupertinoSheetRoute;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +11,8 @@ import '../feature/ask/ask_screen.dart';
 import '../feature/build/build_screen.dart';
 import '../feature/compare/compare_screen.dart';
 import '../feature/compare/picker_screen.dart';
+import '../feature/cpu/processor_screen.dart';
+import '../domain/model/processor.dart';
 import '../feature/detail/detail_screen.dart';
 import '../feature/home/home_screen.dart';
 import '../feature/login/email_login_screen.dart';
@@ -46,7 +48,7 @@ abstract final class TpRoute {
       c == RankCategory.phones ? browse : '$browse/${c.key}';
 
   /// 조립 견적. 프로세서 목록 맨 위 행에서 들어간다.
-  static const String build = '/browse/processors/build';
+  static const String build = '/browse/cpus/build';
 
   /// 예전 주소. 공유된 링크가 아직 이걸 들고 있다.
   static const String legacyRank = '/rank';
@@ -74,9 +76,10 @@ final routerProvider = Provider<GoRouter>((ref) => buildRouter(ref));
 /// `StatefulShellRoute.indexedStack` 은 탭 스크롤과 입력을 유지하는
 /// IndexedStack 에 주소와 이력을 붙인 것이다.
 GoRouter buildRouter(Ref ref) {
+  final root = GlobalKey<NavigatorState>();
   return GoRouter(
     initialLocation: TpRoute.home,
-    navigatorKey: GlobalKey<NavigatorState>(),
+    navigatorKey: root,
     // 커스텀 스킴 딥링크는 플랫폼이 라우터에 **그대로** 넘긴다 —
     // `techpicks://compare/a/b` 는 우리 경로가 아니라서 라우터가 못 찾고
     // "Page Not Found" 를 그렸다. 문법은 TpLink 가 안다.
@@ -160,10 +163,24 @@ GoRouter buildRouter(Ref ref) {
                 builder: (context, state) =>
                     _browse(context, RankCategory.phones),
                 routes: <RouteBase>[
-                  // `:category` 보다 먼저 와야 한다. 뒤에 두면 processors 가
-                  // 카테고리로 먼저 잡힌다.
+                  // `:category` 보다 먼저 와야 한다.
                   GoRoute(
-                    path: 'processors/build',
+                    path: 'cpus/all/:segment',
+                    builder: (context, state) => ProcessorListScreen(
+                      segment:
+                          state.pathParameters['segment'] ==
+                              ProcessorSegment.laptop.name
+                          ? ProcessorSegment.laptop
+                          : ProcessorSegment.mobile,
+                      onBack: () => context.canPop()
+                          ? context.pop()
+                          : context.go(
+                              TpRoute.browseOf(RankCategory.processors),
+                            ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'cpus/build',
                     builder: (context, state) => BuildScreen(
                       onBack: () => context.canPop()
                           ? context.pop()
@@ -198,7 +215,8 @@ GoRouter buildRouter(Ref ref) {
                   // a='pick', b='a' 인 비교를 열려고 한다.
                   GoRoute(
                     path: 'pick/:side',
-                    pageBuilder: (context, state) => _modal(
+                    parentNavigatorKey: root,
+                    pageBuilder: (context, state) => _sheet(
                       context,
                       state,
                       _Picker(
@@ -319,6 +337,7 @@ RankTab _browse(BuildContext context, RankCategory category) => RankTab(
   category: category,
   onDeviceTap: (s) => context.push('/device/$s'),
   onBuild: () => context.go(TpRoute.build),
+  onAllProcessors: (s) => context.go('${TpRoute.browse}/cpus/all/${s.name}'),
   // 칩은 같은 브랜치 안에서 주소만 바꾼다. push 가 아니라 go 라 뒤로 가기가
   // 쌓이지 않는다 — 명세가 "교체지 푸시가 아니다" 라고 한 그대로다.
   onCategory: (c) => context.go(TpRoute.browseOf(c)),
@@ -493,21 +512,6 @@ class _Viewer extends ConsumerWidget {
       onBack: () => context.canPop() ? context.pop() : context.go(TpRoute.home),
     );
   }
-}
-
-/// 취소로 닫는 화면(기기 고르기).
-///
-/// iOS 는 아래에서 올라오는 모달이다. 옆에서 밀려 들어오면 뒤로 가기처럼
-/// 보이는데 버튼은 "취소"라 어긋났다. Android 는 보통 페이지 그대로 둔다.
-Page<void> _modal(BuildContext context, GoRouterState state, Widget child) {
-  if (context.tp.isGlass) {
-    return CupertinoPage<void>(
-      key: state.pageKey,
-      fullscreenDialog: true,
-      child: child,
-    );
-  }
-  return MaterialPage<void>(key: state.pageKey, child: child);
 }
 
 /// 시트로 뜨는 화면(질문, 내 정보).

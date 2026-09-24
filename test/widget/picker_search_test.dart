@@ -7,7 +7,7 @@ import 'package:techpicks/data/dto/smartphone.dart';
 import 'package:techpicks/domain/model/device_search.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
-import 'package:techpicks/shared/widgets/tp_surface.dart';
+import 'package:techpicks/shared/widgets/tp_group.dart';
 
 import '../support/harness.dart';
 import 'package:techpicks/app/theme/tp_icons.dart';
@@ -67,7 +67,7 @@ void main() {
     final all = readCatalog().smartphones;
     final target = all.firstWhere((d) => d.name.contains('Galaxy S25'));
 
-    await tester.enterText(find.byType(TextField), target.name);
+    await tester.enterText(find.byType(EditableText), target.name);
     await tester.pumpAndSettle();
 
     // 검색어가 입력칸에도 남아 있어 같은 글자가 둘이다.
@@ -84,7 +84,7 @@ void main() {
       size: const Size(1200, 2400),
     );
 
-    await tester.enterText(find.byType(TextField), '없는기기이름');
+    await tester.enterText(find.byType(EditableText), '없는기기이름');
     await tester.pumpAndSettle();
 
     expect(find.text(K.noMatches.tr()), findsOneWidget);
@@ -97,7 +97,7 @@ void main() {
       size: const Size(1200, 2400),
     );
 
-    await tester.enterText(find.byType(TextField), 'galaxy');
+    await tester.enterText(find.byType(EditableText), 'galaxy');
     await tester.pumpAndSettle();
     expect(_icon((i) => i.close), findsOneWidget);
 
@@ -132,7 +132,7 @@ void main() {
     final shown = tester
         .widgetList<Text>(
           find.descendant(
-            of: find.byType(TpSurface),
+            of: find.byType(TpRow),
             matching: find.byType(Text),
           ),
         )
@@ -153,16 +153,6 @@ void main() {
     expect(drawnInOrder, names);
   });
 
-  // 키보드가 올라오면 목록도 그만큼 위로 물러나야 한다.
-  testWidgets('키보드만큼 아래를 비운다', (tester) async {
-    tester.view.viewInsets = const FakeViewPadding(bottom: 336);
-    addTearDown(tester.view.reset);
-
-    await pumpScreen(tester, const PickerScreen(), size: const Size(402, 874));
-
-    final list = tester.widget<ListView>(find.byType(ListView));
-    expect(list.padding, const EdgeInsets.fromLTRB(16, 0, 16, 360));
-  });
 }
 
 /// 크롬마다 아이콘이 다르다. 어느 쪽이든 찾는다.

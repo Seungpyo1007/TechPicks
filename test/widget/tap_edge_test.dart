@@ -5,13 +5,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:techpicks/app/providers.dart';
-import 'package:techpicks/domain/model/ranking.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
 import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
-import 'package:techpicks/feature/rank/rank_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
 import '../support/harness.dart';
@@ -95,17 +92,6 @@ void main() {
     await _tapCorners(tester, K.loginEmail.tr());
 
     expect(taps, 4);
-  });
-
-  testWidgets('랭킹 축 칩', (tester) async {
-    final container = await pumpScreen(tester, const RankScreen());
-
-    // 칩은 한 번만 누른다. 두 번 누르면 축이 다시 바뀐다.
-    final battery = _pill(tester, K.rankAxis(RankAxis.battery).tr());
-    await tester.tapAt(battery.topLeft + const Offset(6, 6));
-    await tester.pump();
-
-    expect(container.read(rankAxisProvider), RankAxis.battery);
   });
 
   // 눌러도 아무 반응이 없으면 죽은 버튼처럼 보인다. 명세가 이름을 준 칩·카드

@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:techpicks/feature/rank/rank_screen.dart';
 
 import '../support/harness.dart';
 
@@ -68,11 +67,6 @@ void main() {
       if (slug == null) continue;
       expect(known, contains(slug), reason: phone.slug);
     }
-  });
-
-  test('랭킹 화면 상한보다 카탈로그가 크다', () {
-    // 상한이 카탈로그보다 크면 상한을 둔 의미가 없다.
-    expect(catalog.smartphones.length, greaterThan(RankScreen.maxRows));
   });
 
   test('프로세서는 화면 세그먼트와 짝이 맞는다', () {

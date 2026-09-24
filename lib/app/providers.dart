@@ -376,17 +376,22 @@ final processorSegmentProvider =
     );
 
 /// 현재 세그먼트의 프로세서 순위.
-final rankedProcessorsProvider = Provider<List<RankedProcessor>>((ref) {
-  final catalog = ref.watch(catalogProvider).value;
-  if (catalog == null) return const <RankedProcessor>[];
-  final segment = ref.watch(processorSegmentProvider);
-  return ProcessorRanking.of(switch (segment) {
-    ProcessorSegment.mobile =>
-      catalog.socs.map(Processor.fromSoc).toList(growable: false),
-    ProcessorSegment.laptop =>
-      catalog.cpus.map(Processor.fromCpu).toList(growable: false),
-  });
-});
+final rankedProcessorsProvider = Provider<List<RankedProcessor>>(
+  (ref) => ref.watch(processorsInProvider(ref.watch(processorSegmentProvider))),
+);
+
+/// 구간 하나의 순위. 둘러보기 프로세서 화면이 두 구간을 같이 보여준다.
+final processorsInProvider =
+    Provider.family<List<RankedProcessor>, ProcessorSegment>((ref, segment) {
+      final catalog = ref.watch(catalogProvider).value;
+      if (catalog == null) return const <RankedProcessor>[];
+      return ProcessorRanking.of(switch (segment) {
+        ProcessorSegment.mobile =>
+          catalog.socs.map(Processor.fromSoc).toList(growable: false),
+        ProcessorSegment.laptop =>
+          catalog.cpus.map(Processor.fromCpu).toList(growable: false),
+      });
+    });
 
 /// 비교 중인 기기 목록. 홈 화면의 주인공이다.
 ///

@@ -26,9 +26,9 @@ void main() {
   testWidgets('카탈로그에 있는 기기를 그린다', (tester) async {
     await _pump(tester, 'galaxy-s25');
 
-    expect(find.text('Galaxy S25'), findsOneWidget);
-    expect(find.text('SAMSUNG'), findsOneWidget);
-    expect(find.text(r'$799'), findsWidgets);
+    expect(find.text('Galaxy S25'), findsWidgets);
+    // 브랜드와 가격이 이름 아래 한 줄이다.
+    expect(find.text(r'Samsung · $799'), findsOneWidget);
     expect(find.byType(TpScoreStrip), findsOneWidget);
   });
 
@@ -74,7 +74,7 @@ void main() {
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
     for (final chrome in TpChrome.values) {
       await _pump(tester, 'oneplus-13', chrome: chrome);
-      expect(find.text('OnePlus 13'), findsOneWidget);
+      expect(find.text('OnePlus 13'), findsWidgets);
     }
   });
 

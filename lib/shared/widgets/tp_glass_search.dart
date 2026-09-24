@@ -34,14 +34,23 @@ class TpGlassSearch extends StatelessWidget {
   Widget build(BuildContext context) {
     final sys = context.sys;
     if (!context.tp.isGlass) {
-      return SearchBar(
+      return TextField(
         controller: controller,
-        hintText: placeholder,
-        autoFocus: autofocus,
-        leading: const Icon(Icons.search),
-        elevation: const WidgetStatePropertyAll<double>(0),
+        autofocus: autofocus,
         onChanged: onChanged,
         onSubmitted: onSubmitted,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: placeholder,
+          prefixIcon: const Icon(Icons.search),
+          filled: true,
+          fillColor: sys.fill3,
+          contentPadding: const EdgeInsets.symmetric(vertical: 18),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: BorderSide.none,
+          ),
+        ),
       );
     }
     if (TpNativeGlass.enabled) {
@@ -71,7 +80,7 @@ class TpGlassSearch extends StatelessWidget {
           onSubmitted: onSubmitted,
           backgroundColor: Colors.transparent,
           borderRadius: BorderRadius.circular(24),
-          padding: const EdgeInsetsDirectional.fromSTEB(8, 12, 12, 12),
+          padding: const EdgeInsetsDirectional.fromSTEB(8, 14, 12, 14),
           style: TextStyle(fontSize: 17, color: sys.label),
         ),
       ),

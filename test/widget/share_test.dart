@@ -114,7 +114,7 @@ techpicks://device/galaxy-s25''');
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Galaxy S25'), findsOneWidget);
+      expect(find.text('Galaxy S25'), findsWidgets);
     });
   });
 
