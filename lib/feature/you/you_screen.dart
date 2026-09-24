@@ -42,10 +42,14 @@ class YouScreen extends ConsumerStatefulWidget {
     this.onDeviceTap,
     this.onSources,
     this.onClose,
+    this.onBack,
   });
 
   /// 시트 닫기.
   final VoidCallback? onClose;
+
+  /// 밀어 올린 화면에서 뒤로.
+  final VoidCallback? onBack;
 
   /// 로그인 전에는 둘 다 null 이다. 인증 연결은 로그인 화면에서 한다.
   final String? name;
@@ -107,7 +111,9 @@ class _YouScreenState extends ConsumerState<YouScreen> {
 
     return TpPage(
       title: K.you.tr(),
-      largeTitle: false,
+      // 밀려 들어온 화면이면 큰 제목과 뒤로 버튼, 시트면 작은 제목과 완료.
+      largeTitle: widget.onBack != null,
+      onBack: widget.onBack,
       actions: <TpBarAction>[
         if (widget.onClose != null)
           TpBarAction(label: K.done.tr(), text: true, onTap: widget.onClose),
