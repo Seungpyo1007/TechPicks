@@ -64,6 +64,18 @@ lib/src/liquid_glass_tab_bar.dart
 플랫폼 뷰는 바 높이뿐이라, 앱 쪽(`TpTabBar`)이 검색 중에는 키보드 높이만큼 뷰를 늘린다.
 늘어난 자리는 키보드가 덮고 있어 Flutter 터치를 뺏지 않는다.
 
+`LiquidGlassSegmentedControl` 이 **좌우 16 을 한 번 더** 준다.
+
+SwiftUI `Picker` 에 `.padding(.horizontal, 16)` 이 붙어 있어 Flutter 가 준 여백과 겹쳤다.
+지우고, 호스팅 컨트롤러도 안전 영역을 무시하게 한다.
+
+```
+ios/.../LiquidGlassSegmentedControl/LiquidGlassSegmentedControlSwiftUI.swift
+  - .padding(.horizontal, 16)
+ios/.../LiquidGlassSegmentedControl/LiquidGlassSegmentedControlView.swift
+  + hc.safeAreaRegions = []
+```
+
 ## 언제 지우나
 
 위 패치가 upstream 에 들어간 판이 나오면 이 디렉터리와 `dependency_overrides` 를
