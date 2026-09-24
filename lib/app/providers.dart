@@ -35,7 +35,7 @@ import '../data/service/deep_link_service.dart';
 import '../data/service/device_info_service.dart';
 import '../data/service/link_opener.dart';
 import '../data/service/share_service.dart';
-import '../data/service/shortlist_sync_service.dart';
+import '../data/service/account_sync_service.dart';
 import '../domain/model/ask_answer.dart';
 import '../domain/model/device_search.dart';
 import '../domain/model/device_specs.dart';
@@ -196,7 +196,7 @@ class WeightsNotifier extends Notifier<TpWeights> with RestoreGuard {
 
   @override
   TpWeights build() {
-    unawaited(_restore());
+    _restored = _restore();
     // 미뤄둔 쓰기가 있으면 사라지기 전에 내보낸다.
     ref.onDispose(() {
       _saveTimer?.cancel();
@@ -205,6 +205,11 @@ class WeightsNotifier extends Notifier<TpWeights> with RestoreGuard {
     });
     return TpWeights.defaults;
   }
+
+  Future<void> _restored = Future<void>.value();
+
+  /// 복원이 끝났는지. 계정 병합이 기다린다.
+  Future<void> get ready => _restored;
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
@@ -273,6 +278,26 @@ class WeightsNotifier extends Notifier<TpWeights> with RestoreGuard {
   void reset() {
     TpAnalytics.weightsReset();
     set(TpWeights.defaults);
+  }
+
+  /// 계정의 값을 받아 쓴다. 사람이 고친 게 아니라 분석 이벤트는 없다.
+  Future<void> adopt(TpWeights next) async {
+    touch();
+    _saveTimer?.cancel();
+    _unsaved = null;
+    _pendingAxis = null;
+    state = next;
+    await _write(next);
+  }
+
+  /// 로그아웃 뒤. 기본값으로 돌리고 저장값을 지운다.
+  Future<void> clear() async {
+    touch();
+    _saveTimer?.cancel();
+    _unsaved = null;
+    _pendingAxis = null;
+    state = TpWeights.defaults;
+    await (await SharedPreferences.getInstance()).remove(_prefsKey);
   }
 }
 
@@ -441,9 +466,6 @@ final processorsInProvider =
 class ShortlistNotifier extends Notifier<List<String>> with RestoreGuard {
   static const String _prefsKey = 'shortlist_slugs';
 
-  /// 마지막으로 고친 시각. 계정에 올라간 것과 어느 쪽이 새로운지 가린다.
-  static const String _stampKey = 'shortlist_updated_at';
-
   @override
   List<String> build() {
     _restored = _restore();
@@ -469,22 +491,20 @@ class ShortlistNotifier extends Notifier<List<String>> with RestoreGuard {
     final slugs = state;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_prefsKey, slugs);
-    await prefs.setInt(_stampKey, DateTime.now().millisecondsSinceEpoch);
   }
 
-  /// 이 기기에서 마지막으로 고친 시각. 한 번도 안 건드렸으면 null.
-  Future<DateTime?> lastChanged() async {
-    final millis = (await SharedPreferences.getInstance()).getInt(_stampKey);
-    return millis == null ? null : DateTime.fromMillisecondsSinceEpoch(millis);
-  }
-
-  /// 계정에 올라가 있던 것을 그대로 받아 쓴다. 시각도 그쪽 것을 남긴다.
-  Future<void> adopt(List<String> slugs, DateTime at) async {
+  /// 계정의 목록을 받아 쓴다.
+  Future<void> adopt(List<String> slugs) async {
     touch();
     state = List<String>.unmodifiable(slugs);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_prefsKey, slugs);
-    await prefs.setInt(_stampKey, at.millisecondsSinceEpoch);
+    await _persist();
+  }
+
+  /// 로그아웃 뒤. 다음 사람에게 섞이지 않게 비운다.
+  Future<void> clear() async {
+    touch();
+    state = const <String>[];
+    await (await SharedPreferences.getInstance()).remove(_prefsKey);
   }
 
   bool contains(String slug) => state.contains(slug);
@@ -1055,14 +1075,36 @@ class RecentHitsNotifier extends Notifier<List<String>> with RestoreGuard {
 
   @override
   List<String> build() {
-    unawaited(_restore());
+    _restored = _restore();
     return const <String>[];
   }
+
+  Future<void> _restored = Future<void>.value();
+
+  /// 복원이 끝났는지. 계정 병합이 기다린다.
+  Future<void> get ready => _restored;
 
   Future<void> _restore() async {
     final prefs = await SharedPreferences.getInstance();
     if (!ref.mounted || touched) return;
     state = prefs.getStringList(_prefsKey) ?? const <String>[];
+  }
+
+  /// 계정의 목록을 받아 쓴다.
+  Future<void> adopt(List<String> keys) async {
+    touch();
+    state = List<String>.unmodifiable(keys.take(cap));
+    await (await SharedPreferences.getInstance()).setStringList(
+      _prefsKey,
+      state,
+    );
+  }
+
+  /// 로그아웃 뒤.
+  Future<void> clear() async {
+    touch();
+    state = const <String>[];
+    await (await SharedPreferences.getInstance()).remove(_prefsKey);
   }
 
   static String keyOf(SearchHit hit) => '${hit.kind.name}:${hit.slug}';
@@ -1224,14 +1266,20 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
   }
 }
 
-/// 계정의 서버 데이터를 지운다(계정 삭제 때). 계정 동기화가 채운다.
+/// 계정의 서버 데이터를 지운다(계정 삭제 때).
 final accountCleanupProvider = Provider<Future<void> Function(String uid)>(
-  (ref) => (uid) async {},
+  (ref) => ref.read(accountSyncServiceProvider).delete,
 );
 
-/// 이 기기의 계정 데이터를 기본값으로(로그아웃·삭제 뒤). 계정 동기화가 채운다.
+/// 이 기기의 계정 데이터를 기본값으로(로그아웃·삭제 뒤).
 final localAccountResetProvider = Provider<Future<void> Function()>(
-  (ref) => () async {},
+  (ref) => () async {
+    await Future.wait(<Future<void>>[
+      ref.read(shortlistProvider.notifier).clear(),
+      ref.read(weightsProvider.notifier).clear(),
+      ref.read(recentHitsProvider.notifier).clear(),
+    ]);
+  },
 );
 
 final currentUserProvider = NotifierProvider<CurrentUserNotifier, TpUser?>(
@@ -1524,78 +1572,178 @@ final offlineProvider = StreamProvider<bool>(
   retry: (_, _) => null,
 );
 
-/// 관심 목록을 계정에 올리고 내리는 곳.
-final shortlistSyncServiceProvider = Provider<ShortlistSyncService>(
-  (ref) => FirestoreShortlistSync(),
+/// 계정 데이터를 올리고 내리는 곳.
+final accountSyncServiceProvider = Provider<AccountSyncService>(
+  (ref) => FirestoreAccountSync(),
 );
 
-/// 로그인한 사람의 관심 목록을 기기 사이에서 맞춘다.
+/// 로그인한 사람의 관심 목록·가중치·최근 검색을 기기 사이에서 맞춘다.
 ///
-/// **계정 없이 쓰는 사람은 이 경로를 안 탄다.** 익명 로그인도 마찬가지다 —
-/// 익명 uid 는 설치마다 다르라 올려봐야 다시 못 찾는다.
+/// **계정 없이 쓰는 사람은 이 경로를 안 탄다.**
 ///
-/// 합집합으로 병합하지 않는다. 그러면 한 기기에서 지운 것이 다른 기기에서
-/// 되살아난다. 문서 하나를 통째로 놓고 **마지막에 고친 쪽이 이긴다.**
-class ShortlistSync extends Notifier<void> {
+/// 로그인하는 순간 한 번 합친다.
+/// - 관심 목록: 합집합. 계정 순서 먼저, 이 기기에만 있던 것을 뒤에.
+/// - 가중치: 계정에 있으면 계정 것, 없으면 이 기기 것을 올린다.
+/// - 최근 검색: 합집합. 이 기기 것이 더 최근이라 앞에, 최대 10.
+///
+/// 합집합이 지운 것을 되살리지 않는 건 로그아웃이 기기를 비우기 때문이다.
+/// 로그인한 동안은 snapshot 으로 계속 맞춰져 있다.
+class AccountSync extends Notifier<void> {
   /// 병합이 끝난 계정. 끝나기 전에 올리면 원격을 낡은 것으로 덮는다.
-  final Set<String> _merged = <String>{};
+  String? _merged;
+  StreamSubscription<AccountState>? _watch;
+
+  /// 가중치는 슬라이더가 픽셀마다 바꾼다. 손을 뗀 뒤 한 번 올린다.
+  static const Duration weightsDelay = Duration(milliseconds: 800);
+  Timer? _weightsTimer;
+
+  // 마지막으로 계정과 맞춘 값. 같은 걸 다시 올리거나 받지 않는다.
+  List<String>? _shortlist;
+  TpWeights? _weights;
+  List<String>? _recents;
+
+  AccountSyncService get _service => ref.read(accountSyncServiceProvider);
 
   @override
   void build() {
+    ref.onDispose(_stop);
+
     ref.listen(currentUserProvider, (previous, next) {
-      if (next == null) return;
-      if (next.uid == previous?.uid) return;
-      unawaited(_merge(next.uid));
+      if (next?.uid == _merged && next != null) return;
+      _stop();
+      if (next != null) unawaited(_merge(next.uid));
     }, fireImmediately: true);
 
-    ref.listen(shortlistProvider, (previous, next) {
-      // 첫 값은 저장값을 복원한 것이다. 사람이 고친 게 아니다.
-      if (previous == null) return;
-      final user = ref.read(currentUserProvider);
-      if (user == null) return;
-      if (!_merged.contains(user.uid)) return;
-      unawaited(_push(user.uid, next));
+    ref.listen(shortlistProvider, (_, next) {
+      final uid = _merged;
+      if (uid == null || _same(next, _shortlist)) return;
+      _shortlist = next;
+      unawaited(_push('shortlist', () => _service.writeShortlist(uid, next)));
+    });
+
+    ref.listen(weightsProvider, (_, next) {
+      final uid = _merged;
+      if (uid == null || next == _weights) return;
+      _weightsTimer?.cancel();
+      _weightsTimer = Timer(weightsDelay, () {
+        _weights = next;
+        unawaited(_push('weights', () => _service.writeWeights(uid, next)));
+      });
+    });
+
+    ref.listen(recentHitsProvider, (_, next) {
+      final uid = _merged;
+      if (uid == null || _same(next, _recents)) return;
+      _recents = next;
+      unawaited(_push('recents', () => _service.writeRecents(uid, next)));
     });
   }
 
-  Future<void> _merge(String uid) async {
-    final service = ref.read(shortlistSyncServiceProvider);
-    final shortlist = ref.read(shortlistProvider.notifier);
-    try {
-      // 복원 전에 읽으면 빈 목록을 이 기기의 최신 상태로 착각해 계정을 덮는다.
-      await shortlist.ready;
-      final remote = await service.read(uid);
-      final localAt = await shortlist.lastChanged();
-      if (!ref.mounted) return;
+  void _stop() {
+    _merged = null;
+    _weightsTimer?.cancel();
+    _weightsTimer = null;
+    unawaited(_watch?.cancel());
+    _watch = null;
+    _shortlist = null;
+    _weights = null;
+    _recents = null;
+  }
 
-      if (remote != null &&
-          (localAt == null || remote.updatedAt.isAfter(localAt))) {
-        await shortlist.adopt(remote.slugs, remote.updatedAt);
-      } else {
-        await service.write(
-          uid,
-          ref.read(shortlistProvider),
-          localAt ?? DateTime.now(),
-        );
-      }
-      _merged.add(uid);
+  static bool _same(List<String> a, List<String>? b) {
+    if (b == null || a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  static List<String> _union(List<String> first, List<String> then) => <String>[
+    ...first,
+    ...then.where((s) => !first.contains(s)),
+  ];
+
+  Future<void> _merge(String uid) async {
+    final shortlist = ref.read(shortlistProvider.notifier);
+    final weights = ref.read(weightsProvider.notifier);
+    final recents = ref.read(recentHitsProvider.notifier);
+    try {
+      // 복원 전에 읽으면 빈 목록을 이 기기의 상태로 착각한다.
+      await Future.wait(<Future<void>>[
+        shortlist.ready,
+        weights.ready,
+        recents.ready,
+      ]);
+      final remote = await _service.read(uid);
+      if (!ref.mounted || ref.read(currentUserProvider)?.uid != uid) return;
+
+      final nextShortlist = _union(
+        remote.shortlist ?? const <String>[],
+        ref.read(shortlistProvider),
+      );
+      final TpWeights nextWeights = remote.weights ?? ref.read(weightsProvider);
+      final nextRecents = _union(
+        ref.read(recentHitsProvider),
+        remote.recents ?? const <String>[],
+      ).take(RecentHitsNotifier.cap).toList(growable: false);
+
+      _shortlist = nextShortlist;
+      _weights = nextWeights;
+      _recents = nextRecents;
+      await Future.wait(<Future<void>>[
+        shortlist.adopt(nextShortlist),
+        if (remote.weights != null) weights.adopt(nextWeights),
+        recents.adopt(nextRecents),
+        if (!_same(nextShortlist, remote.shortlist))
+          _service.writeShortlist(uid, nextShortlist),
+        if (remote.weights == null) _service.writeWeights(uid, nextWeights),
+        if (!_same(nextRecents, remote.recents))
+          _service.writeRecents(uid, nextRecents),
+      ]);
+      if (!ref.mounted || ref.read(currentUserProvider)?.uid != uid) return;
+      _merged = uid;
+      _watch = _service.watch(uid).listen(_onRemote, onError: _onWatchError);
     } catch (e, s) {
       // 못 맞춰도 로컬은 그대로 돈다. 다음 로그인에 다시 시도한다.
-      TpErrors.record(e, s, reason: 'shortlist.merge');
+      TpErrors.record(e, s, reason: 'account.merge');
     }
   }
 
-  Future<void> _push(String uid, List<String> slugs) async {
+  /// 다른 기기에서 바뀐 것.
+  void _onRemote(AccountState remote) {
+    if (!ref.mounted || _merged == null) return;
+    final shortlist = remote.shortlist;
+    if (shortlist != null && !_same(shortlist, ref.read(shortlistProvider))) {
+      _shortlist = shortlist;
+      unawaited(ref.read(shortlistProvider.notifier).adopt(shortlist));
+    }
+    final weights = remote.weights;
+    // 끄는 중이면 사람이 이긴다. 손을 떼면 그 값이 올라간다.
+    if (weights != null &&
+        _weightsTimer?.isActive != true &&
+        weights != ref.read(weightsProvider)) {
+      _weights = weights;
+      unawaited(ref.read(weightsProvider.notifier).adopt(weights));
+    }
+    final recents = remote.recents;
+    if (recents != null && !_same(recents, ref.read(recentHitsProvider))) {
+      _recents = recents;
+      unawaited(ref.read(recentHitsProvider.notifier).adopt(recents));
+    }
+  }
+
+  void _onWatchError(Object e, StackTrace s) =>
+      TpErrors.record(e, s, reason: 'account.watch');
+
+  Future<void> _push(String what, Future<void> Function() write) async {
     try {
-      await ref
-          .read(shortlistSyncServiceProvider)
-          .write(uid, slugs, DateTime.now());
+      await write();
     } catch (e, s) {
-      TpErrors.record(e, s, reason: 'shortlist.push');
+      TpErrors.record(e, s, reason: 'account.push.$what');
     }
   }
 }
 
-final shortlistSyncProvider = NotifierProvider<ShortlistSync, void>(
-  ShortlistSync.new,
+final accountSyncProvider = NotifierProvider<AccountSync, void>(
+  AccountSync.new,
 );
