@@ -12,7 +12,7 @@ class TpShimmer extends StatefulWidget {
   final Widget child;
 
   /// 한 번 지나가는 시간. 사이에 쉬는 시간까지 포함한다.
-  static const Duration period = Duration(milliseconds: 1600);
+  static const Duration period = Duration(milliseconds: 2000);
 
   @override
   State<TpShimmer> createState() => _TpShimmerState();

@@ -144,36 +144,42 @@ class TpMotion extends ThemeExtension<TpMotion> {
 
   /// iOS. 짧고 감속 위주.
   factory TpMotion.ios() => const TpMotion(
-    press: TpMove(Duration(milliseconds: 90), Curves.easeOutCubic),
-    selection: TpMove(Duration(milliseconds: 180), Curves.easeOutCubic),
-    reorder: TpMove(Duration(milliseconds: 220), specCurve),
-    reveal: TpMove(Duration(milliseconds: 240), specCurve),
-    valueChange: TpMove(Duration(milliseconds: 220), Curves.easeOutCubic),
-    contentSwap: TpMove(Duration(milliseconds: 200), Curves.easeInOut),
-    listItem: TpMove(Duration(milliseconds: 250), Curves.easeOutCubic),
-    // SwiftUI 의 .snappy / .bouncy / .smooth 와 같은 값. 끝에서는 목표값에
-    // 딱 맞춘다 — 안 그러면 막대가 목표보다 0.0001 모자란 채 멈춘다.
+    press: TpMove(Duration(milliseconds: 120), Curves.easeOutCubic),
+    selection: TpMove(Duration(milliseconds: 280), Curves.easeOutCubic),
+    reorder: TpMove(Duration(milliseconds: 380), specCurve),
+    reveal: TpMove(Duration(milliseconds: 380), specCurve),
+    valueChange: TpMove(Duration(milliseconds: 380), Curves.easeOutCubic),
+    contentSwap: TpMove(Duration(milliseconds: 320), Curves.easeInOut),
+    listItem: TpMove(Duration(milliseconds: 420), Curves.easeOutCubic),
+    // SwiftUI 의 .snappy / .bouncy / .smooth 모양에 시간을 늘렸다. 끝에서는
+    // 목표값에 딱 맞춘다 — 안 그러면 막대가 목표보다 0.0001 모자란 채 멈춘다.
     snappy: CupertinoMotion.snappy(
-      duration: Duration(milliseconds: 350),
+      duration: Duration(milliseconds: 500),
       snapToEnd: true,
     ),
-    bouncy: CupertinoMotion.bouncy(snapToEnd: true),
-    smooth: CupertinoMotion.smooth(snapToEnd: true),
+    bouncy: CupertinoMotion.bouncy(
+      duration: Duration(milliseconds: 700),
+      snapToEnd: true,
+    ),
+    smooth: CupertinoMotion.smooth(
+      duration: Duration(milliseconds: 800),
+      snapToEnd: true,
+    ),
   );
 
   /// Android Material 3.
   factory TpMotion.android() => const TpMotion(
-    press: TpMove(Duration(milliseconds: 90), Easing.standard),
-    selection: TpMove(Durations.short4, Easing.standard),
-    reorder: TpMove(Duration(milliseconds: 220), specCurve),
-    reveal: TpMove(Duration(milliseconds: 240), specCurve),
-    valueChange: TpMove(Durations.medium1, Easing.standard),
-    contentSwap: TpMove(Durations.medium2, Easing.emphasizedDecelerate),
-    listItem: TpMove(Durations.medium1, Easing.emphasizedDecelerate),
-    // M3 Expressive 스프링 토큰.
-    snappy: MaterialSpringMotion.standardSpatialFast(snapToEnd: true),
-    bouncy: MaterialSpringMotion.expressiveSpatialFast(snapToEnd: true),
-    smooth: MaterialSpringMotion.standardSpatialDefault(snapToEnd: true),
+    press: TpMove(Duration(milliseconds: 120), Easing.standard),
+    selection: TpMove(Durations.medium2, Easing.standard),
+    reorder: TpMove(Duration(milliseconds: 380), specCurve),
+    reveal: TpMove(Duration(milliseconds: 380), specCurve),
+    valueChange: TpMove(Durations.medium4, Easing.standard),
+    contentSwap: TpMove(Durations.long1, Easing.emphasizedDecelerate),
+    listItem: TpMove(Durations.medium4, Easing.emphasizedDecelerate),
+    // M3 Expressive 스프링 토큰, 한 단계 느린 것.
+    snappy: MaterialSpringMotion.standardSpatialDefault(snapToEnd: true),
+    bouncy: MaterialSpringMotion.expressiveSpatialDefault(snapToEnd: true),
+    smooth: MaterialSpringMotion.standardSpatialSlow(snapToEnd: true),
   );
 
   /// 모든 시간을 0 으로. 손쉬운 사용에서 동작을 줄였을 때.
