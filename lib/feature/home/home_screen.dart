@@ -461,6 +461,48 @@ class _EmptyShortlist extends StatelessWidget {
   }
 }
 
+/// 접히고 나서 빠지는 행. [builder] 가 받은 함수를 부르면 접기 시작한다.
+class _Collapsing extends StatefulWidget {
+  const _Collapsing({required this.builder, this.onRemoved});
+
+  final Widget Function(BuildContext context, VoidCallback collapse) builder;
+  final VoidCallback? onRemoved;
+
+  @override
+  State<_Collapsing> createState() => _CollapsingState();
+}
+
+class _CollapsingState extends State<_Collapsing>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    value: 1,
+  );
+
+  Future<void> _collapse() async {
+    final move = context.motion.listItem;
+    if (move.duration > Duration.zero) {
+      await _c.animateTo(0, duration: move.duration, curve: move.curve);
+    }
+    if (mounted) widget.onRemoved?.call();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => SizeTransition(
+    sizeFactor: _c,
+    child: FadeTransition(
+      opacity: _c,
+      child: widget.builder(context, _collapse),
+    ),
+  );
+}
+
 class _ShortlistRow extends ConsumerWidget {
   const _ShortlistRow({
     super.key,
@@ -534,49 +576,53 @@ class _ShortlistRow extends ConsumerWidget {
     if (!glass) return swipeable;
 
     // 길게 누르면 iOS 컨텍스트 메뉴. 지우기는 메뉴 안에서, 빨간 글자로.
-    return CupertinoContextMenu.builder(
-      enableHapticFeedback: true,
-      actions: <Widget>[
-        if (onCompare != null)
+    // 메뉴로 지우면 행이 접힌 뒤에 빠진다. 밀어서 지우기는 Dismissible 이 접는다.
+    return _Collapsing(
+      onRemoved: onRemove,
+      builder: (context, collapse) => CupertinoContextMenu.builder(
+        enableHapticFeedback: true,
+        actions: <Widget>[
+          if (onCompare != null)
+            CupertinoContextMenuAction(
+              trailingIcon: CupertinoIcons.arrow_right_arrow_left,
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).pop();
+                onCompare!();
+              },
+              child: Text(K.compareButton.tr()),
+            ),
+          if (onAskWhy != null)
+            CupertinoContextMenuAction(
+              trailingIcon: CupertinoIcons.sparkles,
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).pop();
+                onAskWhy!();
+              },
+              child: Text(K.askWhy.tr()),
+            ),
           CupertinoContextMenuAction(
-            trailingIcon: CupertinoIcons.arrow_right_arrow_left,
+            isDestructiveAction: true,
+            trailingIcon: CupertinoIcons.delete,
             onPressed: () {
               Navigator.of(context, rootNavigator: true).pop();
-              onCompare!();
+              collapse();
             },
-            child: Text(K.compareButton.tr()),
+            child: Text(K.removeShort.tr()),
           ),
-        if (onAskWhy != null)
-          CupertinoContextMenuAction(
-            trailingIcon: CupertinoIcons.sparkles,
-            onPressed: () {
-              Navigator.of(context, rootNavigator: true).pop();
-              onAskWhy!();
-            },
-            child: Text(K.askWhy.tr()),
-          ),
-        CupertinoContextMenuAction(
-          isDestructiveAction: true,
-          trailingIcon: CupertinoIcons.delete,
-          onPressed: () {
-            Navigator.of(context, rootNavigator: true).pop();
-            onRemove?.call();
-          },
-          child: Text(K.removeShort.tr()),
-        ),
-      ],
-      builder: (context, animation) => animation.value > 0
-          ? FittedBox(
-              fit: BoxFit.scaleDown,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(TpGroup.radius),
-                child: SizedBox(
-                  width: MediaQuery.sizeOf(context).width - 32,
-                  child: Material(color: sys.cell, child: row),
+        ],
+        builder: (context, animation) => animation.value > 0
+            ? FittedBox(
+                fit: BoxFit.scaleDown,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(TpGroup.radius),
+                  child: SizedBox(
+                    width: MediaQuery.sizeOf(context).width - 32,
+                    child: Material(color: sys.cell, child: row),
+                  ),
                 ),
-              ),
-            )
-          : swipeable,
+              )
+            : swipeable,
+      ),
     );
   }
 }
