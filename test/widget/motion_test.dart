@@ -160,16 +160,25 @@ void main() {
   group('스프링', () {
     test('iOS 는 SwiftUI 프리셋과 같다', () {
       final m = motionOf(TpChrome.ios);
-      expect(m.bouncy, const CupertinoMotion.bouncy());
-      expect(m.smooth, const CupertinoMotion.smooth());
+      expect(m.bouncy, const CupertinoMotion.bouncy(snapToEnd: true));
+      expect(m.smooth, const CupertinoMotion.smooth(snapToEnd: true));
       expect((m.snappy as CupertinoMotion).bounce, closeTo(.15, 1e-9));
     });
 
     test('Android 는 M3 Expressive 토큰', () {
       final m = motionOf(TpChrome.android);
-      expect(m.snappy, const MaterialSpringMotion.standardSpatialFast());
-      expect(m.bouncy, const MaterialSpringMotion.expressiveSpatialFast());
-      expect(m.smooth, const MaterialSpringMotion.standardSpatialDefault());
+      expect(
+        m.snappy,
+        const MaterialSpringMotion.standardSpatialFast(snapToEnd: true),
+      );
+      expect(
+        m.bouncy,
+        const MaterialSpringMotion.expressiveSpatialFast(snapToEnd: true),
+      );
+      expect(
+        m.smooth,
+        const MaterialSpringMotion.standardSpatialDefault(snapToEnd: true),
+      );
     });
 
     for (final chrome in TpChrome.values) {
