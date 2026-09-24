@@ -151,7 +151,12 @@ GoRouter buildRouter(Ref ref) {
                   onAskWhy: () => context.push(TpRoute.ask),
                   onMoversTap: () => context.go(TpRoute.browse),
                   onYou: () => context.push(TpRoute.you),
-                  onAsk: () => context.push(TpRoute.ask),
+                  onAsk: () {
+                    ProviderScope.containerOf(
+                      context,
+                    ).read(askTopicProvider.notifier).set(null);
+                    context.push(TpRoute.ask);
+                  },
                   onWeights: () => context.push(TpRoute.you),
                   onCompareDevice: (slug) {
                     ProviderScope.containerOf(

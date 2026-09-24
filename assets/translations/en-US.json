@@ -43,6 +43,7 @@
   "brandFounded": "Founded {}",
   "brandSite": "Website",
   "cancel": "Cancel",
+  "close": "Close",
   "catalogFailedBody": "Reading the bundled list failed. Try again.",
   "catalogFailedTitle": "Could not load the device list",
   "changePhoto": "Change photo",
