@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
@@ -16,6 +17,7 @@ import '../support/harness.dart';
 /// 연 비교가 몇 프레임 뒤 기본값으로 덮였다.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
   ({ProviderContainer container, Completer<Catalog> catalog}) boot() {
     final catalog = Completer<Catalog>();
@@ -55,6 +57,29 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     final ranked = readRanking();
+    final slots = container.read(compareProvider);
+    expect(slots.a, ranked[0].device.slug);
+    expect(slots.b, ranked[1].device.slug);
+  });
+
+  test('관심 목록에 둘이 있으면 그 둘을 지수 순으로 채운다', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['iphone-16-pro-max', 'galaxy-s25-ultra'],
+    });
+    final (:container, :catalog) = boot();
+    container.read(compareProvider);
+    catalog.complete(readCatalog());
+    await container.read(catalogProvider.future);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    final ranked = readRanking()
+        .where(
+          (r) => <String>[
+            'iphone-16-pro-max',
+            'galaxy-s25-ultra',
+          ].contains(r.device.slug),
+        )
+        .toList();
     final slots = container.read(compareProvider);
     expect(slots.a, ranked[0].device.slug);
     expect(slots.b, ranked[1].device.slug);
