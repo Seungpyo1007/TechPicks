@@ -51,6 +51,13 @@ flutter test
 
 Firebase 설정이 없어도 앱은 뜬다. 로그인만 안 되고 랭킹·비교·상담은 다 된다.
 
+### 로그인
+
+로그인은 선택이다(Apple · Google · 이메일). 로그인하면 관심 목록·가중치·최근 검색이 `users/{uid}/state/*` 로 동기화된다.
+
+- Android Google 로그인은 웹 클라이언트 ID 가 필요하다: `flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=<id>.apps.googleusercontent.com`. 없으면 버튼이 숨는다.
+- 규칙 배포: `firebase deploy --only firestore:rules,storage`.
+
 ## 라이선스
 
 [Apache License 2.0](LICENSE). 기기 데이터는 TechAPI 의 CC-BY-SA 4.0 을 따른다.
