@@ -1,14 +1,14 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_motion.dart';
+import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
-import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
-import '../../shared/widgets/tp_press.dart';
-import '../../shared/widgets/tp_tap_target.dart';
-import '../../app/theme/tp_icons.dart';
+import '../../shared/widgets/tp_group.dart';
+import '../../shared/widgets/tp_page.dart';
 
 /// 3D 뷰어.
 ///
@@ -40,110 +40,154 @@ class ViewerScreen extends StatefulWidget {
 class _ViewerScreenState extends State<ViewerScreen> {
   int? _highlighted;
 
+  void _pick(int i) {
+    HapticFeedback.selectionClick();
+    setState(() => _highlighted = _highlighted == i ? null : i);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final type = context.tpText;
+    final glass = context.tp.isGlass;
+    final safe = MediaQuery.viewPaddingOf(context);
+    final minTap = glass ? 44.0 : 48.0;
 
-    return TpShell(
-      mode: TpChromeMode.takeover,
+    final close = glass
+        ? TpBarButton(
+            action: TpBarAction(
+              label: K.close.tr(),
+              onTap: widget.onBack,
+              child: const Icon(
+                CupertinoIcons.xmark,
+                size: 20,
+                color: Colors.white,
+              ),
+            ),
+          )
+        : IconButton(
+            onPressed: widget.onBack,
+            tooltip: K.close.tr(),
+            color: Colors.white,
+            icon: const Icon(Icons.close),
+          );
+
+    // 어두운 바탕이라 상태 바 글자는 흰색. v2 에서는 밝은 화면의 값이 남아
+    // 검은 글자가 검은 바탕 위에 떴다.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
       child: ColoredBox(
         color: ViewerScreen.background,
-        child: Stack(
-          children: <Widget>[
-            Positioned.fill(
-              child: Column(
-                children: <Widget>[
-                  Expanded(
-                    child: Center(child: _Stage(highlighted: _highlighted)),
-                  ),
-                  SizedBox(
-                    height: 46,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: ViewerScreen.partKeys.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (context, i) {
-                        final on = _highlighted == i;
-                        return Semantics(
-                          button: true,
-                          selected: on,
-                          // decoration: 으로 칠한 상자는 히트 테스트에 안 잡힌다. 이게 없으면
-                          // 버튼이 글자 글리프 위에서만 눌린다.
-                          child: _PressedChip(
-                            onTap: () =>
-                                setState(() => _highlighted = on ? null : i),
-                            // 다크 인수 화면이라 TpChip 의 밝은 팔레트를 못
-                            // 쓴다. 대신 같은 전환 시간을 쓴다.
-                            child: AnimatedContainer(
-                              duration: context.motion.selection.duration,
-                              curve: context.motion.selection.curve,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 9,
-                              ),
-                              decoration: BoxDecoration(
-                                color: on
-                                    ? TpTokens.blue
-                                    : Colors.white.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(
-                                  TpTokens.rControl,
-                                ),
-                              ),
-                              child: Text(
-                                ViewerScreen.partKeys[i].tr(),
-                                style: type.body.copyWith(
-                                  fontSize: 13.5,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: Text(
-                      K.viewerNote.tr(),
-                      style: type.caption.copyWith(color: Colors.white54),
-                    ),
-                  ),
-                  SizedBox(
-                    height: MediaQuery.viewPaddingOf(context).bottom + 16,
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              top: MediaQuery.viewPaddingOf(context).top + 8,
-              left: 8,
-              right: 16,
-              child: Row(
-                children: <Widget>[
-                  TpTapTarget(
-                    onTap: widget.onBack,
-                    label: K.back.tr(),
-                    child: Icon(
-                      context.icons.back,
-                      color: Colors.white,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: Text(
+        child: Material(
+          type: MaterialType.transparency,
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, safe.top + 8, 16, 0),
+                child: SizedBox(
+                  height: glass ? 44 : 56,
+                  child: NavigationToolbar(
+                    leading: close,
+                    middle: Text(
                       widget.deviceName,
-                      style: type.cardTitle.copyWith(color: Colors.white),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ],
+                ),
+              ),
+              Expanded(
+                child: Center(child: _Stage(highlighted: _highlighted)),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: <Widget>[
+                    for (var i = 0; i < ViewerScreen.partKeys.length; i++)
+                      _PartChip(
+                        label: ViewerScreen.partKeys[i].tr(),
+                        selected: _highlighted == i,
+                        minHeight: minTap,
+                        onTap: () => _pick(i),
+                      ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                child: Text(
+                  K.viewerNote.tr(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.35,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
+              SizedBox(height: safe.bottom + 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 부품 칩. 고른 것만 액센트로 채운다.
+class _PartChip extends StatelessWidget {
+  const _PartChip({
+    required this.label,
+    required this.selected,
+    required this.minHeight,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final double minHeight;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final move = context.motion.selection;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      excludeSemantics: true,
+      onTap: onTap,
+      child: TpTappable(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: move.duration,
+          curve: move.curve,
+          constraints: BoxConstraints(minHeight: minHeight),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: selected
+                ? TpSys.accent
+                : Colors.white.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(minHeight / 2),
+          ),
+          child: Align(
+            widthFactor: 1,
+            heightFactor: 1,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -226,58 +270,23 @@ class _WireframePainter extends CustomPainter {
 
     for (var i = 0; i < regions.length; i++) {
       final on = highlighted == i;
+      final r = RRect.fromRectAndRadius(regions[i], const Radius.circular(10));
+      if (on) {
+        canvas.drawRRect(
+          r,
+          Paint()..color = TpSys.accent.withValues(alpha: 0.30),
+        );
+      }
       canvas.drawRRect(
-        RRect.fromRectAndRadius(regions[i], const Radius.circular(10)),
+        r,
         Paint()
-          ..style = on ? PaintingStyle.fill : PaintingStyle.stroke
-          ..strokeWidth = 1
-          ..color = on
-              ? TpTokens.blue.withValues(alpha: 0.45)
-              : Colors.white.withValues(alpha: 0.14),
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = on ? 1.5 : 1
+          ..color = on ? TpSys.accent : Colors.white.withValues(alpha: 0.14),
       );
     }
   }
 
   @override
   bool shouldRepaint(_WireframePainter old) => old.highlighted != highlighted;
-}
-
-/// 어두운 인수 화면의 칩. 눌리면 알약들과 같은 박자로 줄어든다.
-///
-/// 여기만 [TpChip] 을 못 쓴다 — 밝은 팔레트가 검은 배경에서 안 맞는다.
-/// 그래서 눌림 반응만 [TpPressFeel] 로 맞춘다.
-class _PressedChip extends StatefulWidget {
-  const _PressedChip({required this.onTap, required this.child});
-
-  final VoidCallback onTap;
-  final Widget child;
-
-  @override
-  State<_PressedChip> createState() => _PressedChipState();
-}
-
-class _PressedChipState extends State<_PressedChip> {
-  bool _pressed = false;
-
-  void _set(bool value) {
-    if (_pressed != value) setState(() => _pressed = value);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final move = TpPressFeel.move(context, pressed: _pressed);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: widget.onTap,
-      onTapDown: (_) => _set(true),
-      onTapUp: (_) => _set(false),
-      onTapCancel: () => _set(false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1,
-        duration: move.duration,
-        curve: move.curve,
-        child: widget.child,
-      ),
-    );
-  }
 }

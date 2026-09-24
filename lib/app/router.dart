@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart' show CupertinoSheetRoute;
+import 'package:flutter/cupertino.dart' show CupertinoPage, CupertinoSheetRoute;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -293,10 +293,20 @@ GoRouter buildRouter(Ref ref) {
         builder: (context, state) =>
             _Detail(slug: state.pathParameters['slug']!),
         routes: <RouteBase>[
+          // 전체 화면 모달. 아래에서 올라오고 X 로 닫는다.
           GoRoute(
             path: '3d',
-            builder: (context, state) =>
-                _Viewer(slug: state.pathParameters['slug']!),
+            pageBuilder: (context, state) => context.tp.isGlass
+                ? CupertinoPage<void>(
+                    key: state.pageKey,
+                    fullscreenDialog: true,
+                    child: _Viewer(slug: state.pathParameters['slug']!),
+                  )
+                : MaterialPage<void>(
+                    key: state.pageKey,
+                    fullscreenDialog: true,
+                    child: _Viewer(slug: state.pathParameters['slug']!),
+                  ),
           ),
         ],
       ),
