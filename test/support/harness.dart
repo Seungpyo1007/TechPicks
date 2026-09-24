@@ -23,6 +23,8 @@ import 'package:techpicks/data/repository/parts_repository.dart';
 import 'package:techpicks/domain/model/ranking.dart';
 import 'package:techpicks/domain/model/tp_weights.dart';
 
+import 'fake_account_sync.dart';
+
 /// 애셋을 파일에서 그대로 읽는 번들.
 ///
 /// `tool/build_catalog.dart` 가 구운 실제 카탈로그를 테스트가 그대로 쓴다.
@@ -238,6 +240,7 @@ Future<void> _pump(
         laptopRepositoryProvider.overrideWithValue(
           LaptopRepository(bundle: FileBundle()),
         ),
+        accountSyncServiceProvider.overrideWithValue(FakeAccountSync()),
         ...overrides,
       ],
       child: MaterialApp(
@@ -279,7 +282,7 @@ Future<ProviderContainer> pumpApp(
   bool settle = true,
   bool onboarded = true,
 }) async {
-  // 온보딩·로그인 게이트는 이제 라우터의 redirect 에 있다. 대부분의 테스트는
+  // 온보딩 게이트는 라우터의 redirect 에 있다. 대부분의 테스트는
   // **그 뒤의 앱**을 보므로 기본으로 지나 있게 둔다. 게이트 자체를 보는
   // 테스트(startup_test)만 false 를 준다.
   //
@@ -287,7 +290,6 @@ Future<ProviderContainer> pumpApp(
   if (onboarded) {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_tutorial_completed', true);
-    await prefs.setBool('browsing_as_guest', true);
   }
 
   tester.view.physicalSize = size;
@@ -301,6 +303,7 @@ Future<ProviderContainer> pumpApp(
       catalogRepositoryProvider.overrideWithValue(
         CatalogRepository(bundle: FileBundle(), assetPath: catalogAsset),
       ),
+      accountSyncServiceProvider.overrideWithValue(FakeAccountSync()),
       ...overrides,
     ],
   );

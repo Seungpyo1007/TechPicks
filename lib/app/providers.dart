@@ -1286,6 +1286,35 @@ final currentUserProvider = NotifierProvider<CurrentUserNotifier, TpUser?>(
   CurrentUserNotifier.new,
 );
 
+/// 로그인 안 한 사람이 처음 관심 목록에 담았을 때 **한 번만** 권한다.
+///
+/// 상태는 권한 기기의 slug. 그 상세 화면에만 뜬다. 닫거나 로그인하면 null.
+class LoginPromptNotifier extends Notifier<String?> {
+  static const String _prefsKey = 'login_prompt_seen';
+
+  @override
+  String? build() {
+    ref.listen(currentUserProvider, (_, next) {
+      if (next != null) state = null;
+    });
+    return null;
+  }
+
+  Future<void> offer(String slug) async {
+    if (ref.read(currentUserProvider) != null) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_prefsKey) ?? false) return;
+    await prefs.setBool(_prefsKey, true);
+    if (ref.mounted) state = slug;
+  }
+
+  void dismiss() => state = null;
+}
+
+final loginPromptProvider = NotifierProvider<LoginPromptNotifier, String?>(
+  LoginPromptNotifier.new,
+);
+
 /// 온보딩을 봤는지. v1 의 is_tutorial_completed 키를 그대로 쓴다.
 class OnboardingNotifier extends Notifier<bool?> with RestoreGuard {
   static const String _prefsKey = 'is_tutorial_completed';

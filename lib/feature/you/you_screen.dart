@@ -13,18 +13,20 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../app/locale_controller.dart';
 import '../../core/error_reporter.dart';
+import '../../data/service/auth_service.dart';
 import '../../data/service/link_opener.dart';
 import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
+import '../login/login_sheet.dart' show authMessage;
 import 'profile_edit_screen.dart';
 import 'sources_screen.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
+import '../../shared/tp_haptics.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_menu.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_button.dart';
-import '../../shared/widgets/tp_pressable.dart';
 import '../../shared/widgets/tp_sheet.dart';
 import '../../shared/widgets/tp_slider.dart';
 import '../../shared/widgets/tp_switch.dart';
@@ -36,6 +38,8 @@ class YouScreen extends ConsumerStatefulWidget {
     super.key,
     this.name,
     this.email,
+    this.method,
+    this.emailVerified = true,
     this.onEditProfile,
     this.onChangePassword,
     this.onLogout,
@@ -55,6 +59,12 @@ class YouScreen extends ConsumerStatefulWidget {
   /// 로그인 전에는 둘 다 null 이다. 인증 연결은 로그인 화면에서 한다.
   final String? name;
   final String? email;
+
+  /// 어떻게 로그인했는지. 이메일 가입만 비밀번호를 바꿀 수 있다.
+  final AuthMethod? method;
+
+  /// 이메일 가입인데 아직 확인 링크를 안 눌렀으면 false.
+  final bool emailVerified;
 
   final VoidCallback? onEditProfile;
   final VoidCallback? onChangePassword;
@@ -128,18 +138,34 @@ class _YouScreenState extends ConsumerState<YouScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const SizedBox(height: 8),
-              TpGroup(
-                children: <Widget>[
-                  _ProfileHeader(
-                    photoUrl: ref.watch(profileProvider).value?.photoUrl,
-                    name: name,
-                    email: email,
-                    onEdit: hasAccount
-                        ? widget.onEditProfile ?? _openProfile
-                        : null,
-                  ),
-                ],
-              ),
+              if (hasAccount)
+                TpGroup(
+                  footer: _notice,
+                  children: <Widget>[
+                    _ProfileHeader(
+                      photoUrl: ref.watch(profileProvider).value?.photoUrl,
+                      name: name,
+                      email: email,
+                      method: widget.method,
+                      onEdit: widget.onEditProfile ?? _openProfile,
+                    ),
+                    if (!widget.emailVerified)
+                      TpRow(
+                        title: K.verifyEmail.tr(),
+                        titleStyle: TextStyle(color: sys.label2),
+                        chevron: false,
+                        trailing: _Link(
+                          label: K.resend.tr(),
+                          onTap: () => unawaited(_resendVerification()),
+                        ),
+                      ),
+                  ],
+                )
+              else
+                TpGroup(
+                  footer: _notice,
+                  children: <Widget>[_SignedOut(onSignIn: widget.onSignIn)],
+                ),
               TpGroup(
                 header: K.priorities.tr(),
                 footer: K.prioritiesNote.tr(),
@@ -227,40 +253,48 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 ],
               ),
               TpGroup(
-                footer: _notice,
                 children: <Widget>[
                   _SettingRow(
                     label: K.sources.tr(),
                     onTap: widget.onSources ?? _openSources,
                   ),
-                  if (email != null && email!.isNotEmpty)
+                ],
+              ),
+              if (hasAccount)
+                TpGroup(
+                  header: K.account.tr(),
+                  children: <Widget>[
                     _SettingRow(
-                      label: K.changePassword.tr(),
-                      onTap:
-                          widget.onChangePassword ??
-                          () => unawaited(_resetPassword()),
+                      label: K.editProfile.tr(),
+                      onTap: widget.onEditProfile ?? _openProfile,
                     ),
-                ],
-              ),
-              TpGroup(
-                children: <Widget>[
-                  TpRow(
-                    title: (hasAccount ? K.logout : K.signIn).tr(),
-                    destructive: hasAccount,
-                    titleStyle: hasAccount
-                        ? null
-                        : TextStyle(color: sys.accentText),
-                    chevron: false,
-                    onTap: hasAccount
-                        ? (widget.onLogout == null
-                              ? null
-                              : () => unawaited(
-                                  _confirmLogout(context, widget.onLogout!),
-                                ))
-                        : widget.onSignIn,
-                  ),
-                ],
-              ),
+                    if ((widget.method ?? AuthMethod.email) ==
+                            AuthMethod.email &&
+                        (email?.isNotEmpty ?? false))
+                      _SettingRow(
+                        label: K.changePassword.tr(),
+                        onTap:
+                            widget.onChangePassword ??
+                            () => unawaited(_resetPassword()),
+                      ),
+                    TpRow(
+                      title: K.logout.tr(),
+                      destructive: true,
+                      chevron: false,
+                      onTap: widget.onLogout == null
+                          ? null
+                          : () => unawaited(
+                              _confirmLogout(context, widget.onLogout!),
+                            ),
+                    ),
+                    TpRow(
+                      title: K.deleteAccount.tr(),
+                      destructive: true,
+                      chevron: false,
+                      onTap: () => unawaited(_deleteAccount()),
+                    ),
+                  ],
+                ),
               Center(
                 child: _Link(
                   label: YouScreen.versionLine,
@@ -301,6 +335,37 @@ class _YouScreenState extends ConsumerState<YouScreen> {
       _notice = failure == null
           ? K.pwResetSent.tr(args: <String>[address])
           : K.pwResetFailed.tr();
+    });
+  }
+
+  Future<void> _resendVerification() async {
+    final failure = await ref
+        .read(currentUserProvider.notifier)
+        .resendVerification();
+    if (!mounted) return;
+    setState(() {
+      _notice = failure == null
+          ? K.verifySent.tr()
+          : authMessage(failure) ?? K.authFailed.tr();
+    });
+  }
+
+  /// 확인 → (이메일 가입이면) 비밀번호 → 삭제. Apple·Google 은 삭제 중에
+  /// 시스템 로그인 창이 한 번 더 뜬다(다시 인증).
+  Future<void> _deleteAccount() async {
+    final email = (widget.method ?? AuthMethod.email) == AuthMethod.email;
+    final answer = await _confirmDelete(context, askPassword: email);
+    if (answer == null || !mounted) return;
+    final failure = await ref
+        .read(currentUserProvider.notifier)
+        .deleteAccount(password: email ? answer : null);
+    if (!mounted) return;
+    if (failure == AuthFailure.canceled) return;
+    if (failure == null) TpHaptics.commit();
+    setState(() {
+      _notice = failure == null
+          ? K.deleted.tr()
+          : authMessage(failure) ?? K.authFailed.tr();
     });
   }
 
@@ -448,10 +513,17 @@ class _AiEnginePage extends ConsumerWidget {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({this.name, this.email, this.onEdit, this.photoUrl});
+  const _ProfileHeader({
+    this.name,
+    this.email,
+    this.method,
+    this.onEdit,
+    this.photoUrl,
+  });
 
   final String? name;
   final String? email;
+  final AuthMethod? method;
   final VoidCallback? onEdit;
 
   /// 올린 사진. 없으면 이니셜 원이다.
@@ -509,11 +581,19 @@ class _ProfileHeader extends StatelessWidget {
               ),
       ),
     );
+    // 이메일 옆에 어떻게 들어왔는지. Apple 의 가린 주소는 알아보기 어렵다.
+    final via = switch (method) {
+      AuthMethod.apple => K.viaApple.tr(),
+      AuthMethod.google => K.viaGoogle.tr(),
+      AuthMethod.email || null => null,
+    };
+    final subtitle = <String>[
+      if (email?.isNotEmpty ?? false) email!,
+      ?via,
+    ].join(' · ');
     return TpRow(
-      title: name ?? K.noAccountYet.tr(),
-      subtitle: email,
-      value: onEdit == null ? null : K.editProfile.tr(),
-      valueStyle: const TextStyle(fontSize: 15),
+      title: name ?? email ?? '',
+      subtitle: subtitle.isEmpty ? null : subtitle,
       titleStyle: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
@@ -522,9 +602,8 @@ class _ProfileHeader extends StatelessWidget {
       leading: avatar,
       onTap: onEdit,
       semanticsLabel: <String>[
-        name ?? K.noAccountYet.tr(),
-        ?email,
-        if (onEdit != null) K.editProfile.tr(),
+        ?name,
+        if (subtitle.isNotEmpty) subtitle,
       ].join(', '),
     );
   }
@@ -539,6 +618,78 @@ class _ProfileHeader extends StatelessWidget {
       color: Colors.white,
     ),
   );
+}
+
+/// 로그인 전 머리. 무엇이 따라오는지 한 줄, 그리고 로그인.
+class _SignedOut extends StatelessWidget {
+  const _SignedOut({this.onSignIn});
+
+  final VoidCallback? onSignIn;
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    final glass = context.tp.isGlass;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              MediaQuery.withClampedTextScaling(
+                maxScaleFactor: 1.2,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: sys.fill,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    glass ? CupertinoIcons.person_fill : Icons.person,
+                    size: 30,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      K.guestTitle.tr(),
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: sys.label,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      K.guestBody.tr(),
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.3,
+                        color: sys.label2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          TpPill(
+            label: K.signIn.tr(),
+            height: glass ? 44 : 40,
+            onTap: onSignIn,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// 축 하나의 비중. 움직이면 앱 전체 지수가 즉시 다시 계산된다.
@@ -746,4 +897,82 @@ Future<void> _confirmLogout(BuildContext context, VoidCallback onLogout) async {
     ),
   );
   if (confirmed ?? false) onLogout();
+}
+
+/// 계정 삭제 확인. 이메일 가입이면 비밀번호도 받는다(다시 인증).
+///
+/// 지우기로 하면 비밀번호(없으면 빈 문자열), 그만두면 null.
+Future<String?> _confirmDelete(
+  BuildContext context, {
+  required bool askPassword,
+}) {
+  final password = TextEditingController();
+  final body = Column(
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      Text(K.deleteConfirm.tr()),
+      if (askPassword) ...<Widget>[
+        const SizedBox(height: 8),
+        Text(K.deletePassword.tr()),
+        const SizedBox(height: 10),
+        if (context.tp.isGlass)
+          CupertinoTextField(
+            controller: password,
+            obscureText: true,
+            autofocus: true,
+            autofillHints: const <String>[AutofillHints.password],
+            placeholder: K.passwordLabel.tr(),
+          )
+        else
+          TextField(
+            controller: password,
+            obscureText: true,
+            autofocus: true,
+            autofillHints: const <String>[AutofillHints.password],
+            decoration: InputDecoration(labelText: K.passwordLabel.tr()),
+          ),
+      ],
+    ],
+  );
+  final Future<String?> shown = context.tp.isGlass
+      ? showCupertinoDialog<String>(
+          context: context,
+          builder: (dialog) => CupertinoAlertDialog(
+            title: Text(K.deleteAccount.tr()),
+            content: body,
+            actions: <Widget>[
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(dialog).pop(),
+                child: Text(K.cancel.tr()),
+              ),
+              CupertinoDialogAction(
+                isDestructiveAction: true,
+                onPressed: () => Navigator.of(dialog).pop(password.text),
+                child: Text(K.delete.tr()),
+              ),
+            ],
+          ),
+        )
+      : showDialog<String>(
+          context: context,
+          builder: (dialog) => AlertDialog(
+            title: Text(K.deleteAccount.tr()),
+            content: body,
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(dialog).pop(),
+                child: Text(K.cancel.tr()),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(dialog).pop(password.text),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(dialog).colorScheme.error,
+                ),
+                child: Text(K.delete.tr()),
+              ),
+            ],
+          ),
+        );
+  return shown.whenComplete(password.dispose);
 }

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ import 'package:techpicks/domain/model/tp_weights.dart';
 import 'package:techpicks/app/locale_controller.dart';
 import 'package:techpicks/data/service/device_info_service.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 
 ProviderContainer? _container;
 
@@ -167,7 +169,7 @@ void main() {
       // 원화가 들어오면서 고를 것이 생겼다.
       'Currency',
       'Notifications',
-      // 계정이 없으면 마지막 줄은 로그인이다.
+      // 계정이 없으면 맨 위 카드에 로그인이 있다.
       'Sign in',
     ]) {
       expect(find.text(label), findsOneWidget, reason: label);
@@ -210,7 +212,11 @@ void main() {
 
   testWidgets('로그인 전에는 계정 없이 쓰는 상태로 보인다', (tester) async {
     await _pump(tester);
-    expect(find.text('Browsing without an account'), findsOneWidget);
+    expect(find.text(K.guestTitle.tr()), findsOneWidget);
+    expect(find.text(K.guestBody.tr()), findsOneWidget);
+    // 계정 묶음이 없다.
+    expect(find.text(K.deleteAccount.tr()), findsNothing);
+    expect(find.text(K.logout.tr()), findsNothing);
     // "?" 가 아니라 회색 원에 사람 모양.
     expect(find.text('?'), findsNothing);
     expect(find.byIcon(CupertinoIcons.person_fill), findsOneWidget);

@@ -439,18 +439,23 @@ class YouSheet extends ConsumerWidget {
   const YouSheet({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => YouScreen(
-    onBack: () => context.canPop() ? context.pop() : context.go(TpRoute.home),
-    name: ref.watch(currentUserProvider)?.name,
-    email: ref.watch(currentUserProvider)?.email,
-    // 손님 표시도 같이 지운다. 안 지우면 로그아웃해도 탭에 남는다.
-    onLogout: () => unawaited(ref.read(currentUserProvider.notifier).signOut()),
-    onSignIn: () => context.push(TpRoute.login),
-    onDeviceTap: (s) {
-      context.pop();
-      context.push('/device/$s');
-    },
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    return YouScreen(
+      onBack: () => context.canPop() ? context.pop() : context.go(TpRoute.home),
+      name: user?.name,
+      email: user?.email,
+      method: user?.method,
+      emailVerified: user?.emailVerified ?? true,
+      onLogout: () =>
+          unawaited(ref.read(currentUserProvider.notifier).signOut()),
+      onSignIn: () => context.push(TpRoute.login),
+      onDeviceTap: (s) {
+        context.pop();
+        context.push('/device/$s');
+      },
+    );
+  }
 }
 
 class _Picker extends ConsumerStatefulWidget {
@@ -491,6 +496,7 @@ class _Detail extends ConsumerWidget {
       context.go(TpRoute.compare);
     },
     onView3D: (s) => context.push('/device/$s/3d'),
+    onSignIn: () => context.push(TpRoute.login),
   );
 }
 

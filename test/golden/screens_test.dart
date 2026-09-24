@@ -97,6 +97,15 @@ void main() {
     );
   });
 
+  goldenScenario('you_guest', 'You — 로그인 전', (tester, chrome) async {
+    await pumpScreen(
+      tester,
+      YouScreen(onSignIn: () {}),
+      chrome: chrome,
+      size: frameOf(chrome),
+    );
+  });
+
   goldenScenario('ask_empty', 'Ask — 안내와 제안 칩', (tester, chrome) async {
     await pumpScreen(
       tester,
