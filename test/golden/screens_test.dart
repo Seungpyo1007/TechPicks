@@ -15,6 +15,7 @@ import 'package:techpicks/feature/home/home_screen.dart';
 import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
+import 'package:techpicks/feature/viewer/viewer_screen.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
 import '../support/harness.dart';
@@ -104,6 +105,18 @@ void main() {
         askServiceProvider.overrideWithValue(_StubAsk(_answer)),
       ],
     );
+  });
+
+  goldenScenario('viewer', '3D 뷰어 — 카메라 강조', (tester, chrome) async {
+    await pumpScreenNoSettle(
+      tester,
+      ViewerScreen(deviceName: 'Galaxy S26 Ultra', onBack: () {}),
+      chrome: chrome,
+      size: frameOf(chrome),
+    );
+    await tester.tap(find.text('Camera module'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
   });
 
   goldenScenario('ask_answer', 'Ask — 답변 표', (tester, chrome) async {

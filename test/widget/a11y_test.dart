@@ -115,19 +115,29 @@ void main() {
   }
 
   for (final entry in _noSettle.entries) {
-    testWidgets('${entry.key} — 탭 타깃 크기', (tester) async {
-      final handle = tester.ensureSemantics();
-      await pumpScreenNoSettle(
-        tester,
-        entry.value,
-        size: const Size(1200, 2400),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
+    // 크롬마다 그 플랫폼의 기준. iOS 44pt, Android 48dp.
+    for (final chrome in TpChrome.values) {
+      testWidgets('${entry.key} — 탭 타깃 크기 · ${chrome.name}', (tester) async {
+        final handle = tester.ensureSemantics();
+        await pumpScreenNoSettle(
+          tester,
+          entry.value,
+          chrome: chrome,
+          size: const Size(1200, 2400),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
 
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      handle.dispose();
-    });
+        await expectLater(
+          tester,
+          meetsGuideline(
+            chrome == TpChrome.android
+                ? androidTapTargetGuideline
+                : iOSTapTargetGuideline,
+          ),
+        );
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        handle.dispose();
+      });
+    }
   }
 }
