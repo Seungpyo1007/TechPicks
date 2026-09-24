@@ -39,6 +39,8 @@ void main() {
         ),
       );
 
+      // 툴바 버튼은 떠오르며 나타난다.
+      await tester.pumpAndSettle();
       expect(find.text('둘러보기'), findsWidgets);
       expect(find.text('모바일'), findsOneWidget);
       await tester.tap(find.text('첫 줄'));

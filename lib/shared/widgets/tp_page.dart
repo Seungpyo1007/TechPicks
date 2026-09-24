@@ -209,20 +209,23 @@ class TpPage extends StatelessWidget {
             action: TpBarAction(
               label: K.back.tr(),
               icon: CupertinoIcons.chevron_back,
+              symbol: 'chevron.backward',
               onTap: onBack,
             ),
           )
         : (leading == null ? null : TpBarButton(action: leading!));
     final trail = actions.isEmpty
         ? null
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              for (var i = 0; i < actions.length; i++) ...<Widget>[
-                if (i > 0) const SizedBox(width: 8),
-                TpBarButton(action: actions[i]),
+        : _ActionsArrive(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                for (var i = 0; i < actions.length; i++) ...<Widget>[
+                  if (i > 0) const SizedBox(width: 8),
+                  TpBarButton(action: actions[i]),
+                ],
               ],
-            ],
+            ),
           );
     final titleText = Text(title);
     if (!largeTitle) {
@@ -275,30 +278,32 @@ class TpPage extends StatelessWidget {
                 ));
     final acts = <Widget>[
       for (final a in actions)
-        a.text
-            ? (a.filled
-                  ? Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilledButton(
-                        onPressed: a.onTap,
-                        child: Text(a.label),
-                      ),
-                    )
-                  : TextButton(onPressed: a.onTap, child: Text(a.label)))
-            : a.menu != null
-            ? TpMenu(
-                items: a.menu!,
-                builder: (context, open) => IconButton(
-                  onPressed: open,
+        _ActionsArrive(
+          child: a.text
+              ? (a.filled
+                    ? Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilledButton(
+                          onPressed: a.onTap,
+                          child: Text(a.label),
+                        ),
+                      )
+                    : TextButton(onPressed: a.onTap, child: Text(a.label)))
+              : a.menu != null
+              ? TpMenu(
+                  items: a.menu!,
+                  builder: (context, open) => IconButton(
+                    onPressed: open,
+                    tooltip: a.label,
+                    icon: a.child ?? Icon(a.icon),
+                  ),
+                )
+              : IconButton(
+                  onPressed: a.onTap,
                   tooltip: a.label,
                   icon: a.child ?? Icon(a.icon),
                 ),
-              )
-            : IconButton(
-                onPressed: a.onTap,
-                tooltip: a.label,
-                icon: a.child ?? Icon(a.icon),
-              ),
+        ),
       const SizedBox(width: 4),
     ];
     if (!largeTitle) {
@@ -360,6 +365,59 @@ class _StampState extends State<_Stamp> {
   );
 }
 
+/// 화면이 나타날 때 툴바 버튼이 살짝 커지며 떠오른다. 탭을 바꿀 때 버튼이 툭
+/// 바뀌지 않게.
+class _ActionsArrive extends StatefulWidget {
+  const _ActionsArrive({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_ActionsArrive> createState() => _ActionsArriveState();
+}
+
+class _ActionsArriveState extends State<_ActionsArrive>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    value: 1,
+  );
+  CurvedAnimation? _t;
+  DateTime? _played;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final move = context.motion.contentSwap;
+    _t ??= CurvedAnimation(parent: _c, curve: move.curve);
+    final at = TpArriveScope.freshOf(context);
+    if (at == null || at == _played) return;
+    _played = at;
+    if (move.duration == Duration.zero) return;
+    _c.duration = move.duration;
+    _c.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _t?.dispose();
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = _t!;
+    return FadeTransition(
+      opacity: t,
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 0.85, end: 1).animate(t),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 class _SmallBar extends SliverPersistentHeaderDelegate {
   _SmallBar({required this.height, required this.bar});
 
@@ -393,6 +451,30 @@ class TpBarButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final sys = context.sys;
     final a = action;
+    // iOS 26: 아이콘 버튼은 시스템 유리 버튼. 누르면 OS 가 유리를 눌러 준다 —
+    // Flutter 가 플랫폼 뷰를 줄이는 것으로는 눌린 게 안 보였다.
+    if (TpNativeGlass.enabled &&
+        a.symbol != null &&
+        a.menu == null &&
+        !a.text &&
+        !a.filled &&
+        a.child == null) {
+      return Semantics(
+        button: true,
+        label: a.label,
+        excludeSemantics: true,
+        onTap: a.onTap,
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: TpNativeIconButton(
+            symbol: a.symbol!,
+            onTap: a.onTap,
+            tint: a.active ? TpSys.accent : null,
+          ),
+        ),
+      );
+    }
     // iOS 26: 메뉴 버튼은 시스템 유리 버튼 + UIMenu.
     if (TpNativeGlass.enabled && a.menu != null && a.symbol != null) {
       final menu = a.menu!;
