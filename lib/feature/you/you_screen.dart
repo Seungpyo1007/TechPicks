@@ -474,18 +474,26 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sys = context.sys;
+    final guest = photoUrl == null && initials(name, email) == '?';
     final avatar = MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.2,
       child: Container(
         width: 56,
         height: 56,
         clipBehavior: Clip.antiAlias,
-        decoration: const BoxDecoration(
-          color: TpTokens.blue,
+        decoration: BoxDecoration(
+          // 손님은 "?" 대신 시스템 연락처처럼 회색 원에 사람 모양.
+          color: guest ? sys.fill : TpTokens.blue,
           shape: BoxShape.circle,
         ),
         alignment: Alignment.center,
-        child: photoUrl == null
+        child: guest
+            ? Icon(
+                context.tp.isGlass ? CupertinoIcons.person_fill : Icons.person,
+                size: 30,
+                color: Colors.white,
+              )
+            : photoUrl == null
             ? _initials(name, email)
             : Image.network(
                 photoUrl!,

@@ -39,14 +39,14 @@ class PlatformDeviceInfoService implements DeviceInfoService {
       }
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         final info = await _plugin.iosInfo;
-        // iOS 는 utsname.machine 이 `iPhone16,2` 형태다. 사람이 읽는 이름은
-        // name 쪽인데 사용자가 바꿀 수 있어 모델명 우선.
-        //
-        // 이 식별자는 카탈로그 이름과 안 맞는다. 맞추려면 식별자→제품명 표가
-        // 있어야 하는데 어디에도 없다. ScanMatcher 는 낱말 단위로 세므로
-        // 이걸로는 아무것도 안 걸리고, You 화면이 "카탈로그에 아직 없습니다"
-        // 로 떨어진다 — 안드로이드의 `SM-S931B` 와 같은 처지다.
-        return ThisDevice(name: info.utsname.machine, brand: 'Apple');
+        // utsname.machine 은 `iPhone18,4` 같은 식별자라 사람이 못 읽고 카탈로그
+        // 이름과도 안 맞았다. 플러그인이 주는 제품명(`iPhone Air`)을 먼저 쓴다.
+        // `name` 은 사용자가 바꾼 기기 이름이라 쓰지 않는다.
+        final model = info.modelName.trim();
+        return ThisDevice(
+          name: model.isNotEmpty ? model : info.utsname.machine,
+          brand: 'Apple',
+        );
       }
     } catch (e, s) {
       // 플러그인이 없는 환경(테스트·데스크톱)에서는 그냥 없는 것으로 둔다.
