@@ -27,6 +27,7 @@ abstract final class K {
   static const String weights = 'weights';
   static const String removeShort = 'removeShort';
   static const String browseByKind = 'browseByKind';
+  static const String done = 'done';
 
   // 홈
   static const String homeTitle = 'homeTitle';

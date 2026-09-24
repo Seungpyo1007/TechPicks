@@ -255,5 +255,6 @@
   "buildRowSub": "예산에 맞는 CPU와 GPU 조합",
   "weights": "가중치",
   "removeShort": "관심 목록에서 지우기",
-  "browseByKind": "종류별로 보기"
+  "browseByKind": "종류별로 보기",
+  "done": "완료"
 }

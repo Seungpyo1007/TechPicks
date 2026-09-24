@@ -8,7 +8,7 @@ import 'package:flutter_gemma_builtin_ai/flutter_gemma_builtin_ai.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
-import '../../app/shell/tp_shell.dart';
+import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../app/locale_controller.dart';
@@ -20,9 +20,9 @@ import 'profile_edit_screen.dart';
 import 'sources_screen.dart';
 import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
-import '../../shared/widgets/tp_surface.dart';
-import '../../shared/widgets/tp_tap_target.dart';
-import '../../shared/widgets/tp_press.dart';
+import '../../shared/widgets/tp_group.dart';
+import '../../shared/widgets/tp_menu.dart';
+import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_button.dart';
 import '../../shared/widgets/tp_pressable.dart';
 import '../../shared/widgets/tp_sheet.dart';
@@ -83,7 +83,6 @@ class _YouScreenState extends ConsumerState<YouScreen> {
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
-    final type = context.tpText;
     final weights = ref.watch(weightsProvider);
     final locale = ref.watch(localeControllerProvider);
     final notifications = ref.watch(notificationsProvider);
@@ -94,47 +93,50 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     // 헤더가 "로그인 없이 사용 중"이라고 적는 것과 같은 조건이다.
     final hasAccount = name != null || (email?.isNotEmpty ?? false);
 
-    return TpShell(
-      title: t.isGlass ? null : K.you.tr(),
-      scrollTitle: K.you.tr(),
-      trailing: widget.onClose == null
-          ? null
-          : TpShellAction(
-              icon: t.isGlass ? CupertinoIcons.xmark : Icons.close,
-              label: K.cancel.tr(),
-              onTap: widget.onClose,
-            ),
-      child: Builder(
-        // 셸의 인셋은 이 자리 아래에 있다. 화면 build 에서 바로 읽으면
-        // 크롬이 차지한 자리를 모르는 예전 값이 나온다.
-        builder: (context) => ListView(
-          padding:
-              const EdgeInsets.fromLTRB(16, 4, 16, 24) +
-              tpContentInset(context),
-          children: <Widget>[
-            if (t.isGlass) ...<Widget>[
-              Text(K.you.tr(), style: type.largeTitle),
-              const SizedBox(height: 12),
-            ],
+    final sys = context.sys;
+    final glass = t.isGlass;
+    final rate = ref.watch(fxRateProvider).value ?? FxRate.fallback;
 
-            _ProfileHeader(
-              photoUrl: ref.watch(profileProvider).value?.photoUrl,
-              name: name,
-              email: email,
-              // 계정이 없으면 고칠 프로필도 없다. 손님에게 이름 바꾸기 시트를
-              // 열어 주면 저장이 조용히 실패한다.
-              onEdit: hasAccount ? widget.onEditProfile ?? _openProfile : null,
-            ),
-            const SizedBox(height: 22),
+    Widget menuRow(String label, String value, List<TpMenuItem> items) =>
+        TpMenu(
+          items: items,
+          builder: (context, open) =>
+              _SettingRow(label: label, value: value, onTap: open, menu: true),
+        );
 
-            _YourDevice(onTap: widget.onDeviceTap),
-            const SizedBox(height: 22),
-
-            Text(K.priorities.tr().toUpperCase(), style: type.eyebrow),
-            const SizedBox(height: 8),
-            TpSurface(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-              child: Column(
+    return TpPage(
+      title: K.you.tr(),
+      largeTitle: false,
+      actions: <TpBarAction>[
+        if (widget.onClose != null)
+          TpBarAction(label: K.done.tr(), text: true, onTap: widget.onClose),
+      ],
+      slivers: <Widget>[
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const SizedBox(height: 8),
+              TpGroup(
+                children: <Widget>[
+                  _ProfileHeader(
+                    photoUrl: ref.watch(profileProvider).value?.photoUrl,
+                    name: name,
+                    email: email,
+                    onEdit: hasAccount
+                        ? widget.onEditProfile ?? _openProfile
+                        : null,
+                  ),
+                ],
+              ),
+              TpGroup(
+                header: K.priorities.tr(),
+                footer: K.prioritiesNote.tr(),
+                headerAction: _Link(
+                  label: K.reset.tr(),
+                  onTap: () => ref.read(weightsProvider.notifier).reset(),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 children: <Widget>[
                   for (final kind in TpAxisKind.values)
                     _WeightSlider(
@@ -143,78 +145,83 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                       onChanged: (v) =>
                           ref.read(weightsProvider.notifier).setAxis(kind, v),
                     ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(K.prioritiesNote.tr(), style: type.caption),
-                      ),
-                      const SizedBox(width: 10),
-                      TpTapTarget(
-                        onTap: () => ref.read(weightsProvider.notifier).reset(),
-                        child: Text(
-                          K.reset.tr(),
-                          style: type.caption.copyWith(color: t.link),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
                 ],
               ),
-            ),
-            const SizedBox(height: 22),
-
-            TpSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
+              TpGroup(
+                header: K.yourDevice.tr(),
+                children: <Widget>[_YourDevice(onTap: widget.onDeviceTap)],
+              ),
+              TpGroup(
+                footer: _fxLine(rate),
                 children: <Widget>[
-                  _SettingRow(
-                    label: K.language.tr(),
-                    value: (locale?.current ?? TpLocale.en).label,
-                    onTap: locale == null
-                        ? null
-                        : () => _pickLanguage(context, ref, locale),
-                  ),
-                  _SettingRow(
-                    label: K.darkMode.tr(),
-                    value: _themeLabel(themeMode).tr(),
-                    onTap: () => _pickTheme(context, ref, themeMode),
+                  if (locale != null)
+                    menuRow(K.language.tr(), locale.current.label, <TpMenuItem>[
+                      for (final option in TpLocale.values)
+                        TpMenuItem(
+                          label: option.label,
+                          checked: option == locale.current,
+                          onTap: () => unawaited(locale.set(option)),
+                        ),
+                    ])
+                  else
+                    _SettingRow(
+                      label: K.language.tr(),
+                      value: TpLocale.en.label,
+                    ),
+                  menuRow(
+                    K.darkMode.tr(),
+                    _themeLabel(themeMode).tr(),
+                    <TpMenuItem>[
+                      for (final mode in <ThemeMode>[
+                        ThemeMode.system,
+                        ThemeMode.light,
+                        ThemeMode.dark,
+                      ])
+                        TpMenuItem(
+                          label: _themeLabel(mode).tr(),
+                          checked: mode == themeMode,
+                          onTap: () => unawaited(
+                            ref.read(themeModeProvider.notifier).set(mode),
+                          ),
+                        ),
+                    ],
                   ),
                   _SettingRow(
                     label: K.aiEngine.tr(),
                     value: aiEngine.key.tr(),
-                    onTap: () =>
-                        _pickAiEngine(context, ref, aiEngine, onDevice),
+                    onTap: () => _openAiEngine(context, aiEngine, onDevice),
                   ),
-                  // 통화 줄은 한때 뺐었다. `'USD'` 가 못박혀 있고 핸들러도
-                  // 없어서, 못 누르는 설정 줄이 옆의 진짜 설정들까지 못
-                  // 미덥게 만들었다. 원화가 들어오면서 고를 것이 생겼다.
-                  _SettingRow(
-                    label: K.currency.tr(),
-                    value: K.currencyOf(currency).tr(),
-                    onTap: () => _pickCurrency(context, ref, currency),
+                  menuRow(
+                    K.currency.tr(),
+                    K.currencyOf(currency).tr(),
+                    <TpMenuItem>[
+                      for (final option in TpCurrency.values)
+                        TpMenuItem(
+                          label: K.currencyOf(option).tr(),
+                          checked: option == currency,
+                          onTap: () => unawaited(
+                            ref.read(currencyProvider.notifier).set(option),
+                          ),
+                        ),
+                    ],
                   ),
                   _SettingRow(
                     label: K.notifications.tr(),
                     switchValue: notifications,
-                    // 켜고 끄는 줄이다. 스크린 리더에 "버튼"이라고 하면 눌러야
-                    // 무엇이 되는지 알 수 없다.
                     toggled: notifications,
                     onTap: () => ref
                         .read(notificationsProvider.notifier)
                         .set(!notifications),
-                    last: true,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 14),
-            TpSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
+              TpGroup(
+                footer: _notice,
                 children: <Widget>[
-                  // 비밀번호가 없는 계정(익명·소셜)에는 보낼 곳이 없다.
+                  _SettingRow(
+                    label: K.sources.tr(),
+                    onTap: widget.onSources ?? _openSources,
+                  ),
                   if (email != null && email!.isNotEmpty)
                     _SettingRow(
                       label: K.changePassword.tr(),
@@ -222,12 +229,17 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                           widget.onChangePassword ??
                           () => unawaited(_resetPassword()),
                     ),
-                  _SettingRow(
-                    // 손님에게 "로그아웃"은 나갈 곳이 없다는 뜻으로 읽힌다.
-                    // 누르면 로그인 화면으로 가니 그렇게 적는다.
-                    label: (hasAccount ? K.logout : K.signIn).tr(),
-                    // 계정이 있을 때만 묻는다. iOS 는 되돌릴 수 없는 일을 시트로
-                    // 한 번 더 확인한다. 손님은 로그인 화면으로 갈 뿐이다.
+                ],
+              ),
+              TpGroup(
+                children: <Widget>[
+                  TpRow(
+                    title: (hasAccount ? K.logout : K.signIn).tr(),
+                    destructive: hasAccount,
+                    titleStyle: hasAccount
+                        ? null
+                        : TextStyle(color: sys.accentText),
+                    chevron: false,
                     onTap: widget.onLogout == null
                         ? null
                         : hasAccount
@@ -235,53 +247,38 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                             _confirmLogout(context, widget.onLogout!),
                           )
                         : widget.onLogout,
-                    last: true,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 14),
-            // 출처는 설정이 아니라 고지다. 그래서 설정 카드가 아니라 버전·
-            // 라이선스 줄과 같은 묶음에 둔다.
-            TpSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _SettingRow(
-                label: K.sources.tr(),
-                onTap: widget.onSources ?? _openSources,
-                last: true,
-              ),
-            ),
-            if (_notice != null) ...<Widget>[
-              const SizedBox(height: 8),
-              Text(_notice!, style: type.caption),
-            ],
-            const SizedBox(height: 20),
-
-            // 푸터 문구는 명세 §13 의 확정 카피다. 글자는 그대로 두고 누르면
-            // Apache-2.0 본문이 열리게만 한다.
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TpTapTarget(
-                link: true,
-                minSize: 44,
-                onTap: () => unawaited(_openLicense()),
-                child: Text(
-                  YouScreen.versionLine,
-                  // 눌리는 줄이다. 본문과 같은 회색이면 알 방법이 없다.
-                  style: type.caption.copyWith(color: t.link),
+              Center(
+                child: _Link(
+                  label: YouScreen.versionLine,
+                  small: true,
+                  onTap: () => unawaited(_openLicense()),
                 ),
               ),
-            ),
-          ],
+              if (!glass) const SizedBox(height: 8),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  /// 비밀번호 재설정 메일을 보낸다.
-  ///
-  /// 지금 비밀번호를 묻지 않는다. 그건 별도 화면과 재인증이 필요한데, 메일
-  /// 한 통이면 Firebase 가 그걸 다 해준다.
+  Future<void> _openAiEngine(
+    BuildContext context,
+    TpAiEngine current,
+    BuiltInAiAvailability? status,
+  ) => Navigator.of(context).push(
+    context.tp.isGlass
+        ? CupertinoPageRoute<void>(
+            builder: (_) => _AiEnginePage(status: status),
+          )
+        : MaterialPageRoute<void>(
+            builder: (_) => _AiEnginePage(status: status),
+          ),
+  );
+
   Future<void> _resetPassword() async {
     final sent = await ref
         .read(currentUserProvider.notifier)
@@ -300,14 +297,14 @@ class _YouScreenState extends ConsumerState<YouScreen> {
   /// 한동안 여기에 이름 한 줄짜리 알림창이 있었다. v1 은 사진과 다섯 칸을
   /// 갖고 있었고, 그게 없어진 건 기록조차 안 됐다.
   Future<void> _openProfile() => Navigator.of(context).push(
-    MaterialPageRoute<void>(
+    CupertinoPageRoute<void>(
       builder: (context) =>
           ProfileEditScreen(onBack: () => Navigator.of(context).pop()),
     ),
   );
 
   Future<void> _openSources() => Navigator.of(context).push(
-    MaterialPageRoute<void>(
+    CupertinoPageRoute<void>(
       builder: (context) =>
           SourcesScreen(onBack: () => Navigator.of(context).pop()),
     ),
@@ -333,8 +330,6 @@ class _YourDevice extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = context.tp;
-    final type = context.tpText;
     final asyncDevice = ref.watch(thisDeviceProvider);
     final device = asyncDevice.value;
     final match = ref.watch(thisDeviceMatchProvider);
@@ -347,52 +342,30 @@ class _YourDevice extends ConsumerWidget {
         ? null
         : TpIndex.of(match.device.score, weights);
 
-    return TpSurface(
+    return TpRow(
+      title: device != null
+          ? (match?.device.name ?? device.name)
+          : reading
+          ? ''
+          : K.yourDeviceUnavailable.tr(),
+      subtitle: device != null && match == null
+          ? K.yourDeviceUnknown.tr()
+          : null,
+      leading: TpIconTile(
+        icon: context.tp.isGlass
+            ? CupertinoIcons.device_phone_portrait
+            : Icons.smartphone,
+        color: const Color(0xFF8E8E93),
+      ),
+      value: index?.toString(),
+      valueStyle: const TextStyle(fontWeight: FontWeight.w600),
       onTap: match == null || onTap == null
           ? null
           : () => onTap!(match.device.slug),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(K.yourDevice.tr().toUpperCase(), style: type.eyebrow),
-                const SizedBox(height: 4),
-                Text(
-                  device != null
-                      ? (match?.device.name ?? device.name)
-                      : reading
-                      ? ''
-                      : K.yourDeviceUnavailable.tr(),
-                  style: type.cardTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (device != null && match == null)
-                  Text(K.yourDeviceUnknown.tr(), style: type.caption),
-              ],
-            ),
-          ),
-          if (index != null) ...<Widget>[
-            const SizedBox(width: 10),
-            Text(
-              index.toString(),
-              maxLines: 1,
-              softWrap: false,
-              overflow: TextOverflow.ellipsis,
-              style: type.cardTitle.copyWith(fontSize: 24),
-            ),
-          ] else
-            Icon(Icons.smartphone, size: 20, color: t.dim),
-        ],
-      ),
     );
   }
 }
 
-/// 언어 목록. 지원 언어가 둘뿐이라 시트 하나로 끝난다.
 /// 기기 안 AI 를 못 쓰는 이유를 한 줄로. 쓸 수 있으면 null.
 String? _onDeviceNote(BuiltInAiAvailability? status) => switch (status) {
   null ||
@@ -403,137 +376,12 @@ String? _onDeviceNote(BuiltInAiAvailability? status) => switch (status) {
   _ => K.aiEngineUnavailable,
 };
 
-/// 자동 / 이 기기 안에서만 / 클라우드.
-///
-/// 못 쓰는 기기가 대부분이라 이유를 같이 적는다. 고르는 것 자체는 막지
-/// 않는다 — 골라두면 나중에 쓸 수 있는 기기에서 그대로 동작한다.
-Future<void> _pickAiEngine(
-  BuildContext context,
-  WidgetRef ref,
-  TpAiEngine current,
-  BuiltInAiAvailability? status,
-) async {
-  final type = context.tpText;
-  final note = _onDeviceNote(status);
-
-  await showTpSheet<void>(
-    context: context,
-    builder: (sheetContext) => Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      // 유리는 자기 레이어에서 그려진다. 라우트 위에 뜬 시트에는 흐릴 대상이
-      // 없어서, 72% 흰 면 아래로 아래 화면 글자가 그대로 읽혔다.
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(K.aiEngine.tr(), style: type.cardTitle),
-          if (note != null) ...<Widget>[
-            const SizedBox(height: 6),
-            Text(note.tr(), style: type.caption),
-          ],
-          const SizedBox(height: 8),
-          for (final option in TpAiEngine.values)
-            TpPress(
-              haptic: TpHaptic.selection,
-              onTap: () async {
-                Navigator.of(sheetContext).pop();
-                await ref.read(aiEngineProvider.notifier).set(option);
-              },
-              child: Semantics(
-                selected: option == current,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(child: Text(option.key.tr(), style: type.body)),
-                      if (option == current)
-                        Icon(Icons.check, size: 18, color: context.tp.link)
-                      else
-                        const SizedBox(width: 18, height: 18),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    ),
-  );
-}
-
-/// 밝기 선택 줄의 값.
 String _themeLabel(ThemeMode mode) => switch (mode) {
   ThemeMode.light => K.themeLight,
   ThemeMode.dark => K.themeDark,
   ThemeMode.system => K.themeSystem,
 };
 
-/// 밝게 / 어둡게 / 시스템.
-///
-/// 언어 시트와 같은 모양이다 — 설정 안에서 고르는 방식이 줄마다 다르면
-/// 어느 줄이 시트를 여는지 눌러보기 전에는 모른다.
-/// 통화 고르기.
-///
-/// 시트 아래에 **환율이 어디서 왔는지** 적는다. 명세는 환율 환산을
-/// 금지했는데 그걸 뒤집는 것이라, 무슨 값을 언제 받아 쓰는지 보이지 않으면
-/// 지어낸 숫자와 구분이 안 된다.
-Future<void> _pickCurrency(
-  BuildContext context,
-  WidgetRef ref,
-  TpCurrency current,
-) async {
-  final type = context.tpText;
-  final rate = ref.read(fxRateProvider).value ?? FxRate.fallback;
-
-  await showTpSheet<void>(
-    context: context,
-    builder: (sheetContext) => Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(K.currency.tr(), style: type.cardTitle),
-          const SizedBox(height: 8),
-          for (final option in TpCurrency.values)
-            TpPress(
-              haptic: TpHaptic.selection,
-              onTap: () async {
-                Navigator.of(sheetContext).pop();
-                await ref.read(currencyProvider.notifier).set(option);
-              },
-              child: Semantics(
-                selected: option == current,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          K.currencyOf(option).tr(),
-                          style: type.body,
-                        ),
-                      ),
-                      if (option == current)
-                        Icon(Icons.check, size: 18, color: context.tp.link)
-                      else
-                        const SizedBox(width: 18, height: 18),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          const SizedBox(height: 4),
-          Text(_fxLine(rate), style: type.caption),
-        ],
-      ),
-    ),
-  );
-}
-
-/// `1 USD = ₩1,373 · 2026-09-19 기준`.
-///
-/// 받아온 값이 아니면 그렇다고 덧붙인다 — 오늘 값인 줄 알면 오해다.
 String _fxLine(FxRate rate) {
   final won = rate.krwPerUsd.round().toString();
   final grouped = StringBuffer();
@@ -546,109 +394,44 @@ String _fxLine(FxRate rate) {
   return key.tr(args: <String>[grouped.toString(), day]);
 }
 
-Future<void> _pickTheme(
-  BuildContext context,
-  WidgetRef ref,
-  ThemeMode current,
-) async {
-  final type = context.tpText;
+/// AI 엔진. 선택지마다 설명이 필요해서 메뉴가 아니라 페이지다.
+class _AiEnginePage extends ConsumerWidget {
+  const _AiEnginePage({required this.status});
 
-  await showTpSheet<void>(
-    context: context,
-    builder: (sheetContext) => Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      // 유리는 자기 레이어에서 그려진다. 라우트 위에 뜬 시트에는 흐릴 대상이
-      // 없어서, 72% 흰 면 아래로 아래 화면 글자가 그대로 읽혔다.
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(K.darkMode.tr(), style: type.cardTitle),
-          const SizedBox(height: 8),
-          for (final option in ThemeMode.values)
-            TpPress(
-              haptic: TpHaptic.selection,
-              onTap: () async {
-                Navigator.of(sheetContext).pop();
-                await ref.read(themeModeProvider.notifier).set(option);
-              },
-              child: Semantics(
-                selected: option == current,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Text(_themeLabel(option).tr(), style: type.body),
-                      ),
-                      if (option == current)
-                        Icon(Icons.check, size: 18, color: context.tp.link)
-                      else
-                        const SizedBox(width: 18, height: 18),
-                    ],
+  final BuiltInAiAvailability? status;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final current = ref.watch(aiEngineProvider);
+    final note = _onDeviceNote(status);
+    return TpPage(
+      title: K.aiEngine.tr(),
+      largeTitle: false,
+      onBack: () => Navigator.of(context).pop(),
+      slivers: <Widget>[
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: TpGroup(
+              footer: note?.tr(),
+              children: <Widget>[
+                for (final option in TpAiEngine.values)
+                  TpRow(
+                    title: option.key.tr(),
+                    checked: option == current,
+                    dimmed: option == TpAiEngine.onDevice && note != null,
+                    chevron: false,
+                    onTap: () => unawaited(
+                      ref.read(aiEngineProvider.notifier).set(option),
+                    ),
                   ),
-                ),
-              ),
+              ],
             ),
-        ],
-      ),
-    ),
-  );
-}
-
-Future<void> _pickLanguage(
-  BuildContext context,
-  WidgetRef ref,
-  LocaleController controller,
-) async {
-  final t = context.tp;
-  final type = context.tpText;
-
-  await showTpSheet<void>(
-    context: context,
-    builder: (sheetContext) => Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      // 유리는 자기 레이어에서 그려진다. 라우트 위에 뜬 시트에는 흐릴 대상이
-      // 없어서, 72% 흰 면 아래로 아래 화면 글자가 그대로 읽혔다.
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(K.language.tr(), style: type.cardTitle),
-          const SizedBox(height: 8),
-          for (final option in TpLocale.values)
-            TpPress(
-              haptic: TpHaptic.selection,
-              onTap: () async {
-                Navigator.of(sheetContext).pop();
-                await controller.set(option);
-              },
-              child: Semantics(
-                selected: option == controller.current,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(child: Text(option.label, style: type.body)),
-                      if (option == controller.current)
-                        Icon(Icons.check, size: 18, color: context.tp.link)
-                      else
-                        SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: ColoredBox(
-                            color: t.track.withValues(alpha: 0),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    ),
-  );
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _ProfileHeader extends StatelessWidget {
@@ -682,86 +465,59 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final type = context.tpText;
-
-    return Row(
-      children: <Widget>[
-        // 원은 64pt 로 고정인데 안의 22pt 글자는 배율을 그대로 따라간다.
-        // 1.6배면 'SP' 가 원 밖으로 나가고, 한글 두 글자는 두 줄로 쪼개진다 —
-        // Clip.antiAlias 가 그걸 그냥 잘라내서 예외도 안 났다.
-        MediaQuery.withClampedTextScaling(
-          maxScaleFactor: 1.2,
-          child: Container(
-            width: 64,
-            height: 64,
-            clipBehavior: Clip.antiAlias,
-            decoration: const BoxDecoration(
-              color: TpTokens.blue,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: photoUrl == null
-                ? Text(
-                    initials(name, email),
-                    maxLines: 1,
-                    softWrap: false,
-                    style: type.cardTitle.copyWith(
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  )
-                // 사진을 못 읽으면 이니셜로 돌아간다.
-                : Image.network(
-                    photoUrl!,
-                    width: 64,
-                    height: 64,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Text(
-                      initials(name, email),
-                      maxLines: 1,
-                      softWrap: false,
-                      style: type.cardTitle.copyWith(
-                        fontSize: 22,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-          ),
+    final sys = context.sys;
+    final avatar = MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.2,
+      child: Container(
+        width: 56,
+        height: 56,
+        clipBehavior: Clip.antiAlias,
+        decoration: const BoxDecoration(
+          color: TpTokens.blue,
+          shape: BoxShape.circle,
         ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                name ?? K.noAccountYet.tr(),
-                style: type.cardTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+        alignment: Alignment.center,
+        child: photoUrl == null
+            ? _initials(name, email)
+            : Image.network(
+                photoUrl!,
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => _initials(name, email),
               ),
-              if (email != null)
-                Text(
-                  email!,
-                  style: type.caption,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              if (onEdit != null) ...<Widget>[
-                const SizedBox(height: 4),
-                TpTapTarget(
-                  onTap: onEdit,
-                  child: Text(
-                    K.editProfile.tr(),
-                    style: type.caption.copyWith(color: context.tp.link),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+      ),
+    );
+    return TpRow(
+      title: name ?? K.noAccountYet.tr(),
+      subtitle: email,
+      value: onEdit == null ? null : K.editProfile.tr(),
+      valueStyle: const TextStyle(fontSize: 15),
+      titleStyle: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: sys.label,
+      ),
+      leading: avatar,
+      onTap: onEdit,
+      semanticsLabel: <String>[
+        name ?? K.noAccountYet.tr(),
+        ?email,
+        if (onEdit != null) K.editProfile.tr(),
+      ].join(', '),
     );
   }
+
+  static Widget _initials(String? name, String? email) => Text(
+    initials(name, email),
+    maxLines: 1,
+    softWrap: false,
+    style: const TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+      color: Colors.white,
+    ),
+  );
 }
 
 /// 축 하나의 비중. 움직이면 앱 전체 지수가 즉시 다시 계산된다.
@@ -789,28 +545,31 @@ class _WeightSlider extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  SpecLabels.axis(kind),
-                  style: type.body,
+          // 슬라이더가 축 이름과 값을 같이 읽는다. 글자 줄은 보이기만 한다.
+          ExcludeSemantics(
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    SpecLabels.axis(kind),
+                    style: type.body,
+                    maxLines: 1,
+                    softWrap: false,
+                    // softWrap 이 false 면 기본이 clip 이라 글리프 한가운데서
+                    // 잘린다.
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  // 0.25 -> 25%. 합이 1 이 아니어도 되니 비율이 아니라 비중이다.
+                  '${(value * 100).round()}',
                   maxLines: 1,
                   softWrap: false,
-                  // softWrap 이 false 면 기본이 clip 이라 글리프 한가운데서
-                  // 잘린다.
                   overflow: TextOverflow.ellipsis,
+                  style: type.body.copyWith(fontWeight: t.boldWeight),
                 ),
-              ),
-              Text(
-                // 0.25 -> 25%. 합이 1 이 아니어도 되니 비율이 아니라 비중이다.
-                '${(value * 100).round()}',
-                maxLines: 1,
-                softWrap: false,
-                overflow: TextOverflow.ellipsis,
-                style: type.body.copyWith(fontWeight: t.boldWeight),
-              ),
-            ],
+              ],
+            ),
           ),
           TpSlider(
             value: value.clamp(0, 1),
@@ -840,93 +599,103 @@ class _SettingRow extends StatelessWidget {
     this.onTap,
     this.toggled,
     this.switchValue,
-    this.last = false,
+    this.menu = false,
   });
 
   final String label;
   final String? value;
   final VoidCallback? onTap;
 
-  /// 켜고 끄는 줄이면 지금 상태. 시트를 여는 줄은 null 이다.
+  /// 켜고 끄는 줄이면 지금 상태.
   final bool? toggled;
   final bool? switchValue;
 
-  final bool last;
+  /// 누르면 풀다운 메뉴가 뜨는 줄. 오른쪽에 위아래 화살표.
+  final bool menu;
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tp;
-    final type = context.tpText;
-
-    return Semantics(
-      // 켜고 끄는 줄은 스위치로 읽혀야 한다. 버튼이라고 하면 눌러서 무엇이
-      // 되는지 알 수 없다.
-      button: toggled == null && onTap != null,
-      toggled: toggled,
-      // 라벨과 값이 따로 읽히면 "알림", "켬" 이 무슨 관계인지 모른다.
-      label: value == null ? label : '$label, $value',
-      // excludeSemantics 는 안쪽 글자와 함께 탭 액션도 지운다.
+    final sys = context.sys;
+    return TpRow(
+      title: label,
+      value: value,
       onTap: onTap,
-      excludeSemantics: true,
-      child: TpPress(
-        onTap: onTap,
-        semanticsButton: false,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          decoration: BoxDecoration(
-            border: last ? null : Border(bottom: BorderSide(color: t.hairline)),
-          ),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  // 못 누르는 줄은 그렇게 보여야 한다. 통화는 자리만 잡아둔
-                  // 줄인데 알림 줄과 똑같이 생겼었다.
-                  style: onTap == null
-                      ? type.body.copyWith(color: t.dim)
-                      : type.body,
-                ),
-              ),
-              if (switchValue != null)
-                TpSwitch(value: switchValue!, onChanged: (_) => onTap?.call())
-              else if (value != null) ...<Widget>[
-                const SizedBox(width: 12),
-                // 유연하지 않은 자식이면 폭을 먼저 다 가져가 라벨을 굶긴다.
-                // "On this phone only" 나 "시스템 설정" 이 그렇다.
-                Flexible(
-                  child: Text(
-                    value!,
-                    style: type.secondary,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                  ),
-                ),
-                if (onTap != null) ...<Widget>[
-                  const SizedBox(width: 8),
-                  Icon(
-                    context.tp.isGlass
-                        ? CupertinoIcons.chevron_forward
-                        : Icons.chevron_right,
-                    size: 16,
-                    color: t.dim,
-                  ),
-                ],
-              ] else
-                Icon(Icons.chevron_right, size: 18, color: t.dim),
-            ],
-          ),
-        ),
-      ),
+      toggled: toggled,
+      dimmed: onTap == null,
+      chevron: !menu && switchValue == null && onTap != null,
+      semanticsLabel: value == null ? label : '$label, $value',
+      trailing: switchValue != null
+          ? TpSwitch(value: switchValue!, onChanged: (_) => onTap?.call())
+          : menu
+          ? Icon(
+              context.tp.isGlass
+                  ? CupertinoIcons.chevron_up_chevron_down
+                  : Icons.unfold_more,
+              size: 16,
+              color: sys.label3,
+            )
+          : null,
     );
   }
 }
 
+/// 글자 버튼(되돌리기, 버전 줄).
+class _Link extends StatelessWidget {
+  const _Link({required this.label, required this.onTap, this.small = false});
+
+  final String label;
+  final VoidCallback onTap;
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: label,
+    excludeSemantics: true,
+    onTap: onTap,
+    child: TpTappable(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+        child: Center(
+          widthFactor: 1,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: small ? 13 : 15,
+              color: context.sys.accentText,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 /// 로그아웃 확인. 경고색이 없는 팔레트라 버튼 순서와 문구로 구분한다.
 Future<void> _confirmLogout(BuildContext context, VoidCallback onLogout) async {
+  if (context.tp.isGlass) {
+    final confirmed = await showCupertinoModalPopup<bool>(
+      context: context,
+      builder: (popup) => CupertinoActionSheet(
+        message: Text(K.logoutConfirm.tr()),
+        actions: <Widget>[
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(popup).pop(true),
+            child: Text(K.logout.tr()),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.of(popup).pop(false),
+          child: Text(K.cancel.tr()),
+        ),
+      ),
+    );
+    if (confirmed ?? false) onLogout();
+    return;
+  }
   final type = context.tpText;
   final confirmed = await showTpSheet<bool>(
     context: context,

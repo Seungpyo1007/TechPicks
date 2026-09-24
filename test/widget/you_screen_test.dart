@@ -291,7 +291,7 @@ void main() {
         ),
       );
 
-      expect(find.text('YOUR DEVICE'), findsOneWidget);
+      expect(find.text('Your device'), findsOneWidget);
       expect(find.text('Galaxy S25 Ultra'), findsOneWidget);
       // 기본 가중치에서 77.
       expect(find.text('77'), findsOneWidget);

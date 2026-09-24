@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../theme/tp_sys.dart';
 import '../theme/tp_tokens.dart';
 import '../theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
@@ -155,7 +156,10 @@ class TpShell extends StatelessWidget {
       // 검은 글자가 검은 배경 위에 남는다.
       value: t.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: DecoratedBox(
-        decoration: t.pageBackground,
+        // v3: iOS 는 시스템 grouped 바탕. 그라데이션은 Android 만 남는다.
+        decoration: t.isGlass
+            ? BoxDecoration(color: context.sys.background)
+            : t.pageBackground,
         // Ink 계열 위젯(InkWell, IconButton)이 Material 조상을 요구한다.
         // 배경은 위 DecoratedBox 가 그리므로 여기서는 투명하게 둔다.
         child: Material(

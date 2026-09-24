@@ -255,5 +255,6 @@
   "buildRowSub": "CPU and GPU pairs for a budget",
   "weights": "Weights",
   "removeShort": "Remove from shortlist",
-  "browseByKind": "Browse by kind"
+  "browseByKind": "Browse by kind",
+  "done": "Done"
 }

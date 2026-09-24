@@ -236,7 +236,11 @@ class TpRow extends StatefulWidget {
     this.titleStyle,
     this.valueStyle,
     this.below,
+    this.toggled,
   });
+
+  /// 켜고 끄는 줄이면 지금 상태. 스위치로 읽힌다.
+  final bool? toggled;
 
   final String title;
   final String? subtitle;
@@ -282,7 +286,7 @@ class _TpRowState extends State<TpRow> {
     final titleColor = w.destructive
         ? sys.destructive
         : w.dimmed
-        ? sys.label3
+        ? sys.label2
         : sys.label;
     final chevron = w.chevron ?? (w.onTap != null && !w.checked);
     final centred = w.destructive && w.leading == null && w.value == null;
@@ -377,7 +381,8 @@ class _TpRowState extends State<TpRow> {
         w.semanticsLabel ??
         <String?>[w.title, w.subtitle, w.value].whereType<String>().join(', ');
     return Semantics(
-      button: w.onTap != null,
+      button: w.onTap != null && w.toggled == null,
+      toggled: w.toggled,
       selected: w.checked,
       label: label,
       excludeSemantics: true,
