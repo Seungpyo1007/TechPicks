@@ -15,8 +15,7 @@ import '../feature/cpu/processor_screen.dart';
 import '../domain/model/processor.dart';
 import '../feature/detail/detail_screen.dart';
 import '../feature/home/home_screen.dart';
-import '../feature/login/email_login_screen.dart';
-import '../feature/login/login_screen.dart';
+import '../feature/login/login_sheet.dart';
 import '../feature/onboarding/onboarding_screen.dart';
 import '../feature/rank/rank_category.dart';
 import '../feature/rank/rank_tab.dart';
@@ -107,31 +106,30 @@ GoRouter buildRouter(Ref ref) {
       }
       if (here == TpRoute.onboarding) return TpRoute.home;
 
-      final signedIn =
-          ref.read(currentUserProvider) != null || ref.read(guestProvider);
-      if (!signedIn) {
-        return here.startsWith(TpRoute.login) ? null : TpRoute.login;
-      }
-      return here.startsWith(TpRoute.login) ? TpRoute.home : null;
+      // 로그인은 선택이다. 온보딩만 거치면 앱이다.
+      return null;
     },
     routes: <RouteBase>[
       GoRoute(
         path: TpRoute.onboarding,
         builder: (context, state) => const OnboardingScreen(),
       ),
+      // 로그인 시트. 어디서 열든 닫으면 그 자리로 돌아간다.
       GoRoute(
         path: TpRoute.login,
-        builder: (context, state) => _Login(),
-        routes: <RouteBase>[
-          GoRoute(
-            path: 'email',
-            builder: (context, state) => EmailLoginScreen(
-              startInSignUp: state.uri.queryParameters['signUp'] == '1',
-              onBack: () =>
-                  context.canPop() ? context.pop() : context.go(TpRoute.login),
-              onSignedIn: () => context.go(TpRoute.home),
-            ),
+        pageBuilder: (context, state) => _sheet(
+          context,
+          state,
+          LoginSheet(
+            onClose: () =>
+                context.canPop() ? context.pop() : context.go(TpRoute.home),
+            onSignedIn: () =>
+                context.canPop() ? context.pop() : context.go(TpRoute.home),
           ),
+        ),
+        routes: <RouteBase>[
+          // 예전 주소.
+          GoRoute(path: 'email', redirect: (_, _) => TpRoute.login),
         ],
       ),
 
@@ -372,7 +370,6 @@ class _Gate extends ChangeNotifier {
     for (final sub in <void Function()>[
       () => ref.listen(onboardingDoneProvider, (_, _) => notifyListeners()),
       () => ref.listen(currentUserProvider, (_, _) => notifyListeners()),
-      () => ref.listen(guestProvider, (_, _) => notifyListeners()),
     ]) {
       sub();
     }
@@ -405,21 +402,6 @@ class _CompareWithState extends ConsumerState<_CompareWith> {
 
   @override
   Widget build(BuildContext context) => const _Compare();
-}
-
-class _Login extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) => LoginScreen(
-    onSignedIn: () => context.go(TpRoute.home),
-    // 푸터의 `Sign up` 은 가입 화면을 연다. 지금까지는 로그인을 건너뛰어서,
-    // 가입하려던 사람이 그냥 앱에 들어와 버렸다.
-    onSignUp: () => context.go('${TpRoute.emailLogin}?signUp=1'),
-    onEmail: () => context.go(TpRoute.emailLogin),
-    onBrowse: () {
-      unawaited(ref.read(guestProvider.notifier).stay());
-      context.go(TpRoute.home);
-    },
-  );
 }
 
 /// 비교 탭. 프로바이더를 만지는 행동 둘이 있어서 감싼다.
@@ -462,10 +444,8 @@ class YouSheet extends ConsumerWidget {
     name: ref.watch(currentUserProvider)?.name,
     email: ref.watch(currentUserProvider)?.email,
     // 손님 표시도 같이 지운다. 안 지우면 로그아웃해도 탭에 남는다.
-    onLogout: () {
-      unawaited(ref.read(currentUserProvider.notifier).signOut());
-      unawaited(ref.read(guestProvider.notifier).clear());
-    },
+    onLogout: () => unawaited(ref.read(currentUserProvider.notifier).signOut()),
+    onSignIn: () => context.push(TpRoute.login),
     onDeviceTap: (s) {
       context.pop();
       context.push('/device/$s');

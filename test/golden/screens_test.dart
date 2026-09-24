@@ -1,3 +1,5 @@
+import 'package:techpicks/shared/copy_keys.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -5,19 +7,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/dto/smartphone.dart';
 import 'package:techpicks/data/service/ask_service.dart';
-import 'package:techpicks/data/service/auth_service.dart';
 import 'package:techpicks/domain/model/ask_answer.dart';
 import 'package:techpicks/feature/ask/ask_screen.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/feature/cpu/processor_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
-import 'package:techpicks/feature/login/login_screen.dart';
+import 'package:techpicks/feature/login/login_sheet.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
+import '../support/fake_auth.dart';
 import '../support/harness.dart';
 import 'golden_harness.dart';
 
@@ -143,10 +145,22 @@ void main() {
     );
   });
 
+  goldenScenario('login_email', '로그인 · 이메일', (tester, chrome) async {
+    await pumpScreen(
+      tester,
+      LoginSheet(onClose: () {}),
+      chrome: chrome,
+      size: frameOf(chrome),
+      overrides: <Override>[authServiceProvider.overrideWithValue(_StubAuth())],
+    );
+    await tester.tap(find.text(K.continueEmail.tr()));
+    await tester.pumpAndSettle();
+  });
+
   goldenScenario('login', '로그인', (tester, chrome) async {
     await pumpScreen(
       tester,
-      const LoginScreen(),
+      LoginSheet(onClose: () {}),
       chrome: chrome,
       size: frameOf(chrome),
       overrides: <Override>[authServiceProvider.overrideWithValue(_StubAuth())],
@@ -178,31 +192,4 @@ const _answer = AskAnswer(
 );
 
 /// Firebase 를 띄우지 않는 가짜. 화면은 로그아웃 상태로만 그린다.
-class _StubAuth implements AuthService {
-  @override
-  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
-  @override
-  TpUser? get current => null;
-
-  @override
-  Future<TpUser?> signIn(
-    AuthMethod method, {
-    String? email,
-    String? password,
-  }) async => null;
-
-  @override
-  Future<TpUser?> signUp({
-    required String email,
-    required String password,
-  }) async => null;
-
-  @override
-  Future<bool> sendPasswordReset(String email) async => false;
-
-  @override
-  Future<TpUser?> updateName(String name) async => null;
-
-  @override
-  Future<void> signOut() async {}
-}
+class _StubAuth extends FakeAuthService {}

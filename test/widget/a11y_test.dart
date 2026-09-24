@@ -9,8 +9,7 @@ import 'package:techpicks/feature/cpu/processor_screen.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
-import 'package:techpicks/feature/login/email_login_screen.dart';
-import 'package:techpicks/feature/login/login_screen.dart';
+import 'package:techpicks/feature/login/login_sheet.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
@@ -27,12 +26,11 @@ final _screens = <String, Widget>{
   'detail': const DetailScreen(slug: 'galaxy-s25'),
   'ask': const AskScreen(),
   'you': const YouScreen(),
-  'login': const LoginScreen(),
+  'login': const LoginSheet(),
   'onboarding': const OnboardingScreen(),
   // 뒤로 가기처럼 아이콘만 있는 버튼이 있는 화면들.
   'detail-with-back': DetailScreen(slug: 'galaxy-s25', onBack: () {}),
   'picker': PickerScreen(onDone: () {}),
-  'email-login': EmailLoginScreen(onBack: () {}),
 };
 
 /// 스캔·뷰어는 애니메이션이 멈추지 않아 settle 이 끝나지 않는다.

@@ -1101,7 +1101,6 @@ final authServiceProvider = Provider<AuthService>(
   (ref) => FirebaseAuthService(),
 );
 
-/// 지금 로그인한 사람. 로그인·로그아웃할 때 갱신한다.
 /// 프로필 저장소. 테스트는 이걸 갈아끼운다.
 final profileServiceProvider = Provider<ProfileService>(
   (ref) => FirebaseProfileService(),
@@ -1159,37 +1158,34 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
     return auth.current;
   }
 
-  Future<SignInOutcome> signIn(
+  /// 로그인. 실패면 까닭을 돌려준다(취소도 [AuthFailure.canceled] 로).
+  Future<AuthResult> signIn(
     AuthMethod method, {
     String? email,
     String? password,
   }) async {
-    final TpUser? user;
-    try {
-      user = await ref
-          .read(authServiceProvider)
-          .signIn(method, email: email, password: password);
-    } on AuthCanceled {
-      return SignInOutcome.canceled;
-    }
-    if (user != null && ref.mounted) state = user;
-    return user == null ? SignInOutcome.failed : SignInOutcome.ok;
+    final result = await ref
+        .read(authServiceProvider)
+        .signIn(method, email: email, password: password);
+    if (result.user != null && ref.mounted) state = result.user;
+    return result;
   }
 
-  Future<bool> signUp(String email, String password) async {
-    final user = await ref
+  Future<AuthResult> signUp(String email, String password) async {
+    final result = await ref
         .read(authServiceProvider)
         .signUp(email: email, password: password);
-    if (user != null && ref.mounted) state = user;
-    return user != null;
+    if (result.user != null && ref.mounted) state = result.user;
+    return result;
   }
 
-  /// 비밀번호 재설정 메일. 로그인한 사람의 주소로만 보낸다.
-  Future<bool> sendPasswordReset() async {
-    final email = state?.email;
-    if (email == null || email.isEmpty) return false;
-    return ref.read(authServiceProvider).sendPasswordReset(email);
-  }
+  /// 비밀번호 재설정 메일. 로그인 전(비밀번호 찾기)에도 쓴다. 보냈으면 null.
+  Future<AuthFailure?> sendPasswordReset(String email) =>
+      ref.read(authServiceProvider).sendPasswordReset(email);
+
+  /// 메일 확인 메일을 다시 보낸다.
+  Future<AuthFailure?> resendVerification() =>
+      ref.read(authServiceProvider).sendEmailVerification();
 
   /// 표시 이름을 바꾼다.
   Future<bool> updateName(String name) async {
@@ -1199,6 +1195,21 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
     return true;
   }
 
+  /// 계정을 지운다. 계정의 데이터는 [accountCleanupProvider] 가 지운다.
+  /// 성공하면 기기의 계정 데이터도 기본값으로 돌린다.
+  Future<AuthFailure?> deleteAccount({String? password}) async {
+    final cleanup = ref.read(accountCleanupProvider);
+    final failure = await ref
+        .read(authServiceProvider)
+        .deleteAccount(password: password, cleanup: cleanup);
+    if (failure != null) return failure;
+    if (ref.mounted) {
+      state = null;
+      await ref.read(localAccountResetProvider)();
+    }
+    return null;
+  }
+
   Future<void> signOut() async {
     // 화면을 먼저 되돌린다.
     //
@@ -1206,9 +1217,22 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
     // 눌러도 아무 일이 안 일어난다. 시뮬레이터에서 실제로 그랬다. 누른 대로
     // 나가는 것이 먼저다 — 실패하면 다음 실행에 세션이 복원될 뿐이다.
     state = null;
+    // 이 기기에 남은 계정 데이터(관심 목록·가중치·최근)를 기본값으로. 안 비우면
+    // 다음에 로그인한 사람에게 섞인다.
+    await ref.read(localAccountResetProvider)();
     await ref.read(authServiceProvider).signOut();
   }
 }
+
+/// 계정의 서버 데이터를 지운다(계정 삭제 때). 계정 동기화가 채운다.
+final accountCleanupProvider = Provider<Future<void> Function(String uid)>(
+  (ref) => (uid) async {},
+);
+
+/// 이 기기의 계정 데이터를 기본값으로(로그아웃·삭제 뒤). 계정 동기화가 채운다.
+final localAccountResetProvider = Provider<Future<void> Function()>(
+  (ref) => () async {},
+);
 
 final currentUserProvider = NotifierProvider<CurrentUserNotifier, TpUser?>(
   CurrentUserNotifier.new,
@@ -1245,44 +1269,6 @@ class OnboardingNotifier extends Notifier<bool?> with RestoreGuard {
 final onboardingDoneProvider = NotifierProvider<OnboardingNotifier, bool?>(
   OnboardingNotifier.new,
 );
-
-/// 계정 없이 쓰기로 한 사람.
-///
-/// 이걸 안 남기면 `Browse without an account` 를 고른 사람이 앱을 켤 때마다
-/// 로그인 화면을 다시 본다. 관심 목록도 온보딩도 남는데 이것만 안 남을
-/// 이유가 없다.
-class GuestNotifier extends Notifier<bool> with RestoreGuard {
-  static const String _prefsKey = 'browsing_as_guest';
-
-  @override
-  bool build() {
-    unawaited(_restore());
-    return false;
-  }
-
-  Future<void> _restore() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!ref.mounted || touched) return;
-    state = prefs.getBool(_prefsKey) ?? false;
-  }
-
-  Future<void> stay() async {
-    touch();
-    state = true;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_prefsKey, true);
-  }
-
-  /// 로그아웃하면 다시 로그인 화면으로 보낸다.
-  Future<void> clear() async {
-    touch();
-    state = false;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_prefsKey);
-  }
-}
-
-final guestProvider = NotifierProvider<GuestNotifier, bool>(GuestNotifier.new);
 
 /// 언어 전환. 앱은 화면에서 context 로 만들어 넣고, 테스트는 가짜를 끼운다.
 final localeControllerProvider = Provider<LocaleController?>((ref) => null);
@@ -1557,7 +1543,7 @@ class ShortlistSync extends Notifier<void> {
   @override
   void build() {
     ref.listen(currentUserProvider, (previous, next) {
-      if (next == null || next.isAnonymous) return;
+      if (next == null) return;
       if (next.uid == previous?.uid) return;
       unawaited(_merge(next.uid));
     }, fireImmediately: true);
@@ -1566,7 +1552,7 @@ class ShortlistSync extends Notifier<void> {
       // 첫 값은 저장값을 복원한 것이다. 사람이 고친 게 아니다.
       if (previous == null) return;
       final user = ref.read(currentUserProvider);
-      if (user == null || user.isAnonymous) return;
+      if (user == null) return;
       if (!_merged.contains(user.uid)) return;
       unawaited(_push(user.uid, next));
     });

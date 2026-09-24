@@ -11,52 +11,34 @@ import 'package:techpicks/domain/model/tp_profile.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
+import '../support/fake_auth.dart';
 import '../support/harness.dart';
 
 /// 이름과 비밀번호는 Firebase 가 처리한다. 여기서는 무엇을 시켰는지만 본다.
-class _StubAuth implements AuthService {
-  @override
-  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
+class _StubAuth extends FakeAuthService {
   _StubAuth({this.succeeds = true, TpUser? user})
-    : _current = user ?? const TpUser(uid: 'u1', email: 'a@b.com', name: '홍길동');
+    : super(
+        user:
+            user ??
+            const TpUser(
+              uid: 'u1',
+              email: 'a@b.com',
+              name: '홍길동',
+              method: AuthMethod.email,
+              emailVerified: true,
+            ),
+        resetFailure: succeeds ? null : AuthFailure.network,
+      );
 
   final bool succeeds;
-  TpUser? _current;
-
-  final List<String> resets = <String>[];
   final List<String> names = <String>[];
-
-  @override
-  TpUser? get current => _current;
-
-  @override
-  Future<TpUser?> signIn(
-    AuthMethod method, {
-    String? email,
-    String? password,
-  }) async => _current;
-
-  @override
-  Future<TpUser?> signUp({
-    required String email,
-    required String password,
-  }) async => null;
-
-  @override
-  Future<bool> sendPasswordReset(String email) async {
-    resets.add(email);
-    return succeeds;
-  }
 
   @override
   Future<TpUser?> updateName(String name) async {
     names.add(name);
     if (!succeeds) return null;
-    return _current = TpUser(uid: 'u1', email: 'a@b.com', name: name);
+    return super.updateName(name);
   }
-
-  @override
-  Future<void> signOut() async => _current = null;
 }
 
 /// 프로필 문서. Firestore 없이 무엇을 저장했는지만 본다.

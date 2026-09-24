@@ -39,6 +39,7 @@ class YouScreen extends ConsumerStatefulWidget {
     this.onEditProfile,
     this.onChangePassword,
     this.onLogout,
+    this.onSignIn,
     this.onDeviceTap,
     this.onSources,
     this.onClose,
@@ -58,6 +59,9 @@ class YouScreen extends ConsumerStatefulWidget {
   final VoidCallback? onEditProfile;
   final VoidCallback? onChangePassword;
   final VoidCallback? onLogout;
+
+  /// 로그인 시트를 연다.
+  final VoidCallback? onSignIn;
 
   /// 내 기기가 카탈로그에 있으면 상세로 보낸다.
   final ValueChanged<String>? onDeviceTap;
@@ -247,13 +251,13 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                         ? null
                         : TextStyle(color: sys.accentText),
                     chevron: false,
-                    onTap: widget.onLogout == null
-                        ? null
-                        : hasAccount
-                        ? () => unawaited(
-                            _confirmLogout(context, widget.onLogout!),
-                          )
-                        : widget.onLogout,
+                    onTap: hasAccount
+                        ? (widget.onLogout == null
+                              ? null
+                              : () => unawaited(
+                                  _confirmLogout(context, widget.onLogout!),
+                                ))
+                        : widget.onSignIn,
                   ),
                 ],
               ),
@@ -287,14 +291,15 @@ class _YouScreenState extends ConsumerState<YouScreen> {
   );
 
   Future<void> _resetPassword() async {
-    final sent = await ref
+    final address = email ?? '';
+    final failure = await ref
         .read(currentUserProvider.notifier)
-        .sendPasswordReset();
+        .sendPasswordReset(address);
     if (!mounted) return;
 
     setState(() {
-      _notice = sent
-          ? K.pwResetSent.tr(args: <String>[email ?? ''])
+      _notice = failure == null
+          ? K.pwResetSent.tr(args: <String>[address])
           : K.pwResetFailed.tr();
     });
   }

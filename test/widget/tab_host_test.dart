@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:riverpod/misc.dart' show Override;
 
+import '../support/fake_auth.dart';
 import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
@@ -14,7 +15,6 @@ import 'package:techpicks/app/shell/tp_tab.dart';
 import 'package:techpicks/app/router.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/service/ask_service.dart';
-import 'package:techpicks/data/service/auth_service.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
@@ -23,34 +23,7 @@ import 'package:techpicks/feature/rank/browse_screen.dart';
 import 'package:techpicks/app/theme/tp_icons.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
-class _NoAuth implements AuthService {
-  @override
-  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
-  @override
-  TpUser? get current => null;
-
-  @override
-  Future<TpUser?> signIn(
-    AuthMethod m, {
-    String? email,
-    String? password,
-  }) async => null;
-
-  @override
-  Future<TpUser?> signUp({
-    required String email,
-    required String password,
-  }) async => null;
-
-  @override
-  Future<bool> sendPasswordReset(String email) async => false;
-
-  @override
-  Future<TpUser?> updateName(String name) async => null;
-
-  @override
-  Future<void> signOut() async {}
-}
+class _NoAuth extends FakeAuthService {}
 
 ProviderContainer? _container;
 

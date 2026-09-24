@@ -577,10 +577,14 @@ class TpPill extends StatelessWidget {
     this.icon,
     this.height = 50,
     this.expand = true,
+    this.busy = false,
   });
 
   final String label;
   final VoidCallback? onTap;
+
+  /// 기다리는 중. 아이콘 자리에 돌림 표시가 뜨고 눌리지 않는다.
+  final bool busy;
   final TpPillKind kind;
   final IconData? icon;
   final double height;
@@ -594,7 +598,7 @@ class TpPill extends StatelessWidget {
       TpPillKind.tinted => (sys.tint, sys.accentText),
       TpPillKind.gray => (sys.fill3, sys.label),
     };
-    final disabled = onTap == null;
+    final disabled = onTap == null || busy;
     final move = context.motion.selection;
     // 종류가 바뀌면(담기 → 담김) 색은 번지고 아이콘은 튀어 들어온다.
     final face = AnimatedContainer(
@@ -610,7 +614,18 @@ class TpPill extends StatelessWidget {
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          if (icon != null) ...<Widget>[
+          if (busy) ...<Widget>[
+            SizedBox.square(
+              dimension: 18,
+              child: context.tp.isGlass
+                  ? CupertinoActivityIndicator(color: sys.label2)
+                  : CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: sys.label2,
+                    ),
+            ),
+            const SizedBox(width: 8),
+          ] else if (icon != null) ...<Widget>[
             AnimatedSwitcher(
               duration: move.duration,
               transitionBuilder: (child, a) => ScaleTransition(
@@ -645,8 +660,8 @@ class TpPill extends StatelessWidget {
       button: !disabled,
       label: label,
       excludeSemantics: true,
-      onTap: onTap,
-      child: TpTappable(onTap: onTap, press: true, child: face),
+      onTap: busy ? null : onTap,
+      child: TpTappable(onTap: busy ? null : onTap, press: true, child: face),
     );
   }
 }
