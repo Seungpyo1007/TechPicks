@@ -6,39 +6,11 @@ import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/service/auth_service.dart';
 import 'package:techpicks/data/service/shortlist_sync_service.dart';
 
+import '../support/fake_auth.dart';
+
 /// 로그인을 테스트가 정한다.
-class _StubAuth implements AuthService {
-  @override
-  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
-  TpUser? _current;
-
-  @override
-  TpUser? get current => _current;
-
-  @override
-  Future<TpUser?> signIn(
-    AuthMethod method, {
-    String? email,
-    String? password,
-  }) async => _current = TpUser(
-    uid: method == AuthMethod.anonymous ? 'anon' : 'u1',
-    isAnonymous: method == AuthMethod.anonymous,
-  );
-
-  @override
-  Future<TpUser?> signUp({
-    required String email,
-    required String password,
-  }) async => null;
-
-  @override
-  Future<bool> sendPasswordReset(String email) async => false;
-
-  @override
-  Future<TpUser?> updateName(String name) async => null;
-
-  @override
-  Future<void> signOut() async => _current = null;
+class _StubAuth extends FakeAuthService {
+  _StubAuth() : super(signInResult: const AuthResult.ok(TpUser(uid: 'u1')));
 }
 
 class _FakeSync implements ShortlistSyncService {
@@ -175,22 +147,6 @@ void main() {
     expect(sync.writes, <List<String>>[
       <String>['pixel-9-pro'],
     ]);
-  });
-
-  test('익명 로그인은 계정에 안 올린다', () async {
-    // 익명 uid 는 설치마다 달라 올려도 다시 못 찾는다.
-    final sync = _FakeSync();
-    final container = _container(auth: _StubAuth(), sync: sync);
-    await _settle();
-
-    await container
-        .read(currentUserProvider.notifier)
-        .signIn(AuthMethod.anonymous);
-    await _settle();
-    container.read(shortlistProvider.notifier).toggle('pixel-9-pro');
-    await _settle();
-
-    expect(sync.writes, isEmpty);
   });
 
   test('로그인하지 않으면 아무 일도 없다', () async {

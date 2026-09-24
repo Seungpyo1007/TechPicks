@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
-import 'package:techpicks/feature/login/login_screen.dart';
+import 'package:techpicks/feature/login/login_sheet.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
@@ -86,12 +86,13 @@ void main() {
   });
 
   testWidgets('로그인 버튼', (tester) async {
-    var taps = 0;
-    await pumpScreen(tester, LoginScreen(onEmail: () => taps++));
+    await pumpScreen(tester, const LoginSheet());
 
-    await _tapCorners(tester, K.loginEmail.tr());
-
-    expect(taps, 4);
+    // 글자 밖, 버튼 왼쪽 끝 가까이를 눌러도 이메일 단계로 넘어간다.
+    final label = tester.getRect(find.text(K.continueEmail.tr()));
+    await tester.tapAt(Offset(28, label.center.dy));
+    await tester.pumpAndSettle();
+    expect(find.text(K.emailLabel.tr()), findsWidgets);
   });
 
   // 눌러도 아무 반응이 없으면 죽은 버튼처럼 보인다. 명세가 이름을 준 칩·카드

@@ -285,6 +285,28 @@ abstract final class K {
   static const String passwordShort = 'passwordShort';
   static const String authFailed = 'authFailed';
   static const String signupFailed = 'signupFailed';
+  static const String loginTitle = 'loginTitle';
+  static const String loginWhy = 'loginWhy';
+  static const String continueApple = 'continueApple';
+  static const String continueGoogle = 'continueGoogle';
+  static const String continueEmail = 'continueEmail';
+  static const String legalLine = 'legalLine';
+  static const String forgotPw = 'forgotPw';
+  static const String resetTitle = 'resetTitle';
+  static const String resetBody = 'resetBody';
+  static const String resetSend = 'resetSend';
+  static const String resetSent = 'resetSent';
+  static const String pwHint = 'pwHint';
+  static const String signedIn = 'signedIn';
+  static const String authBadCredentials = 'authBadCredentials';
+  static const String authEmailInUse = 'authEmailInUse';
+  static const String authWeakPassword = 'authWeakPassword';
+  static const String authNetwork = 'authNetwork';
+  static const String authTooMany = 'authTooMany';
+  static const String authOtherProvider = 'authOtherProvider';
+  static const String authRecentLogin = 'authRecentLogin';
+  static const String authDisabled = 'authDisabled';
+  static const String authNotConfigured = 'authNotConfigured';
 
   // 스캔 · 뷰어
   static const String scanTitle = 'scanTitle';

@@ -17,16 +17,28 @@ void main() {
   });
 
   for (final method in AuthMethod.values) {
-    test('$method 로그인은 null 로 떨어진다', () async {
-      expect(
-        await service.signIn(method, email: 'a@b.com', password: '123456'),
-        isNull,
+    test('$method 로그인은 설정 안 됨으로 떨어진다', () async {
+      final result = await service.signIn(
+        method,
+        email: 'a@b.com',
+        password: '123456',
       );
+      expect(result.ok, isFalse);
+      expect(result.failure, AuthFailure.notConfigured);
     });
   }
 
-  test('가입도 null 로 떨어진다', () async {
-    expect(await service.signUp(email: 'a@b.com', password: '123456'), isNull);
+  test('가입도 설정 안 됨으로 떨어진다', () async {
+    final result = await service.signUp(email: 'a@b.com', password: '123456');
+    expect(result.failure, AuthFailure.notConfigured);
+  });
+
+  test('재설정·확인 메일도 던지지 않는다', () async {
+    expect(
+      await service.sendPasswordReset('a@b.com'),
+      AuthFailure.notConfigured,
+    );
+    expect(await service.sendEmailVerification(), isNotNull);
   });
 
   test('로그아웃은 조용히 지나간다', () async {

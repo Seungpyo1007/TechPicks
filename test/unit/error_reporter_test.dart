@@ -54,7 +54,7 @@ void main() {
     final service = FirebaseAuthService();
 
     service.current;
-    await service.signIn(AuthMethod.anonymous);
+    await service.signIn(AuthMethod.email, email: 'a@b.com', password: 'x');
     await service.signUp(email: 'a@b.com', password: '123456');
 
     final reasons = sink.entries.map((e) => e.reason).toSet();
