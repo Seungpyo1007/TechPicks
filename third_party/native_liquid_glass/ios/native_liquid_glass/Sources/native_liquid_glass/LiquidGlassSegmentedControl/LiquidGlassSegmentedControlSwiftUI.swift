@@ -27,7 +27,7 @@ struct LiquidGlassSegmentedControlSwiftUIView: View {
     .pickerStyle(.segmented)
     .tint(viewModel.tintColor)
     .disabled(!viewModel.enabled)
-    .padding(.horizontal, 16)
+    // TechPicks 패치: 좌우 여백은 Flutter 가 준다. 여기서 또 16 을 주면 두 배가 된다.
   }
 
   private var selectionBinding: Binding<Int> {
