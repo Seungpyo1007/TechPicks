@@ -487,6 +487,18 @@ void _browseInPlace() {
     final before = tester.state(find.byType(BrowseScreen));
 
     await tester.tap(find.text(K.cpus.tr()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    // 오른쪽 칸을 골랐으니 내용이 오른쪽에서 들어온다.
+    final sliding = tester
+        .widgetList<SlideTransition>(
+          find.descendant(
+            of: find.byType(BrowseScreen),
+            matching: find.byType(SlideTransition),
+          ),
+        )
+        .where((w) => w.position.value.dx > 0);
+    expect(sliding, isNotEmpty);
     await tester.pumpAndSettle();
 
     final after = tester.state(find.byType(BrowseScreen));
