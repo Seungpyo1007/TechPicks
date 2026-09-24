@@ -115,8 +115,7 @@ void main() {
       size: frameOf(chrome),
     );
     await tester.tap(find.text('Camera module'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
   });
 
   goldenScenario('ask_answer', 'Ask — 답변 표', (tester, chrome) async {

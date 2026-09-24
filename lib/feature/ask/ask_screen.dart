@@ -677,6 +677,7 @@ class _Suggestion extends StatelessWidget {
       excludeSemantics: true,
       onTap: onTap,
       child: TpTappable(
+        press: true,
         onTap: onTap,
         child: Container(
           constraints: BoxConstraints(minHeight: _Composer.minTap(context)),

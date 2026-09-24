@@ -9,6 +9,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
+import '../../shared/tp_haptics.dart';
 
 /// 3D 뷰어.
 ///
@@ -41,7 +42,7 @@ class _ViewerScreenState extends State<ViewerScreen> {
   int? _highlighted;
 
   void _pick(int i) {
-    HapticFeedback.selectionClick();
+    TpHaptics.selection();
     setState(() => _highlighted = _highlighted == i ? null : i);
   }
 
@@ -164,6 +165,7 @@ class _PartChip extends StatelessWidget {
       excludeSemantics: true,
       onTap: onTap,
       child: TpTappable(
+        press: true,
         onTap: onTap,
         child: AnimatedContainer(
           duration: move.duration,
