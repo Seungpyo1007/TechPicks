@@ -286,11 +286,8 @@ GoRouter buildRouter(Ref ref) {
           ),
         ),
       ),
-      GoRoute(
-        path: TpRoute.you,
-        pageBuilder: (context, state) =>
-            _sheet(context, state, const YouSheet()),
-      ),
+      // 내 정보는 시트가 아니라 옆에서 밀려 들어오는 화면이다.
+      GoRoute(path: TpRoute.you, builder: (context, state) => const YouSheet()),
 
       // 탭 위로 밀리는 화면들. 명세의 back stack 은 한 단계다.
       GoRoute(
@@ -466,7 +463,7 @@ class YouSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => YouScreen(
-    onClose: () => context.pop(),
+    onBack: () => context.canPop() ? context.pop() : context.go(TpRoute.home),
     name: ref.watch(currentUserProvider)?.name,
     email: ref.watch(currentUserProvider)?.email,
     // 손님 표시도 같이 지운다. 안 지우면 로그아웃해도 탭에 남는다.
