@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../../app/theme/tp_motion.dart';
+import 'tp_arrive.dart';
 
 /// 바뀐 자리만 굴러가는 숫자. SwiftUI 의 `.contentTransition(.numericText())`.
 ///
@@ -38,6 +39,25 @@ class _TpNumberState extends State<TpNumber>
 
   /// 값이 커졌는가. 굴러가는 방향.
   bool _up = true;
+
+  DateTime? _arrived;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 나타나면 같은 자릿수의 0 에서 굴러 올라온다.
+    final at = TpArriveScope.freshOf(context);
+    if (at == null || at == _arrived) return;
+    _arrived = at;
+    final zeros = widget.text.replaceAll(RegExp('[0-9]'), '0');
+    if (zeros == widget.text) return;
+    _from = zeros;
+    _to = widget.text;
+    _up = true;
+    _c
+      ..value = 0
+      ..animateWith(context.motion.smooth.createSimulation());
+  }
 
   @override
   void didUpdateWidget(TpNumber old) {

@@ -3,6 +3,7 @@ import 'package:motor/motor.dart';
 
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
+import 'tp_arrive.dart';
 
 /// 0–1 을 채우는 가로 막대.
 ///
@@ -39,6 +40,9 @@ class TpBar extends StatelessWidget {
           color: t.track,
           // 스프링이라 도중에 값이 또 바뀌어도(슬라이더) 속도를 이어받는다.
           child: SingleMotionBuilder(
+            // 화면이 나타나면 0 에서부터 찬다.
+            key: ValueKey<DateTime?>(TpArriveScope.of(context)),
+            from: TpArriveScope.freshOf(context) == null ? null : 0,
             value: fraction.clamp(0, 1).toDouble(),
             motion: context.motion.smooth,
             builder: (context, v, _) => Align(
