@@ -8,7 +8,6 @@ import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_group.dart';
-import '../../shared/widgets/tp_page.dart';
 import 'viewer_stage.dart';
 import '../../shared/tp_haptics.dart';
 
@@ -53,15 +52,29 @@ class _ViewerScreenState extends State<ViewerScreen> {
     final safe = MediaQuery.viewPaddingOf(context);
     final minTap = glass ? 44.0 : 48.0;
 
+    // 어두운 무대라 시스템 유리(밝은 스타일)가 회색 덩어리로 떴다. 부품 칩과
+    // 같은 반투명 원으로.
     final close = glass
-        ? TpBarButton(
-            action: TpBarAction(
-              label: K.close.tr(),
+        ? Semantics(
+            button: true,
+            label: K.close.tr(),
+            excludeSemantics: true,
+            onTap: widget.onBack,
+            child: TpTappable(
+              press: true,
               onTap: widget.onBack,
-              child: const Icon(
-                CupertinoIcons.xmark,
-                size: 20,
-                color: Colors.white,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  CupertinoIcons.xmark,
+                  size: 18,
+                  color: Colors.white,
+                ),
               ),
             ),
           )
