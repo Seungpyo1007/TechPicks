@@ -19,6 +19,7 @@ import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_sheet.dart';
 import 'category_chips.dart';
 import 'rank_category.dart';
+import '../../shared/widgets/tp_shimmer.dart';
 
 /// 둘러보기 · 스마트폰.
 ///
@@ -284,22 +285,24 @@ class _Skeleton extends StatelessWidget {
   const _Skeleton();
 
   @override
-  Widget build(BuildContext context) => TpGroup(
-    children: <Widget>[
-      for (var i = 0; i < 6; i++)
-        SizedBox(
-          height: 66,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: context.sys.fill3,
-                borderRadius: BorderRadius.circular(8),
+  Widget build(BuildContext context) => TpShimmer(
+    child: TpGroup(
+      children: <Widget>[
+        for (var i = 0; i < 6; i++)
+          SizedBox(
+            height: 66,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: context.sys.fill3,
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ),
-        ),
-    ],
+      ],
+    ),
   );
 }
 

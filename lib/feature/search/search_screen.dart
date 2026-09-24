@@ -17,6 +17,8 @@ import '../../shared/widgets/tp_glass_search.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../rank/rank_category.dart';
+import '../../shared/figures/tp_figure.dart';
+import '../../shared/figures/tp_figures.dart';
 
 /// 검색 탭. 폰·프로세서·노트북을 한 상자에서 찾는다.
 ///
@@ -138,11 +140,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             padding: const EdgeInsets.fromLTRB(40, 60, 40, 0),
             child: Column(
               children: <Widget>[
-                Icon(
-                  glass ? CupertinoIcons.search : Icons.search,
-                  size: 44,
-                  color: sys.label3,
-                ),
+                const TpFigure(height: 64, paint: TpFigures.search),
                 const SizedBox(height: 12),
                 Text(
                   K.noMatches.tr(),
