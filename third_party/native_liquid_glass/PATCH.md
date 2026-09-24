@@ -28,6 +28,17 @@ ios/.../LiquidGlassTabBar/LiquidGlassTabBarView.swift
   didSelectTab(_:)      → guard selectionIsUserInitiated else { return }
 ```
 
+`LiquidGlassContainer` 가 **안전 영역에 걸치면 유리가 눌린다.**
+
+`UIHostingController` 가 창의 안전 영역만큼 SwiftUI 내용을 안쪽으로 민다. 홈 인디케이터
+위에 놓인 원 버튼은 아래 13pt 가 비고 납작하게 그려졌다. 호스팅 컨트롤러가 안전 영역을
+무시하게 한다.
+
+```
+ios/.../LiquidGlassContainer/LiquidGlassContainerView.swift
+  + hc.safeAreaRegions = []
+```
+
 ## 언제 지우나
 
 위 패치가 upstream 에 들어간 판이 나오면 이 디렉터리와 `dependency_overrides` 를

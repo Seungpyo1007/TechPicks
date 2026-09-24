@@ -40,6 +40,14 @@ class TpTabBar extends StatelessWidget {
 
   static const double androidHeight = 80;
 
+  /// 검색 탭에서 접힌 원과 필드의 바닥 여백. 시스템 탭 캡슐 바닥과 맞춘다
+  /// (홈 인디케이터 안쪽으로 13pt 들어간 자리).
+  static double searchBottom(BuildContext context) {
+    final bottom = MediaQuery.viewPaddingOf(context).bottom;
+    if (!TpNativeGlass.enabled) return bottom + 4;
+    return bottom > 21 ? bottom - 13 : bottom + 8;
+  }
+
   /// 이 크롬에서 바가 가리는 높이(안전 영역 제외). 화면이 목록 아래를 이만큼 더 비운다.
   static double coverOf(BuildContext context) {
     if (context.tp.isGlass) {
@@ -60,10 +68,14 @@ class TpTabBar extends StatelessWidget {
       );
     }
 
-    // 검색 탭: 바가 접히고 원 하나만 남는다. 필드는 검색 화면이 그 옆에 그린다.
+    // 검색 탭: 바가 접힌다. iOS 는 원과 필드를 검색 화면이 한 줄로 그린다.
+    // 원을 여기(탭 호스트)에 두면 네이티브 유리가 안전 영역 경계에서 잘렸다.
+    if (current == TpTab.search && TpNativeGlass.enabled) {
+      return const SizedBox.shrink();
+    }
     if (current == TpTab.search) {
       return Padding(
-        padding: EdgeInsets.fromLTRB(21, 0, 21, safe.bottom + 4),
+        padding: EdgeInsets.fromLTRB(21, 0, 21, searchBottom(context)),
         child: Align(
           alignment: Alignment.bottomLeft,
           child: _GlassCircle(
@@ -77,16 +89,17 @@ class TpTabBar extends StatelessWidget {
     }
 
     if (TpNativeGlass.enabled) {
-      return Padding(
-        padding: EdgeInsets.only(bottom: safe.bottom),
+      // 시스템 바는 자기 안에서 홈 인디케이터 자리를 잡는다. 바깥에서 그만큼
+      // 또 띄우면 34pt 떠 보인다. 뷰를 화면 끝까지 늘려 둔다.
+      return SizedBox(
         child: SizedBox(
-          height: iosHeight + TpNativeTabBar.overflow,
+          height: iosHeight + TpNativeTabBar.overflow + safe.bottom,
           child: TpNativeTabBar(
             index: TpTab.bar.indexOf(current),
             onSelected: (i) => onSelected(TpTab.bar[i]),
             onSearch: () => onSelected(TpTab.search),
             searchLabel: K.tab(TpTab.search).tr(),
-            height: iosHeight,
+            height: iosHeight + safe.bottom,
             tint: TpTokens.blue,
             items: <TpNativeTabItem>[
               for (final t in TpTab.bar)
@@ -229,9 +242,11 @@ class _GlassCircle extends StatelessWidget {
     child: TpPress(
       semanticsButton: false,
       onTap: onTap,
+      // 캡슐로 넘기면 OS 가 정사각형 틀 안에서 납작하게 그린다. 반지름을
+      // 절반으로 주면 원이 된다.
       child: TpSurface.chrome(
         raised: true,
-        radius: TpTokens.rControl,
+        radius: size / 2,
         child: SizedBox(
           width: size,
           height: size,
@@ -291,6 +306,45 @@ class TpTabRail extends StatelessWidget {
         ),
     ],
   );
+}
+
+/// 검색 탭의 접힌 원이 돌아갈 곳. [TabHost] 가 넣어 준다.
+class TpSearchReturn extends InheritedWidget {
+  const TpSearchReturn({
+    super.key,
+    required this.tab,
+    required this.onReturn,
+    required super.child,
+  });
+
+  final TpTab tab;
+  final VoidCallback onReturn;
+
+  static TpSearchReturn? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<TpSearchReturn>();
+
+  @override
+  bool updateShouldNotify(TpSearchReturn old) => old.tab != tab;
+}
+
+/// 원 버튼. 검색 화면도 쓴다.
+class TpGlassCircle extends StatelessWidget {
+  const TpGlassCircle({
+    super.key,
+    required this.size,
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final double size;
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) =>
+      _GlassCircle(size: size, label: label, icon: icon, onTap: onTap);
 }
 
 /// 지금 탭을 다시 눌렀다는 신호. 셸이 듣고 자기 목록을 맨 위로 올린다.

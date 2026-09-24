@@ -54,6 +54,10 @@ final class LiquidGlassContainerPlatformView: NSObject, FlutterPlatformView {
       // shape's bounds; don't clip it at the host view boundary.
       hc.view.clipsToBounds = false
       hc.view.layer.masksToBounds = false
+      // TechPicks patch: the platform view can sit over the home indicator.
+      // Left alone, the hosting controller insets the SwiftUI content by the
+      // window's safe area and the glass comes out squashed.
+      hc.safeAreaRegions = []
 
       containerView.addSubview(hc.view)
       NSLayoutConstraint.activate([

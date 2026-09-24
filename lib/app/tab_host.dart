@@ -95,30 +95,37 @@ class _TabHostState extends ConsumerState<TabHost> {
       },
       child: TpActiveTab(
         tab: tab,
-        child: TpTabReselect(
-          notifier: _reselect,
-          child: rail
-              ? Row(
-                  children: <Widget>[
-                    TpTabRail(current: tab, onSelected: (t) => _select(t, tab)),
-                    Expanded(child: widget.shell),
-                  ],
-                )
-              : Stack(
-                  children: <Widget>[
-                    Positioned.fill(child: widget.shell),
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: TpTabBar(
+        child: TpSearchReturn(
+          tab: _lastBarTab,
+          onReturn: () => context.go(TpRoute.of(_lastBarTab)),
+          child: TpTabReselect(
+            notifier: _reselect,
+            child: rail
+                ? Row(
+                    children: <Widget>[
+                      TpTabRail(
                         current: tab,
-                        returnTo: _lastBarTab,
                         onSelected: (t) => _select(t, tab),
                       ),
-                    ),
-                  ],
-                ),
+                      Expanded(child: widget.shell),
+                    ],
+                  )
+                : Stack(
+                    children: <Widget>[
+                      Positioned.fill(child: widget.shell),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: TpTabBar(
+                          current: tab,
+                          returnTo: _lastBarTab,
+                          onSelected: (t) => _select(t, tab),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );
