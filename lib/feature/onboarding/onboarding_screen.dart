@@ -10,6 +10,8 @@ import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/figures/tp_figure.dart';
+import '../../shared/figures/tp_figures.dart';
 import '../../shared/widgets/tp_button.dart';
 
 /// 온보딩 세 장.
@@ -94,13 +96,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      _Figure(index: i),
+                      _Figure(index: i, active: i == _index),
                       const SizedBox(height: 32),
-                      Text(pane.title.tr(), style: type.largeTitle),
+                      // 그림이 먼저, 제목과 본문이 조금씩 늦게 올라온다.
+                      _Rise(
+                        active: i == _index,
+                        delay: const Duration(milliseconds: 180),
+                        child: Text(pane.title.tr(), style: type.largeTitle),
+                      ),
                       const SizedBox(height: 12),
-                      Text(
-                        pane.body.tr(),
-                        style: type.body.copyWith(height: 1.5),
+                      _Rise(
+                        active: i == _index,
+                        delay: const Duration(milliseconds: 280),
+                        child: Text(
+                          pane.body.tr(),
+                          style: type.body.copyWith(height: 1.5),
+                        ),
                       ),
                     ],
                   ),
@@ -139,89 +150,95 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
-/// 각 장의 개념도. 실제 화면 요소를 단순화한 모양이다.
+/// 각 장의 개념도. 실제 화면 요소를 단순화한 모양이 움직인다.
+///
+/// 그 장이 화면에 들어올 때마다 처음부터 다시 튼다([active]).
 class _Figure extends StatelessWidget {
-  const _Figure({required this.index});
+  const _Figure({required this.index, required this.active});
 
   final int index;
+  final bool active;
 
   @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    return SizedBox(
-      height: 120,
-      child: switch (index) {
-        // 점수 다섯 줄이 숫자 하나로 접히는 그림.
-        0 => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            for (final f in <double>[.9, .5, .7, .6, .4])
-              Padding(
-                padding: const EdgeInsets.only(bottom: 7),
-                child: FractionallySizedBox(
-                  widthFactor: f,
-                  child: Container(
-                    height: 6,
-                    decoration: BoxDecoration(
-                      gradient: t.barFill,
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        // 두 열이 나란히 선 그림.
-        1 => Row(
-          children: <Widget>[
-            for (var i = 0; i < 2; i++) ...<Widget>[
-              if (i > 0) const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: i == 0 ? t.tintFill : t.track,
-                    borderRadius: BorderRadius.circular(t.rInner),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        // 말풍선 두 개.
-        _ => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            FractionallySizedBox(
-              widthFactor: .55,
-              child: Container(
-                height: 34,
-                decoration: BoxDecoration(
-                  color: t.track,
-                  borderRadius: BorderRadius.circular(t.rInner),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FractionallySizedBox(
-                widthFactor: .45,
-                alignment: Alignment.centerRight,
-                child: Container(
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: TpTokens.blue,
-                    borderRadius: BorderRadius.circular(t.rInner),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      },
+  Widget build(BuildContext context) => TpFigure(
+    height: 120,
+    active: active,
+    delay: const Duration(milliseconds: 120),
+    duration: const Duration(milliseconds: 1500),
+    paint: switch (index) {
+      0 => TpFigures.index,
+      1 => TpFigures.compare,
+      _ => TpFigures.ask,
+    },
+  );
+}
+
+/// 장이 들어올 때 글자가 조금 올라오며 나타난다. 이미 본 장으로 돌아와도 다시.
+class _Rise extends StatefulWidget {
+  const _Rise({required this.active, required this.delay, required this.child});
+
+  final bool active;
+  final Duration delay;
+  final Widget child;
+
+  @override
+  State<_Rise> createState() => _RiseState();
+}
+
+class _RiseState extends State<_Rise> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this);
+  CurvedAnimation? _t;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_t != null) return;
+    final move = context.motion.listItem;
+    final total = move.duration + widget.delay;
+    _c.duration = total;
+    _t = CurvedAnimation(
+      parent: _c,
+      curve: Interval(
+        total == Duration.zero
+            ? 0
+            : widget.delay.inMicroseconds / total.inMicroseconds,
+        1,
+        curve: move.curve,
+      ),
     );
+    if (widget.active) _play();
   }
+
+  @override
+  void didUpdateWidget(_Rise oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !oldWidget.active) _play();
+  }
+
+  void _play() {
+    if (context.motion.isReduced) {
+      _c.value = 1;
+    } else {
+      _c.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _t?.dispose();
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+    opacity: _t!,
+    child: SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 0.3),
+        end: Offset.zero,
+      ).animate(_t!),
+      child: widget.child,
+    ),
+  );
 }

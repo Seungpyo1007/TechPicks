@@ -149,11 +149,13 @@ Future<void> pumpScreenNoSettle(
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
   bool disableAnimations = false,
+  bool dark = false,
 }) async {
   await _pump(
     tester,
     screen,
     chrome: chrome,
+    dark: dark,
     overrides: overrides,
     size: size,
     viewPadding: viewPadding,
