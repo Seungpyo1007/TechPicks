@@ -98,7 +98,7 @@ void main() {
     expect(arriving(), isEmpty);
   });
 
-  testWidgets('브랜드 시트로 거르고 지우기로 되돌린다', (tester) async {
+  testWidgets('브랜드 메뉴로 거르고 지우기로 되돌린다', (tester) async {
     final container = await pumpScreen(
       tester,
       const RankScreen(),
@@ -115,8 +115,9 @@ void main() {
     final filtered = container.read(rankVisibleProvider);
     expect(filtered.length, lessThan(all));
     expect(filtered.every((r) => r.device.brand?.name == brand), isTrue);
-    // 고른 브랜드가 툴바 버튼 글자가 된다.
-    expect(find.bySemanticsLabel(brand), findsWidgets);
+    // 버튼 모양은 그대로고, 무엇이 걸렸는지는 상태 줄이 말한다.
+    expect(find.bySemanticsLabel(K.brand.tr()), findsWidgets);
+    expect(find.textContaining(brand), findsWidgets);
 
     await tester.tap(find.text(K.clear.tr()));
     await tester.pumpAndSettle();

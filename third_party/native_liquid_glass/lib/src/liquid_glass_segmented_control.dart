@@ -136,7 +136,9 @@ class _LiquidGlassSegmentedControlState extends State<LiquidGlassSegmentedContro
           creationParams: _buildCreationParams(),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: _onPlatformViewCreated,
-          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{Factory<TapGestureRecognizer>(() => TapGestureRecognizer())},
+          // TechPicks 패치: 손이 닿는 즉시 UIKit 에 넘긴다. Tap 으로 두면 스크롤 안에서
+          // 손을 뗄 때까지 터치가 묶여 눌림도, 칸이 미끄러지는 것도 안 보였다.
+          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer())},
         ),
       );
     }

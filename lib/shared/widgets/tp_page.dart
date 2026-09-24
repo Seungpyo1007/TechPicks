@@ -28,6 +28,8 @@ class TpBarAction {
     this.filled = false,
     this.child,
     this.menu,
+    this.symbol,
+    this.active = false,
   });
 
   /// 스크린 리더 이름. [text] 면 화면에도 이 글자가 나온다.
@@ -46,6 +48,12 @@ class TpBarAction {
 
   /// 있으면 누를 때 풀다운 메뉴가 열린다.
   final List<TpMenuItem>? menu;
+
+  /// SF Symbol 이름. iOS 26 에서 메뉴 버튼을 시스템 것으로 그릴 때 쓴다.
+  final String? symbol;
+
+  /// 걸려 있는 상태(필터). 모양은 그대로 두고 아이콘만 액센트로.
+  final bool active;
 }
 
 /// v3 화면 뼈대. large title 이 스크롤하면 줄어드는 표준 네비게이션 바 위에
@@ -385,6 +393,28 @@ class TpBarButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final sys = context.sys;
     final a = action;
+    // iOS 26: 메뉴 버튼은 시스템 유리 버튼 + UIMenu.
+    if (TpNativeGlass.enabled && a.menu != null && a.symbol != null) {
+      final menu = a.menu!;
+      return SizedBox(
+        width: 44,
+        height: 44,
+        child: TpNativeMenuButton(
+          symbol: a.symbol!,
+          label: a.label,
+          tint: a.active ? TpSys.accent : null,
+          entries: <TpNativeMenuEntry>[
+            for (final m in menu)
+              TpNativeMenuEntry(
+                label: m.label,
+                checked: m.checked,
+                destructive: m.destructive,
+              ),
+          ],
+          onSelected: (i) => menu[i].onTap(),
+        ),
+      );
+    }
     final Widget face;
     if (a.filled) {
       face = Container(
@@ -423,7 +453,13 @@ class TpBarButton extends StatelessWidget {
           : SizedBox(
               width: 44,
               child: Center(
-                child: a.child ?? Icon(a.icon, size: 20, color: sys.label),
+                child:
+                    a.child ??
+                    Icon(
+                      a.icon,
+                      size: 20,
+                      color: a.active ? TpSys.accent : sys.label,
+                    ),
               ),
             );
       face = SizedBox(

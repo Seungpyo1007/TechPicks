@@ -50,7 +50,7 @@ ios/.../LiquidGlassContainer/LiquidGlassContainerView.swift
 ios/.../LiquidGlassTabBar/LiquidGlassTabBarConfig.swift
   + nativeSearch, searchPlaceholder
 ios/.../LiquidGlassTabBar/LiquidGlassTabBarView.swift
-  makeActionTab        → nativeSearch 면 makeSearchContent, automaticallyActivatesSearch
+  makeActionTab        → nativeSearch 면 makeSearchContent. 키보드는 검색창을 눌러야(automaticallyActivatesSearch = false)
   shouldSelectTab      → 검색 탭도 true
   didSelectTab         → onSearchActive(true) / 검색에서 돌아오면 onSearchActive(false)
   setSelectedIndex     → 검색 탭이 켜져 있으면 같은 칸이어도 다시 고른다
@@ -75,6 +75,18 @@ ios/.../LiquidGlassSegmentedControl/LiquidGlassSegmentedControlSwiftUI.swift
 ios/.../LiquidGlassSegmentedControl/LiquidGlassSegmentedControlView.swift
   + hc.safeAreaRegions = []
 ```
+
+`LiquidGlassMenu` 가 체크 표시와 iOS 26 유리 버튼을 못 그린다.
+
+```
+lib/src/liquid_glass_menu.dart   + LiquidGlassMenuItem.isChecked, glass, accessibilityLabel
+ios/.../LiquidGlassMenu/LiquidGlassMenuView.swift
+  UIAction.state = .on (isChecked)
+  glass 면 UIButton.Configuration.glass(), 캡슐, 칸을 채운다
+```
+
+세그먼트와 메뉴의 제스처를 `EagerGestureRecognizer` 로. `TapGestureRecognizer` 면 스크롤 안에서
+손을 뗄 때까지 터치가 묶여 눌림이 안 보였다.
 
 ## 언제 지우나
 
