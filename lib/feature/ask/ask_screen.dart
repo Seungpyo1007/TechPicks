@@ -16,6 +16,7 @@ import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/widgets/tp_shimmer.dart';
 
 /// 질문 시트.
 ///
@@ -383,9 +384,11 @@ class _Thinking extends StatelessWidget {
       label: K.askThinking.tr(),
       excludeSemantics: true,
       child: _AiShape(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[bar(0.9), const SizedBox(height: 8), bar(0.6)],
+        child: TpShimmer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[bar(0.9), const SizedBox(height: 8), bar(0.6)],
+          ),
         ),
       ),
     );
@@ -858,7 +861,9 @@ class _Composer extends StatelessWidget {
                     // 물어보세요"라고 읽는다.
                     label: K.send.tr(),
                     minSize: minTap(context),
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: context.motion.selection.duration,
+                      curve: context.motion.selection.curve,
                       width: send,
                       height: send,
                       decoration: BoxDecoration(
