@@ -92,7 +92,13 @@ class TpPage extends StatelessWidget {
   static void scrollToTop(BuildContext context) {
     final controller = PrimaryScrollController.maybeOf(context);
     if (controller == null || !controller.hasClients) return;
+    // 동작 줄이기면 바로 맨 위로.
+    final reduced = MediaQuery.disableAnimationsOf(context);
     for (final p in controller.positions.toList()) {
+      if (reduced) {
+        p.jumpTo(0);
+        continue;
+      }
       p.animateTo(
         0,
         duration: const Duration(milliseconds: 380),
@@ -381,7 +387,7 @@ class TpBarButton extends StatelessWidget {
       label: a.label,
       excludeSemantics: true,
       onTap: onTap,
-      child: TpTappable(onTap: onTap, child: face),
+      child: TpTappable(onTap: onTap, press: true, child: face),
     );
     if (a.menu != null) {
       return TpMenu(items: a.menu!, builder: (context, open) => tappable(open));
@@ -455,7 +461,7 @@ class TpPill extends StatelessWidget {
       label: label,
       excludeSemantics: true,
       onTap: onTap,
-      child: TpTappable(onTap: onTap, child: face),
+      child: TpTappable(onTap: onTap, press: true, child: face),
     );
   }
 }

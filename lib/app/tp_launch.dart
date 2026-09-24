@@ -82,7 +82,7 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
     if (_done) return widget.child;
 
     final t = context.tp;
-    // "동작 줄이기" 면 열리는 장면을 건너뛴다. 로고는 여전히 읽는 동안 떠 있다.
+    // "동작 줄이기" 면 크기 변화 없이 페이드만 한다. 로고는 여전히 읽는 동안 떠 있다.
     final reduced = MediaQuery.disableAnimationsOf(context);
 
     return Stack(
@@ -95,7 +95,9 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
             final t = Curves.easeOutCubic.transform(_c.value);
             return Opacity(
               opacity: reduced ? _c.value : t,
-              child: Transform.scale(scale: 0.98 + 0.02 * t, child: child),
+              child: reduced
+                  ? child
+                  : Transform.scale(scale: 0.98 + 0.02 * t, child: child),
             );
           },
           child: widget.child,
@@ -119,7 +121,9 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
                     opacity: reduced ? logo : Curves.easeIn.transform(logo),
                     child: Transform.scale(
                       // 커지며 열린다. 작아지면 앱이 뒤로 물러나는 것처럼 읽힌다.
-                      scale: 1 + 0.35 * Curves.easeInCubic.transform(v),
+                      scale: reduced
+                          ? 1
+                          : 1 + 0.35 * Curves.easeInCubic.transform(v),
                       child: child,
                     ),
                   ),

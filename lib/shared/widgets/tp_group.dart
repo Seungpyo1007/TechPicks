@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
+import 'tp_pressable.dart';
 
 /// iOS inset grouped 목록의 한 묶음. 위 레이블, 칸들, 아래 설명.
 ///
@@ -486,12 +487,16 @@ class TpTrack extends StatelessWidget {
 }
 
 /// 누를 수 있는 것. 손가락, Tab + Enter/Space 둘 다 받는다.
+///
+/// [press] 면 누르는 동안 0.97 로 줄어든다(알약·툴바 버튼·칩). 행은 끄고
+/// [onDown] 으로 배경을 칠한다 — iOS 표 셀과 같다.
 class TpTappable extends StatelessWidget {
   const TpTappable({
     super.key,
     required this.onTap,
     required this.child,
     this.onDown,
+    this.press = false,
   });
 
   final VoidCallback? onTap;
@@ -500,9 +505,23 @@ class TpTappable extends StatelessWidget {
   /// 눌림 표시. true 로 들어왔다가 false 로 나간다.
   final ValueChanged<bool>? onDown;
 
+  /// 누르는 동안 줄어든다.
+  final bool press;
+
   @override
   Widget build(BuildContext context) {
     if (onTap == null) return child;
+    if (press) {
+      // 눌림은 포인터로 잡는다. 스크롤 안에서 onTapDown 은 100ms 늦다.
+      return TpPressable(
+        onTap: onTap,
+        haptic: TpHaptic.none,
+        semantics: false,
+        builder: (context, t, child) =>
+            TpPressPaint.scale(t, double.infinity, child!),
+        child: child,
+      );
+    }
     return FocusableActionDetector(
       actions: <Type, Action<Intent>>{
         ActivateIntent: CallbackAction<ActivateIntent>(
