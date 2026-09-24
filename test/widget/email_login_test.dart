@@ -64,7 +64,7 @@ Future<void> _pump(
 );
 
 Future<void> _fill(WidgetTester tester, String email, String password) async {
-  final fields = find.byType(TextField);
+  final fields = find.byType(EditableText);
   await tester.enterText(fields.first, email);
   await tester.enterText(fields.last, password);
   await tester.pumpAndSettle();

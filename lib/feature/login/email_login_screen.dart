@@ -1,15 +1,18 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../shared/widgets/tp_page.dart';
+import '../../shared/widgets/tp_group.dart';
+import '../../app/theme/tp_sys.dart';
 import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../data/service/auth_service.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_tap_target.dart';
-import '../../shared/widgets/tp_button.dart';
 import '../../app/theme/tp_icons.dart';
 
 /// 이메일 로그인·가입.
@@ -140,7 +143,7 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
 
           // 한 묶음이어야 iCloud 키체인이 아이디와 암호를 같이 채워 준다.
           AutofillGroup(
-            child: Column(
+            child: _Fields(
               children: <Widget>[
                 _Field(
                   controller: _email,
@@ -152,7 +155,6 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
                   ],
                   action: TextInputAction.next,
                 ),
-                const SizedBox(height: 12),
                 _Field(
                   controller: _password,
                   label: K.passwordLabel.tr(),
@@ -172,11 +174,17 @@ class _EmailLoginScreenState extends ConsumerState<EmailLoginScreen> {
 
           if (_error != null) ...<Widget>[
             const SizedBox(height: 10),
-            Text(_error!, style: type.caption.copyWith(color: t.dim)),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                _error!,
+                style: type.caption.copyWith(color: context.sys.destructive),
+              ),
+            ),
           ],
 
           const SizedBox(height: 20),
-          TpButton(
+          TpPill(
             label: (_signingUp ? K.signup : K.signIn).tr(),
             onTap: _submit,
           ),
@@ -234,43 +242,114 @@ class _Field extends StatelessWidget {
     final t = context.tp;
     final type = context.tpText;
 
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: t.inputBg,
-        borderRadius: BorderRadius.circular(
-          t.isGlass ? TpTokens.rControl : t.rCard,
+    if (t.isGlass) {
+      // iOS: inset grouped 칸 안에 왼쪽 레이블 + 테두리 없는 필드.
+      final sys = context.sys;
+      return ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 50),
+        child: Row(
+          children: <Widget>[
+            SizedBox(
+              width: 96,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: ExcludeSemantics(
+                  child: Text(
+                    label,
+                    style: TextStyle(fontSize: 17, color: sys.label),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: MergeSemantics(
+                child: Semantics(
+                  label: label,
+                  child: CupertinoTextField(
+                    controller: controller,
+                    obscureText: obscure,
+                    keyboardType: keyboardType,
+                    autofillHints: autofillHints,
+                    textInputAction: action,
+                    autocorrect: false,
+                    enableSuggestions: !obscure && keyboardType == null,
+                    onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                    onSubmitted: onSubmitted,
+                    decoration: null,
+                    padding: const EdgeInsets.fromLTRB(4, 14, 16, 14),
+                    style: TextStyle(fontSize: 17, color: sys.label),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-      // hintText 는 글자를 치면 사라진다. 그러면 필드에 읽을 이름이 없어진다.
-      child: Semantics(
-        label: label,
-        child: TextField(
-          controller: controller,
-          obscureText: obscure,
-          keyboardType: keyboardType,
-          autofillHints: autofillHints,
-          textInputAction: action,
-          // 주소와 암호를 사전이 고치면 로그인이 안 된다.
-          autocorrect: false,
-          enableSuggestions: !obscure && keyboardType == null,
-          onTapOutside: (_) => FocusScope.of(context).unfocus(),
-          onSubmitted: onSubmitted,
-          style: type.body,
-          decoration: InputDecoration(
-            // isDense 를 켜면 필드의 히트 영역이 글자 높이로 줄어 접근성
-            // 기준(48)에 못 미친다. 세로 여백으로 채운다.
-            contentPadding: const EdgeInsets.symmetric(vertical: 16),
-            border: InputBorder.none,
-            // hintText 로 주면 그 문자열이 시맨틱에 한 번 더 들어가서
-            // 이름이 두 번 읽힌다. 위젯으로 주고 시맨틱에서는 뺀다.
-            hint: ExcludeSemantics(
-              child: Text(label, style: type.body.copyWith(color: t.dim)),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: t.inputBg,
+          borderRadius: BorderRadius.circular(t.rCard),
+        ),
+        child: Semantics(
+          label: label,
+          child: TextField(
+            controller: controller,
+            obscureText: obscure,
+            keyboardType: keyboardType,
+            autofillHints: autofillHints,
+            textInputAction: action,
+            autocorrect: false,
+            enableSuggestions: !obscure && keyboardType == null,
+            onTapOutside: (_) => FocusScope.of(context).unfocus(),
+            onSubmitted: onSubmitted,
+            style: type.body,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+              border: InputBorder.none,
+              hint: ExcludeSemantics(
+                child: Text(label, style: type.body.copyWith(color: t.dim)),
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// iOS 는 한 묶음(inset grouped), Android 는 그냥 세로로.
+class _Fields extends StatelessWidget {
+  const _Fields({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!context.tp.isGlass) return Column(children: children);
+    final sys = context.sys;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: sys.cell,
+        borderRadius: BorderRadius.circular(TpGroup.radius),
+      ),
+      child: Column(
+        children: <Widget>[
+          for (var i = 0; i < children.length; i++) ...<Widget>[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Container(height: 0.5, color: sys.separator),
+              ),
+            children[i],
+          ],
+        ],
       ),
     );
   }
