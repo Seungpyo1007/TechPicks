@@ -55,7 +55,11 @@ class TpSys {
         background: r(CupertinoColors.systemGroupedBackground),
         cell: r(CupertinoColors.secondarySystemGroupedBackground),
         label: r(CupertinoColors.label),
-        label2: r(CupertinoColors.secondaryLabel),
+        // 시스템 값(60%)은 회색 바탕 위 13pt 에서 3.3:1 이라 AA 에 모자란다.
+        // 라이트만 77% 로 올린다. 다크는 시스템 값으로 충분하다.
+        label2: dark
+            ? r(CupertinoColors.secondaryLabel)
+            : const Color(0xC43C3C43),
         label3: r(CupertinoColors.tertiaryLabel),
         separator: r(CupertinoColors.separator),
         fill: r(CupertinoColors.systemFill),

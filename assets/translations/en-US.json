@@ -248,5 +248,9 @@
   "tabToday": "Today",
   "tabCompare": "Compare",
   "tabSearch": "Search",
-  "askTitle": "Ask"
+  "askTitle": "Ask",
+  "sort": "Sort",
+  "clear": "Clear",
+  "rankStatus": "By {} · {} · {} phones",
+  "buildRowSub": "CPU and GPU pairs for a budget"
 }

@@ -1,35 +1,33 @@
 import 'dart:async' show unawaited;
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
-import '../../app/shell/tp_shell.dart';
-import '../../app/theme/tp_motion.dart';
+import '../../app/theme/tp_icons.dart';
+import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../core/analytics.dart';
 import '../../core/error_reporter.dart';
 import '../../core/failure.dart';
-import '../../data/service/link_opener.dart';
-import '../../shared/copy_keys.dart';
-import '../share/share_text.dart';
 import '../../data/dto/smartphone.dart';
+import '../../data/service/link_opener.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
+import '../../shared/copy_keys.dart';
 import '../../shared/spec_labels.dart';
-import '../../shared/widgets/tp_score_strip.dart';
-import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_error_state.dart';
+import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_link_line.dart';
-import '../../shared/widgets/tp_button.dart';
-import '../../shared/widgets/tp_pressable.dart';
-import '../../app/theme/tp_icons.dart';
+import '../../shared/widgets/tp_page.dart';
+import '../../shared/widgets/tp_score_strip.dart';
+import '../share/share_text.dart';
 
-/// 기기 상세.
-///
-/// 카피는 아직 하드코딩이다. 번역 파일 이관은 따로 한다.
+/// 기기 상세. 이름이 large title 이고, 스크롤하면 바의 작은 제목이 된다.
 class DetailScreen extends ConsumerWidget {
   const DetailScreen({
     super.key,
@@ -47,46 +45,47 @@ class DetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final device = ref.watch(deviceProvider(slug));
-
-    // 아직 안 왔거나 실패한 기기는 공유할 게 없다.
     final loaded = device.value;
+    final name =
+        loaded?.name ??
+        ref
+            .watch(catalogProvider)
+            .value
+            ?.smartphones
+            .where((d) => d.slug == slug)
+            .firstOrNull
+            ?.name ??
+        '';
 
-    return TpShell(
+    return TpPage(
+      title: name,
       onBack: onBack,
-      trailing: loaded == null
-          ? null
-          : TpShellAction(
-              icon: context.icons.share,
-              label: K.share.tr(),
-              onTap: () => unawaited(_share(ref, loaded)),
-            ),
-      // 셸의 인셋은 이 자리 아래에 있다.
-      child: Builder(
-        builder: (context) => AnimatedSwitcher(
-          duration: context.motion.contentSwap.duration,
-          switchInCurve: context.motion.contentSwap.curve,
-          switchOutCurve: context.motion.contentSwap.curve,
-          child: device.when(
-            loading: () =>
-                const _DetailSkeleton(key: ValueKey<String>('skeleton')),
-            error: (e, _) => _DetailError(
-              key: const ValueKey<String>('error'),
-              error: e,
-              slug: slug,
-            ),
-            data: (d) => _DetailBody(
-              key: ValueKey<String>(d.slug),
+      actions: <TpBarAction>[
+        if (loaded != null)
+          TpBarAction(
+            label: K.share.tr(),
+            icon: context.icons.share,
+            onTap: () => unawaited(_share(ref, loaded)),
+          ),
+      ],
+      slivers: <Widget>[
+        device.when(
+          loading: () => const SliverToBoxAdapter(child: _DetailSkeleton()),
+          error: (e, _) => SliverToBoxAdapter(
+            child: _DetailError(error: e, slug: slug),
+          ),
+          data: (d) => SliverToBoxAdapter(
+            child: _DetailBody(
               device: d,
               onCompare: onCompare,
               onView3D: onView3D,
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 
-  /// 화면이 이미 말하고 있는 것을 그대로 보낸다 — 이름, 지수, 링크.
   Future<void> _share(WidgetRef ref, Smartphone device) async {
     final index = TpIndex.of(device.score, ref.read(weightsProvider));
     TpAnalytics.shared('device');
@@ -102,19 +101,13 @@ class DetailScreen extends ConsumerWidget {
             subject: ShareText.subject(device.name),
           );
     } catch (e, s) {
-      // 시트를 못 띄운 것으로 화면이 죽지 않는다.
       TpErrors.record(e, s, reason: 'share.device');
     }
   }
 }
 
 class _DetailBody extends ConsumerWidget {
-  const _DetailBody({
-    super.key,
-    required this.device,
-    this.onCompare,
-    this.onView3D,
-  });
+  const _DetailBody({required this.device, this.onCompare, this.onView3D});
 
   final Smartphone device;
   final ValueChanged<String>? onCompare;
@@ -122,141 +115,160 @@ class _DetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = context.tp;
+    final sys = context.sys;
     final type = context.tpText;
     final weights = ref.watch(weightsProvider);
     final money = ref.watch(moneyProvider);
     final shortlisted = ref.watch(shortlistProvider).contains(device.slug);
     final index = TpIndex.of(device.score, weights);
+    final glass = context.tp.isGlass;
 
-    return ListView(
-      padding:
-          const EdgeInsets.fromLTRB(16, 4, 16, 24) + tpContentInset(context),
+    final line = <String>[
+      if (device.brand?.name != null) device.brand!.name,
+      money.format(device.msrpUsd),
+    ].join(' · ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _ImageSlot(url: device.imageUrl),
-        const SizedBox(height: 16),
-
-        Text((device.brand?.name ?? '').toUpperCase(), style: type.eyebrow),
-        const SizedBox(height: 4),
-        Text(
-          device.name,
-          style: type.cardTitle.copyWith(
-            fontSize: 28,
-            fontWeight: t.isGlass ? FontWeight.w700 : FontWeight.w500,
-          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: _ImageSlot(url: device.imageUrl),
         ),
-        const SizedBox(height: 6),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: <Widget>[
-            Expanded(
-              child: Text(
-                money.format(device.msrpUsd),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: type.body,
-              ),
-            ),
-            const SizedBox(width: 12),
-            // 지수 숫자는 이미 44px 이다. 손쉬운 사용 배율을 그대로 곱하면
-            // 가격과 한 줄에 안 들어간다. 읽는 데 지장이 없는 선까지만 키운다.
-            MediaQuery.withClampedTextScaling(
-              maxScaleFactor: 1.3,
-              child: Semantics(
-                container: true,
-                label: index == null
-                    ? null
-                    : K.a11yIndex.tr(args: <String>[index.toString()]),
-                excludeSemantics: index != null,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: <Widget>[
-                    Text(
-                      index?.toString() ?? DeviceSpecs.empty,
-                      style: type.indexNumeral.copyWith(fontSize: 44),
-                    ),
-                    const SizedBox(width: 8),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Text(K.tpIndex.tr(), style: type.caption),
-                    ),
-                  ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  line,
+                  style: TextStyle(fontSize: 15, color: sys.label2),
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        TpSurface(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Column(
-            children: <Widget>[
-              for (final spec in DeviceSpecs.of(device, weights, money))
-                _SpecRow(spec: spec),
+              MediaQuery.withClampedTextScaling(
+                maxScaleFactor: 1.3,
+                child: Semantics(
+                  container: true,
+                  label: index == null
+                      ? null
+                      : K.a11yIndex.tr(args: <String>[index.toString()]),
+                  excludeSemantics: index != null,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: <Widget>[
+                      Text(
+                        index?.toString() ?? DeviceSpecs.empty,
+                        style: type.indexNumeral.copyWith(
+                          fontSize: 44,
+                          color: TpSys.accent,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          K.tpIndex.tr(),
+                          style: TextStyle(fontSize: 13, color: sys.label2),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 14),
-
-        TpSurface(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
-          child: TpScoreStrip(axes: TpIndex.axes(device.score)),
-        ),
-        const SizedBox(height: 16),
-
-        TpButton(
-          label: (shortlisted ? K.inShortlist : K.addShortlist).tr(),
-          // 담기면 채움이 풀린다. 이미 담긴 것을 또 권하지 않는다.
-          kind: shortlisted ? TpButtonKind.secondary : TpButtonKind.primary,
-          haptic: shortlisted ? TpHaptic.impact : TpHaptic.commit,
-          onTap: () => ref.read(shortlistProvider.notifier).toggle(device.slug),
-        ),
-        const SizedBox(height: 10),
-        TpButton(
-          label: K.compareButton.tr(),
-          kind: TpButtonKind.secondary,
-          onTap: onCompare == null ? null : () => onCompare!(device.slug),
-        ),
-        const SizedBox(height: 10),
-        TpButton(
-          label: K.view3d.tr(),
-          kind: TpButtonKind.secondary,
-          onTap: onView3D == null ? null : () => onView3D!(device.slug),
-        ),
-
-        _BrandCard(slug: device.brand?.slug),
-
-        if (device.sourceUrls.isNotEmpty) ...<Widget>[
-          const SizedBox(height: 20),
-          // CC-BY-SA 4.0 상 출처 표기는 선택이 아니고, 표기만으로도 모자란다.
-          // 라이선스 본문과 원본에 닿을 수 있어야 한다.
-          TpLinkLine(
-            label: K.dataSource.tr(),
-            url: TpUrls.license,
-            style: type.caption,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          child: Column(
+            children: <Widget>[
+              TpPill(
+                label: (shortlisted ? K.inShortlist : K.addShortlist).tr(),
+                kind: shortlisted ? TpPillKind.tinted : TpPillKind.filled,
+                icon: shortlisted
+                    ? (glass ? CupertinoIcons.check_mark : Icons.check)
+                    : (glass ? CupertinoIcons.add : Icons.add),
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  ref.read(shortlistProvider.notifier).toggle(device.slug);
+                },
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: TpPill(
+                      label: K.compareButton.tr(),
+                      kind: TpPillKind.tinted,
+                      height: 44,
+                      onTap: onCompare == null
+                          ? null
+                          : () => onCompare!(device.slug),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TpPill(
+                      label: K.view3d.tr(),
+                      kind: TpPillKind.tinted,
+                      height: 44,
+                      onTap: onView3D == null
+                          ? null
+                          : () => onView3D!(device.slug),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          for (final url in device.sourceUrls)
-            TpLinkLine(
-              // 원문 주소는 한 줄을 다 먹는다. 보이는 건 도메인만, 열리는
-              // 것은 원문 그대로 — 귀속에 필요한 건 링크가 살아 있는 것이다.
-              label: TpLinkLine.hostOf(url),
-              url: Uri.tryParse(url),
-              style: type.caption,
-              topPadding: 2,
+        ),
+        TpGroup(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+          children: <Widget>[TpScoreStrip(axes: TpIndex.axes(device.score))],
+        ),
+        TpGroup(
+          children: <Widget>[
+            for (final spec in DeviceSpecs.of(device, weights, money))
+              TpRow(
+                title: SpecLabels.of(spec.kind),
+                titleStyle: TextStyle(fontSize: 15, color: sys.label2),
+                value: spec.value,
+                valueStyle: TextStyle(
+                  fontSize: 15,
+                  color: spec.hasValue ? sys.label : sys.label3,
+                ),
+                chevron: false,
+              ),
+          ],
+        ),
+        _BrandCard(slug: device.brand?.slug),
+        if (device.sourceUrls.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(32, 0, 32, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                TpLinkLine(
+                  label: K.dataSource.tr(),
+                  url: TpUrls.license,
+                  style: type.caption,
+                ),
+                for (final url in device.sourceUrls)
+                  TpLinkLine(
+                    label: TpLinkLine.hostOf(url),
+                    url: Uri.tryParse(url),
+                    style: type.caption,
+                    topPadding: 2,
+                  ),
+              ],
             ),
-        ],
+          ),
       ],
     );
   }
 }
 
-/// 제품 사진 자리. 명세대로 196px 이다.
-///
-/// 카탈로그 154종 **전부** `imageUrl` 이 비어 있다 — 원본 CDN 이 404 를
-/// 돌려줘서 굽는 도구가 아무것도 못 채웠다. 그래도 그리는 쪽은 붙여둔다:
-/// 사진이 들어오는 날 카탈로그만 다시 구우면 되고, 그때까지는(그리고 주소가
-/// 죽어 있으면) 이 자리 표시로 떨어진다.
 class _ImageSlot extends StatelessWidget {
   const _ImageSlot({this.url});
 
@@ -264,112 +276,54 @@ class _ImageSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = context.tp;
-    final radius = BorderRadius.circular(t.rCard);
+    final sys = context.sys;
     final address = url?.trim();
-
+    final placeholder = Icon(context.icons.image, size: 40, color: sys.label3);
     return Container(
-      height: 196,
-      decoration: BoxDecoration(color: t.slotBg, borderRadius: radius),
+      height: 236,
+      decoration: BoxDecoration(
+        color: sys.cell,
+        borderRadius: BorderRadius.circular(TpGroup.radius),
+      ),
       alignment: Alignment.center,
       clipBehavior: Clip.antiAlias,
       child: address == null || address.isEmpty
-          ? _Placeholder(tokens: t)
+          ? placeholder
           : Image.network(
               address,
               fit: BoxFit.contain,
               width: double.infinity,
-              height: 196,
-              // 사진이 도착하면 옅게 들어온다. 툭 나타나면 화면이 한 번 튄다.
-              frameBuilder: (context, child, frame, wasSync) => AnimatedOpacity(
-                opacity: frame == null ? 0 : 1,
-                duration: context.motion.contentSwap.duration,
-                curve: context.motion.contentSwap.curve,
-                child: child,
-              ),
-              errorBuilder: (_, _, _) => _Placeholder(tokens: t),
+              height: 236,
+              errorBuilder: (_, _, _) => placeholder,
             ),
-    );
-  }
-}
-
-/// 사진이 없거나 못 읽었을 때.
-class _Placeholder extends StatelessWidget {
-  const _Placeholder({required this.tokens});
-
-  final TpTokens tokens;
-
-  @override
-  Widget build(BuildContext context) =>
-      Icon(context.icons.image, size: 34, color: tokens.dim);
-}
-
-class _SpecRow extends StatelessWidget {
-  const _SpecRow({required this.spec});
-
-  final DeviceSpec spec;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    final type = context.tpText;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 11),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: t.hairline)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          SizedBox(
-            width: 96,
-            child: Text(SpecLabels.of(spec.kind), style: type.secondary),
-          ),
-          Expanded(
-            child: Text(
-              spec.value,
-              textAlign: TextAlign.right,
-              style: type.body.copyWith(color: spec.hasValue ? t.ink : t.dim),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
 
 class _DetailSkeleton extends StatelessWidget {
-  const _DetailSkeleton({super.key});
+  const _DetailSkeleton();
 
   @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    return ListView(
-      padding:
-          const EdgeInsets.fromLTRB(16, 4, 16, 24) + tpContentInset(context),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: Column(
       children: <Widget>[
-        for (final h in <double>[196, 40, 220, 160])
+        for (final h in <double>[236, 40, 110, 220])
           Padding(
             padding: const EdgeInsets.only(bottom: 14),
             child: Container(
               height: h,
               decoration: BoxDecoration(
-                color: t.track,
-                borderRadius: BorderRadius.circular(t.rCard),
+                color: context.sys.fill3,
+                borderRadius: BorderRadius.circular(TpGroup.radius),
               ),
             ),
           ),
       ],
-    );
-  }
+    ),
+  );
 }
 
-/// 만든 회사 한 조각.
-///
-/// 기기에 임베드된 brand 는 이름뿐이라 국가·설립연도·설명은 카탈로그의
-/// `brands` 에서 찾아온다. 못 찾으면 아무것도 안 그린다 — 옛 카탈로그를
-/// 받아둔 기기에는 이 목록이 없다.
 class _BrandCard extends ConsumerWidget {
   const _BrandCard({required this.slug});
 
@@ -379,61 +333,58 @@ class _BrandCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final brand = ref.watch(catalogProvider).value?.brand(slug);
     if (brand == null) return const SizedBox.shrink();
-
-    final type = context.tpText;
-    // `context.locale` 은 EasyLocalization 위젯을 요구한다. 테스트는 그걸
-    // 안 올리므로(하네스 주석 참고) Flutter 가 늘 깔아주는 쪽을 본다.
+    final sys = context.sys;
     final ko = Localizations.maybeLocaleOf(context)?.languageCode == 'ko';
     final description = ko
         ? (brand.descriptionKo ?? brand.descriptionEn)
         : (brand.descriptionEn ?? brand.descriptionKo);
-
     final meta = <String>[
-      if (brand.country != null) brand.country!,
       if (brand.foundedYear != null)
         K.brandFounded.tr(args: <String>['${brand.foundedYear}']),
+      if (brand.country != null) brand.country!,
     ].join(' · ');
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 20),
-      child: TpSurface(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(child: Text(brand.name, style: type.cardTitle)),
-                if (meta.isNotEmpty) Text(meta, style: type.caption),
-              ],
+    return TpGroup(
+      header: K.brand.tr(),
+      footer: description,
+      children: <Widget>[
+        TpRow(
+          title: brand.name,
+          subtitle: meta.isEmpty ? null : meta,
+          leading: Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: sys.fill3,
+              borderRadius: BorderRadius.circular(10),
             ),
-            if (description != null && description.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 6),
-              Text(description, style: type.secondary),
-            ],
-            if (brand.website != null) ...<Widget>[
-              const SizedBox(height: 2),
-              TpLinkLine(
-                label: K.brandSite.tr(),
-                url: Uri.tryParse(brand.website!),
-                style: type.caption,
+            child: Text(
+              brand.name.characters.first,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: sys.label2,
               ),
-            ],
-          ],
+            ),
+          ),
+          chevron: false,
         ),
-      ),
+        if (brand.website != null)
+          TpRow(
+            title: K.brandSite.tr(),
+            titleStyle: TextStyle(color: sys.accentText),
+            value: Uri.tryParse(brand.website!)?.host.replaceFirst('www.', ''),
+            onTap: () =>
+                ref.read(linkOpenerProvider).open(Uri.parse(brand.website!)),
+          ),
+      ],
     );
   }
 }
 
-/// 기기를 못 불러왔다.
-///
-/// 카탈로그에 있는 기기는 애셋에서 오므로 여기까지 오지 않는다. 여기 오는
-/// 것은 전부 TechAPI 를 타는 기기다 — 그래서 인터넷이 끊긴 경우가 실제로
-/// 흔하다. 그 경우를 "불러오지 못했습니다"로 뭉뚱그리면 사용자는 앱이 고장
-/// 난 줄 안다.
 class _DetailError extends ConsumerWidget {
-  const _DetailError({super.key, required this.error, required this.slug});
+  const _DetailError({required this.error, required this.slug});
 
   final Object error;
 

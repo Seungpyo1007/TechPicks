@@ -17,6 +17,7 @@ import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
+import 'package:techpicks/app/theme/app_theme.dart';
 import '../support/harness.dart';
 
 final _screens = <String, Widget>{
@@ -48,6 +49,23 @@ void main() {
   setUp(seedHomeContent);
 
   for (final entry in _screens.entries) {
+    // 크롬마다 그 플랫폼의 기준. iOS 44pt, Android 48dp.
+    testWidgets('${entry.key} — 탭 타깃 크기 · android', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpScreen(
+        tester,
+        entry.value,
+        chrome: TpChrome.android,
+        size: const Size(1200, 3200),
+        overrides: <Override>[
+          askServiceProvider.overrideWithValue(const LocalAskService()),
+        ],
+      );
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      handle.dispose();
+    });
+
     testWidgets('${entry.key} — 탭 타깃 크기', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpScreen(
@@ -58,7 +76,6 @@ void main() {
           askServiceProvider.overrideWithValue(const LocalAskService()),
         ],
       );
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
       // 아이콘만 있는 버튼은 스크린 리더가 읽을 이름이 있어야 한다.
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));

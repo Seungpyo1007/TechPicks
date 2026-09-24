@@ -248,5 +248,9 @@
   "tabToday": "오늘",
   "tabCompare": "비교",
   "tabSearch": "검색",
-  "askTitle": "질문"
+  "askTitle": "질문",
+  "sort": "정렬",
+  "clear": "지우기",
+  "rankStatus": "{}순 · {} · {}종",
+  "buildRowSub": "예산에 맞는 CPU와 GPU 조합"
 }

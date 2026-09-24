@@ -17,6 +17,7 @@ import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
+import 'package:techpicks/feature/rank/rank_screen.dart';
 import 'package:techpicks/app/theme/tp_icons.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
@@ -92,7 +93,7 @@ void main() {
 
     await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
-    expect(find.text('Rankings'), findsOneWidget);
+    expect(find.text('Browse'), findsWidgets);
 
     await tester.tap(find.text(K.tab(TpTab.compare).tr()));
     await tester.pumpAndSettle();
@@ -302,7 +303,13 @@ void _pickerSlots() {
       await tester.scrollUntilVisible(
         target,
         300,
-        scrollable: find.byType(Scrollable).last,
+        // 검색 필드 안에도 Scrollable 이 있다. 목록 쪽을 집는다.
+        scrollable: find
+            .descendant(
+              of: find.byType(PickerScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
       );
     }
     await tester.ensureVisible(target.first);
@@ -401,7 +408,7 @@ void _pushedScreens() {
 
     // 명세의 back stack 은 한 단계다 — 랭킹으로 돌아온다.
     expect(find.byType(DetailScreen), findsNothing);
-    expect(find.text(K.rankNote.tr()), findsOneWidget);
+    expect(find.byType(RankScreen), findsOneWidget);
   });
 }
 
@@ -428,11 +435,11 @@ void _systemBack() {
         askServiceProvider.overrideWithValue(const LocalAskService()),
       ],
     );
-    expect(find.text(K.rankNote.tr()), findsOneWidget);
+    expect(find.byType(RankScreen), findsOneWidget);
 
     await back(tester);
 
-    expect(find.text(K.rankNote.tr()), findsNothing);
+    expect(find.byType(RankScreen), findsNothing);
     expect(find.text(K.homeTitle.tr()), findsWidgets);
   });
 

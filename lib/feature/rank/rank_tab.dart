@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/model/processor.dart';
 import '../cpu/processor_screen.dart';
 import 'laptop_screen.dart';
 import 'rank_category.dart';
@@ -19,12 +20,14 @@ class RankTab extends StatelessWidget {
     required this.category,
     this.onDeviceTap,
     this.onBuild,
+    this.onAllProcessors,
     this.onCategory,
   });
 
   final RankCategory category;
   final ValueChanged<String>? onDeviceTap;
   final VoidCallback? onBuild;
+  final ValueChanged<ProcessorSegment>? onAllProcessors;
   final ValueChanged<RankCategory>? onCategory;
 
   @override
@@ -33,6 +36,7 @@ class RankTab extends StatelessWidget {
       RankCategory.processors => ProcessorScreen(
         onCategory: onCategory,
         onBuild: onBuild,
+        onAll: onAllProcessors,
       ),
       RankCategory.laptops => LaptopScreen(onCategory: onCategory),
       RankCategory.phones => RankScreen(

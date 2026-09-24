@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/domain/model/processor.dart';
 import 'package:techpicks/feature/cpu/processor_screen.dart';
@@ -15,32 +16,42 @@ import '../support/harness.dart';
 void main() {
   setUp(initLocalization);
 
-  testWidgets('모바일 세그먼트가 기본이고 점수순으로 선다', (tester) async {
-    await pumpScreen(tester, const ProcessorScreen());
+  testWidgets('모바일과 노트북을 같이 보여준다', (tester) async {
+    final container = await pumpScreen(
+      tester,
+      const ProcessorScreen(),
+      size: const Size(700, 3000),
+    );
 
-    expect(find.text(K.cpuTitle.tr()), findsWidgets);
-    expect(find.text('Snapdragon 8 Elite'), findsOneWidget);
-    expect(find.text('MediaTek Dimensity 9400'), findsOneWidget);
-    // 1위는 Snapdragon 8 Elite (96.7).
-    expect(find.text('97'), findsOneWidget);
+    expect(find.text(K.cpuMobile.tr()), findsOneWidget);
+    expect(find.text(K.cpuLaptop.tr()), findsOneWidget);
+    for (final s in ProcessorSegment.values) {
+      final top = container.read(processorsInProvider(s)).first;
+      expect(find.text(top.processor.name), findsOneWidget);
+    }
     expect(find.text(K.cpuNote.tr()), findsOneWidget);
   });
 
-  testWidgets('sub 줄에 제조사와 공정이 나온다', (tester) async {
-    await pumpScreen(tester, const ProcessorScreen());
-
-    expect(find.textContaining('Qualcomm · 3nm'), findsWidgets);
+  testWidgets('모두 보기가 어느 구간인지 알려준다', (tester) async {
+    ProcessorSegment? opened;
+    await pumpScreen(
+      tester,
+      ProcessorScreen(onAll: (s) => opened = s),
+      size: const Size(700, 3000),
+    );
+    await tester.tap(find.text(K.seeAll.tr()).last);
+    expect(opened, ProcessorSegment.laptop);
   });
 
-  testWidgets('Laptop 을 누르면 노트북 CPU 로 바뀐다', (tester) async {
-    final container = await pumpScreen(tester, const ProcessorScreen());
-
-    await tester.tap(find.text(K.cpuLaptop.tr()));
-    await tester.pumpAndSettle();
-
-    expect(container.read(processorSegmentProvider), ProcessorSegment.laptop);
-    expect(find.text('Intel Core i9-14900HX'), findsOneWidget);
-    expect(find.text('Snapdragon 8 Elite'), findsNothing);
+  testWidgets('조립 견적 행이 맨 위에 있다', (tester) async {
+    var taps = 0;
+    await pumpScreen(
+      tester,
+      ProcessorScreen(onBuild: () => taps++),
+      size: const Size(700, 3000),
+    );
+    await tester.tap(find.text(K.buildTitle.tr()));
+    expect(taps, 1);
   });
 
   testWidgets('카테고리 칩이 어느 카테고리로 가려는지 알려준다', (tester) async {
@@ -87,7 +98,7 @@ void main() {
 
   testWidgets('행은 순위·이름·지수를 한 문장으로 읽는다', (tester) async {
     final handle = tester.ensureSemantics();
-    await pumpScreen(tester, const ProcessorScreen());
+    await pumpScreen(tester, const ProcessorScreen(), size: const Size(700, 3000));
 
     // 1위가 무엇인지는 카탈로그가 정한다. 문장 형태만 본다.
     final top = ProcessorRanking.of(
@@ -119,9 +130,15 @@ void main() {
   });
 
   testWidgets('Android 크롬에서도 뜬다', (tester) async {
-    await pumpScreen(tester, const ProcessorScreen(), chrome: TpChrome.android);
+    final container = await pumpScreen(
+      tester,
+      const ProcessorScreen(),
+      chrome: TpChrome.android,
+      size: const Size(700, 3000),
+    );
 
-    expect(find.text('Snapdragon 8 Elite'), findsOneWidget);
+    final top = container.read(processorsInProvider(ProcessorSegment.mobile));
+    expect(find.text(top.first.processor.name), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

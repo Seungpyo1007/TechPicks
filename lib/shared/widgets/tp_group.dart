@@ -313,7 +313,7 @@ class _TpRowState extends State<TpRow> {
       ],
     );
 
-    final row = Container(
+    Widget rowOf(double maxValue) => Container(
       constraints: BoxConstraints(minHeight: w.subtitle == null ? 48 : 60),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: _down
@@ -328,13 +328,20 @@ class _TpRowState extends State<TpRow> {
           Expanded(child: text),
           if (w.value != null) ...<Widget>[
             const SizedBox(width: 12),
-            Text(
-              w.value!,
-              style: TextStyle(
-                fontSize: 17,
-                color: sys.label2,
-                fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
-              ).merge(w.valueStyle),
+            // 값은 오른쪽 끝에 붙고, 길면 행의 60% 까지만 쓰고 줄바꿈한다.
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxValue),
+              child: Text(
+                w.value!,
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  fontSize: 17,
+                  color: sys.label2,
+                  fontFeatures: const <FontFeature>[
+                    FontFeature.tabularFigures(),
+                  ],
+                ).merge(w.valueStyle),
+              ),
             ),
           ],
           if (w.trailing != null) ...<Widget>[
@@ -357,11 +364,21 @@ class _TpRowState extends State<TpRow> {
       ),
     );
 
+    final row = LayoutBuilder(
+      builder: (context, box) =>
+          rowOf(box.maxWidth.isFinite ? box.maxWidth * 0.6 : 240),
+    );
+
+    // 행 전체가 한 문장이다. 안 그러면 누르는 노드와 글자 노드가 갈라져
+    // "이름 없는 버튼"이 된다.
+    final label =
+        w.semanticsLabel ??
+        <String?>[w.title, w.subtitle, w.value].whereType<String>().join(', ');
     return Semantics(
       button: w.onTap != null,
       selected: w.checked,
-      label: w.semanticsLabel,
-      excludeSemantics: w.semanticsLabel != null,
+      label: label,
+      excludeSemantics: true,
       onTap: w.onTap,
       child: w.onTap == null
           ? row
@@ -454,9 +471,15 @@ class TpTrack extends StatelessWidget {
       child: Stack(
         children: <Widget>[
           Positioned.fill(child: ColoredBox(color: context.sys.fill)),
-          FractionallySizedBox(
-            widthFactor: value.clamp(0.0, 1.0),
-            child: const ColoredBox(color: TpSys.accent),
+          Positioned.fill(
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FractionallySizedBox(
+                widthFactor: value.clamp(0.0, 1.0),
+                heightFactor: 1,
+                child: const ColoredBox(color: TpSys.accent),
+              ),
+            ),
           ),
         ],
       ),

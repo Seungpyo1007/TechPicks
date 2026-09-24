@@ -104,7 +104,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Galaxy S25'), findsOneWidget);
+      expect(find.text('Galaxy S25'), findsWidgets);
     });
 
     testWidgets('스크린 리더가 링크로 읽는다', (tester) async {

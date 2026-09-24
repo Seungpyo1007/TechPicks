@@ -10,6 +10,7 @@ import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../copy_keys.dart';
+import 'tp_menu.dart';
 import 'tp_surface.dart';
 
 /// 툴바 버튼 하나.
@@ -21,6 +22,7 @@ class TpBarAction {
     this.text = false,
     this.filled = false,
     this.child,
+    this.menu,
   });
 
   /// 스크린 리더 이름. [text] 면 화면에도 이 글자가 나온다.
@@ -36,6 +38,9 @@ class TpBarAction {
 
   /// 아이콘 자리에 직접 그릴 것(프로필 이니셜 원).
   final Widget? child;
+
+  /// 있으면 누를 때 풀다운 메뉴가 열린다.
+  final List<TpMenuItem>? menu;
 }
 
 /// v3 화면 뼈대. large title 이 스크롤하면 줄어드는 표준 네비게이션 바 위에
@@ -187,17 +192,23 @@ class TpPage extends StatelessWidget {
           );
     final titleText = Text(title);
     if (!largeTitle) {
-      return CupertinoSliverNavigationBar(
-        largeTitle: null,
-        middle: titleText,
-        alwaysShowMiddle: true,
-        leading: lead,
-        trailing: trail,
-        automaticallyImplyLeading: false,
-        transitionBetweenRoutes: false,
-        border: null,
-        backgroundColor: sys.background.withValues(alpha: .92),
-        padding: const EdgeInsetsDirectional.symmetric(horizontal: 16),
+      final top = MediaQuery.paddingOf(context).top;
+      return SliverPersistentHeader(
+        pinned: true,
+        delegate: _SmallBar(
+          height: top + 52,
+          bar: CupertinoNavigationBar(
+            middle: titleText,
+            leading: lead,
+            trailing: trail,
+            automaticallyImplyLeading: false,
+            automaticallyImplyMiddle: false,
+            transitionBetweenRoutes: false,
+            border: null,
+            backgroundColor: sys.background.withValues(alpha: .92),
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: 16),
+          ),
+        ),
       );
     }
     return CupertinoSliverNavigationBar(
@@ -240,6 +251,15 @@ class TpPage extends StatelessWidget {
                       ),
                     )
                   : TextButton(onPressed: a.onTap, child: Text(a.label)))
+            : a.menu != null
+            ? TpMenu(
+                items: a.menu!,
+                builder: (context, open) => IconButton(
+                  onPressed: open,
+                  tooltip: a.label,
+                  icon: a.child ?? Icon(a.icon),
+                ),
+              )
             : IconButton(
                 onPressed: a.onTap,
                 tooltip: a.label,
@@ -263,6 +283,26 @@ class TpPage extends StatelessWidget {
       actions: acts,
     );
   }
+}
+
+class _SmallBar extends SliverPersistentHeaderDelegate {
+  _SmallBar({required this.height, required this.bar});
+
+  final double height;
+  final Widget bar;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlaps) =>
+      SizedBox(height: height, child: Align(alignment: Alignment.bottomCenter, child: bar));
+
+  @override
+  bool shouldRebuild(_SmallBar old) => old.height != height || old.bar != bar;
 }
 
 /// iOS 26 툴바 버튼. 44pt 유리 원, 글자면 유리 캡슐, 저장은 액센트 캡슐.
@@ -323,14 +363,92 @@ class TpBarButton extends StatelessWidget {
             : TpSurface.chrome(radius: TpTokens.rControl, child: inner),
       );
     }
-    return Semantics(
+    Widget tappable(VoidCallback? onTap) => Semantics(
       button: true,
       label: a.label,
       excludeSemantics: true,
-      onTap: a.onTap,
+      onTap: onTap,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: a.onTap,
+        onTap: onTap,
+        child: face,
+      ),
+    );
+    if (a.menu != null) {
+      return TpMenu(items: a.menu!, builder: (context, open) => tappable(open));
+    }
+    return tappable(a.onTap);
+  }
+}
+
+/// 캡슐 버튼. 채움은 화면당 하나, 나머지는 tinted.
+enum TpPillKind { filled, tinted, gray }
+
+class TpPill extends StatelessWidget {
+  const TpPill({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.kind = TpPillKind.filled,
+    this.icon,
+    this.height = 50,
+    this.expand = true,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final TpPillKind kind;
+  final IconData? icon;
+  final double height;
+  final bool expand;
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    final (bg, fg) = switch (kind) {
+      TpPillKind.filled => (TpSys.accent, Colors.white),
+      TpPillKind.tinted => (sys.tint, sys.accentText),
+      TpPillKind.gray => (sys.fill3, sys.label),
+    };
+    final disabled = onTap == null;
+    final face = Container(
+      height: height,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: BoxDecoration(
+        color: disabled ? sys.fill3 : bg,
+        borderRadius: BorderRadius.circular(height / 2),
+      ),
+      child: Row(
+        mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          if (icon != null) ...<Widget>[
+            Icon(icon, size: 18, color: disabled ? sys.label2 : fg),
+            const SizedBox(width: 6),
+          ],
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: height >= 50 ? 17 : 15,
+                fontWeight: FontWeight.w600,
+                color: disabled ? sys.label2 : fg,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    return Semantics(
+      button: !disabled,
+      label: label,
+      excludeSemantics: true,
+      onTap: onTap,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
         child: face,
       ),
     );

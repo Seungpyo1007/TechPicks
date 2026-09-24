@@ -20,6 +20,10 @@ abstract final class K {
   static const String tabCompare = 'tabCompare';
   static const String tabSearch = 'tabSearch';
   static const String askTitle = 'askTitle';
+  static const String sort = 'sort';
+  static const String clear = 'clear';
+  static const String rankStatus = 'rankStatus';
+  static const String buildRowSub = 'buildRowSub';
 
   // 홈
   static const String homeTitle = 'homeTitle';
