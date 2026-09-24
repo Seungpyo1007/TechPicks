@@ -14,10 +14,22 @@ import '../../shared/tp_haptics.dart';
 /// - 아무도 안 만지면 천천히 흔들린다(`motion.loops`). 한 번 만지면 멈춘다.
 /// - 동작 줄이기면 회전·흔들림·벌어짐이 없고 강조만 바뀐다.
 class ViewerStage extends StatefulWidget {
-  const ViewerStage({super.key, this.part});
+  const ViewerStage({
+    super.key,
+    this.part,
+    this.interactive = true,
+    this.ink = Colors.white,
+  });
 
   /// 고른 부품. [ViewerLayer.part] 와 같은 번호(0 화면, 1 배터리, 2 칩, 3 카메라).
   final int? part;
+
+  /// 드래그·두 번 탭을 받을지. 상세의 그림 자리처럼 스크롤 안에 놓일 때는 끈다 —
+  /// 켜 두면 그 위에서 시작한 스크롤을 가로챈다.
+  final bool interactive;
+
+  /// 선 색. 뷰어의 어두운 무대는 흰색, 밝은 카드 위에서는 글자색.
+  final Color ink;
 
   /// 기기 크기.
   static const Size device = Size(150, 290);
@@ -176,12 +188,15 @@ class ViewerStageState extends State<ViewerStage>
 
   @override
   Widget build(BuildContext context) {
+    final interactive = widget.interactive;
     return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onPanStart: _panStart,
-      onPanUpdate: _panUpdate,
-      onPanEnd: _panEnd,
-      onDoubleTap: _reset,
+      behavior: interactive
+          ? HitTestBehavior.opaque
+          : HitTestBehavior.deferToChild,
+      onPanStart: interactive ? _panStart : null,
+      onPanUpdate: interactive ? _panUpdate : null,
+      onPanEnd: interactive ? _panEnd : null,
+      onDoubleTap: interactive ? _reset : null,
       child: AnimatedBuilder(
         animation: Listenable.merge(<Listenable>[
           _yaw,
@@ -209,7 +224,7 @@ class ViewerStageState extends State<ViewerStage>
                       decoration: BoxDecoration(
                         gradient: RadialGradient(
                           colors: <Color>[
-                            Colors.white.withValues(alpha: .09 - .03 * spread),
+                            widget.ink.withValues(alpha: .09 - .03 * spread),
                             Colors.transparent,
                           ],
                         ),
@@ -234,6 +249,7 @@ class ViewerStageState extends State<ViewerStage>
                         size: ViewerStage.device,
                         painter: _LayerPainter(
                           layer: layer,
+                          ink: widget.ink,
                           selected:
                               widget.part != null && layer.part == widget.part,
                           dim: widget.part != null && layer.part != widget.part
@@ -277,9 +293,11 @@ class _LayerPainter extends CustomPainter {
     required this.layer,
     required this.selected,
     required this.dim,
+    required this.ink,
   });
 
   final ViewerLayer layer;
+  final Color ink;
   final bool selected;
 
   /// 고르지 않은 판이 흐려지는 정도.
@@ -291,13 +309,11 @@ class _LayerPainter extends CustomPainter {
     Paint stroke(double alpha, [double w = 1.2]) => Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = selected ? 1.6 : w
-      ..color = selected
-          ? TpSys.accent
-          : Colors.white.withValues(alpha: alpha * a);
+      ..color = selected ? TpSys.accent : ink.withValues(alpha: alpha * a);
     Paint fill(double alpha) => Paint()
       ..color = selected
           ? TpSys.accent.withValues(alpha: .30)
-          : Colors.white.withValues(alpha: alpha * a);
+          : ink.withValues(alpha: alpha * a);
 
     final body = RRect.fromRectAndRadius(
       Offset.zero & size,
@@ -370,5 +386,8 @@ class _LayerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_LayerPainter old) =>
-      old.layer != layer || old.selected != selected || old.dim != dim;
+      old.layer != layer ||
+      old.selected != selected ||
+      old.dim != dim ||
+      old.ink != ink;
 }

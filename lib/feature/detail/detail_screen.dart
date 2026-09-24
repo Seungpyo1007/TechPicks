@@ -28,6 +28,7 @@ import '../share/share_text.dart';
 import '../../shared/tp_haptics.dart';
 import '../../shared/widgets/tp_number.dart';
 import '../../shared/widgets/tp_pulse.dart';
+import '../viewer/viewer_stage.dart';
 
 /// 기기 상세. 이름이 large title 이고, 스크롤하면 바의 작은 제목이 된다.
 class DetailScreen extends ConsumerWidget {
@@ -283,7 +284,18 @@ class _ImageSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     final sys = context.sys;
     final address = url?.trim();
-    final placeholder = Icon(context.icons.image, size: 40, color: sys.label3);
+    // 사진이 없거나 못 받으면(카탈로그 주소가 지금 전부 404 다) 빈 사진 아이콘
+    // 대신 뷰어의 기기 그림을 천천히 흔들어 둔다.
+    final placeholder = Padding(
+      padding: const EdgeInsets.all(12),
+      child: FittedBox(
+        child: SizedBox(
+          width: 300,
+          height: 380,
+          child: ViewerStage(interactive: false, ink: sys.label),
+        ),
+      ),
+    );
     return Container(
       height: 236,
       decoration: BoxDecoration(
