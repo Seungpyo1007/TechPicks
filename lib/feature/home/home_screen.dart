@@ -26,6 +26,7 @@ import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_score_strip.dart';
 import '../share/share_text.dart';
 import '../../shared/tp_haptics.dart';
+import '../../shared/widgets/tp_number.dart';
 
 /// 오늘. 관심 목록과 그 결론.
 class HomeScreen extends ConsumerWidget {
@@ -125,8 +126,9 @@ class HomeScreen extends ConsumerWidget {
                       key: const ValueKey<String>('empty'),
                       onAdd: onAdd,
                     )
+                  // 판정 기기가 바뀌어도 카드는 그대로 두고 안의 값만 움직인다.
                   : _VerdictCard(
-                      key: ValueKey<String>(verdict.slug),
+                      key: const ValueKey<String>('verdict'),
                       device: verdict,
                       onCompareAll: onCompareAll,
                       onAskWhy: onAskWhy,
@@ -295,14 +297,24 @@ class _VerdictCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
                       Expanded(
-                        child: Text(
-                          device.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: sys.label,
+                        child: AnimatedSwitcher(
+                          duration: context.motion.contentSwap.duration,
+                          switchInCurve: context.motion.contentSwap.curve,
+                          switchOutCurve: context.motion.contentSwap.curve,
+                          layoutBuilder: (current, previous) => Stack(
+                            alignment: AlignmentDirectional.centerStart,
+                            children: <Widget>[...previous, ?current],
+                          ),
+                          child: Text(
+                            device.name,
+                            key: ValueKey<String>(device.slug),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: sys.label,
+                            ),
                           ),
                         ),
                       ),
@@ -315,7 +327,7 @@ class _VerdictCard extends ConsumerWidget {
                         excludeSemantics: true,
                         child: MediaQuery.withClampedTextScaling(
                           maxScaleFactor: 1.3,
-                          child: Text(
+                          child: TpNumber(
                             index?.toString() ?? DeviceSpecs.empty,
                             style: type.indexNumeral.copyWith(
                               fontSize: 44,
@@ -479,6 +491,7 @@ class _ShortlistRow extends ConsumerWidget {
         if (device.soc?.name != null) device.soc!.name,
       ].join(' · '),
       value: index?.toString() ?? DeviceSpecs.empty,
+      numeric: true,
       valueStyle: TextStyle(
         fontSize: 22,
         fontWeight: FontWeight.w600,

@@ -180,7 +180,7 @@ void main() {
           disableAnimations: true,
         );
         for (final spring in <Motion>[m.snappy, m.bouncy, m.smooth]) {
-          expect(spring, isA<NoMotion>());
+          expect(spring, isA<TpInstantMotion>());
         }
         expect(m.loops, isFalse);
         expect((await readMotion(tester, chrome: chrome)).loops, isTrue);

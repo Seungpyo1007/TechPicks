@@ -26,6 +26,7 @@ import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_score_strip.dart';
 import '../share/share_text.dart';
 import '../../shared/tp_haptics.dart';
+import '../../shared/widgets/tp_number.dart';
 
 /// 기기 상세. 이름이 large title 이고, 스크롤하면 바의 작은 제목이 된다.
 class DetailScreen extends ConsumerWidget {
@@ -157,7 +158,7 @@ class _DetailBody extends ConsumerWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: <Widget>[
-                      Text(
+                      TpNumber(
                         index?.toString() ?? DeviceSpecs.empty,
                         style: type.indexNumeral.copyWith(
                           fontSize: 44,

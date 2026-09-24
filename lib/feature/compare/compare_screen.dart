@@ -20,6 +20,7 @@ import '../../shared/widgets/tp_bar.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
+import '../../shared/widgets/tp_number.dart';
 
 double _lines(BuildContext context, TextStyle style, int lines) =>
     MediaQuery.textScalerOf(context).scale(style.fontSize!) *
@@ -248,7 +249,7 @@ class _ColumnHead extends StatelessWidget {
                   children: <Widget>[
                     MediaQuery.withClampedTextScaling(
                       maxScaleFactor: 1.3,
-                      child: Text(
+                      child: TpNumber(
                         index?.toString() ?? DeviceSpecs.empty,
                         style: type.indexNumeral.copyWith(
                           fontSize: 34,
