@@ -1,9 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
-import '../../app/shell/tp_shell.dart';
+import '../../app/theme/tp_sys.dart';
+import '../../shared/widgets/tp_group.dart';
+import '../../shared/widgets/tp_menu.dart';
+import '../../shared/widgets/tp_page.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
@@ -38,112 +42,113 @@ class BuildScreen extends ConsumerWidget {
     final query = ref.watch(buildQueryProvider);
     final picks = ref.watch(buildPicksProvider);
 
-    return TpShell(
+    final sys = context.sys;
+    return TpPage(
       title: K.buildTitle.tr(),
       tab: TpTab.browse,
       onBack: onBack,
-      child: Builder(
-        builder: (context) => ListView(
-          padding:
-              const EdgeInsets.fromLTRB(16, 4, 16, 24) +
-              tpContentInset(context),
-          children: <Widget>[
-            _UseCases(
-              current: query.useCase,
-              onSelect: (u) => ref.read(buildQueryProvider.notifier).useCase(u),
-            ),
-            const SizedBox(height: 6),
-            Text(query.useCase.subKey.tr(), style: type.secondary),
-            const SizedBox(height: 16),
-            _Budget(
-              usd: query.budgetUsd,
-              onChanged: (v) => ref.read(buildQueryProvider.notifier).budget(v),
-            ),
-            const SizedBox(height: 18),
-
-            AnimatedSwitcher(
-              duration: motion.contentSwap.duration,
-              switchInCurve: motion.contentSwap.curve,
-              switchOutCurve: motion.contentSwap.curve,
-              child: parts.hasError
-                  ? const TpCatalogError(key: ValueKey<String>('error'))
-                  : picks.isEmpty
-                  ? TpSurface(
-                      key: const ValueKey<String>('empty'),
-                      padding: const EdgeInsets.all(20),
-                      // 오류가 아니다. 예산이 낮아서 후보가 없는 것이고,
-                      // "문제가 생겼습니다" 로 쓰면 거짓말이 된다.
-                      child: Text(K.buildEmpty.tr(), style: type.body),
-                    )
-                  : Column(
-                      key: ValueKey<String>(
-                        '${query.useCase.name}-${query.budgetUsd}',
-                      ),
-                      children: <Widget>[
-                        for (final combo in picks)
-                          _ComboCard(
-                            combo: combo,
-                            useCase: query.useCase,
-                            budgetUsd: query.budgetUsd,
-                          ),
-                      ],
-                    ),
-            ),
-
-            if (picks.isNotEmpty) ...<Widget>[
+      slivers: <Widget>[
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
               const SizedBox(height: 8),
-              _Requirements(combo: picks.first),
-            ],
-
-            const SizedBox(height: 18),
-            Text(K.buildScope.tr(), style: type.caption),
-            const SizedBox(height: 8),
-            Text(
-              K.buildPsuNote.tr(
-                args: <String>['${BuildEstimate.platformWatts}'],
+              TpGroup(
+                footer: query.useCase.subKey.tr(),
+                children: <Widget>[
+                  TpMenu(
+                    items: <TpMenuItem>[
+                      for (final use in BuildUseCase.values)
+                        TpMenuItem(
+                          label: use.key.tr(),
+                          checked: use == query.useCase,
+                          onTap: () => ref
+                              .read(buildQueryProvider.notifier)
+                              .useCase(use),
+                        ),
+                    ],
+                    builder: (context, open) => TpRow(
+                      title: K.buildUse.tr(),
+                      value: query.useCase.key.tr(),
+                      chevron: false,
+                      onTap: open,
+                      trailing: Icon(
+                        context.tp.isGlass
+                            ? CupertinoIcons.chevron_up_chevron_down
+                            : Icons.unfold_more,
+                        size: 16,
+                        color: sys.label3,
+                      ),
+                    ),
+                  ),
+                  _Budget(
+                    usd: query.budgetUsd,
+                    onChanged: (v) =>
+                        ref.read(buildQueryProvider.notifier).budget(v),
+                  ),
+                ],
               ),
-              style: type.caption,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 용도 칩.
-///
-/// **가로 스크롤이 아니라 줄바꿈이다.** 402pt 에서 넷 중 둘만 보이고
-/// 나머지가 화면 밖으로 밀렸는데, 용도는 이 화면 전체의 입력이라 절반이
-/// 숨으면 고를 수 있다는 것조차 모른다. 랭킹의 축 칩은 스크롤해도 되지만
-/// (거기선 하나가 이미 골라져 있고 나머지는 대안이다) 여기선 아니다.
-class _UseCases extends StatelessWidget {
-  const _UseCases({required this.current, required this.onSelect});
-
-  final BuildUseCase current;
-  final ValueChanged<BuildUseCase> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: <Widget>[
-        for (final use in BuildUseCase.values)
-          TpChip(
-            label: use.key.tr(),
-            selected: use == current,
-            onTap: () => onSelect(use),
+              AnimatedSwitcher(
+                duration: motion.contentSwap.duration,
+                switchInCurve: motion.contentSwap.curve,
+                switchOutCurve: motion.contentSwap.curve,
+                child: parts.hasError
+                    ? const TpCatalogError(key: ValueKey<String>('error'))
+                    : picks.isEmpty
+                    ? Padding(
+                        key: const ValueKey<String>('empty'),
+                        padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
+                        child: Text(
+                          K.buildEmpty.tr(),
+                          style: TextStyle(fontSize: 15, color: sys.label2),
+                        ),
+                      )
+                    : Padding(
+                        key: ValueKey<String>(
+                          '${query.useCase.name}-${query.budgetUsd}',
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          children: <Widget>[
+                            for (final combo in picks)
+                              _ComboCard(
+                                combo: combo,
+                                useCase: query.useCase,
+                                budgetUsd: query.budgetUsd,
+                              ),
+                          ],
+                        ),
+                      ),
+              ),
+              if (picks.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                  child: _Requirements(combo: picks.first),
+                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 18, 32, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(K.buildScope.tr(), style: type.caption),
+                    const SizedBox(height: 8),
+                    Text(
+                      K.buildPsuNote.tr(
+                        args: <String>['${BuildEstimate.platformWatts}'],
+                      ),
+                      style: type.caption,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+        ),
       ],
     );
   }
 }
 
-/// 예산. 프리셋과 슬라이더.
-///
-/// 슬라이더만 두면 정확한 값을 맞추기 어렵고, 프리셋만 두면 그 사이를 못
-/// 고른다. 둘 다 둔다.
 class _Budget extends StatelessWidget {
   const _Budget({required this.usd, required this.onChanged});
 
@@ -154,19 +159,14 @@ class _Budget extends StatelessWidget {
   Widget build(BuildContext context) {
     final type = context.tpText;
 
-    return TpSurface(
+    return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
-              Expanded(
-                child: Text(
-                  K.buildBudget.tr().toUpperCase(),
-                  style: type.eyebrow,
-                ),
-              ),
+              Expanded(child: Text(K.buildBudget.tr(), style: type.body)),
               Text(DeviceSpecs.formatPrice(usd), style: type.cardTitle),
             ],
           ),

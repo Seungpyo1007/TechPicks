@@ -104,10 +104,7 @@ void main() {
         name,
       );
       final phones = hits.where((h) => h.kind == SearchKind.phone).length;
-      expect(
-        find.text('${K.searchKindPhone.tr()} · $phones'),
-        findsOneWidget,
-      );
+      expect(find.text('${K.searchKindPhone.tr()} · $phones'), findsOneWidget);
     });
 
     testWidgets('맞는 게 없으면 그렇게 말한다', (tester) async {
@@ -133,10 +130,7 @@ void main() {
       // 위가 손가락 자리가 아니다.
       await tester.tap(
         find
-            .ancestor(
-              of: find.text(phone.name),
-              matching: find.byType(TpRow),
-            )
+            .ancestor(of: find.text(phone.name), matching: find.byType(TpRow))
             .first,
       );
       await tester.pumpAndSettle();

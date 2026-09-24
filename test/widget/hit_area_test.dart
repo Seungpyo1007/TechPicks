@@ -61,7 +61,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // 끝까지 내린다.
-      await tester.fling(find.byType(Scrollable).first, const Offset(0, -600), 2000);
+      await tester.fling(
+        find.byType(Scrollable).first,
+        const Offset(0, -600),
+        2000,
+      );
       await tester.pumpAndSettle();
 
       // 화면 좌표로 누른다. find.text 로 누르면 위젯이 화면 밖이어도 통과한다.

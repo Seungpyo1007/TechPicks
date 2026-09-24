@@ -256,5 +256,6 @@
   "weights": "Weights",
   "removeShort": "Remove from shortlist",
   "browseByKind": "Browse by kind",
-  "done": "Done"
+  "done": "Done",
+  "buildUse": "Use"
 }

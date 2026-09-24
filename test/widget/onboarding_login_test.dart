@@ -186,7 +186,8 @@ void main() {
 
       final lefts = <double>[
         for (final b in LoginScreen.buttons)
-          if (b.method != AuthMethod.anonymous)
+          // iOS 의 Apple 은 공식 버튼이라 라벨이 가운데다.
+          if (b.method != AuthMethod.anonymous && b.method != AuthMethod.apple)
             tester.getTopLeft(find.text(b.key.tr())).dx,
       ];
 

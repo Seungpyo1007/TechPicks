@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
+import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
@@ -111,15 +112,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               for (var i = 0; i < K.onboarding.length; i++)
+                // iOS 페이지 컨트롤: 7pt 원, 간격 9, 지금 것만 진하게.
                 AnimatedContainer(
                   duration: context.motion.selection.duration,
                   curve: context.motion.selection.curve,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == _index ? 18 : 6,
-                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 4.5),
+                  width: 7,
+                  height: 7,
                   decoration: BoxDecoration(
-                    color: i == _index ? TpTokens.blue : t.track,
-                    borderRadius: BorderRadius.circular(3),
+                    color: i == _index ? context.sys.label : context.sys.label3,
+                    shape: BoxShape.circle,
                   ),
                 ),
             ],

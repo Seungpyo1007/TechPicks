@@ -40,7 +40,10 @@ void main() {
 
     final before = container.read(buildPicksProvider).first;
 
-    await tester.tap(find.text(BuildUseCase.office.key.tr()));
+    // 용도는 풀다운 메뉴다.
+    await tester.tap(find.text(K.buildUse.tr()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(BuildUseCase.office.key.tr()).last);
     await tester.pumpAndSettle();
 
     expect(container.read(buildQueryProvider).useCase, BuildUseCase.office);
