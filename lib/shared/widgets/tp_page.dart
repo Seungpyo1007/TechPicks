@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../app/shell/tp_shell.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/shell/tp_tab_bar.dart';
+import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
@@ -426,7 +427,11 @@ class TpPill extends StatelessWidget {
       TpPillKind.gray => (sys.fill3, sys.label),
     };
     final disabled = onTap == null;
-    final face = Container(
+    final move = context.motion.selection;
+    // 종류가 바뀌면(담기 → 담김) 색은 번지고 아이콘은 튀어 들어온다.
+    final face = AnimatedContainer(
+      duration: move.duration,
+      curve: move.curve,
       height: height,
       padding: const EdgeInsets.symmetric(horizontal: 18),
       decoration: BoxDecoration(
@@ -438,7 +443,19 @@ class TpPill extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           if (icon != null) ...<Widget>[
-            Icon(icon, size: 18, color: disabled ? sys.label2 : fg),
+            AnimatedSwitcher(
+              duration: move.duration,
+              transitionBuilder: (child, a) => ScaleTransition(
+                scale: a,
+                child: FadeTransition(opacity: a, child: child),
+              ),
+              child: Icon(
+                icon,
+                key: ValueKey<IconData>(icon!),
+                size: 18,
+                color: disabled ? sys.label2 : fg,
+              ),
+            ),
             const SizedBox(width: 6),
           ],
           Flexible(

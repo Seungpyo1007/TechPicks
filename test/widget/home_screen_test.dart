@@ -144,8 +144,17 @@ void _shortlistRemoval() {
     await hold.up();
     await tester.pumpAndSettle();
     await tester.tap(find.text(K.removeShort.tr()));
-    await tester.pumpAndSettle();
+    // 메뉴가 닫히고 행이 접히는 동안은 아직 목록에 있다.
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(container.read(shortlistProvider), hasLength(2));
+    final folding = tester
+        .widgetList<SizeTransition>(find.byType(SizeTransition))
+        .where((w) => w.sizeFactor.value < 1);
+    expect(folding, isNotEmpty);
 
+    await tester.pumpAndSettle();
     expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
   });
 

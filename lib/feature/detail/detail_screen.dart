@@ -27,6 +27,7 @@ import '../../shared/widgets/tp_score_strip.dart';
 import '../share/share_text.dart';
 import '../../shared/tp_haptics.dart';
 import '../../shared/widgets/tp_number.dart';
+import '../../shared/widgets/tp_pulse.dart';
 
 /// 기기 상세. 이름이 large title 이고, 스크롤하면 바의 작은 제목이 된다.
 class DetailScreen extends ConsumerWidget {
@@ -184,16 +185,19 @@ class _DetailBody extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           child: Column(
             children: <Widget>[
-              TpPill(
-                label: (shortlisted ? K.inShortlist : K.addShortlist).tr(),
-                kind: shortlisted ? TpPillKind.tinted : TpPillKind.filled,
-                icon: shortlisted
-                    ? (glass ? CupertinoIcons.check_mark : Icons.check)
-                    : (glass ? CupertinoIcons.add : Icons.add),
-                onTap: () {
-                  TpHaptics.commit();
-                  ref.read(shortlistProvider.notifier).toggle(device.slug);
-                },
+              TpPulse(
+                trigger: shortlisted,
+                child: TpPill(
+                  label: (shortlisted ? K.inShortlist : K.addShortlist).tr(),
+                  kind: shortlisted ? TpPillKind.tinted : TpPillKind.filled,
+                  icon: shortlisted
+                      ? (glass ? CupertinoIcons.check_mark : Icons.check)
+                      : (glass ? CupertinoIcons.add : Icons.add),
+                  onTap: () {
+                    TpHaptics.commit();
+                    ref.read(shortlistProvider.notifier).toggle(device.slug);
+                  },
+                ),
               ),
               const SizedBox(height: 10),
               Row(
