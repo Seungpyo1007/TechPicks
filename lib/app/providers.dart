@@ -966,6 +966,19 @@ final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(
   SearchQueryNotifier.new,
 );
 
+/// 네이티브 검색창 키보드의 최종 높이. 키보드가 움직이기 **시작할 때** 온다.
+class SearchKeyboardHeightNotifier extends Notifier<double> {
+  @override
+  double build() => 0;
+
+  void set(double value) => state = value;
+}
+
+final searchKeyboardHeightProvider =
+    NotifierProvider<SearchKeyboardHeightNotifier, double>(
+      SearchKeyboardHeightNotifier.new,
+    );
+
 /// 올릴 때마다 네이티브 검색창 키보드가 내려간다.
 class SearchKeyboardNotifier extends Notifier<int> {
   @override

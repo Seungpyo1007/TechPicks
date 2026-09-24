@@ -223,6 +223,9 @@ class LiquidGlassTabBar extends StatefulWidget {
   final ValueChanged<String>? onSearchChanged;
   final ValueChanged<String>? onSearchSubmitted;
 
+  /// 검색 중 키보드가 움직이기 시작할 때의 최종 높이(내려간 뒤에는 0).
+  final ValueChanged<double>? onSearchKeyboard;
+
   /// 바뀔 때마다 검색창 키보드를 내린다(결과 목록을 스크롤할 때).
   final int searchKeyboardDismissToken;
 
@@ -248,6 +251,7 @@ class LiquidGlassTabBar extends StatefulWidget {
     this.onSearchActiveChanged,
     this.onSearchChanged,
     this.onSearchSubmitted,
+    this.onSearchKeyboard,
     this.searchKeyboardDismissToken = 0,
   }) : assert(items.length >= 2, 'LiquidGlassTabBar requires at least 2 tab items.'),
        assert(currentIndex >= 0, 'currentIndex must be >= 0.'),
@@ -375,6 +379,9 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
         return;
       case 'onSearchSubmitted':
         widget.onSearchSubmitted?.call(call.arguments as String? ?? '');
+        return;
+      case 'onSearchKeyboard':
+        widget.onSearchKeyboard?.call((call.arguments as num?)?.toDouble() ?? 0);
         return;
       default:
         return;

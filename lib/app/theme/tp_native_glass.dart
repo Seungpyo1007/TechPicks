@@ -121,8 +121,12 @@ class TpNativeTabBar extends StatelessWidget {
     this.searchActive = false,
     this.searchPlaceholder,
     this.onSearchChanged,
+    this.onSearchKeyboard,
     this.keyboardDismissToken = 0,
   });
+
+  /// 검색 중 키보드의 최종 높이. 움직이기 시작할 때 온다.
+  final ValueChanged<double>? onSearchKeyboard;
 
   /// 검색 원을 진짜 검색 탭으로. 누르면 UIKit 이 칸을 밀어내고 검색창을 펼친다.
   final bool nativeSearch;
@@ -186,6 +190,7 @@ class TpNativeTabBar extends StatelessWidget {
     },
     onSearchChanged: onSearchChanged,
     onSearchSubmitted: onSearchChanged,
+    onSearchKeyboard: onSearchKeyboard,
     searchKeyboardDismissToken: keyboardDismissToken,
     labelTextStyle: labelStyle,
     items: <LiquidGlassTabItem>[
