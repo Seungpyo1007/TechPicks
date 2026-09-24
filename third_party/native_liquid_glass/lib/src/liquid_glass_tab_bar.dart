@@ -244,6 +244,10 @@ class LiquidGlassTabBar extends StatefulWidget {
   /// 잡아 둘 때, 빈 윗부분이 화면 터치를 먹지 않게.
   final bool iosHitTestTransparent;
 
+  /// 플랫폼 뷰가 받을 제스처. null 이면 기본(Tap). 어느 터치를 네이티브가
+  /// 받을지 여기서 거른다.
+  final Set<Factory<OneSequenceGestureRecognizer>>? iosGestureRecognizers;
+
   const LiquidGlassTabBar({
     super.key,
     required this.items,
@@ -272,6 +276,7 @@ class LiquidGlassTabBar extends StatefulWidget {
     this.searchTextToken = 0,
     this.searchFocusToken = 0,
     this.iosHitTestTransparent = false,
+    this.iosGestureRecognizers,
   }) : assert(
          items.length >= 2,
          'LiquidGlassTabBar requires at least 2 tab items.',
@@ -843,9 +848,11 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar>
         ),
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: _onNativePlatformViewCreated,
-        gestureRecognizers: _tabBarGestureRecognizers,
+        gestureRecognizers:
+            widget.iosGestureRecognizers ?? _tabBarGestureRecognizers,
+        // transparent 면 플랫폼 뷰가 아예 안 눌린다. translucent 라야 뒤와 같이 히트된다.
         hitTestBehavior: widget.iosHitTestTransparent
-            ? PlatformViewHitTestBehavior.transparent
+            ? PlatformViewHitTestBehavior.translucent
             : PlatformViewHitTestBehavior.opaque,
       ),
     );
