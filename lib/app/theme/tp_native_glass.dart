@@ -369,3 +369,30 @@ class _RegionEager extends EagerGestureRecognizer {
   bool isPointerAllowed(PointerDownEvent event) =>
       acceptsAt(event.position) && super.isPointerAllowed(event);
 }
+
+/// iOS 26 툴바의 아이콘 버튼. 시스템 유리 버튼이라 누르면 유리가 OS 식으로
+/// 눌렸다 튀어 오른다.
+class TpNativeIconButton extends StatelessWidget {
+  const TpNativeIconButton({
+    super.key,
+    required this.symbol,
+    required this.onTap,
+    this.tint,
+  });
+
+  /// SF Symbol 이름.
+  final String symbol;
+  final VoidCallback? onTap;
+
+  /// 아이콘 색. null 이면 글자색.
+  final Color? tint;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassButton.icon(
+    icon: NativeLiquidGlassIcon.sfSymbol(symbol),
+    onPressed: onTap,
+    size: 44,
+    iconSize: 18,
+    iconColor: tint,
+  );
+}

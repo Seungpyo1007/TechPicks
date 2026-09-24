@@ -68,6 +68,7 @@ class DetailScreen extends ConsumerWidget {
           TpBarAction(
             label: K.share.tr(),
             icon: context.icons.share,
+            symbol: 'square.and.arrow.up',
             onTap: () => unawaited(_share(ref, loaded)),
           ),
       ],
