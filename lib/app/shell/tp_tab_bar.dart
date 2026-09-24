@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/copy_keys.dart';
@@ -44,15 +45,6 @@ class TpTabBar extends ConsumerWidget {
 
   static const double androidHeight = 80;
 
-  /// 바·검색창이 실제로 있는 자리. 플랫폼 뷰는 이 안의 터치만 받는다.
-  static final GlobalKey _barArea = GlobalKey(debugLabel: 'tab-bar-area');
-
-  static bool _inBarArea(Offset global) {
-    final box = _barArea.currentContext?.findRenderObject();
-    if (box is! RenderBox || !box.hasSize) return true;
-    return (Offset.zero & box.size).contains(box.globalToLocal(global));
-  }
-
   /// iOS 26 탭 바 플랫폼 뷰가 미리 잡아 두는 키보드 자리. 세로 키보드(예측 줄
   /// 포함) 보다 넉넉하게.
   static const double keyboardRoom = 420;
@@ -90,61 +82,51 @@ class TpTabBar extends ConsumerWidget {
     //
     // 플랫폼 뷰 크기는 **절대 바꾸지 않는다.** 키보드에 맞춰 늘리던 때는 UIKit 이
     // 옛 크기로 자리를 잡아 검색창이 화면 위쪽까지 날아갔다가 내려왔다. 그래서
-    // 처음부터 키보드 자리([keyboardRoom])까지 크게 잡고, 빈 윗부분은 터치를
-    // 뒤의 화면으로 흘려보낸다. 바·검색창이 실제로 있는 아래쪽만 [_Absorb] 가
-    // 화면 터치를 막는다 — 이건 Flutter 위젯이라 마음대로 크기를 바꿔도 된다.
+    // 처음부터 키보드 자리([keyboardRoom])까지 크게 잡는다.
+    //
+    // 대신 바·검색창이 있는 아래쪽 밖에서는 **아예 히트되지 않게** 한다
+    // ([_BarHit]). 히트되면 플랫폼 뷰의 제스처가 아레나에 먼저 들어가 손을 뗄 때
+    // 이겨 버려서, 그 뒤의 목록 행이 눌리지 않았다(스크롤만 됐다).
     if (TpNativeGlass.enabled) {
       final searching = current == TpTab.search;
       final keyboard = searching
           ? ref.watch(searchKeyboardHeightProvider)
           : 0.0;
       final command = ref.watch(searchCommandProvider);
-      final bar = iosHeight + TpNativeTabBar.overflow;
+      final total =
+          iosHeight + TpNativeTabBar.overflow + safe.bottom + keyboardRoom;
+      final area = iosHeight + math.max(safe.bottom, keyboard);
       return SizedBox(
-        height: bar + safe.bottom + keyboardRoom,
-        child: Stack(
-          children: <Widget>[
-            // 바·검색창 자리. 그 위(넘침 20 은 빼고)는 뒤 화면이 받는다.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: iosHeight + math.max(safe.bottom, keyboard),
-              child: _Absorb(key: _barArea),
-            ),
-            Positioned.fill(
-              child: TpNativeTabBar(
-                index: TpTab.bar.indexOf(searching ? returnTo : current),
-                onSelected: (i) => onSelected(TpTab.bar[i]),
-                onSearch: () => onSelected(TpTab.search),
-                searchLabel: K.tab(TpTab.search).tr(),
-                nativeSearch: true,
-                searchActive: searching,
-                searchPlaceholder: K.searchAllHint.tr(),
-                onSearchChanged: (q) =>
-                    ref.read(searchQueryProvider.notifier).set(q),
-                onSearchKeyboard: (h) =>
-                    ref.read(searchKeyboardHeightProvider.notifier).set(h),
-                keyboardDismissToken: ref.watch(searchKeyboardProvider),
-                searchText: command.text,
-                searchTextToken: command.textToken,
-                searchFocusToken: command.focusToken,
-                hitTestTransparent: true,
-                // 바·검색창 자리의 터치만 네이티브가 받는다.
-                acceptsAt: _inBarArea,
-                height: iosHeight + safe.bottom + keyboardRoom,
-                tint: TpTokens.blue,
-                items: <TpNativeTabItem>[
-                  for (final t in TpTab.bar)
-                    TpNativeTabItem(
-                      label: K.tab(t).tr(),
-                      symbol: t.symbol,
-                      activeSymbol: t.activeSymbol,
-                    ),
-                ],
-              ),
-            ),
-          ],
+        height: total,
+        child: _BarHit(
+          hits: (local) => local.dy >= total - area,
+          child: TpNativeTabBar(
+            index: TpTab.bar.indexOf(searching ? returnTo : current),
+            onSelected: (i) => onSelected(TpTab.bar[i]),
+            onSearch: () => onSelected(TpTab.search),
+            searchLabel: K.tab(TpTab.search).tr(),
+            nativeSearch: true,
+            searchActive: searching,
+            searchPlaceholder: K.searchAllHint.tr(),
+            onSearchChanged: (q) =>
+                ref.read(searchQueryProvider.notifier).set(q),
+            onSearchKeyboard: (h) =>
+                ref.read(searchKeyboardHeightProvider.notifier).set(h),
+            keyboardDismissToken: ref.watch(searchKeyboardProvider),
+            searchText: command.text,
+            searchTextToken: command.textToken,
+            searchFocusToken: command.focusToken,
+            height: iosHeight + safe.bottom + keyboardRoom,
+            tint: TpTokens.blue,
+            items: <TpNativeTabItem>[
+              for (final t in TpTab.bar)
+                TpNativeTabItem(
+                  label: K.tab(t).tr(),
+                  symbol: t.symbol,
+                  activeSymbol: t.activeSymbol,
+                ),
+            ],
+          ),
         ),
       );
     }
@@ -419,13 +401,29 @@ class TpTabReselectNotifier extends ChangeNotifier {
   }
 }
 
-/// 이 자리의 터치를 뒤 화면에 안 넘긴다. 앞의 플랫폼 뷰는 그대로 받는다.
-class _Absorb extends StatelessWidget {
-  const _Absorb({super.key});
+/// [hits] 가 참인 자리만 히트된다. 그 밖의 터치는 이 아래(뒤의 화면)로 간다.
+class _BarHit extends SingleChildRenderObjectWidget {
+  const _BarHit({required this.hits, required super.child});
+
+  final bool Function(Offset local) hits;
 
   @override
-  Widget build(BuildContext context) => const Listener(
-    behavior: HitTestBehavior.opaque,
-    child: SizedBox.expand(),
-  );
+  RenderObject createRenderObject(BuildContext context) => _RenderBarHit(hits);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderBarHit renderObject) {
+    renderObject.hits = hits;
+  }
+}
+
+class _RenderBarHit extends RenderProxyBox {
+  _RenderBarHit(this.hits);
+
+  bool Function(Offset local) hits;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (!hits(position)) return false;
+    return super.hitTest(result, position: position);
+  }
 }
