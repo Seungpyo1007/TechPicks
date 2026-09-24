@@ -28,6 +28,7 @@ abstract final class K {
   static const String removeShort = 'removeShort';
   static const String browseByKind = 'browseByKind';
   static const String done = 'done';
+  static const String buildUse = 'buildUse';
 
   // 홈
   static const String homeTitle = 'homeTitle';

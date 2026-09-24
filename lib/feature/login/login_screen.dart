@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart'
+    show SignInWithAppleButton;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
@@ -109,25 +111,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Text(K.welcomeSub.tr(), style: type.body.copyWith(height: 1.5)),
           const SizedBox(height: 28),
 
-          for (final b in LoginScreen.buttons) ...<Widget>[
-            TpButton(
-              label: b.key.tr(),
-              // 이메일만 파란 채움. 익명은 텍스트 버튼.
-              kind: switch (b.method) {
-                AuthMethod.email => TpButtonKind.primary,
-                AuthMethod.anonymous => TpButtonKind.plain,
-                _ => TpButtonKind.secondary,
-              },
-              alignStart: b.method != AuthMethod.anonymous,
-              // 마크가 없는 버튼도 라벨은 같은 선에서 시작한다. 이메일 줄만
-              // 왼쪽으로 튀어나와 넉 장의 왼쪽 끝이 들쭉날쭉했다.
-              icon: b.method == AuthMethod.anonymous
-                  ? null
-                  : b.asset == null
-                  ? const SizedBox(width: 20)
-                  : Image.asset(b.asset!, width: 20, height: 20),
-              onTap: () => _tap(b.method),
+          // iOS 는 Apple 이 맨 위, 공식 버튼(심사 지침 4.8).
+          for (final b in <({AuthMethod method, String key, String? asset})>[
+            if (t.isGlass)
+              ...LoginScreen.buttons.where((b) => b.method == AuthMethod.apple),
+            ...LoginScreen.buttons.where(
+              (b) => !t.isGlass || b.method != AuthMethod.apple,
             ),
+          ]) ...<Widget>[
+            if (t.isGlass && b.method == AuthMethod.apple)
+              SignInWithAppleButton(
+                text: b.key.tr(),
+                height: 50,
+                borderRadius: const BorderRadius.all(Radius.circular(25)),
+                onPressed: () => _tap(b.method),
+              )
+            else
+              TpButton(
+                label: b.key.tr(),
+                // 이메일만 파란 채움. 익명은 텍스트 버튼.
+                kind: switch (b.method) {
+                  AuthMethod.email => TpButtonKind.primary,
+                  AuthMethod.anonymous => TpButtonKind.plain,
+                  _ => TpButtonKind.secondary,
+                },
+                alignStart: b.method != AuthMethod.anonymous,
+                // 마크가 없는 버튼도 라벨은 같은 선에서 시작한다. 이메일 줄만
+                // 왼쪽으로 튀어나와 넉 장의 왼쪽 끝이 들쭉날쭉했다.
+                icon: b.method == AuthMethod.anonymous
+                    ? null
+                    : b.asset == null
+                    ? const SizedBox(width: 20)
+                    : Image.asset(b.asset!, width: 20, height: 20),
+                onTap: () => _tap(b.method),
+              ),
             const SizedBox(height: 12),
           ],
 
