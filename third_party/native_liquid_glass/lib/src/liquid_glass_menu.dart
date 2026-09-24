@@ -15,9 +15,9 @@ import 'utils/text_style_utils.dart';
 /// forwarding from swallowing or delaying those gestures.
 final Set<Factory<OneSequenceGestureRecognizer>> _menuGestureRecognizers =
     <Factory<OneSequenceGestureRecognizer>>{
-  // TechPicks 패치: 손이 닿는 즉시 UIKit 에 넘긴다(누르는 유리 반응이 바로 보이게).
-  Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer()),
-};
+      // TechPicks 패치: 손이 닿는 즉시 UIKit 에 넘긴다(누르는 유리 반응이 바로 보이게).
+      Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer()),
+    };
 
 /// A single menu item for [LiquidGlassMenu].
 class LiquidGlassMenuItem {
@@ -42,7 +42,15 @@ class LiquidGlassMenuItem {
   /// TechPicks 패치: 체크 표시(UIAction.state = .on).
   final bool isChecked;
 
-  const LiquidGlassMenuItem({required this.id, required this.title, this.icon, this.isDestructive = false, this.isDisabled = false, this.isChecked = false, this.children});
+  const LiquidGlassMenuItem({
+    required this.id,
+    required this.title,
+    this.icon,
+    this.isDestructive = false,
+    this.isDisabled = false,
+    this.isChecked = false,
+    this.children,
+  });
 
   Map<String, Object?> toMap() {
     return <String, Object?>{
@@ -133,9 +141,11 @@ class LiquidGlassMenu extends StatefulWidget {
   State<LiquidGlassMenu> createState() => _LiquidGlassMenuState();
 }
 
-class _LiquidGlassMenuState extends State<LiquidGlassMenu> with LiquidGlassRouteSuppression {
+class _LiquidGlassMenuState extends State<LiquidGlassMenu>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   int? _lastItemsHash;
   int? _lastColor;
   double? _nativeWidth;
@@ -258,7 +268,9 @@ class _LiquidGlassMenuState extends State<LiquidGlassMenu> with LiquidGlassRoute
   Widget build(BuildContext context) {
     if (NativeLiquidGlassUtils.supportsLiquidGlass) {
       final isIconOnly = widget.label == null;
-      final width = isIconOnly ? widget.height : (_nativeWidth ?? _estimateWidth());
+      final width = isIconOnly
+          ? widget.height
+          : (_nativeWidth ?? _estimateWidth());
       return SizedBox(
         width: width,
         height: widget.height,

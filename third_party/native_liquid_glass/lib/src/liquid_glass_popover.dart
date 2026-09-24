@@ -15,7 +15,8 @@ class LiquidGlassPopover {
   /// Live popover handles keyed by request id, so the shared presenter
   /// channel's single persistent handler can null out the right handle when
   /// the user dismisses by tapping outside.
-  static final Map<int, LiquidGlassPopoverHandle> _live = <int, LiquidGlassPopoverHandle>{};
+  static final Map<int, LiquidGlassPopoverHandle> _live =
+      <int, LiquidGlassPopoverHandle>{};
   static bool _handlerInstalled = false;
 
   LiquidGlassPopover._();

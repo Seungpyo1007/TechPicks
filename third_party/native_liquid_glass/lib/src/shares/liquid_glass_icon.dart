@@ -43,13 +43,25 @@ class NativeLiquidGlassIcon {
   final String? assetPath;
 
   /// Creates an icon from an SF Symbol name (native iOS).
-  const NativeLiquidGlassIcon.sfSymbol(String name) : _type = _IconSourceType.sfSymbol, sfSymbolName = name, iconDataValue = null, assetPath = null;
+  const NativeLiquidGlassIcon.sfSymbol(String name)
+    : _type = _IconSourceType.sfSymbol,
+      sfSymbolName = name,
+      iconDataValue = null,
+      assetPath = null;
 
   /// Creates an icon from Flutter [IconData].
-  const NativeLiquidGlassIcon.iconData(IconData data) : _type = _IconSourceType.iconData, sfSymbolName = null, iconDataValue = data, assetPath = null;
+  const NativeLiquidGlassIcon.iconData(IconData data)
+    : _type = _IconSourceType.iconData,
+      sfSymbolName = null,
+      iconDataValue = data,
+      assetPath = null;
 
   /// Creates an icon from an asset path (PNG, SVG, etc.).
-  const NativeLiquidGlassIcon.asset(String path) : _type = _IconSourceType.asset, sfSymbolName = null, iconDataValue = null, assetPath = path;
+  const NativeLiquidGlassIcon.asset(String path)
+    : _type = _IconSourceType.asset,
+      sfSymbolName = null,
+      iconDataValue = null,
+      assetPath = path;
 
   /// Whether this icon is an SF Symbol.
   bool get isSfSymbol => _type == _IconSourceType.sfSymbol;
@@ -73,7 +85,14 @@ class NativeLiquidGlassIcon {
       case _IconSourceType.asset:
         final path = assetPath!;
         if (path.toLowerCase().endsWith('.svg')) {
-          return SvgPicture.asset(path, width: size, height: size, colorFilter: color != null ? ColorFilter.mode(color, BlendMode.srcIn) : null);
+          return SvgPicture.asset(
+            path,
+            width: size,
+            height: size,
+            colorFilter: color != null
+                ? ColorFilter.mode(color, BlendMode.srcIn)
+                : null,
+          );
         }
         return ImageIcon(AssetImage(path), size: size, color: color);
     }
@@ -88,7 +107,11 @@ class NativeLiquidGlassIcon {
   ///
   /// Call [resolveNativePayload] first to populate PNG bytes.
   Map<String, Object?> toNativeMap(NativeLiquidGlassIconPayload? payload) {
-    return <String, Object?>{'sfSymbolName': sfSymbolName, 'iconDataPng': payload?.iconDataPng, 'assetIconPng': payload?.assetIconPng};
+    return <String, Object?>{
+      'sfSymbolName': sfSymbolName,
+      'iconDataPng': payload?.iconDataPng,
+      'assetIconPng': payload?.assetIconPng,
+    };
   }
 
   /// A synchronous hash for change detection / native view signature.
@@ -97,7 +120,12 @@ class NativeLiquidGlassIcon {
       case _IconSourceType.sfSymbol:
         return Object.hash('sf', sfSymbolName);
       case _IconSourceType.iconData:
-        return Object.hash('id', iconDataValue?.codePoint, iconDataValue?.fontFamily, iconDataValue?.fontPackage);
+        return Object.hash(
+          'id',
+          iconDataValue?.codePoint,
+          iconDataValue?.fontFamily,
+          iconDataValue?.fontPackage,
+        );
       case _IconSourceType.asset:
         return Object.hash('asset', assetPath);
     }
@@ -150,7 +178,9 @@ void clearNativeLiquidGlassIconCaches() {
 /// For SF Symbols this returns an empty payload immediately.
 /// For [IconData] and asset icons the data is rasterized / loaded
 /// asynchronously and cached.
-Future<NativeLiquidGlassIconPayload> resolveIconPayload(NativeLiquidGlassIcon? icon) async {
+Future<NativeLiquidGlassIconPayload> resolveIconPayload(
+  NativeLiquidGlassIcon? icon,
+) async {
   if (icon == null) {
     return const NativeLiquidGlassIconPayload();
   }
@@ -188,11 +218,20 @@ Future<Uint8List?> _encodeIconDataAsPng(IconData iconData) async {
       textDirection: TextDirection.ltr,
       text: TextSpan(
         text: String.fromCharCode(iconData.codePoint),
-        style: TextStyle(inherit: false, color: Colors.white, fontSize: iconSize, fontFamily: iconData.fontFamily, package: iconData.fontPackage),
+        style: TextStyle(
+          inherit: false,
+          color: Colors.white,
+          fontSize: iconSize,
+          fontFamily: iconData.fontFamily,
+          package: iconData.fontPackage,
+        ),
       ),
     )..layout();
 
-    final offset = Offset((canvasSize - textPainter.width) / 2, (canvasSize - textPainter.height) / 2);
+    final offset = Offset(
+      (canvasSize - textPainter.width) / 2,
+      (canvasSize - textPainter.height) / 2,
+    );
     textPainter.paint(canvas, offset);
 
     final picture = recorder.endRecording();
@@ -225,7 +264,13 @@ Future<Uint8List?> _loadAssetBytes(String assetPath) async {
 }
 
 String _iconCacheKeyWithDpr(IconData iconData, double dpr) {
-  return [iconData.codePoint, iconData.fontFamily, iconData.fontPackage, iconData.matchTextDirection, dpr.toStringAsFixed(2)].join('|');
+  return [
+    iconData.codePoint,
+    iconData.fontFamily,
+    iconData.fontPackage,
+    iconData.matchTextDirection,
+    dpr.toStringAsFixed(2),
+  ].join('|');
 }
 
 double _currentDevicePixelRatio() {

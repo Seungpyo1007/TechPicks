@@ -16,9 +16,11 @@ import 'utils/text_style_utils.dart';
 /// Flutter's gesture arena from swallowing keyboard-focus taps.
 final Set<Factory<OneSequenceGestureRecognizer>> _searchBarGestureRecognizers =
     <Factory<OneSequenceGestureRecognizer>>{
-  Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-  Factory<HorizontalDragGestureRecognizer>(() => HorizontalDragGestureRecognizer()),
-};
+      Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+      Factory<HorizontalDragGestureRecognizer>(
+        () => HorizontalDragGestureRecognizer(),
+      ),
+    };
 
 /// Controller for [LiquidGlassSearchBar].
 class LiquidGlassSearchBarController extends ChangeNotifier {
@@ -178,9 +180,11 @@ class LiquidGlassSearchBar extends StatefulWidget {
   State<LiquidGlassSearchBar> createState() => _LiquidGlassSearchBarState();
 }
 
-class _LiquidGlassSearchBarState extends State<LiquidGlassSearchBar> with SingleTickerProviderStateMixin, LiquidGlassRouteSuppression {
+class _LiquidGlassSearchBarState extends State<LiquidGlassSearchBar>
+    with SingleTickerProviderStateMixin, LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   late bool _isExpanded;
   final TextEditingController _textController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
@@ -197,14 +201,20 @@ class _LiquidGlassSearchBarState extends State<LiquidGlassSearchBar> with Single
   /// Debounce timer for per-keystroke text changes. Coalesces rapid keystrokes
   /// so [LiquidGlassSearchBar.onChanged] is not called on every character.
   Timer? _onChangedDebounce;
-  static const Duration _onChangedDebounceDuration = Duration(milliseconds: 200);
+  static const Duration _onChangedDebounceDuration = Duration(
+    milliseconds: 200,
+  );
 
   @override
   void initState() {
     super.initState();
     _isExpanded = widget.initiallyExpanded || !widget.expandable;
 
-    _expandController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), value: _isExpanded ? 1.0 : 0.0);
+    _expandController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      value: _isExpanded ? 1.0 : 0.0,
+    );
     widget.controller?._isExpanded = _isExpanded;
   }
 
@@ -241,7 +251,9 @@ class _LiquidGlassSearchBarState extends State<LiquidGlassSearchBar> with Single
     if (ch == null) return;
 
     if (_lastPlaceholder != widget.placeholder) {
-      await ch.invokeMethod('setPlaceholder', {'placeholder': widget.placeholder});
+      await ch.invokeMethod('setPlaceholder', {
+        'placeholder': widget.placeholder,
+      });
       _lastPlaceholder = widget.placeholder;
     }
     final tint = widget.tint?.toARGB32();
@@ -249,8 +261,18 @@ class _LiquidGlassSearchBarState extends State<LiquidGlassSearchBar> with Single
     final placeholderColor = widget.placeholderColor?.toARGB32();
     final cancelButtonColor = widget.cancelButtonColor?.toARGB32();
     final iconColor = widget.iconColor?.toARGB32();
-    if (_lastTint != tint || _lastTextColor != textColor || _lastPlaceholderColor != placeholderColor || _lastCancelButtonColor != cancelButtonColor || _lastIconColor != iconColor) {
-      await ch.invokeMethod('setStyle', {'tint': tint, 'textColor': textColor, 'placeholderColor': placeholderColor, 'cancelButtonColor': cancelButtonColor, 'iconColor': iconColor});
+    if (_lastTint != tint ||
+        _lastTextColor != textColor ||
+        _lastPlaceholderColor != placeholderColor ||
+        _lastCancelButtonColor != cancelButtonColor ||
+        _lastIconColor != iconColor) {
+      await ch.invokeMethod('setStyle', {
+        'tint': tint,
+        'textColor': textColor,
+        'placeholderColor': placeholderColor,
+        'cancelButtonColor': cancelButtonColor,
+        'iconColor': iconColor,
+      });
       _lastTint = tint;
       _lastTextColor = textColor;
       _lastPlaceholderColor = placeholderColor;
@@ -353,7 +375,8 @@ class _LiquidGlassSearchBarState extends State<LiquidGlassSearchBar> with Single
       'textColor': widget.textColor?.toARGB32(),
       'placeholderColor': widget.placeholderColor?.toARGB32(),
       'textStyle': textStylePayload(widget.textStyle),
-      if (widget.cancelButtonColor != null) 'cancelButtonColor': widget.cancelButtonColor!.toARGB32(),
+      if (widget.cancelButtonColor != null)
+        'cancelButtonColor': widget.cancelButtonColor!.toARGB32(),
       if (widget.iconColor != null) 'iconColor': widget.iconColor!.toARGB32(),
       if (widget.borderRadius != null) 'borderRadius': widget.borderRadius,
       'interactive': widget.interactive,

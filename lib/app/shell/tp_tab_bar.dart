@@ -44,6 +44,10 @@ class TpTabBar extends ConsumerWidget {
 
   static const double androidHeight = 80;
 
+  /// iOS 26 탭 바 플랫폼 뷰가 미리 잡아 두는 키보드 자리. 세로 키보드(예측 줄
+  /// 포함) 보다 넉넉하게.
+  static const double keyboardRoom = 420;
+
   /// 검색 탭에서 접힌 원과 필드의 바닥 여백. 시스템 탭 캡슐 바닥과 맞춘다
   /// (홈 인디케이터 안쪽으로 13pt 들어간 자리).
   static double searchBottom(BuildContext context) {
@@ -73,40 +77,62 @@ class TpTabBar extends ConsumerWidget {
     }
 
     // iOS 26: 검색도 시스템 바가 한다. 검색 탭을 누르면 UIKit 이 칸을 밀어내고
-    // 검색창을 바 자리로 펼친다. 키보드가 올라오면 검색창이 그 위로 가므로
-    // 플랫폼 뷰를 키보드 높이까지 늘린다 — 늘어난 자리는 키보드가 덮고 있어서
-    // Flutter 쪽 터치를 뺏지 않는다.
+    // 검색창을 바 자리로 펼치며, 검색창을 누르면 키보드 위로 올린다.
+    //
+    // 플랫폼 뷰 크기는 **절대 바꾸지 않는다.** 키보드에 맞춰 늘리던 때는 UIKit 이
+    // 옛 크기로 자리를 잡아 검색창이 화면 위쪽까지 날아갔다가 내려왔다. 그래서
+    // 처음부터 키보드 자리([keyboardRoom])까지 크게 잡고, 빈 윗부분은 터치를
+    // 뒤의 화면으로 흘려보낸다. 바·검색창이 실제로 있는 아래쪽만 [_Absorb] 가
+    // 화면 터치를 막는다 — 이건 Flutter 위젯이라 마음대로 크기를 바꿔도 된다.
     if (TpNativeGlass.enabled) {
       final searching = current == TpTab.search;
-      // 키보드 높이는 탭 바가 미리 받은 값. viewInsets 는 키보드를 따라 늦게
-      // 와서, 검색창이 잠깐 뷰 밖으로 나갔다가 튀어 올라왔다.
       final keyboard = searching
           ? ref.watch(searchKeyboardHeightProvider)
           : 0.0;
-      final bottom = math.max(safe.bottom, keyboard);
+      final command = ref.watch(searchCommandProvider);
+      final bar = iosHeight + TpNativeTabBar.overflow;
       return SizedBox(
-        height: iosHeight + TpNativeTabBar.overflow + bottom,
-        child: TpNativeTabBar(
-          index: TpTab.bar.indexOf(searching ? returnTo : current),
-          onSelected: (i) => onSelected(TpTab.bar[i]),
-          onSearch: () => onSelected(TpTab.search),
-          searchLabel: K.tab(TpTab.search).tr(),
-          nativeSearch: true,
-          searchActive: searching,
-          searchPlaceholder: K.searchAllHint.tr(),
-          onSearchChanged: (q) => ref.read(searchQueryProvider.notifier).set(q),
-          onSearchKeyboard: (h) =>
-              ref.read(searchKeyboardHeightProvider.notifier).set(h),
-          keyboardDismissToken: ref.watch(searchKeyboardProvider),
-          height: iosHeight + bottom,
-          tint: TpTokens.blue,
-          items: <TpNativeTabItem>[
-            for (final t in TpTab.bar)
-              TpNativeTabItem(
-                label: K.tab(t).tr(),
-                symbol: t.symbol,
-                activeSymbol: t.activeSymbol,
+        height: bar + safe.bottom + keyboardRoom,
+        child: Stack(
+          children: <Widget>[
+            // 바·검색창 자리. 그 위(넘침 20 은 빼고)는 뒤 화면이 받는다.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: iosHeight + math.max(safe.bottom, keyboard),
+              child: const _Absorb(),
+            ),
+            Positioned.fill(
+              child: TpNativeTabBar(
+                index: TpTab.bar.indexOf(searching ? returnTo : current),
+                onSelected: (i) => onSelected(TpTab.bar[i]),
+                onSearch: () => onSelected(TpTab.search),
+                searchLabel: K.tab(TpTab.search).tr(),
+                nativeSearch: true,
+                searchActive: searching,
+                searchPlaceholder: K.searchAllHint.tr(),
+                onSearchChanged: (q) =>
+                    ref.read(searchQueryProvider.notifier).set(q),
+                onSearchKeyboard: (h) =>
+                    ref.read(searchKeyboardHeightProvider.notifier).set(h),
+                keyboardDismissToken: ref.watch(searchKeyboardProvider),
+                searchText: command.text,
+                searchTextToken: command.textToken,
+                searchFocusToken: command.focusToken,
+                hitTestTransparent: true,
+                height: iosHeight + safe.bottom + keyboardRoom,
+                tint: TpTokens.blue,
+                items: <TpNativeTabItem>[
+                  for (final t in TpTab.bar)
+                    TpNativeTabItem(
+                      label: K.tab(t).tr(),
+                      symbol: t.symbol,
+                      activeSymbol: t.activeSymbol,
+                    ),
+                ],
               ),
+            ),
           ],
         ),
       );
@@ -380,4 +406,15 @@ class TpTabReselectNotifier extends ChangeNotifier {
     last = tab;
     notifyListeners();
   }
+}
+
+/// 이 자리의 터치를 뒤 화면에 안 넘긴다. 앞의 플랫폼 뷰는 그대로 받는다.
+class _Absorb extends StatelessWidget {
+  const _Absorb();
+
+  @override
+  Widget build(BuildContext context) => const Listener(
+    behavior: HitTestBehavior.opaque,
+    child: SizedBox.expand(),
+  );
 }

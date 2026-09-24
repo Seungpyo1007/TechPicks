@@ -14,10 +14,14 @@ import 'utils/native_liquid_glass_utils.dart';
 /// mid-gesture, which would leave a wheel stuck between values.
 final Set<Factory<OneSequenceGestureRecognizer>> _datePickerGestureRecognizers =
     <Factory<OneSequenceGestureRecognizer>>{
-  Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-  Factory<VerticalDragGestureRecognizer>(() => VerticalDragGestureRecognizer()),
-  Factory<HorizontalDragGestureRecognizer>(() => HorizontalDragGestureRecognizer()),
-};
+      Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+      Factory<VerticalDragGestureRecognizer>(
+        () => VerticalDragGestureRecognizer(),
+      ),
+      Factory<HorizontalDragGestureRecognizer>(
+        () => HorizontalDragGestureRecognizer(),
+      ),
+    };
 
 /// Mode of the date picker.
 enum LiquidGlassDatePickerMode {
@@ -49,17 +53,24 @@ class LiquidGlassDatePickerController extends ChangeNotifier {
 
   /// Set the date programmatically.
   Future<void> setDate(DateTime date, {bool animated = false}) async {
-    await _channel?.invokeMethod<void>('setDate', {'date': date.millisecondsSinceEpoch, 'animated': animated});
+    await _channel?.invokeMethod<void>('setDate', {
+      'date': date.millisecondsSinceEpoch,
+      'animated': animated,
+    });
   }
 
   /// Set minimum date.
   Future<void> setMinimumDate(DateTime date) async {
-    await _channel?.invokeMethod<void>('setMinimumDate', {'date': date.millisecondsSinceEpoch});
+    await _channel?.invokeMethod<void>('setMinimumDate', {
+      'date': date.millisecondsSinceEpoch,
+    });
   }
 
   /// Set maximum date.
   Future<void> setMaximumDate(DateTime date) async {
-    await _channel?.invokeMethod<void>('setMaximumDate', {'date': date.millisecondsSinceEpoch});
+    await _channel?.invokeMethod<void>('setMaximumDate', {
+      'date': date.millisecondsSinceEpoch,
+    });
   }
 }
 
@@ -118,9 +129,11 @@ class LiquidGlassDatePicker extends StatefulWidget {
   State<LiquidGlassDatePicker> createState() => _LiquidGlassDatePickerState();
 }
 
-class _LiquidGlassDatePickerState extends State<LiquidGlassDatePicker> with LiquidGlassRouteSuppression {
+class _LiquidGlassDatePickerState extends State<LiquidGlassDatePicker>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   int? _lastMode;
   int? _lastStyle;
   int? _lastMinDate;
@@ -184,7 +197,9 @@ class _LiquidGlassDatePickerState extends State<LiquidGlassDatePicker> with Liqu
     final maxDate = widget.maximumDate?.millisecondsSinceEpoch;
     final color = widget.color?.toARGB32();
 
-    if (widget.mode.index != _lastMode || widget.style.index != _lastStyle || widget.minuteInterval != _lastMinuteInterval) {
+    if (widget.mode.index != _lastMode ||
+        widget.style.index != _lastStyle ||
+        widget.minuteInterval != _lastMinuteInterval) {
       // Mode/style/interval change requires full config update
       await ch.invokeMethod('updateConfig', _buildCreationParams());
       _lastMode = widget.mode.index;

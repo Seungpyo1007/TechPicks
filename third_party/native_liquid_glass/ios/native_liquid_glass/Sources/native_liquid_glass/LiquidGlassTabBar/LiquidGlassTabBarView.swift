@@ -405,6 +405,16 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
     searchController?.searchBar.resignFirstResponder()
   }
 
+  /// 검색창에 글자를 넣는다(예시 검색어를 눌렀을 때). 델리게이트는 안 불린다.
+  func setSearchText(_ text: String) {
+    searchController?.searchBar.text = text
+  }
+
+  /// 검색창을 눌러 키보드를 올린 것과 같게.
+  func focusSearch() {
+    searchController?.searchBar.becomeFirstResponder()
+  }
+
   // MARK: - UISearchBarDelegate
 
   func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
@@ -1089,6 +1099,15 @@ final class LiquidGlassTabBarPlatformView: NSObject, FlutterPlatformView {
 
     case "dismissSearchKeyboard":
       nativeTabBarControllerView?.dismissSearchKeyboard()
+      result(nil)
+
+    case "setSearchText":
+      let text = (call.arguments as? [String: Any])?["text"] as? String ?? ""
+      nativeTabBarControllerView?.setSearchText(text)
+      result(nil)
+
+    case "focusSearch":
+      nativeTabBarControllerView?.focusSearch()
       result(nil)
 
     case "updateBadges":
