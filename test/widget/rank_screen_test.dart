@@ -73,6 +73,31 @@ void main() {
     });
   }
 
+  testWidgets('정렬을 바꾸면 위쪽 행이 차례로 들어오고 곧 멈춘다', (tester) async {
+    final container = await pumpScreen(
+      tester,
+      const RankScreen(),
+      size: const Size(700, 3000),
+    );
+    Iterable<FadeTransition> arriving() => tester
+        .widgetList<FadeTransition>(
+          find.descendant(
+            of: find.byType(RankScreen),
+            matching: find.byType(FadeTransition),
+          ),
+        )
+        .where((f) => f.child is SlideTransition && f.opacity.value < 1);
+    expect(arriving(), isEmpty);
+
+    container.read(rankAxisProvider.notifier).set(RankAxis.battery);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(arriving(), isNotEmpty);
+
+    await tester.pumpAndSettle();
+    expect(arriving(), isEmpty);
+  });
+
   testWidgets('브랜드 시트로 거르고 지우기로 되돌린다', (tester) async {
     final container = await pumpScreen(
       tester,

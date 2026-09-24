@@ -7,6 +7,7 @@ import '../../app/providers.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
+import '../../app/theme/tp_motion.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/ranking.dart';
 import '../../domain/model/tp_money.dart';
@@ -22,14 +23,33 @@ import 'rank_category.dart';
 /// 둘러보기 · 스마트폰.
 ///
 /// 세그먼트로 카테고리, 툴바로 브랜드와 정렬. 목록은 보이는 행만 짓는다.
-class RankScreen extends ConsumerWidget {
+class RankScreen extends ConsumerStatefulWidget {
   const RankScreen({super.key, this.onDeviceTap, this.onCategory});
 
   final ValueChanged<RankCategory>? onCategory;
   final ValueChanged<String>? onDeviceTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RankScreen> createState() => _RankScreenState();
+}
+
+class _RankScreenState extends ConsumerState<RankScreen> {
+  /// 정렬이나 브랜드가 바뀐 횟수와 시각. 이때 새로 지어진 위쪽 행만 들어온다 —
+  /// 스크롤로 다시 지어지는 행은 가만히 있어야 한다.
+  int _generation = 0;
+  DateTime? _changedAt;
+
+  void _changed() => setState(() {
+    _generation++;
+    _changedAt = DateTime.now();
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(rankAxisProvider, (_, _) => _changed());
+    ref.listen(rankBrandProvider, (_, _) => _changed());
+    final onCategory = widget.onCategory;
+    final onDeviceTap = widget.onDeviceTap;
     final sys = context.sys;
     final glass = context.tp.isGlass;
     final money = ref.watch(moneyProvider);
@@ -62,16 +82,22 @@ class RankScreen extends ConsumerWidget {
         ),
       );
     } else {
+      final changedAt = _changedAt;
       list = TpGroupSliver(
+        key: ValueKey<int>(_generation),
         count: ranked.length,
         footer: K.rankNote.tr(),
-        builder: (context, i) => _RankRow(
-          entry: ranked[i],
-          axis: axis,
-          money: money,
-          onTap: onDeviceTap == null
-              ? null
-              : () => onDeviceTap!(ranked[i].device.slug),
+        builder: (context, i) => _Arrive(
+          index: i,
+          changedAt: changedAt,
+          child: _RankRow(
+            entry: ranked[i],
+            axis: axis,
+            money: money,
+            onTap: onDeviceTap == null
+                ? null
+                : () => onDeviceTap(ranked[i].device.slug),
+          ),
         ),
       );
     }
@@ -285,4 +311,83 @@ String formatAxisValue(
   if (value == null) return TpMoney.empty;
   if (axis == RankAxis.price) return money.format(value.round());
   return value.round().toString();
+}
+
+/// 재정렬 직후에 지어진 위쪽 행이 차례로 들어온다. `motion.reorder`(220ms).
+class _Arrive extends StatefulWidget {
+  const _Arrive({
+    required this.index,
+    required this.changedAt,
+    required this.child,
+  });
+
+  final int index;
+  final DateTime? changedAt;
+  final Widget child;
+
+  /// 이만큼만 움직인다. 화면 밖 행까지 기다리게 하면 느려 보인다.
+  static const int rows = 12;
+
+  /// 행 사이 간격.
+  static const Duration step = Duration(milliseconds: 18);
+
+  @override
+  State<_Arrive> createState() => _ArriveState();
+}
+
+class _ArriveState extends State<_Arrive> with SingleTickerProviderStateMixin {
+  AnimationController? _c;
+  CurvedAnimation? _t;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_c != null) return;
+    final at = widget.changedAt;
+    final move = context.motion.reorder;
+    final fresh =
+        at != null &&
+        DateTime.now().difference(at) < const Duration(milliseconds: 300);
+    if (!fresh ||
+        widget.index >= _Arrive.rows ||
+        move.duration == Duration.zero) {
+      return;
+    }
+    final delay = _Arrive.step * widget.index;
+    final total = move.duration + delay;
+    final c = AnimationController(vsync: this, duration: total);
+    _c = c;
+    _t = CurvedAnimation(
+      parent: c,
+      curve: Interval(
+        delay.inMicroseconds / total.inMicroseconds,
+        1,
+        curve: move.curve,
+      ),
+    );
+    c.forward();
+  }
+
+  @override
+  void dispose() {
+    _t?.dispose();
+    _c?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = _t;
+    if (t == null) return widget.child;
+    return FadeTransition(
+      opacity: t,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.25),
+          end: Offset.zero,
+        ).animate(t),
+        child: widget.child,
+      ),
+    );
+  }
 }
