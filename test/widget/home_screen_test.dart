@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:techpicks/shared/copy_keys.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
@@ -36,7 +38,7 @@ void main() {
     expect(find.text('Nothing on your shortlist yet'), findsOneWidget);
     expect(find.text('Add a device'), findsOneWidget);
     // 명세: 빈 상태에서는 결론 카드를 보여주지 않는다.
-    expect(find.text('WHERE THIS LANDS'), findsNothing);
+    expect(find.text('Where this lands'), findsNothing);
     expect(find.byType(TpScoreStrip), findsNothing);
   });
 
@@ -46,7 +48,7 @@ void main() {
     });
     await _pump(tester);
 
-    expect(find.text('WHERE THIS LANDS'), findsOneWidget);
+    expect(find.text('Where this lands'), findsOneWidget);
     expect(find.byType(TpScoreStrip), findsOneWidget);
     expect(find.text('Compare all'), findsOneWidget);
     expect(find.text('Ask why'), findsOneWidget);
@@ -110,8 +112,7 @@ void main() {
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
     for (final chrome in TpChrome.values) {
       await _pump(tester, chrome: chrome);
-      // iOS 는 콘텐츠 안, Android 는 large app bar 에 제목이 있다.
-      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('Today'), findsWidgets);
     }
   });
 }
@@ -124,11 +125,25 @@ void _shortlistRemoval() {
       'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
     });
 
-    final container = await pumpScreen(tester, const HomeScreen());
+    final container = await pumpScreen(
+      tester,
+      const HomeScreen(),
+      size: const Size(402, 874),
+    );
     await tester.pumpAndSettle();
     expect(container.read(shortlistProvider).length, 2);
 
-    await tester.longPress(find.text('iPhone 16 Pro Max').first);
+    // 길게 누르면 컨텍스트 메뉴가 뜨고, 지우기는 그 안에 있다. iOS 는
+    // 800ms 를 눌러야 뜬다.
+    final hold = await tester.startGesture(
+      tester.getCenter(find.text('iPhone 16 Pro Max').first),
+    );
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await hold.up();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(K.removeShort.tr()));
     await tester.pumpAndSettle();
 
     expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);

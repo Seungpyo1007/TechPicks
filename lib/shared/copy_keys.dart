@@ -24,6 +24,9 @@ abstract final class K {
   static const String clear = 'clear';
   static const String rankStatus = 'rankStatus';
   static const String buildRowSub = 'buildRowSub';
+  static const String weights = 'weights';
+  static const String removeShort = 'removeShort';
+  static const String browseByKind = 'browseByKind';
 
   // 홈
   static const String homeTitle = 'homeTitle';

@@ -98,7 +98,11 @@ void main() {
 
   testWidgets('행은 순위·이름·지수를 한 문장으로 읽는다', (tester) async {
     final handle = tester.ensureSemantics();
-    await pumpScreen(tester, const ProcessorScreen(), size: const Size(700, 3000));
+    await pumpScreen(
+      tester,
+      const ProcessorScreen(),
+      size: const Size(700, 3000),
+    );
 
     // 1위가 무엇인지는 카탈로그가 정한다. 문장 형태만 본다.
     final top = ProcessorRanking.of(

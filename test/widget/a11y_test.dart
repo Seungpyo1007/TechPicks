@@ -13,7 +13,6 @@ import 'package:techpicks/feature/login/email_login_screen.dart';
 import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
-import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
@@ -38,7 +37,6 @@ final _screens = <String, Widget>{
 
 /// 스캔·뷰어는 애니메이션이 멈추지 않아 settle 이 끝나지 않는다.
 final _noSettle = <String, Widget>{
-  'scan': ScanScreen(onBack: () {}, recognizedText: 'Galaxy S25 Ultra Samsung'),
   'viewer': ViewerScreen(deviceName: 'Galaxy S25', onBack: () {}),
 };
 

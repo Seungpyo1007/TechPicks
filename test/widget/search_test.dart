@@ -5,12 +5,12 @@ import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/search_index.dart';
 import 'package:techpicks/feature/search/search_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
-import 'package:techpicks/shared/widgets/tp_surface.dart';
+import 'package:techpicks/shared/widgets/tp_group.dart';
 
 import '../support/harness.dart';
 
 Future<void> _type(WidgetTester tester, String query) async {
-  await tester.enterText(find.byType(TextField), query);
+  await tester.enterText(find.byType(EditableText), query);
   await tester.pumpAndSettle();
 }
 
@@ -67,7 +67,7 @@ void main() {
     testWidgets('열면 결과가 아니라 안내가 있다', (tester) async {
       await pumpScreen(tester, const SearchScreen());
 
-      expect(find.text(K.searchEmpty.tr()), findsOneWidget);
+      expect(find.text(K.browseByKind.tr()), findsOneWidget);
     });
 
     testWidgets('치면 세 갈래에서 찾는다', (tester) async {
@@ -79,10 +79,10 @@ void main() {
 
       // 데스크톱 CPU 가 아니라 카탈로그의 모바일 CPU 를 훑는다.
       await _type(tester, readCatalog().cpus.first.name);
-      expect(find.text(K.searchKindCpu.tr()), findsWidgets);
+      expect(find.textContaining(K.searchKindCpu.tr()), findsWidgets);
 
       await _type(tester, readCatalog().smartphones.first.name);
-      expect(find.text(K.searchKindPhone.tr()), findsWidgets);
+      expect(find.textContaining(K.searchKindPhone.tr()), findsWidgets);
     });
 
     testWidgets('몇 건인지 알려준다', (tester) async {
@@ -103,8 +103,9 @@ void main() {
         ),
         name,
       );
+      final phones = hits.where((h) => h.kind == SearchKind.phone).length;
       expect(
-        find.text(K.searchCount.tr(args: <String>['${hits.length}'])),
+        find.text('${K.searchKindPhone.tr()} · $phones'),
         findsOneWidget,
       );
     });
@@ -134,7 +135,7 @@ void main() {
         find
             .ancestor(
               of: find.text(phone.name),
-              matching: find.byType(TpSurface),
+              matching: find.byType(TpRow),
             )
             .first,
       );
