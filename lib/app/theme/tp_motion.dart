@@ -151,10 +151,14 @@ class TpMotion extends ThemeExtension<TpMotion> {
     valueChange: TpMove(Duration(milliseconds: 220), Curves.easeOutCubic),
     contentSwap: TpMove(Duration(milliseconds: 200), Curves.easeInOut),
     listItem: TpMove(Duration(milliseconds: 250), Curves.easeOutCubic),
-    // SwiftUI 의 .snappy / .bouncy / .smooth 와 같은 값.
-    snappy: CupertinoMotion.snappy(duration: Duration(milliseconds: 350)),
-    bouncy: CupertinoMotion.bouncy(),
-    smooth: CupertinoMotion.smooth(),
+    // SwiftUI 의 .snappy / .bouncy / .smooth 와 같은 값. 끝에서는 목표값에
+    // 딱 맞춘다 — 안 그러면 막대가 목표보다 0.0001 모자란 채 멈춘다.
+    snappy: CupertinoMotion.snappy(
+      duration: Duration(milliseconds: 350),
+      snapToEnd: true,
+    ),
+    bouncy: CupertinoMotion.bouncy(snapToEnd: true),
+    smooth: CupertinoMotion.smooth(snapToEnd: true),
   );
 
   /// Android Material 3.
@@ -167,9 +171,9 @@ class TpMotion extends ThemeExtension<TpMotion> {
     contentSwap: TpMove(Durations.medium2, Easing.emphasizedDecelerate),
     listItem: TpMove(Durations.medium1, Easing.emphasizedDecelerate),
     // M3 Expressive 스프링 토큰.
-    snappy: MaterialSpringMotion.standardSpatialFast(),
-    bouncy: MaterialSpringMotion.expressiveSpatialFast(),
-    smooth: MaterialSpringMotion.standardSpatialDefault(),
+    snappy: MaterialSpringMotion.standardSpatialFast(snapToEnd: true),
+    bouncy: MaterialSpringMotion.expressiveSpatialFast(snapToEnd: true),
+    smooth: MaterialSpringMotion.standardSpatialDefault(snapToEnd: true),
   );
 
   /// 모든 시간을 0 으로. 손쉬운 사용에서 동작을 줄였을 때.
