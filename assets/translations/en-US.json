@@ -174,7 +174,7 @@
   "verdictNoData": "Not enough data to score this one yet.",
   "verdictReason": "Leads your shortlist, carried by {}.",
   "view3d": "View in 3D",
-  "viewerNote": "Tap a part to highlight where it sits. Real 3D models are not in yet.",
+  "viewerNote": "Drag to turn it. Tap a part to pull the layers apart.",
   "welcome": "Welcome to\nTechPicks",
   "welcomeSub": "Sign in to keep your shortlist across devices, or skip and start comparing now.",
   "welcomeSubShort": "Score every device the way you weigh it.",
