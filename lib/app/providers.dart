@@ -910,6 +910,38 @@ class AskNotifier extends Notifier<List<AskMessage>> {
   }
 }
 
+/// 검색에서 열어 본 것. 최근 것이 앞, 최대 10개. `kind:slug` 로 저장한다.
+class RecentHitsNotifier extends Notifier<List<String>> with RestoreGuard {
+  static const String _prefsKey = 'recent_hits';
+  static const int cap = 10;
+
+  @override
+  List<String> build() {
+    unawaited(_restore());
+    return const <String>[];
+  }
+
+  Future<void> _restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!ref.mounted || touched) return;
+    state = prefs.getStringList(_prefsKey) ?? const <String>[];
+  }
+
+  static String keyOf(SearchHit hit) => '${hit.kind.name}:${hit.slug}';
+
+  Future<void> add(SearchHit hit) async {
+    touch();
+    final key = keyOf(hit);
+    state = <String>[key, ...state.where((k) => k != key)].take(cap).toList();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_prefsKey, state);
+  }
+}
+
+final recentHitsProvider = NotifierProvider<RecentHitsNotifier, List<String>>(
+  RecentHitsNotifier.new,
+);
+
 /// 질문 시트 위의 맥락 알약. 비교에서 넘어오면 두 기기, 오늘 툴바에서 열면 없다.
 class AskTopicNotifier extends Notifier<String?> {
   @override

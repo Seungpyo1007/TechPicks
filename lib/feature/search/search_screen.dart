@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -48,6 +50,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final catalog = ref.watch(catalogProvider).value;
     final hits = SearchIndex.filter(ref.watch(searchIndexProvider), _query);
     final typing = _query.trim().isNotEmpty;
+    final index = ref.watch(searchIndexProvider);
+    final recent = <SearchHit>[
+      for (final key in ref.watch(recentHitsProvider))
+        ?index.where((h) => RecentHitsNotifier.keyOf(h) == key).firstOrNull,
+    ].take(3).toList();
+
+    void open(SearchHit hit) {
+      unawaited(ref.read(recentHitsProvider.notifier).add(hit));
+      widget.onHit?.call(hit);
+    }
 
     final field = TpGlassSearch(
       placeholder: K.searchAllHint.tr(),
@@ -61,6 +73,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
             child: field,
+          ),
+        ),
+      if (!typing && recent.isNotEmpty)
+        SliverToBoxAdapter(
+          child: TpGroup(
+            header: K.recent.tr(),
+            children: <Widget>[
+              for (final hit in recent)
+                TpRow(
+                  title: hit.name,
+                  subtitle: K.searchKind(hit.kind).tr(),
+                  leading: TpIconTile(
+                    icon: glass ? CupertinoIcons.clock : Icons.history,
+                  ),
+                  onTap: widget.onHit == null ? null : () => open(hit),
+                ),
+            ],
           ),
         ),
       if (!typing)
@@ -148,9 +177,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               builder: (context, i) => TpRow(
                 title: group[i].name,
                 subtitle: group[i].meta,
-                onTap: widget.onHit == null
-                    ? null
-                    : () => widget.onHit!(group[i]),
+                onTap: widget.onHit == null ? null : () => open(group[i]),
               ),
             ),
     ];
