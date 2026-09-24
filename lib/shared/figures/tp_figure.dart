@@ -18,7 +18,7 @@ class TpFigure extends StatefulWidget {
     super.key,
     required this.paint,
     required this.height,
-    this.duration = const Duration(milliseconds: 1400),
+    this.duration = const Duration(milliseconds: 1900),
     this.active = true,
     this.delay = Duration.zero,
   });

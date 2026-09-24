@@ -55,31 +55,31 @@ void main() {
   group('명세가 정한 값', () {
     // 이 값들은 디자인 결정이라 플랫폼과 무관하게 같아야 한다.
     for (final chrome in TpChrome.values) {
-      test('$chrome — 랭킹 재정렬은 220ms 에 명세 커브', () {
+      test('$chrome — 랭킹 재정렬은 380ms 에 명세 커브', () {
         final m = motionOf(chrome).reorder;
-        expect(m.duration, const Duration(milliseconds: 220));
+        expect(m.duration, const Duration(milliseconds: 380));
         expect(m.curve, const Cubic(.2, .8, .2, 1));
       });
 
-      test('$chrome — 스캔 결과 카드는 240ms 에 같은 커브', () {
+      test('$chrome — 스캔 결과 카드는 380ms 에 같은 커브', () {
         final m = motionOf(chrome).reveal;
-        expect(m.duration, const Duration(milliseconds: 240));
+        expect(m.duration, const Duration(milliseconds: 380));
         expect(m.curve, const Cubic(.2, .8, .2, 1));
       });
 
-      test('$chrome — 누름은 90ms', () {
+      test('$chrome — 누름은 120ms', () {
         expect(
           motionOf(chrome).press.duration,
-          const Duration(milliseconds: 90),
+          const Duration(milliseconds: 120),
         );
       });
     }
 
-    test('iOS 탭 알약은 180ms', () {
+    test('iOS 탭 알약은 280ms', () {
       // 명세 Interactions 표가 iOS 만 못박았다.
       expect(
         motionOf(TpChrome.ios).selection.duration,
-        const Duration(milliseconds: 180),
+        const Duration(milliseconds: 280),
       );
     });
   });
@@ -91,22 +91,22 @@ void main() {
     test('내용 교체', () {
       expect(ios.contentSwap, isNot(android.contentSwap));
       // Android 는 Flutter 가 들고 있는 M3 토큰을 그대로 쓴다.
-      expect(android.contentSwap.duration, Durations.medium2);
+      expect(android.contentSwap.duration, Durations.long1);
       expect(android.contentSwap.curve, Easing.emphasizedDecelerate);
     });
 
     test('값 변화', () {
       expect(ios.valueChange, isNot(android.valueChange));
-      expect(android.valueChange.duration, Durations.medium1);
+      expect(android.valueChange.duration, Durations.medium4);
     });
 
     test('목록 항목', () {
       expect(ios.listItem, isNot(android.listItem));
-      expect(android.listItem.duration, Durations.medium1);
+      expect(android.listItem.duration, Durations.medium4);
     });
 
     test('고른 상태', () {
-      expect(android.selection.duration, Durations.short4);
+      expect(android.selection.duration, Durations.medium2);
     });
 
     test('iOS 는 감속 커브를 쓴다', () {
@@ -141,7 +141,7 @@ void main() {
 
       testWidgets('$chrome — 끄면 그대로다', (tester) async {
         final m = await readMotion(tester, chrome: chrome);
-        expect(m.reorder.duration, const Duration(milliseconds: 220));
+        expect(m.reorder.duration, const Duration(milliseconds: 380));
         expect(m.isReduced, isFalse);
       });
     }
@@ -160,8 +160,20 @@ void main() {
   group('스프링', () {
     test('iOS 는 SwiftUI 프리셋과 같다', () {
       final m = motionOf(TpChrome.ios);
-      expect(m.bouncy, const CupertinoMotion.bouncy(snapToEnd: true));
-      expect(m.smooth, const CupertinoMotion.smooth(snapToEnd: true));
+      expect(
+        m.bouncy,
+        const CupertinoMotion.bouncy(
+          duration: Duration(milliseconds: 700),
+          snapToEnd: true,
+        ),
+      );
+      expect(
+        m.smooth,
+        const CupertinoMotion.smooth(
+          duration: Duration(milliseconds: 800),
+          snapToEnd: true,
+        ),
+      );
       expect((m.snappy as CupertinoMotion).bounce, closeTo(.15, 1e-9));
     });
 
@@ -169,15 +181,15 @@ void main() {
       final m = motionOf(TpChrome.android);
       expect(
         m.snappy,
-        const MaterialSpringMotion.standardSpatialFast(snapToEnd: true),
+        const MaterialSpringMotion.standardSpatialDefault(snapToEnd: true),
       );
       expect(
         m.bouncy,
-        const MaterialSpringMotion.expressiveSpatialFast(snapToEnd: true),
+        const MaterialSpringMotion.expressiveSpatialDefault(snapToEnd: true),
       );
       expect(
         m.smooth,
-        const MaterialSpringMotion.standardSpatialDefault(snapToEnd: true),
+        const MaterialSpringMotion.standardSpatialSlow(snapToEnd: true),
       );
     });
 
@@ -380,7 +392,7 @@ void _homeMotion() {
     // 자리를 시간에 걸쳐 옮기는 위젯이어야 한다.
     expect(
       tester.widget<AnimatedPositioned>(pill).duration.inMilliseconds,
-      180,
+      280,
     );
 
     final home = tester.getRect(pill);

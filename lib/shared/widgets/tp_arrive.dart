@@ -53,7 +53,7 @@ class TpArriveScope extends InheritedWidget {
 
 /// 등장 신호가 오면 [index] 번째 순서로 조금씩 늦게 올라온다.
 ///
-/// 위 [rows] 개만 움직인다. 행 사이 18ms, 한 행은 `motion.reorder`(220ms).
+/// 위 [rows] 개만 움직인다. 행 사이 35ms, 한 행은 `motion.reorder`(380ms).
 /// 동작 줄이기면 아무것도 안 한다.
 class TpArrive extends StatefulWidget {
   const TpArrive({super.key, required this.index, required this.child});
@@ -62,7 +62,7 @@ class TpArrive extends StatefulWidget {
   final Widget child;
 
   static const int rows = 12;
-  static const Duration step = Duration(milliseconds: 18);
+  static const Duration step = Duration(milliseconds: 35);
 
   @override
   State<TpArrive> createState() => _TpArriveState();

@@ -164,7 +164,7 @@ class _Figure extends StatelessWidget {
     height: 120,
     active: active,
     delay: const Duration(milliseconds: 120),
-    duration: const Duration(milliseconds: 1500),
+    duration: const Duration(milliseconds: 2000),
     paint: switch (index) {
       0 => TpFigures.index,
       1 => TpFigures.compare,
