@@ -27,6 +27,7 @@ import '../../shared/widgets/tp_score_strip.dart';
 import '../share/share_text.dart';
 import '../../shared/tp_haptics.dart';
 import '../../shared/widgets/tp_number.dart';
+import '../../shared/widgets/tp_pop_in.dart';
 import '../../shared/widgets/tp_pulse.dart';
 import '../viewer/viewer_stage.dart';
 
@@ -38,12 +39,16 @@ class DetailScreen extends ConsumerWidget {
     this.onBack,
     this.onCompare,
     this.onView3D,
+    this.onSignIn,
   });
 
   final String slug;
   final VoidCallback? onBack;
   final ValueChanged<String>? onCompare;
   final ValueChanged<String>? onView3D;
+
+  /// 첫 담기 뒤 로그인 권유에서.
+  final VoidCallback? onSignIn;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -83,6 +88,7 @@ class DetailScreen extends ConsumerWidget {
               device: d,
               onCompare: onCompare,
               onView3D: onView3D,
+              onSignIn: onSignIn,
             ),
           ),
         ),
@@ -111,11 +117,17 @@ class DetailScreen extends ConsumerWidget {
 }
 
 class _DetailBody extends ConsumerWidget {
-  const _DetailBody({required this.device, this.onCompare, this.onView3D});
+  const _DetailBody({
+    required this.device,
+    this.onCompare,
+    this.onView3D,
+    this.onSignIn,
+  });
 
   final Smartphone device;
   final ValueChanged<String>? onCompare;
   final ValueChanged<String>? onView3D;
+  final VoidCallback? onSignIn;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -198,9 +210,25 @@ class _DetailBody extends ConsumerWidget {
                   onTap: () {
                     TpHaptics.commit();
                     ref.read(shortlistProvider.notifier).toggle(device.slug);
+                    if (!shortlisted) {
+                      unawaited(
+                        ref
+                            .read(loginPromptProvider.notifier)
+                            .offer(device.slug),
+                      );
+                    }
                   },
                 ),
               ),
+              if (ref.watch(loginPromptProvider) == device.slug)
+                _LoginPrompt(
+                  onSignIn: () {
+                    ref.read(loginPromptProvider.notifier).dismiss();
+                    onSignIn?.call();
+                  },
+                  onLater: () =>
+                      ref.read(loginPromptProvider.notifier).dismiss(),
+                ),
               const SizedBox(height: 10),
               Row(
                 children: <Widget>[
@@ -272,6 +300,81 @@ class _DetailBody extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// 첫 담기 뒤 한 번. "다른 기기에서도" + 로그인·나중에.
+class _LoginPrompt extends StatelessWidget {
+  const _LoginPrompt({required this.onSignIn, required this.onLater});
+
+  final VoidCallback onSignIn;
+  final VoidCallback onLater;
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    final glass = context.tp.isGlass;
+    return TpPopIn(
+      child: Container(
+        margin: const EdgeInsets.only(top: 12),
+        padding: const EdgeInsets.fromLTRB(16, 14, 8, 8),
+        decoration: BoxDecoration(
+          color: sys.cell,
+          borderRadius: BorderRadius.circular(glass ? 18 : 16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Icon(
+                  glass ? CupertinoIcons.cloud : Icons.cloud_outlined,
+                  size: 20,
+                  color: TpSys.accent,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      K.promptTitle.tr(),
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.35,
+                        color: sys.label,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                TextButton(
+                  onPressed: onLater,
+                  child: Text(
+                    K.notNow.tr(),
+                    style: TextStyle(color: sys.label2),
+                  ),
+                ),
+                TextButton(
+                  onPressed: onSignIn,
+                  child: Text(
+                    K.signIn.tr(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: sys.accentText,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

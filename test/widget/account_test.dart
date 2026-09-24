@@ -70,13 +70,20 @@ class _StubProfiles implements ProfileService {
 
 Future<void> _pump(
   WidgetTester tester,
-  _StubAuth auth, {
+  FakeAuthService auth, {
   String? name = '홍길동',
   String? email = 'a@b.com',
+  AuthMethod? method,
+  bool emailVerified = true,
   ProfileService? profiles,
 }) => pumpScreen(
   tester,
-  YouScreen(name: name, email: email),
+  YouScreen(
+    name: name,
+    email: email,
+    method: method,
+    emailVerified: emailVerified,
+  ),
   size: const Size(1200, 3600),
   overrides: <Override>[
     authServiceProvider.overrideWithValue(auth),
@@ -231,6 +238,86 @@ void main() {
       // 죽지 않는 것까지가 여기서 볼 수 있는 전부다.
       expect(find.text(K.editProfile.tr()), findsWidgets);
       expect(profiles.uploads, isEmpty);
+    });
+  });
+
+  group('계정', () {
+    testWidgets('Google 계정은 비밀번호 줄이 없고 방법이 보인다', (tester) async {
+      await _pump(tester, _StubAuth(), method: AuthMethod.google);
+
+      expect(find.text(K.changePassword.tr()), findsNothing);
+      expect(find.text('a@b.com · Google'), findsOneWidget);
+      expect(find.text(K.deleteAccount.tr()), findsOneWidget);
+    });
+
+    testWidgets('확인 안 한 메일은 다시 보낼 수 있다', (tester) async {
+      final auth = _StubAuth();
+      await _pump(tester, auth, emailVerified: false);
+
+      expect(find.text(K.verifyEmail.tr()), findsOneWidget);
+      await tester.tap(find.text(K.resend.tr()));
+      await tester.pumpAndSettle();
+
+      expect(auth.verifies, 1);
+      expect(find.text(K.verifySent.tr()), findsOneWidget);
+    });
+
+    testWidgets('이메일 계정 삭제는 비밀번호를 받아 지운다', (tester) async {
+      final auth = _StubAuth();
+      await _pump(tester, auth);
+
+      await tester.tap(find.text(K.deleteAccount.tr()));
+      await tester.pumpAndSettle();
+      expect(find.text(K.deleteConfirm.tr()), findsOneWidget);
+
+      await tester.enterText(find.byType(EditableText).last, 'longenough');
+      await tester.tap(find.text(K.delete.tr()));
+      await tester.pumpAndSettle();
+
+      expect(auth.deletes, 1);
+      expect(auth.deletePassword, 'longenough');
+      expect(find.text(K.deleted.tr()), findsOneWidget);
+    });
+
+    testWidgets('Apple 계정 삭제는 비밀번호를 묻지 않는다', (tester) async {
+      final auth = _StubAuth();
+      await _pump(tester, auth, method: AuthMethod.apple);
+
+      await tester.tap(find.text(K.deleteAccount.tr()));
+      await tester.pumpAndSettle();
+      expect(find.text(K.deletePassword.tr()), findsNothing);
+
+      await tester.tap(find.text(K.delete.tr()));
+      await tester.pumpAndSettle();
+
+      expect(auth.deletes, 1);
+      expect(auth.deletePassword, isNull);
+    });
+
+    testWidgets('취소하면 아무것도 안 지운다', (tester) async {
+      final auth = _StubAuth();
+      await _pump(tester, auth);
+
+      await tester.tap(find.text(K.deleteAccount.tr()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(K.cancel.tr()));
+      await tester.pumpAndSettle();
+
+      expect(auth.deletes, 0);
+    });
+
+    testWidgets('틀린 비밀번호면 그렇게 말하고 계정은 남는다', (tester) async {
+      final auth = _StubAuth()..deleteFailure = AuthFailure.badCredentials;
+      await _pump(tester, auth);
+
+      await tester.tap(find.text(K.deleteAccount.tr()));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).last, 'wrongpass');
+      await tester.tap(find.text(K.delete.tr()));
+      await tester.pumpAndSettle();
+
+      expect(find.text(K.authBadCredentials.tr()), findsOneWidget);
+      expect(find.text(K.deleted.tr()), findsNothing);
     });
   });
 }

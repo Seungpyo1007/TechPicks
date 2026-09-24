@@ -35,7 +35,7 @@ void main() {
 
   for (final (name, frame, top, bottom) in devices) {
     testWidgets('$name — 목록 끝의 줄이 눌린다', (tester) async {
-      var signIns = 0;
+      var sources = 0;
       var licenses = 0;
 
       tester.view.physicalSize = frame;
@@ -54,7 +54,7 @@ void main() {
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: AppTheme.of(TpChrome.ios),
-            home: YouScreen(onSignIn: () => signIns++),
+            home: YouScreen(onSources: () => sources++),
           ),
         ),
       );
@@ -69,16 +69,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // 화면 좌표로 누른다. find.text 로 누르면 위젯이 화면 밖이어도 통과한다.
-      // 계정 없이 띄운 화면이라 마지막 줄은 "로그인"이다.
-      final signIn = tester.getRect(find.text(K.signIn.tr()));
-      expect(
-        signIn.bottom,
-        lessThan(frame.height),
-        reason: '$name 로그인 줄이 화면 밖',
-      );
-      await tester.tapAt(signIn.center);
+      // 계정 없이 띄운 화면이라 마지막 줄은 "데이터 출처"다.
+      final last = tester.getRect(find.text(K.sources.tr()));
+      expect(last.bottom, lessThan(frame.height), reason: '$name 마지막 줄이 화면 밖');
+      await tester.tapAt(last.center);
       await tester.pump();
-      expect(signIns, 1, reason: '$name 로그인');
+      expect(sources, 1, reason: '$name 마지막 줄');
 
       final version = tester.getRect(find.text(YouScreen.versionLine));
       expect(

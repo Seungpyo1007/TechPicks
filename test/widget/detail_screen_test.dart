@@ -1,21 +1,31 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod/misc.dart' show Override;
 
+import '../support/fake_auth.dart';
 import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/widgets/tp_score_strip.dart';
 
 Future<void> _pump(
   WidgetTester tester,
   String slug, {
   TpChrome chrome = TpChrome.ios,
+  FakeAuthService? auth,
+  VoidCallback? onSignIn,
 }) => pumpScreen(
   tester,
-  DetailScreen(slug: slug),
+  DetailScreen(slug: slug, onSignIn: onSignIn),
   chrome: chrome,
   size: const Size(1200, 3200),
+  overrides: <Override>[
+    if (auth != null) authServiceProvider.overrideWithValue(auth),
+  ],
 );
 
 void main() {
@@ -82,5 +92,50 @@ void main() {
     await _pump(tester, 'galaxy-s25');
     expect(find.text('Compare'), findsOneWidget);
     expect(find.text('View in 3D'), findsOneWidget);
+  });
+
+  group('첫 담기 로그인 권유', () {
+    testWidgets('로그인 안 했으면 처음 담을 때 한 번 뜬다', (tester) async {
+      var signIns = 0;
+      await _pump(tester, 'galaxy-s25', onSignIn: () => signIns++);
+
+      await tester.tap(find.text('Add to shortlist'));
+      await tester.pumpAndSettle();
+      expect(find.text(K.promptTitle.tr()), findsOneWidget);
+
+      await tester.tap(find.text(K.signIn.tr()));
+      await tester.pumpAndSettle();
+      expect(signIns, 1);
+      expect(find.text(K.promptTitle.tr()), findsNothing);
+    });
+
+    testWidgets('나중에를 누르면 다시 안 뜬다', (tester) async {
+      await _pump(tester, 'galaxy-s25');
+
+      await tester.tap(find.text('Add to shortlist'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(K.notNow.tr()));
+      await tester.pumpAndSettle();
+      expect(find.text(K.promptTitle.tr()), findsNothing);
+
+      // 뺐다가 다시 담아도.
+      await tester.tap(find.text('On your shortlist'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add to shortlist'));
+      await tester.pumpAndSettle();
+      expect(find.text(K.promptTitle.tr()), findsNothing);
+    });
+
+    testWidgets('로그인했으면 안 뜬다', (tester) async {
+      await _pump(
+        tester,
+        'galaxy-s25',
+        auth: FakeAuthService(user: FakeAuthService.defaultUser),
+      );
+
+      await tester.tap(find.text('Add to shortlist'));
+      await tester.pumpAndSettle();
+      expect(find.text(K.promptTitle.tr()), findsNothing);
+    });
   });
 }
