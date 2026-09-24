@@ -8,10 +8,23 @@ import '../../app/theme/tp_motion.dart';
 /// 정렬·카테고리를 바꾼 화면은 그 안에서 다시 찍는다. 받는 쪽은 [freshOf] 로
 /// "방금 찍혔는가"를 묻는다 — 스크롤로 나중에 지어진 행은 가만히 있어야 한다.
 class TpArriveScope extends InheritedWidget {
-  const TpArriveScope({super.key, required this.at, required super.child});
+  const TpArriveScope({
+    super.key,
+    required this.at,
+    required super.child,
+    this.from = up,
+  });
 
   /// 마지막으로 찍은 시각. null 이면 등장 연출이 없다.
   final DateTime? at;
+
+  /// 어디서 들어오는가(자기 크기 비율). 기본은 조금 아래에서.
+  final Offset from;
+
+  static const Offset up = Offset(0, 0.25);
+
+  static Offset fromOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<TpArriveScope>()?.from ?? up;
 
   /// 이만큼 안에 지어진 것만 등장한다.
   static const Duration window = Duration(milliseconds: 350);
@@ -34,7 +47,8 @@ class TpArriveScope extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(TpArriveScope oldWidget) => oldWidget.at != at;
+  bool updateShouldNotify(TpArriveScope oldWidget) =>
+      oldWidget.at != at || oldWidget.from != from;
 }
 
 /// 등장 신호가 오면 [index] 번째 순서로 조금씩 늦게 올라온다.
@@ -100,7 +114,7 @@ class _TpArriveState extends State<TpArrive>
       opacity: t,
       child: SlideTransition(
         position: Tween<Offset>(
-          begin: const Offset(0, 0.25),
+          begin: TpArriveScope.fromOf(context),
           end: Offset.zero,
         ).animate(t),
         child: widget.child,
