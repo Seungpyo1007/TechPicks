@@ -9,6 +9,7 @@ import '../../app/providers.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/shell/tp_tab_bar.dart';
 import '../../app/theme/tp_icons.dart';
+import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../domain/model/search_index.dart';
@@ -50,8 +51,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final sys = context.sys;
     final glass = context.tp.isGlass;
     final catalog = ref.watch(catalogProvider).value;
-    final hits = SearchIndex.filter(ref.watch(searchIndexProvider), _query);
-    final typing = _query.trim().isNotEmpty;
+    // iOS 26 은 검색창이 시스템 탭 바 안에 있다. 글자는 탭 바가 넣어준다.
+    final native = glass && TpNativeGlass.enabled;
+    final query = native ? ref.watch(searchQueryProvider) : _query;
+    final hits = SearchIndex.filter(ref.watch(searchIndexProvider), query);
+    final typing = query.trim().isNotEmpty;
     final index = ref.watch(searchIndexProvider);
     final recent = <SearchHit>[
       for (final key in ref.watch(recentHitsProvider))
@@ -186,6 +190,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       slivers: slivers,
     );
     if (!glass) return page;
+    if (native) {
+      // 결과를 끌어 올리면 키보드가 내려간다. 검색창이 Flutter 밖이라 직접 알린다.
+      return NotificationListener<ScrollStartNotification>(
+        onNotification: (n) {
+          if (n.dragDetails != null) {
+            ref.read(searchKeyboardProvider.notifier).dismiss();
+          }
+          return false;
+        },
+        child: page,
+      );
+    }
 
     // 접힌 탭 바: 돌아갈 탭 원 + 유리 필드가 한 줄.
     final back = TpSearchReturn.maybeOf(context);

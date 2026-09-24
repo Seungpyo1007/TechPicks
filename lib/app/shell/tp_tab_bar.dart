@@ -1,8 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../shared/copy_keys.dart';
+import '../providers.dart';
 import '../../shared/widgets/tp_press.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../theme/tp_icons.dart';
@@ -18,7 +22,7 @@ import 'tp_window.dart';
 /// 예전에는 탭 화면마다 셸이 자기 탭 바를 그렸다. 다섯 브랜치를 미리 짓기
 /// 때문에 네이티브 탭 바 플랫폼 뷰가 화면 뒤에 다섯 장 떠 있었다. 이제는
 /// [TabHost] 가 이것 한 장을 그리고, 화면은 그 자리만 비운다.
-class TpTabBar extends StatelessWidget {
+class TpTabBar extends ConsumerWidget {
   const TpTabBar({
     super.key,
     required this.current,
@@ -58,7 +62,7 @@ class TpTabBar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final safe = MediaQuery.viewPaddingOf(context);
     if (!context.tp.isGlass) {
       return _AndroidBar(
@@ -68,11 +72,43 @@ class TpTabBar extends StatelessWidget {
       );
     }
 
-    // 검색 탭: 바가 접힌다. iOS 는 원과 필드를 검색 화면이 한 줄로 그린다.
-    // 원을 여기(탭 호스트)에 두면 네이티브 유리가 안전 영역 경계에서 잘렸다.
-    if (current == TpTab.search && TpNativeGlass.enabled) {
-      return const SizedBox.shrink();
+    // iOS 26: 검색도 시스템 바가 한다. 검색 탭을 누르면 UIKit 이 칸을 밀어내고
+    // 검색창을 바 자리로 펼친다. 키보드가 올라오면 검색창이 그 위로 가므로
+    // 플랫폼 뷰를 키보드 높이까지 늘린다 — 늘어난 자리는 키보드가 덮고 있어서
+    // Flutter 쪽 터치를 뺏지 않는다.
+    if (TpNativeGlass.enabled) {
+      final searching = current == TpTab.search;
+      final keyboard = searching
+          ? MediaQuery.viewInsetsOf(context).bottom
+          : 0.0;
+      final bottom = math.max(safe.bottom, keyboard);
+      return SizedBox(
+        height: iosHeight + TpNativeTabBar.overflow + bottom,
+        child: TpNativeTabBar(
+          index: TpTab.bar.indexOf(searching ? returnTo : current),
+          onSelected: (i) => onSelected(TpTab.bar[i]),
+          onSearch: () => onSelected(TpTab.search),
+          searchLabel: K.tab(TpTab.search).tr(),
+          nativeSearch: true,
+          searchActive: searching,
+          searchPlaceholder: K.searchAllHint.tr(),
+          onSearchChanged: (q) => ref.read(searchQueryProvider.notifier).set(q),
+          keyboardDismissToken: ref.watch(searchKeyboardProvider),
+          height: iosHeight + bottom,
+          tint: TpTokens.blue,
+          items: <TpNativeTabItem>[
+            for (final t in TpTab.bar)
+              TpNativeTabItem(
+                label: K.tab(t).tr(),
+                symbol: t.symbol,
+                activeSymbol: t.activeSymbol,
+              ),
+          ],
+        ),
+      );
     }
+
+    // 26 미만: 검색 탭에서 바가 원 하나로 접히고, 필드는 검색 화면이 그린다.
     if (current == TpTab.search) {
       return Padding(
         padding: EdgeInsets.fromLTRB(21, 0, 21, searchBottom(context)),
@@ -83,32 +119,6 @@ class TpTabBar extends StatelessWidget {
             label: K.tab(returnTo).tr(),
             icon: TpIcons.iosTab(returnTo, active: false),
             onTap: () => onSelected(returnTo),
-          ),
-        ),
-      );
-    }
-
-    if (TpNativeGlass.enabled) {
-      // 시스템 바는 자기 안에서 홈 인디케이터 자리를 잡는다. 바깥에서 그만큼
-      // 또 띄우면 34pt 떠 보인다. 뷰를 화면 끝까지 늘려 둔다.
-      return SizedBox(
-        child: SizedBox(
-          height: iosHeight + TpNativeTabBar.overflow + safe.bottom,
-          child: TpNativeTabBar(
-            index: TpTab.bar.indexOf(current),
-            onSelected: (i) => onSelected(TpTab.bar[i]),
-            onSearch: () => onSelected(TpTab.search),
-            searchLabel: K.tab(TpTab.search).tr(),
-            height: iosHeight + safe.bottom,
-            tint: TpTokens.blue,
-            items: <TpNativeTabItem>[
-              for (final t in TpTab.bar)
-                TpNativeTabItem(
-                  label: K.tab(t).tr(),
-                  symbol: t.symbol,
-                  activeSymbol: t.activeSymbol,
-                ),
-            ],
           ),
         ),
       );

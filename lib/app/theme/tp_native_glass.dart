@@ -117,7 +117,23 @@ class TpNativeTabBar extends StatelessWidget {
     this.searchLabel,
     this.labelStyle,
     this.iconSize,
+    this.nativeSearch = false,
+    this.searchActive = false,
+    this.searchPlaceholder,
+    this.onSearchChanged,
+    this.keyboardDismissToken = 0,
   });
+
+  /// 검색 원을 진짜 검색 탭으로. 누르면 UIKit 이 칸을 밀어내고 검색창을 펼친다.
+  final bool nativeSearch;
+
+  /// 검색 탭이 켜져 있어야 하는가.
+  final bool searchActive;
+  final String? searchPlaceholder;
+  final ValueChanged<String>? onSearchChanged;
+
+  /// 바뀔 때마다 검색창 키보드를 내린다.
+  final int keyboardDismissToken;
 
   final List<TpNativeTabItem> items;
   final int index;
@@ -161,6 +177,16 @@ class TpNativeTabBar extends StatelessWidget {
             icon: NativeLiquidGlassIcon.sfSymbol('magnifyingglass'),
           ),
     onActionButtonPressed: onSearch,
+    iosNativeSearch: nativeSearch,
+    searchActive: searchActive,
+    searchPlaceholder: searchPlaceholder,
+    // 켜질 때만 알린다. 꺼질 때는 onTabSelected 가 돌아갈 칸을 같이 준다.
+    onSearchActiveChanged: (active) {
+      if (active) onSearch?.call();
+    },
+    onSearchChanged: onSearchChanged,
+    onSearchSubmitted: onSearchChanged,
+    searchKeyboardDismissToken: keyboardDismissToken,
     labelTextStyle: labelStyle,
     items: <LiquidGlassTabItem>[
       for (final item in items)

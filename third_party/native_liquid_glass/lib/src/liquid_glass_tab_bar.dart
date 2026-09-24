@@ -208,6 +208,24 @@ class LiquidGlassTabBar extends StatefulWidget {
   /// Optional iOS native item width.
   final double? iosItemWidth;
 
+  /// TechPicks 패치: [iosActionButton] 을 진짜 검색 탭으로. 누르면 UIKit 이 탭
+  /// 칸을 밀어내고 검색창을 바 자리로 펼친다. [onActionButtonPressed] 대신
+  /// [onSearchActiveChanged] 가 불린다.
+  final bool iosNativeSearch;
+
+  /// 검색창 자리표시.
+  final String? searchPlaceholder;
+
+  /// 검색 탭이 켜져 있어야 하는가. 바뀌면 네이티브를 따라 바꾼다.
+  final bool searchActive;
+
+  final ValueChanged<bool>? onSearchActiveChanged;
+  final ValueChanged<String>? onSearchChanged;
+  final ValueChanged<String>? onSearchSubmitted;
+
+  /// 바뀔 때마다 검색창 키보드를 내린다(결과 목록을 스크롤할 때).
+  final int searchKeyboardDismissToken;
+
   const LiquidGlassTabBar({
     super.key,
     required this.items,
@@ -224,6 +242,13 @@ class LiquidGlassTabBar extends StatefulWidget {
     this.iosItemPositioning = LiquidGlassTabBarItemPositioning.automatic,
     this.iosItemSpacing,
     this.iosItemWidth,
+    this.iosNativeSearch = false,
+    this.searchPlaceholder,
+    this.searchActive = false,
+    this.onSearchActiveChanged,
+    this.onSearchChanged,
+    this.onSearchSubmitted,
+    this.searchKeyboardDismissToken = 0,
   }) : assert(items.length >= 2, 'LiquidGlassTabBar requires at least 2 tab items.'),
        assert(currentIndex >= 0, 'currentIndex must be >= 0.'),
        assert(currentIndex < items.length, 'currentIndex must be within the range of items.'),
@@ -281,6 +306,14 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
       }
     }
 
+    if (oldWidget.searchKeyboardDismissToken != widget.searchKeyboardDismissToken) {
+      unawaited(_invoke('dismissSearchKeyboard', null));
+    }
+
+    if (oldWidget.searchActive != widget.searchActive) {
+      unawaited(_invoke('setSearchActive', <String, Object?>{'active': widget.searchActive}));
+    }
+
     if (oldWidget.currentIndex != widget.currentIndex) {
       if (_lastNativeSelectedIndex == widget.currentIndex) {
         // This index already came from native user selection; avoid a redundant
@@ -334,6 +367,15 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
       case 'onActionButtonPressed':
         widget.onActionButtonPressed?.call();
         return;
+      case 'onSearchActive':
+        widget.onSearchActiveChanged?.call(call.arguments == true);
+        return;
+      case 'onSearchChanged':
+        widget.onSearchChanged?.call(call.arguments as String? ?? '');
+        return;
+      case 'onSearchSubmitted':
+        widget.onSearchSubmitted?.call(call.arguments as String? ?? '');
+        return;
       default:
         return;
     }
@@ -346,7 +388,18 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
     _nativeChannel = channel;
 
     _syncNativeSelectedIndex(widget.currentIndex);
+    if (widget.searchActive) {
+      unawaited(_invoke('setSearchActive', <String, Object?>{'active': true}));
+    }
     syncGlassRouteVisibility();
+  }
+
+  Future<void> _invoke(String method, Object? arguments) async {
+    try {
+      await _nativeChannel?.invokeMethod<void>(method, arguments);
+    } catch (_) {
+      // 탭 바 호출이 실패해도 Flutter 쪽은 멈추지 않는다.
+    }
   }
 
   void _syncNativeSelectedIndex(int index) {
@@ -434,6 +487,8 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
       brightness,
       identityHashCode(nativeTabs),
       identityHashCode(nativeActionButton),
+      widget.iosNativeSearch,
+      widget.searchPlaceholder,
     ]);
     final cached = _cachedCreationParams;
     if (_creationParamsCacheKey == key && cached != null) {
@@ -462,6 +517,8 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
       ...?(widget.iosItemSpacing == null ? null : <String, Object?>{'itemSpacing': widget.iosItemSpacing}),
       ...?(widget.iosItemWidth == null ? null : <String, Object?>{'itemWidth': widget.iosItemWidth}),
       ...?(nativeActionButton == null ? null : <String, Object?>{'actionButton': nativeActionButton}),
+      'nativeSearch': widget.iosNativeSearch,
+      ...?(widget.searchPlaceholder == null ? null : <String, Object?>{'searchPlaceholder': widget.searchPlaceholder}),
       'tabs': nativeTabs,
     };
   }
@@ -622,6 +679,8 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
         widget.iosItemPositioning,
         widget.iosItemSpacing,
         widget.iosItemWidth,
+        widget.iosNativeSearch,
+        widget.searchPlaceholder,
         // Recreate the platform view when the app theme flips so the native
         // bar picks up the new brightness via creationParams.
         brightness,

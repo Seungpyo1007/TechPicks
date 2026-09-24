@@ -39,6 +39,31 @@ ios/.../LiquidGlassContainer/LiquidGlassContainerView.swift
   + hc.safeAreaRegions = []
 ```
 
+`LiquidGlassTabBar` 의 검색 원이 **검색 탭 흉내**였다.
+
+`UISearchTab` 으로 그려 놓고 `shouldSelectTab` 에서 막은 뒤 Flutter 로 탭만 넘겼다.
+그래서 iOS 26 의 검색 모션(칸이 밀려나고 검색창이 바 자리로 펼쳐지는 것)이 없었다.
+`iosNativeSearch` 를 켜면 검색 탭을 진짜로 고르게 두고, 탭 내용에 투명한 화면 +
+`UISearchController` 를 붙인다. UIKit 이 모션과 키보드 위 자리를 맡는다.
+
+```
+ios/.../LiquidGlassTabBar/LiquidGlassTabBarConfig.swift
+  + nativeSearch, searchPlaceholder
+ios/.../LiquidGlassTabBar/LiquidGlassTabBarView.swift
+  makeActionTab        → nativeSearch 면 makeSearchContent, automaticallyActivatesSearch
+  shouldSelectTab      → 검색 탭도 true
+  didSelectTab         → onSearchActive(true) / 검색에서 돌아오면 onSearchActive(false)
+  setSelectedIndex     → 검색 탭이 켜져 있으면 같은 칸이어도 다시 고른다
+  + setSearchActive, dismissSearchKeyboard, UISearchBarDelegate
+  채널: onSearchActive, onSearchChanged, onSearchSubmitted / setSearchActive, dismissSearchKeyboard
+lib/src/liquid_glass_tab_bar.dart
+  + iosNativeSearch, searchPlaceholder, searchActive, onSearchActiveChanged,
+    onSearchChanged, onSearchSubmitted, searchKeyboardDismissToken
+```
+
+플랫폼 뷰는 바 높이뿐이라, 앱 쪽(`TpTabBar`)이 검색 중에는 키보드 높이만큼 뷰를 늘린다.
+늘어난 자리는 키보드가 덮고 있어 Flutter 터치를 뺏지 않는다.
+
 ## 언제 지우나
 
 위 패치가 upstream 에 들어간 판이 나오면 이 디렉터리와 `dependency_overrides` 를

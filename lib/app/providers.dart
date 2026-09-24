@@ -951,6 +951,33 @@ class AskNotifier extends Notifier<List<AskMessage>> {
   }
 }
 
+/// 네이티브 검색창(iOS 26 탭 바가 펼친 것)에 친 글자.
+///
+/// 검색창이 Flutter 밖에 있어서 화면이 컨트롤러를 못 쥔다. 탭 바가 받아서
+/// 여기에 넣고, 검색 화면이 읽는다.
+class SearchQueryNotifier extends Notifier<String> {
+  @override
+  String build() => '';
+
+  void set(String value) => state = value;
+}
+
+final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(
+  SearchQueryNotifier.new,
+);
+
+/// 올릴 때마다 네이티브 검색창 키보드가 내려간다.
+class SearchKeyboardNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void dismiss() => state++;
+}
+
+final searchKeyboardProvider = NotifierProvider<SearchKeyboardNotifier, int>(
+  SearchKeyboardNotifier.new,
+);
+
 /// 검색에서 열어 본 것. 최근 것이 앞, 최대 10개. `kind:slug` 로 저장한다.
 class RecentHitsNotifier extends Notifier<List<String>> with RestoreGuard {
   static const String _prefsKey = 'recent_hits';
