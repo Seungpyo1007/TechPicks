@@ -12,6 +12,8 @@ import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/app/theme/tp_motion.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
 import 'package:motor/motor.dart';
+import 'package:techpicks/shared/widgets/tp_pulse.dart';
+import 'package:techpicks/shared/widgets/tp_shimmer.dart';
 
 import '../support/harness.dart';
 
@@ -190,6 +192,71 @@ void main() {
     test('테스트에서는 반복이 꺼져 있다', () {
       // test/flutter_test_config.dart. 켜져 있으면 pumpAndSettle 이 안 끝난다.
       expect(motionOf(TpChrome.ios).loops, isFalse);
+    });
+  });
+
+  group('튀기와 반짝임', () {
+    Widget pulse(Object trigger) => Center(
+      child: TpPulse(
+        trigger: trigger,
+        child: const SizedBox(width: 40, height: 40),
+      ),
+    );
+    // Transform.scale 은 z 를 1 로 두므로 getMaxScaleOnAxis 는 늘 1 이상이다.
+    double scale(WidgetTester tester) => tester
+        .widget<Transform>(
+          find.descendant(
+            of: find.byType(TpPulse),
+            matching: find.byType(Transform),
+          ),
+        )
+        .transform
+        .storage[0];
+
+    testWidgets('처음에는 안 튀고, 바뀌면 줄었다가 1 을 넘었다가 돌아온다', (tester) async {
+      await pumpScreen(tester, pulse(false));
+      expect(scale(tester), 1);
+
+      await pumpScreenNoSettle(tester, pulse(true));
+      await tester.pump();
+      expect(scale(tester), lessThan(1));
+
+      var peak = 0.0;
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        if (scale(tester) > peak) peak = scale(tester);
+      }
+      expect(peak, greaterThan(1));
+      await tester.pumpAndSettle();
+      expect(scale(tester), closeTo(1, 0.001));
+    });
+
+    testWidgets('동작을 줄이면 안 튄다', (tester) async {
+      await pumpScreen(tester, pulse(false), disableAnimations: true);
+      await pumpScreenNoSettle(tester, pulse(true), disableAnimations: true);
+      await tester.pump();
+      expect(scale(tester), 1);
+    });
+
+    testWidgets('반복이 꺼져 있으면 반짝임은 그냥 자식이다', (tester) async {
+      await pumpScreen(
+        tester,
+        const TpShimmer(child: SizedBox(width: 10, height: 10)),
+      );
+      expect(find.byType(ShaderMask), findsNothing);
+    });
+
+    testWidgets('반복이 켜져 있으면 빛이 지나간다', (tester) async {
+      TpMotion.loopsAllowed = true;
+      addTearDown(() => TpMotion.loopsAllowed = false);
+      await pumpScreenNoSettle(
+        tester,
+        const TpShimmer(child: SizedBox(width: 10, height: 10)),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(ShaderMask), findsOneWidget);
+      // 테스트가 끝나기 전에 트리를 비워 반복을 멈춘다.
+      await tester.pumpWidget(const SizedBox());
     });
   });
 
