@@ -161,6 +161,23 @@ void main() {
       expect(find.text(phone.name), findsOneWidget);
     });
 
+    testWidgets('빈 화면에 예시 검색어가 있고 누르면 그 결과가 나온다', (tester) async {
+      await pumpScreen(
+        tester,
+        SearchScreen(onHit: (_) {}),
+        size: const Size(402, 2400),
+      );
+      expect(find.text(K.searchTry.tr()), findsOneWidget);
+      expect(find.text('Galaxy S26'), findsOneWidget);
+
+      await tester.tap(find.text('Galaxy S26'));
+      await tester.pumpAndSettle();
+
+      // 예시 줄은 사라지고 결과 그룹이 뜬다.
+      expect(find.text(K.searchTry.tr()), findsNothing);
+      expect(find.textContaining('Galaxy S26'), findsWidgets);
+    });
+
     testWidgets('두 크롬 모두에서 그려진다', (tester) async {
       for (final chrome in TpChrome.values) {
         await pumpScreen(tester, const SearchScreen(), chrome: chrome);

@@ -30,6 +30,14 @@ class SearchScreen extends ConsumerStatefulWidget {
   final ValueChanged<SearchHit>? onHit;
   final ValueChanged<RankCategory>? onKind;
 
+  /// 빈 화면의 예시 검색어. 이름·칩·브랜드로 찾을 수 있다는 걸 보여준다.
+  static const List<String> examples = <String>[
+    'Galaxy S26',
+    'iPhone 17',
+    'Snapdragon',
+    'MacBook',
+  ];
+
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
@@ -45,6 +53,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   void _set(String v) => setState(() => _query = v);
+
+  /// 예시 검색어를 눌렀을 때. 검색창에 그 글자를 넣고 결과를 보여준다.
+  void _try(String q, {required bool native}) {
+    if (native) {
+      ref.read(searchCommandProvider.notifier).setText(q);
+      return;
+    }
+    _input.text = q;
+    _set(q);
+  }
+
+  /// 결과 미리보기 한 줄. 앞의 두 개와 나머지 개수.
+  static String _preview(List<SearchHit> found) {
+    final names = found.take(2).map((h) => h.name).join(', ');
+    return found.length > 2
+        ? K.searchTryMore.tr(args: <String>[names, '${found.length - 2}'])
+        : names;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +121,27 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ),
                   onTap: widget.onHit == null ? null : () => open(hit),
                 ),
+            ],
+          ),
+        ),
+      if (!typing)
+        SliverToBoxAdapter(
+          child: TpGroup(
+            header: K.searchTry.tr(),
+            children: <Widget>[
+              for (final q in SearchScreen.examples)
+                if (SearchIndex.filter(index, q) case final found
+                    when found.isNotEmpty)
+                  TpRow(
+                    title: q,
+                    subtitle: _preview(found),
+                    value: '${found.length}',
+                    leading: TpIconTile(
+                      icon: glass ? CupertinoIcons.search : Icons.search,
+                      color: const Color(0xFF8E8E93),
+                    ),
+                    onTap: () => _try(q, native: native),
+                  ),
             ],
           ),
         ),

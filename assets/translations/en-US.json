@@ -261,6 +261,8 @@
   "laptopStatus": "{} · {} · {} laptops",
   "clear": "Clear",
   "recent": "Recent",
+  "searchTry": "Try searching",
+  "searchTryMore": "{} and {} more",
   "rankStatus": "By {} · {} · {} phones",
   "buildRowSub": "CPU and GPU pairs for a budget",
   "weights": "Weights",
