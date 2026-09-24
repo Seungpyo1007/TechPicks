@@ -252,6 +252,7 @@
   "askTitle": "Ask",
   "sort": "Sort",
   "clear": "Clear",
+  "recent": "Recent",
   "rankStatus": "By {} · {} · {} phones",
   "buildRowSub": "CPU and GPU pairs for a budget",
   "weights": "Weights",

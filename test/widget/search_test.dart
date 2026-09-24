@@ -139,6 +139,28 @@ void main() {
       expect(picked?.kind, SearchKind.phone);
     });
 
+    testWidgets('열어 본 결과가 최근 그룹에 남는다', (tester) async {
+      await pumpScreen(
+        tester,
+        SearchScreen(onHit: (_) {}),
+        size: const Size(402, 2400),
+      );
+      expect(find.text(K.recent.tr()), findsNothing);
+
+      final phone = readCatalog().smartphones.first;
+      await _type(tester, phone.name);
+      await tester.tap(
+        find
+            .ancestor(of: find.text(phone.name), matching: find.byType(TpRow))
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await _type(tester, '');
+
+      expect(find.text(K.recent.tr()), findsOneWidget);
+      expect(find.text(phone.name), findsOneWidget);
+    });
+
     testWidgets('두 크롬 모두에서 그려진다', (tester) async {
       for (final chrome in TpChrome.values) {
         await pumpScreen(tester, const SearchScreen(), chrome: chrome);
