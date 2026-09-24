@@ -78,8 +78,10 @@ class TpTabBar extends ConsumerWidget {
     // Flutter 쪽 터치를 뺏지 않는다.
     if (TpNativeGlass.enabled) {
       final searching = current == TpTab.search;
+      // 키보드 높이는 탭 바가 미리 받은 값. viewInsets 는 키보드를 따라 늦게
+      // 와서, 검색창이 잠깐 뷰 밖으로 나갔다가 튀어 올라왔다.
       final keyboard = searching
-          ? MediaQuery.viewInsetsOf(context).bottom
+          ? ref.watch(searchKeyboardHeightProvider)
           : 0.0;
       final bottom = math.max(safe.bottom, keyboard);
       return SizedBox(
@@ -93,6 +95,8 @@ class TpTabBar extends ConsumerWidget {
           searchActive: searching,
           searchPlaceholder: K.searchAllHint.tr(),
           onSearchChanged: (q) => ref.read(searchQueryProvider.notifier).set(q),
+          onSearchKeyboard: (h) =>
+              ref.read(searchKeyboardHeightProvider.notifier).set(h),
           keyboardDismissToken: ref.watch(searchKeyboardProvider),
           height: iosHeight + bottom,
           tint: TpTokens.blue,

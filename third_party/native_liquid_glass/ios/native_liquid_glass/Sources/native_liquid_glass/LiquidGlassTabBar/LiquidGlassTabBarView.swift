@@ -21,6 +21,11 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
   var onSearchActive: (Bool) -> Void = { _ in }
   var onSearchChanged: (String) -> Void = { _ in }
   var onSearchSubmitted: (String) -> Void = { _ in }
+  /// 키보드가 **움직이기 시작할 때** 최종 높이. Flutter 의 viewInsets 는 키보드를
+  /// 따라 늦게 오므로, 그걸로 플랫폼 뷰를 늘리면 검색창이 잠깐 뷰 밖으로 나가
+  /// 잘렸다가 튀어 올라왔다.
+  var onSearchKeyboard: (Double) -> Void = { _ in }
+  private var keyboardObservers: [NSObjectProtocol] = []
   private var searchController: UISearchController?
   /// 검색 탭을 켜기 전에 고르고 있던 칸. 검색을 끄면 여기로 돌아간다.
   private var lastSelectableIndex = 0
@@ -70,6 +75,30 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
     layer.isOpaque = false
     configureTabBarController(with: config)
     applyUserInterfaceStyle()
+    if config.nativeSearch { observeKeyboard() }
+  }
+
+  private func observeKeyboard() {
+    let center = NotificationCenter.default
+    keyboardObservers.append(
+      center.addObserver(
+        forName: UIResponder.keyboardWillChangeFrameNotification, object: nil, queue: .main
+      ) { [weak self] note in
+        guard let self, self.isSearchSelected,
+          let end = (note.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?
+            .cgRectValue,
+          let window = self.window
+        else { return }
+        let height = max(0, window.bounds.maxY - end.minY)
+        // 올라갈 때만 미리 알린다. 내려갈 때 먼저 줄이면 내려오는 검색창이 잘린다.
+        if height > 0 { self.onSearchKeyboard(Double(height)) }
+      })
+    keyboardObservers.append(
+      center.addObserver(
+        forName: UIResponder.keyboardDidHideNotification, object: nil, queue: .main
+      ) { [weak self] _ in
+        self?.onSearchKeyboard(0)
+      })
   }
 
   /// Pins the bar to the Flutter app's brightness.
@@ -150,6 +179,7 @@ final class LiquidGlassNativeTabBarControllerView: UIView, UITabBarControllerDel
 
   /// Ensures controller containment is cleaned up when this host view is deallocated.
   deinit {
+    keyboardObservers.forEach { NotificationCenter.default.removeObserver($0) }
     if tabBarController.parent != nil {
       tabBarController.willMove(toParent: nil)
       tabBarController.removeFromParent()
@@ -1001,6 +1031,9 @@ final class LiquidGlassTabBarPlatformView: NSObject, FlutterPlatformView {
     }
     nativeView.onSearchSubmitted = { [weak self] text in
       self?.channel.invokeMethod("onSearchSubmitted", arguments: text)
+    }
+    nativeView.onSearchKeyboard = { [weak self] height in
+      self?.channel.invokeMethod("onSearchKeyboard", arguments: height)
     }
     nativeView.translatesAutoresizingMaskIntoConstraints = false
     nativeView.attach(to: hostViewController)
