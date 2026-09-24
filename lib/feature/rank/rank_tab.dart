@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/model/processor.dart';
-import '../cpu/processor_screen.dart';
-import 'laptop_screen.dart';
+import 'browse_screen.dart';
 import 'rank_category.dart';
-import 'rank_screen.dart';
 
 /// 둘러보기 탭이 담고 있는 세 화면을 카테고리로 가른다.
 ///
@@ -30,19 +28,13 @@ class RankTab extends StatelessWidget {
   final ValueChanged<ProcessorSegment>? onAllProcessors;
   final ValueChanged<RankCategory>? onCategory;
 
+  /// 셋 다 같은 [BrowseScreen] 이다. 카테고리를 바꿔도 화면은 그대로 남고
+  /// 안의 내용만 바뀐다 — 세그먼트의 고른 칸이 미끄러지는 것도 그래서다.
   @override
-  Widget build(BuildContext context) {
-    return switch (category) {
-      RankCategory.processors => ProcessorScreen(
-        onCategory: onCategory,
-        onBuild: onBuild,
-        onAll: onAllProcessors,
-      ),
-      RankCategory.laptops => LaptopScreen(onCategory: onCategory),
-      RankCategory.phones => RankScreen(
-        onDeviceTap: onDeviceTap,
-        onCategory: onCategory,
-      ),
-    };
-  }
+  Widget build(BuildContext context) => BrowseScreen(
+    category: category,
+    onDeviceTap: onDeviceTap,
+    onCategory: onCategory,
+    onBuild: onBuild,
+  );
 }

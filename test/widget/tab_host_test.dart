@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:techpicks/feature/rank/rank_category.dart';
+import 'package:go_router/go_router.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:riverpod/misc.dart' show Override;
 
@@ -17,7 +19,7 @@ import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
-import 'package:techpicks/feature/rank/rank_screen.dart';
+import 'package:techpicks/feature/rank/browse_screen.dart';
 import 'package:techpicks/app/theme/tp_icons.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
@@ -77,6 +79,7 @@ void main() {
   group('비교 열 고르기', _pickerSlots);
   group('밀려 올라오는 화면', _pushedScreens);
   group('시스템 뒤로 가기', _systemBack);
+  group('둘러보기 카테고리', _browseInPlace);
 
   setUp(initLocalization);
 
@@ -408,7 +411,7 @@ void _pushedScreens() {
 
     // 명세의 back stack 은 한 단계다 — 랭킹으로 돌아온다.
     expect(find.byType(DetailScreen), findsNothing);
-    expect(find.byType(RankScreen), findsOneWidget);
+    expect(find.byType(BrowseScreen), findsOneWidget);
   });
 }
 
@@ -435,11 +438,11 @@ void _systemBack() {
         askServiceProvider.overrideWithValue(const LocalAskService()),
       ],
     );
-    expect(find.byType(RankScreen), findsOneWidget);
+    expect(find.byType(BrowseScreen), findsOneWidget);
 
     await back(tester);
 
-    expect(find.byType(RankScreen), findsNothing);
+    expect(find.byType(BrowseScreen), findsNothing);
     expect(find.text(K.homeTitle.tr()), findsWidgets);
   });
 
@@ -467,3 +470,53 @@ Finder _icon(IconData Function(TpIcons) pick) => find.byWidgetPredicate(
       w is Icon &&
       (w.icon == pick(TpIcons.ios) || w.icon == pick(TpIcons.android)),
 );
+
+/// 세그먼트를 눌러도 새 화면이 밀려 들어오지 않는다.
+void _browseInPlace() {
+  testWidgets('카테고리를 바꾸면 같은 화면 안에서 내용만 바뀐다', (tester) async {
+    await initLocalization();
+    await pumpApp(
+      tester,
+      initialLocation: TpRoute.browse,
+      size: const Size(700, 3000),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    final before = tester.state(find.byType(BrowseScreen));
+
+    await tester.tap(find.text(K.cpus.tr()));
+    await tester.pumpAndSettle();
+
+    final after = tester.state(find.byType(BrowseScreen));
+    expect(identical(before, after), isTrue);
+    expect(
+      tester.widget<BrowseScreen>(find.byType(BrowseScreen)).category,
+      RankCategory.processors,
+    );
+    // 뒤로 갈 곳이 생기지 않았다.
+    expect(find.byType(BrowseScreen), findsOneWidget);
+    expect(
+      GoRouter.of(tester.element(find.byType(BrowseScreen))).canPop(),
+      isFalse,
+    );
+  });
+
+  testWidgets('예전 주소는 쿼리로 옮겨진다', (tester) async {
+    await initLocalization();
+    await pumpApp(
+      tester,
+      initialLocation: '/browse/laptops',
+      size: const Size(700, 3000),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    expect(
+      tester.widget<BrowseScreen>(find.byType(BrowseScreen)).category,
+      RankCategory.laptops,
+    );
+  });
+}
