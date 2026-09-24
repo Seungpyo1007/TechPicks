@@ -9,6 +9,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
+import 'viewer_stage.dart';
 import '../../shared/tp_haptics.dart';
 
 /// 3D 뷰어.
@@ -101,7 +102,16 @@ class _ViewerScreenState extends State<ViewerScreen> {
                 ),
               ),
               Expanded(
-                child: Center(child: _Stage(highlighted: _highlighted)),
+                // 돌리고 벌리는 무대. 뜻은 기기 이름과 고른 부품으로 읽는다.
+                child: Semantics(
+                  label: <String>[
+                    widget.deviceName,
+                    if (_highlighted != null)
+                      ViewerScreen.partKeys[_highlighted!].tr(),
+                  ].join(', '),
+                  excludeSemantics: true,
+                  child: ViewerStage(part: _highlighted),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -194,101 +204,4 @@ class _PartChip extends StatelessWidget {
       ),
     );
   }
-}
-
-/// 모델 자리. 지평선과 바닥 그림자 위에 와이어프레임을 놓는다.
-class _Stage extends StatelessWidget {
-  const _Stage({this.highlighted});
-
-  final int? highlighted;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 260,
-      height: 320,
-      child: Stack(
-        alignment: Alignment.center,
-        children: <Widget>[
-          Positioned(
-            bottom: 40,
-            child: Container(
-              width: 200,
-              height: 1,
-              color: Colors.white.withValues(alpha: 0.10),
-            ),
-          ),
-          Positioned(
-            bottom: 18,
-            child: Container(
-              width: 160,
-              height: 34,
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  colors: <Color>[
-                    Colors.white.withValues(alpha: 0.10),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          CustomPaint(
-            size: const Size(140, 250),
-            painter: _WireframePainter(highlighted: highlighted),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 모델이 없으니 기기 윤곽만 선으로 그린다.
-class _WireframePainter extends CustomPainter {
-  const _WireframePainter({this.highlighted});
-
-  final int? highlighted;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final body = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4
-      ..color = Colors.white.withValues(alpha: 0.35);
-
-    final rect = RRect.fromRectAndRadius(
-      Offset.zero & size,
-      const Radius.circular(18),
-    );
-    canvas.drawRRect(rect, body);
-
-    // 부품 위치. 칩을 누르면 해당 영역만 파랗게 칠한다.
-    final regions = <Rect>[
-      Rect.fromLTWH(10, 10, size.width - 20, size.height - 20), // Display
-      Rect.fromLTWH(18, size.height * 0.45, size.width - 36, size.height * 0.4),
-      Rect.fromLTWH(size.width * 0.3, size.height * 0.3, size.width * 0.4, 40),
-      const Rect.fromLTWH(14, 14, 52, 52), // Camera module
-    ];
-
-    for (var i = 0; i < regions.length; i++) {
-      final on = highlighted == i;
-      final r = RRect.fromRectAndRadius(regions[i], const Radius.circular(10));
-      if (on) {
-        canvas.drawRRect(
-          r,
-          Paint()..color = TpSys.accent.withValues(alpha: 0.30),
-        );
-      }
-      canvas.drawRRect(
-        r,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = on ? 1.5 : 1
-          ..color = on ? TpSys.accent : Colors.white.withValues(alpha: 0.14),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_WireframePainter old) => old.highlighted != highlighted;
 }
