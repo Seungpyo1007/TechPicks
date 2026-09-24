@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/shell/tp_tab.dart';
+import '../../app/shell/tp_tab_bar.dart';
+import '../../app/theme/tp_icons.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../domain/model/search_index.dart';
@@ -160,17 +162,30 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
     if (!glass) return page;
 
-    // 접힌 탭 바의 원(왼쪽 아래, 50) 옆에 필드가 붙는다.
-    final safe = MediaQuery.viewPaddingOf(context);
+    // 접힌 탭 바: 돌아갈 탭 원 + 유리 필드가 한 줄.
+    final back = TpSearchReturn.maybeOf(context);
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return Stack(
       children: <Widget>[
         Positioned.fill(child: page),
         Positioned(
-          left: 21 + 50 + 10,
+          left: 21,
           right: 21,
-          bottom: keyboard > 0 ? keyboard + 8 : safe.bottom + 5,
-          child: field,
+          bottom: keyboard > 0 ? keyboard + 8 : TpTabBar.searchBottom(context),
+          child: Row(
+            children: <Widget>[
+              if (back != null) ...<Widget>[
+                TpGlassCircle(
+                  size: TpGlassSearch.height,
+                  label: K.tab(back.tab).tr(),
+                  icon: TpIcons.iosTab(back.tab, active: false),
+                  onTap: back.onReturn,
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(child: field),
+            ],
+          ),
         ),
       ],
     );
