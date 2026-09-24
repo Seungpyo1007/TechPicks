@@ -211,7 +211,9 @@ void main() {
   testWidgets('로그인 전에는 계정 없이 쓰는 상태로 보인다', (tester) async {
     await _pump(tester);
     expect(find.text('Browsing without an account'), findsOneWidget);
-    expect(find.text('?'), findsOneWidget);
+    // "?" 가 아니라 회색 원에 사람 모양.
+    expect(find.text('?'), findsNothing);
+    expect(find.byIcon(CupertinoIcons.person_fill), findsOneWidget);
     // 고칠 프로필이 없다. 열어 봐야 저장이 조용히 실패한다.
     expect(find.text('Edit profile'), findsNothing);
   });
