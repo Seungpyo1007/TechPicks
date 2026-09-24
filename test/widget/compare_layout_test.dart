@@ -8,7 +8,6 @@ import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/spec_labels.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
 
-import 'package:techpicks/shared/widgets/tp_page.dart';
 import '../support/harness.dart';
 
 /// 비교 화면의 자리 배치.
@@ -92,35 +91,9 @@ void main() {
     expect(find.byType(TpBar), findsNWidgets(6));
   });
 
-  testWidgets('이유 물어보기가 표를 안 지나고 화면 안에 있다', (tester) async {
+  testWidgets('이유 물어보기 버튼이 없다', (tester) async {
     await pumpScreen(tester, const CompareScreen(), size: const Size(402, 874));
-
-    final button = tester.getRect(find.byType(TpPill));
-    expect(button.bottom, lessThanOrEqualTo(874));
-    expect(button.top, greaterThan(0));
-  });
-
-  testWidgets('바닥 버튼이 마지막 줄을 가리지 않는다', (tester) async {
-    await pumpScreen(tester, const CompareScreen(), size: const Size(402, 874));
-
-    // 끝까지 내린다. 목록이 자기 패딩에 버튼 자리를 안 더하면 마지막 줄이
-    // 버튼 뒤에 영영 숨는다.
-    final list = find.byType(Scrollable).first;
-    await tester.scrollUntilVisible(
-      find.text(SpecLabels.of(SpecKind.released)),
-      400,
-      scrollable: list,
-    );
-    await tester.pumpAndSettle();
-    // 스크롤이 끝까지 갔는지와 무관하게, 더 내려도 안 움직일 때까지 민다.
-    await tester.fling(list, const Offset(0, -600), 2000);
-    await tester.pumpAndSettle();
-
-    final button = tester.getRect(find.byType(TpPill));
-    final released = tester.getRect(
-      find.text(SpecLabels.of(SpecKind.released)),
-    );
-    expect(released.bottom, lessThanOrEqualTo(button.top));
+    expect(find.text(K.askWhy.tr()), findsNothing);
   });
 
   test('점수 막대는 승자를 못 가리는 줄에만 있다', () {

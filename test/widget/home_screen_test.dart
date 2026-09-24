@@ -51,7 +51,8 @@ void main() {
     expect(find.text('Where this lands'), findsOneWidget);
     expect(find.byType(TpScoreStrip), findsOneWidget);
     expect(find.text('Compare all'), findsOneWidget);
-    expect(find.text('Ask why'), findsOneWidget);
+    // 질문은 툴바의 반짝이 버튼이 맡는다. 카드에는 없다.
+    expect(find.text('Ask why'), findsNothing);
     expect(find.text('Nothing on your shortlist yet'), findsNothing);
   });
 
