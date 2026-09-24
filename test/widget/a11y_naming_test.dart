@@ -51,7 +51,7 @@ void main() {
       containsAll(<String>[K.emailLabel.tr(), K.passwordLabel.tr()]),
     );
 
-    await tester.enterText(find.byType(TextField).first, 'a@b.com');
+    await tester.enterText(find.byType(EditableText).first, 'a@b.com');
     await tester.pumpAndSettle();
 
     expect(
