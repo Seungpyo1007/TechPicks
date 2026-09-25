@@ -56,12 +56,10 @@ class TpBarAction {
   final bool active;
 }
 
-/// v3 화면 뼈대. large title 이 스크롤하면 줄어드는 표준 네비게이션 바 위에
-/// 슬리버 목록을 올린다.
+/// v3 화면 뼈대. 큰 제목 + 슬리버 목록.
 ///
-/// iOS 는 `CupertinoSliverNavigationBar`: 맨 위에서는 바 배경이 없고, 내용이
-/// 밑으로 지나가기 시작하면 배경과 작은 제목이 나타난다. Android 는
-/// `SliverAppBar.large`.
+/// iOS 는 큰 제목이 내용과 같이 스크롤돼 올라가고, 위에는 유리 버튼만 떠
+/// 있다(가운데 작은 제목으로 줄어들지 않는다). Android 는 `SliverAppBar.large`.
 ///
 /// 탭 바 자리는 여기서 비운다. 탭 바 자체는 [TabHost] 가 그린다.
 class TpPage extends StatelessWidget {
@@ -248,18 +246,41 @@ class TpPage extends StatelessWidget {
         ),
       );
     }
-    return CupertinoSliverNavigationBar(
-      largeTitle: titleText,
-      middle: titleText,
-      alwaysShowMiddle: false,
-      leading: lead,
-      trailing: trail,
-      automaticallyImplyLeading: false,
-      automaticallyImplyTitle: false,
-      transitionBetweenRoutes: false,
-      border: null,
-      backgroundColor: sys.background.withValues(alpha: .92),
-      padding: const EdgeInsetsDirectional.symmetric(horizontal: 16),
+    // 큰 제목은 내용과 같이 올라가고, 바에는 버튼만 남는다. 줄어든 작은
+    // 제목이 가운데 붙는 옛 방식은 Liquid Glass 툴바와 안 맞는다.
+    final top = MediaQuery.paddingOf(context).top;
+    return SliverMainAxisGroup(
+      slivers: <Widget>[
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _GlassEdge(
+            top: top,
+            color: sys.background,
+            leading: lead,
+            trailing: trail,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+            child: Semantics(
+              header: true,
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 34,
+                  height: 1.2,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: .4,
+                  color: sys.label,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -439,6 +460,70 @@ class _SmallBar extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_SmallBar old) => old.height != height || old.bar != bar;
+}
+
+/// 큰 제목 화면의 위 가장자리. 버튼만 있고 제목은 없다.
+///
+/// 배경은 바탕색에서 투명으로 번지는 띠다. 내용이 상태 막대·버튼 뒤로 지나갈
+/// 때 글자가 겹쳐 읽히지 않게 할 만큼만. 띠는 탭을 받지 않는다.
+class _GlassEdge extends SliverPersistentHeaderDelegate {
+  _GlassEdge({
+    required this.top,
+    required this.color,
+    this.leading,
+    this.trailing,
+  });
+
+  final double top;
+  final Color color;
+  final Widget? leading;
+  final Widget? trailing;
+
+  static const double bar = 45;
+
+  @override
+  double get minExtent => top + bar;
+
+  @override
+  double get maxExtent => top + bar;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlaps) =>
+      Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    color,
+                    color.withValues(alpha: .85),
+                    color.withValues(alpha: 0),
+                  ],
+                  stops: const <double>[0, .55, 1],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            top: top,
+            height: bar,
+            child: Row(children: <Widget>[?leading, const Spacer(), ?trailing]),
+          ),
+        ],
+      );
+
+  @override
+  bool shouldRebuild(_GlassEdge old) =>
+      old.top != top ||
+      old.color != color ||
+      old.leading != leading ||
+      old.trailing != trailing;
 }
 
 /// iOS 26 툴바 버튼. 44pt 유리 원, 글자면 유리 캡슐, 저장은 액센트 캡슐.
