@@ -1198,16 +1198,44 @@ class ProfileNotifier extends AsyncNotifier<TpProfile> {
     return ok;
   }
 
+  /// 올리기가 이보다 오래 걸리면 실패로 친다. 이전 사진은 그대로 남는다.
+  static const Duration photoTimeout = Duration(seconds: 20);
+
   /// 사진을 올리고 프로필에 붙인다. 주소를 돌려주고, 실패하면 null.
-  Future<String?> uploadPhoto(Uint8List bytes) async {
+  Future<String?> uploadPhoto(
+    Uint8List bytes, {
+    void Function(double)? onProgress,
+  }) async {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return null;
 
-    final url = await ref.read(profileServiceProvider).uploadPhoto(uid, bytes);
-    if (url == null) return null;
+    final url = await ref
+        .read(profileServiceProvider)
+        .uploadPhoto(uid, bytes, onProgress: onProgress)
+        .timeout(photoTimeout, onTimeout: () => null);
+    if (url == null || !ref.mounted) return null;
 
     final next = (state.value ?? const TpProfile()).copyWith(photoUrl: url);
     return await save(next) ? url : null;
+  }
+
+  /// 사진을 뗀다. 문서에서 먼저 지우고 파일은 그다음. 파일을 못 지워도
+  /// 화면은 지운 상태다.
+  Future<bool> removePhoto() async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return false;
+
+    final current = state.value ?? const TpProfile();
+    // copyWith 는 null 을 "안 건드림"으로 읽는다. 새로 만든다.
+    final next = TpProfile(
+      username: current.username,
+      pronouns: current.pronouns,
+      phone: current.phone,
+      gender: current.gender,
+    );
+    if (!await save(next)) return false;
+    await ref.read(profileServiceProvider).removePhoto(uid);
+    return true;
   }
 }
 

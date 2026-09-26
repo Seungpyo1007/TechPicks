@@ -1,15 +1,22 @@
+import 'dart:async' show unawaited;
+
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/shell/tp_shell.dart';
+import '../../app/theme/tp_sys.dart';
+import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
+import '../../core/error_reporter.dart';
 import '../../data/repository/catalog_repository.dart';
 import '../../data/service/link_opener.dart';
 import '../../domain/model/tp_weights.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_link_line.dart';
+import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_surface.dart';
 
 /// 데이터 출처.
@@ -33,6 +40,12 @@ class SourcesScreen extends ConsumerWidget {
     final type = context.tpText;
     final catalog = ref.watch(catalogProvider).value;
     final weights = ref.watch(weightsProvider);
+    final indexNote = weights == TpWeights.defaults
+        ? K.indexNote.tr()
+        : K.indexNoteCustom.tr();
+    if (context.tp.isGlass) {
+      return _iosSources(context, ref, catalog, indexNote);
+    }
 
     // 밀려 들어온 화면이다. 뒤로 버튼은 다른 푸시 화면처럼 헤더 왼쪽에 둔다.
     return TpShell(
@@ -115,12 +128,7 @@ class SourcesScreen extends ConsumerWidget {
             // **기본 가중치일 때만** 확정 문구를 쓴다. 그 문구가
             // 25/25/20/20/10 을 못박는데 You 에서 바꿀 수 있어서, 슬라이더를
             // 움직인 사람에게 그대로 보이면 거짓말이 된다.
-            Text(
-              weights == TpWeights.defaults
-                  ? K.indexNote.tr()
-                  : K.indexNoteCustom.tr(),
-              style: type.caption,
-            ),
+            Text(indexNote, style: type.caption),
             const SizedBox(height: 14),
             Text(K.sourcesPerDevice.tr(), style: type.caption),
             const SizedBox(height: 14),
@@ -132,6 +140,87 @@ class SourcesScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// iOS 보드: 작은 제목, 설정 앱식 묶음 줄. 링크는 줄, 개수도 줄 하나씩.
+  Widget _iosSources(
+    BuildContext context,
+    WidgetRef ref,
+    Catalog? catalog,
+    String indexNote,
+  ) {
+    final sys = context.sys;
+    Future<void> open(Uri url) async {
+      try {
+        await ref.read(linkOpenerProvider).open(url);
+      } catch (e, s) {
+        TpErrors.record(e, s, reason: 'link.open');
+      }
+    }
+
+    Widget link(String label, Uri url) => TpRow(
+      title: label,
+      leading: const TpIconTile(
+        icon: CupertinoIcons.doc_text_fill,
+        color: Color(0xFF8E8E93),
+      ),
+      onTap: () => unawaited(open(url)),
+    );
+
+    return TpPage(
+      title: K.sources.tr(),
+      largeTitle: false,
+      onBack: onBack,
+      slivers: <Widget>[
+        SliverToBoxAdapter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 8, 32, 20),
+                child: Text(
+                  K.sourcesIntro.tr(),
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.38,
+                    color: sys.label2,
+                  ),
+                ),
+              ),
+              // 카탈로그가 스스로 들고 온 출처 문자열을 아래에 둔다. 손으로
+              // 적지 않는다.
+              TpGroup(
+                header: K.sourcesDataset.tr(),
+                footer: catalog?.source ?? K.dataSource.tr(),
+                children: <Widget>[
+                  link(K.sourcesRepo.tr(), TpUrls.techApi),
+                  link(K.sourcesLicense.tr(), TpUrls.license),
+                ],
+              ),
+              if (catalog != null)
+                TpGroup(
+                  header: K.sourcesContents.tr(),
+                  footer: K.sourcesPerDevice.tr(),
+                  children: <Widget>[
+                    for (final line in _contents(catalog)) TpRow(title: line),
+                    TpRow(
+                      title: K.sourcesVersion.tr(
+                        args: <String>['${catalog.version}'],
+                      ),
+                    ),
+                  ],
+                ),
+              TpGroup(
+                footer: indexNote,
+                children: <Widget>[
+                  link(K.sourcesAppCode.tr(), TpUrls.appLicense),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

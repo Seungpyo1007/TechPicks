@@ -306,11 +306,15 @@ class TpNativeMenuEntry {
     required this.label,
     this.checked = false,
     this.destructive = false,
+    this.symbol,
   });
 
   final String label;
   final bool checked;
   final bool destructive;
+
+  /// 줄 오른쪽 SF Symbol.
+  final String? symbol;
 }
 
 /// iOS 26 툴바의 메뉴 버튼. 유리 원을 누르면 `UIMenu` 가 펼쳐진다.
@@ -434,6 +438,47 @@ class TpNativeMenuPicker extends StatelessWidget {
           id: '$i',
           title: entries[i].label,
           isChecked: entries[i].checked,
+        ),
+    ],
+    onItemSelected: (id) => onSelected(int.parse(id)),
+  );
+}
+
+/// 글자 버튼에서 펼쳐지는 시스템 풀다운. 프로필 수정의 "사진 바꾸기".
+///
+/// 유리 캡슐이 아니라 링크 색 글자다. 누르면 그 자리에서 UIMenu 가 펼쳐진다.
+class TpNativeMenuLink extends StatelessWidget {
+  const TpNativeMenuLink({
+    super.key,
+    required this.label,
+    required this.entries,
+    required this.onSelected,
+    this.color,
+  });
+
+  final String label;
+  final List<TpNativeMenuEntry> entries;
+  final ValueChanged<int> onSelected;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassMenu(
+    // 항목이 바뀌면(사진이 생기면 "지우기") 새로 만든다.
+    key: ValueKey<int>(entries.length),
+    label: label,
+    color: color,
+    labelTextStyle: const TextStyle(fontSize: 17),
+    accessibilityLabel: label,
+    height: 44,
+    items: <LiquidGlassMenuItem>[
+      for (var i = 0; i < entries.length; i++)
+        LiquidGlassMenuItem(
+          id: '$i',
+          title: entries[i].label,
+          icon: entries[i].symbol == null
+              ? null
+              : NativeLiquidGlassIcon.sfSymbol(entries[i].symbol!),
+          isDestructive: entries[i].destructive,
         ),
     ],
     onItemSelected: (id) => onSelected(int.parse(id)),

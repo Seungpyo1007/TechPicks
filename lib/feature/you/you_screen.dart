@@ -37,11 +37,13 @@ import '../../shared/widgets/tp_sheet.dart';
 import '../../shared/widgets/tp_slider.dart';
 import '../../shared/widgets/tp_switch.dart';
 import '../../shared/widgets/tp_number.dart';
+import '../../shared/widgets/tp_alert.dart';
 import '../../shared/widgets/tp_arrive.dart';
 import '../../shared/widgets/tp_pop_in.dart';
 
 part 'account_screen.dart';
 part 'priorities_screen.dart';
+part 'you_header.dart';
 
 /// 내 정보.
 class YouScreen extends ConsumerStatefulWidget {
@@ -95,6 +97,10 @@ class YouScreen extends ConsumerStatefulWidget {
   /// (test/unit/version_test.dart 가 확인한다).
   static const String version = '2.0.0';
   static const String versionLine = 'TechPicks version $version · Apache-2.0';
+
+  /// 사진이 없을 때 원에 들어가는 이니셜. 프로필 수정도 같은 걸 쓴다.
+  static String initials(String? name, String? email) =>
+      _ProfileHeader.initials(name, email);
 
   @override
   ConsumerState<YouScreen> createState() => _YouScreenState();
@@ -176,45 +182,85 @@ class _YouScreenState extends ConsumerState<YouScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const SizedBox(height: 8),
-              TpGroup(
-                footer: _notice,
-                children: <Widget>[
-                  arrive(
-                    hasAccount
-                        ? _ProfileHeader(
-                            photoUrl: ref
-                                .watch(profileProvider)
-                                .value
-                                ?.photoUrl,
-                            name: name,
-                            email: email,
-                            method: widget.method,
-                            unverified: !widget.emailVerified,
-                            onEdit: () => unawaited(_openAccount()),
-                          )
-                        : _SignedOut(onSignIn: widget.onSignIn),
+              // iOS 는 84 원 카드와 통계 띠, 그 아래 "내 선택" 두 칸.
+              if (glass && hasAccount)
+                arrive(
+                  _ProfileCard(
+                    photoUrl: ref.watch(profileProvider).value?.photoUrl,
+                    name: name,
+                    email: email,
+                    method: widget.method,
+                    unverified: !widget.emailVerified,
+                    onEdit: () => unawaited(_openAccount()),
                   ),
-                ],
-              ),
-              TpGroup(
-                children: <Widget>[
-                  arrive(
-                    _SettingRow(
-                      label: K.weights.tr(),
-                      value: _weightsSummary(weights),
-                      leading: TpIconTile(
-                        icon: icon(
-                          CupertinoIcons.slider_horizontal_3,
-                          Icons.tune,
-                        ),
-                      ),
-                      onTap: () => unawaited(_openPriorities()),
+                )
+              else
+                TpGroup(
+                  footer: _notice,
+                  // 손님 머리는 제 여백이 있는 면이라 M3 줄로 펴지 않는다.
+                  m3: hasAccount,
+                  children: <Widget>[
+                    arrive(
+                      hasAccount
+                          ? _ProfileHeader(
+                              photoUrl: ref
+                                  .watch(profileProvider)
+                                  .value
+                                  ?.photoUrl,
+                              name: name,
+                              email: email,
+                              method: widget.method,
+                              unverified: !widget.emailVerified,
+                              onEdit: () => unawaited(_openAccount()),
+                            )
+                          : _SignedOut(onSignIn: widget.onSignIn),
+                    ),
+                  ],
+                ),
+              if (glass && hasAccount && _notice != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 16),
+                  child: Text(
+                    _notice!,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.38,
+                      color: context.sys.label2,
                     ),
                   ),
-                  arrive(_YourDevice(onTap: widget.onDeviceTap)),
-                ],
-              ),
+                ),
+              if (glass)
+                arrive(
+                  _YourPicks(
+                    onWeights: () => unawaited(_openPriorities()),
+                    onDeviceTap: widget.onDeviceTap,
+                  ),
+                )
+              else ...<Widget>[
+                const TpM3Divider(),
+                TpGroup(
+                  m3: true,
+                  children: <Widget>[
+                    arrive(
+                      _SettingRow(
+                        label: K.weights.tr(),
+                        value: _weightsSummary(weights),
+                        leading: TpIconTile(
+                          icon: icon(
+                            CupertinoIcons.slider_horizontal_3,
+                            Icons.tune,
+                          ),
+                        ),
+                        onTap: () => unawaited(_openPriorities()),
+                      ),
+                    ),
+                    arrive(_YourDevice(onTap: widget.onDeviceTap)),
+                  ],
+                ),
+              ],
+              if (glass) _BigHeader(K.settings.tr()) else const TpM3Divider(),
               TpGroup(
+                m3: true,
                 footer: _fxLine(rate),
                 children: <Widget>[
                   arrive(
@@ -321,7 +367,9 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                   ),
                 ],
               ),
+              if (!glass) const TpM3Divider(),
               TpGroup(
+                m3: true,
                 footer: _coachNotice,
                 children: <Widget>[
                   arrive(
@@ -484,13 +532,24 @@ class _YourDevice extends ConsumerWidget {
 }
 
 /// 기기 안 AI 를 못 쓰는 이유를 한 줄로. 쓸 수 있으면 null.
-String? _onDeviceNote(BuiltInAiAvailability? status) => switch (status) {
-  null ||
-  BuiltInAiAvailability.available ||
-  BuiltInAiAvailability.downloadable ||
-  BuiltInAiAvailability.downloading => null,
-  BuiltInAiAvailability.unavailableDisabled => K.aiEngineDisabled,
-  _ => K.aiEngineUnavailable,
+///
+/// Android 에는 Apple Intelligence 가 없다. 꺼져 있어도 못 돌린다고만 쓴다.
+String? _onDeviceNote(BuiltInAiAvailability? status, {bool apple = true}) =>
+    switch (status) {
+      null ||
+      BuiltInAiAvailability.available ||
+      BuiltInAiAvailability.downloadable ||
+      BuiltInAiAvailability.downloading => null,
+      BuiltInAiAvailability.unavailableDisabled when apple =>
+        K.aiEngineDisabled,
+      _ => K.aiEngineUnavailable,
+    };
+
+/// 선택지 아래 한 줄. 무엇이 어디로 가는지.
+String _aiEngineBody(TpAiEngine engine) => switch (engine) {
+  TpAiEngine.auto => K.aiEngineAutoBody,
+  TpAiEngine.onDevice => K.aiEngineOnDeviceBody,
+  TpAiEngine.cloud => K.aiEngineCloudBody,
 };
 
 String _themeLabel(ThemeMode mode) => switch (mode) {
@@ -520,7 +579,7 @@ class _AiEnginePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(aiEngineProvider);
-    final note = _onDeviceNote(status);
+    final note = _onDeviceNote(status, apple: context.tp.isGlass);
     return TpPage(
       title: K.aiEngine.tr(),
       largeTitle: false,
@@ -530,11 +589,13 @@ class _AiEnginePage extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.only(top: 16),
             child: TpGroup(
+              m3: true,
               footer: note?.tr(),
               children: <Widget>[
                 for (final option in TpAiEngine.values)
                   TpRow(
                     title: option.key.tr(),
+                    subtitle: _aiEngineBody(option).tr(),
                     checked: option == current,
                     dimmed: option == TpAiEngine.onDevice && note != null,
                     chevron: false,
@@ -639,8 +700,8 @@ class _ProfileHeader extends StatelessWidget {
       title: name ?? email ?? '',
       subtitle: subtitle.isEmpty ? null : subtitle,
       titleStyle: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontSize: context.tp.isGlass ? 20 : 22,
+        fontWeight: context.tp.isGlass ? FontWeight.w600 : FontWeight.w400,
         color: sys.label,
       ),
       leading: avatar,
@@ -955,11 +1016,58 @@ Future<void> _confirmLogout(BuildContext context, VoidCallback onLogout) async {
 /// 계정 삭제 확인. 이메일 가입이면 비밀번호도 받는다(다시 인증).
 ///
 /// 지우기로 하면 비밀번호(없으면 빈 문자열), 그만두면 null.
+///
+/// iOS 는 iOS 26 알림 모양(캡슐 버튼)으로 우리가 그린다. 시스템 알림은
+/// 비밀번호 칸을 못 붙인다.
 Future<String?> _confirmDelete(
   BuildContext context, {
   required bool askPassword,
 }) {
   final password = TextEditingController();
+  if (context.tp.isGlass) {
+    final sys = context.sys;
+    return showTpAlert<String>(
+          context: context,
+          title: K.deleteAccount.tr(),
+          message: K.deleteConfirm.tr(),
+          content: askPassword
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Text(
+                      K.deletePassword.tr(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: sys.label2),
+                    ),
+                    const SizedBox(height: 10),
+                    CupertinoTextField(
+                      controller: password,
+                      obscureText: true,
+                      autofocus: true,
+                      autofillHints: const <String>[AutofillHints.password],
+                      placeholder: K.passwordLabel.tr(),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: sys.fill3,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ],
+                )
+              : null,
+          actions: <TpAlertAction<String>>[
+            TpAlertAction<String>(label: K.cancel.tr(), cancel: true),
+            TpAlertAction<String>(
+              label: K.delete.tr(),
+              destructive: true,
+              // 비밀번호는 닫힌 뒤 칸에서 읽는다.
+              value: '',
+            ),
+          ],
+        )
+        .then((answer) => answer == null ? null : password.text)
+        .whenComplete(password.dispose);
+  }
   final body = Column(
     mainAxisSize: MainAxisSize.min,
     children: <Widget>[
@@ -968,64 +1076,34 @@ Future<String?> _confirmDelete(
         const SizedBox(height: 8),
         Text(K.deletePassword.tr()),
         const SizedBox(height: 10),
-        if (context.tp.isGlass)
-          CupertinoTextField(
-            controller: password,
-            obscureText: true,
-            autofocus: true,
-            autofillHints: const <String>[AutofillHints.password],
-            placeholder: K.passwordLabel.tr(),
-          )
-        else
-          TextField(
-            controller: password,
-            obscureText: true,
-            autofocus: true,
-            autofillHints: const <String>[AutofillHints.password],
-            decoration: InputDecoration(labelText: K.passwordLabel.tr()),
-          ),
+        TextField(
+          controller: password,
+          obscureText: true,
+          autofocus: true,
+          autofillHints: const <String>[AutofillHints.password],
+          decoration: InputDecoration(labelText: K.passwordLabel.tr()),
+        ),
       ],
     ],
   );
-  final Future<String?> shown = context.tp.isGlass
-      ? showCupertinoDialog<String>(
-          context: context,
-          builder: (dialog) => CupertinoAlertDialog(
-            title: Text(K.deleteAccount.tr()),
-            content: body,
-            actions: <Widget>[
-              CupertinoDialogAction(
-                isDefaultAction: true,
-                onPressed: () => Navigator.of(dialog).pop(),
-                child: Text(K.cancel.tr()),
-              ),
-              CupertinoDialogAction(
-                isDestructiveAction: true,
-                onPressed: () => Navigator.of(dialog).pop(password.text),
-                child: Text(K.delete.tr()),
-              ),
-            ],
+  return showDialog<String>(
+    context: context,
+    builder: (dialog) => AlertDialog(
+      title: Text(K.deleteAccount.tr()),
+      content: body,
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(),
+          child: Text(K.cancel.tr()),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(password.text),
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(dialog).colorScheme.error,
           ),
-        )
-      : showDialog<String>(
-          context: context,
-          builder: (dialog) => AlertDialog(
-            title: Text(K.deleteAccount.tr()),
-            content: body,
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(dialog).pop(),
-                child: Text(K.cancel.tr()),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(dialog).pop(password.text),
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(dialog).colorScheme.error,
-                ),
-                child: Text(K.delete.tr()),
-              ),
-            ],
-          ),
-        );
-  return shown.whenComplete(password.dispose);
+          child: Text(K.delete.tr()),
+        ),
+      ],
+    ),
+  ).whenComplete(password.dispose);
 }

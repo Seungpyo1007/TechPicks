@@ -78,6 +78,8 @@
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<!-- 프로필 사진을 고를 때만 앨범을 연다. 카메라는 안 쓴다. -->
+		<key>NSCameraUsageDescription</key>
+		<string>Take a profile photo. It only shows on your account.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Pick a profile photo from your library.</string>
 		<key>UILaunchStoryboardName</key>

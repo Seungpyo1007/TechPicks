@@ -40,6 +40,15 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     final glass = context.tp.isGlass;
     IconData icon(IconData ios, IconData android) => glass ? ios : android;
     final email = widget.email;
+    final VoidCallback? logout = widget.onLogout == null
+        ? null
+        : () => unawaited(
+            _confirmLogout(context, () {
+              widget.onLogout!();
+              Navigator.of(context).maybePop();
+            }),
+          );
+    void delete() => unawaited(_deleteAccount());
     return TpPage(
       title: K.account.tr(),
       largeTitle: false,
@@ -55,10 +64,14 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                 name: widget.name,
                 email: email,
                 method: widget.method,
+                verified: (email?.isNotEmpty ?? false)
+                    ? widget.emailVerified
+                    : null,
               ),
               const SizedBox(height: 24),
               if (!widget.emailVerified)
                 TpGroup(
+                  m3: true,
                   children: <Widget>[
                     TpArrive(
                       index: 0,
@@ -80,7 +93,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     ),
                   ],
                 ),
+              if (!glass && !widget.emailVerified) const TpM3Divider(),
               TpGroup(
+                m3: true,
                 footer: _notice,
                 children: <Widget>[
                   TpArrive(
@@ -112,35 +127,42 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     ),
                 ],
               ),
-              TpGroup(
-                children: <Widget>[
-                  TpArrive(
-                    index: 3,
-                    child: TpRow(
+              // iOS 는 로그아웃과 계정 삭제가 카드 두 장이고, 삭제 아래에
+              // 무엇이 지워지는지 한 줄. Android 는 면 없는 빨간 줄 둘.
+              if (glass) ...<Widget>[
+                TpArrive(
+                  index: 3,
+                  child: _AccountAction(label: K.logout.tr(), onTap: logout),
+                ),
+                TpArrive(
+                  index: 4,
+                  child: _AccountAction(
+                    label: K.deleteAccount.tr(),
+                    destructive: true,
+                    footer: K.deleteNote.tr(),
+                    onTap: delete,
+                  ),
+                ),
+              ] else ...<Widget>[
+                const TpM3Divider(),
+                TpGroup(
+                  m3: true,
+                  children: <Widget>[
+                    TpRow(
                       title: K.logout.tr(),
                       destructive: true,
                       chevron: false,
-                      onTap: widget.onLogout == null
-                          ? null
-                          : () => unawaited(
-                              _confirmLogout(context, () {
-                                widget.onLogout!();
-                                Navigator.of(context).maybePop();
-                              }),
-                            ),
+                      onTap: logout,
                     ),
-                  ),
-                  TpArrive(
-                    index: 4,
-                    child: TpRow(
+                    TpRow(
                       title: K.deleteAccount.tr(),
                       destructive: true,
                       chevron: false,
-                      onTap: () => unawaited(_deleteAccount()),
+                      onTap: delete,
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -205,14 +227,96 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   );
 }
 
+/// iOS 계정 화면의 로그아웃·삭제 한 장. 가운데 글자 카드.
+class _AccountAction extends StatelessWidget {
+  const _AccountAction({
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+    this.footer,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final bool destructive;
+
+  /// 카드 아래 한 줄.
+  final String? footer;
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, footer == null ? 10 : 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Semantics(
+            button: onTap != null,
+            label: label,
+            excludeSemantics: true,
+            onTap: onTap,
+            child: TpTappable(
+              onTap: onTap,
+              press: true,
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: sys.cell,
+                  borderRadius: BorderRadius.circular(TpGroup.radius),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 17,
+                    color: onTap == null
+                        ? sys.label3
+                        : destructive
+                        ? sys.destructive
+                        : sys.label,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (footer != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 7, 16, 0),
+              child: Text(
+                footer!,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, height: 1.38, color: sys.label2),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 /// 계정 화면 머리. 큰 사진, 이름, 주소와 로그인 방법.
 class _AccountHero extends StatelessWidget {
-  const _AccountHero({this.photoUrl, this.name, this.email, this.method});
+  const _AccountHero({
+    this.photoUrl,
+    this.name,
+    this.email,
+    this.method,
+    this.verified,
+  });
 
   final String? photoUrl;
   final String? name;
   final String? email;
   final AuthMethod? method;
+
+  /// 메일 확인 여부. 주소가 없으면 null 이고 알약도 없다.
+  final bool? verified;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +374,21 @@ class _AccountHero extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 15, color: sys.label2),
           ),
+        ],
+        // iOS 만. Android 보드는 주소 줄로 끝난다.
+        if (verified != null && context.tp.isGlass) ...<Widget>[
+          const SizedBox(height: 8),
+          verified!
+              ? _Badge(
+                  label: K.emailConfirmed.tr(),
+                  icon: CupertinoIcons.checkmark_seal,
+                  color: const Color(0xFF248A3D),
+                )
+              : _Badge(
+                  label: K.unverified.tr(),
+                  icon: CupertinoIcons.envelope,
+                  color: const Color(0xFFD04E00),
+                ),
         ],
       ],
     );
