@@ -396,3 +396,46 @@ class TpNativeIconButton extends StatelessWidget {
     iconColor: tint,
   );
 }
+
+/// 설정 줄 오른쪽의 풀다운 값 버튼. 유리 캡슐에 "값 ⌃⌄", 누르면 UIMenu.
+class TpNativeMenuPicker extends StatelessWidget {
+  const TpNativeMenuPicker({
+    super.key,
+    required this.value,
+    required this.label,
+    required this.entries,
+    required this.onSelected,
+  });
+
+  /// 지금 값. 캡슐에 보인다.
+  final String value;
+
+  /// 줄 이름(스크린 리더).
+  final String label;
+  final List<TpNativeMenuEntry> entries;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassMenu(
+    // 값이 바뀌면 캡슐 글자도 바뀌어야 한다. 네이티브는 처음 값만 받으므로
+    // 새로 만든다.
+    key: ValueKey<String>(value),
+    label: value,
+    icon: NativeLiquidGlassIcon.sfSymbol('chevron.up.chevron.down'),
+    iconSize: 11,
+    glass: true,
+    imageTrailing: true,
+    height: 36,
+    labelTextStyle: const TextStyle(fontSize: 15),
+    accessibilityLabel: '$label, $value',
+    items: <LiquidGlassMenuItem>[
+      for (var i = 0; i < entries.length; i++)
+        LiquidGlassMenuItem(
+          id: '$i',
+          title: entries[i].label,
+          isChecked: entries[i].checked,
+        ),
+    ],
+    onItemSelected: (id) => onSelected(int.parse(id)),
+  );
+}

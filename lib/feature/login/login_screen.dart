@@ -19,7 +19,6 @@ import '../../shared/figures/tp_figure.dart';
 import '../../shared/figures/tp_figures.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
-import '../../shared/widgets/tp_pop_in.dart';
 import '../../shared/widgets/tp_pulse.dart';
 
 /// 로그인이 안 된 까닭을 사람 말로. 취소면 null — 스스로 닫은 사람에게 오류를
@@ -65,7 +64,7 @@ class LoginScreen extends StatefulWidget {
   }
 
   /// 성공 체크를 보여주는 시간.
-  static const Duration doneHold = Duration(milliseconds: 700);
+  static const Duration doneHold = Duration(milliseconds: 1400);
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -74,6 +73,12 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<NavigatorState> _nav = GlobalKey<NavigatorState>();
   bool _done = false;
+
+  /// 안쪽 단계가 몇 겹 쌓였는지. 첫 단계면 밖의 뒤로(밀어서 뒤로 포함)가
+  /// 이 화면을 닫고, 더 들어가 있으면 안쪽 한 단계만 돌아간다.
+  late final _Depth _depth = _Depth(() {
+    if (mounted) setState(() {});
+  });
 
   Route<void> _route(Widget child) => context.tp.isGlass
       ? CupertinoPageRoute<void>(builder: (_) => child)
@@ -114,8 +119,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final sys = context.sys;
     return PopScope(
-      // 안쪽 단계에서 뒤로 가면 시트를 닫지 말고 한 단계 돌아간다.
-      canPop: false,
+      // 안쪽 단계에서 뒤로 가면 화면을 닫지 말고 한 단계 돌아간다. 첫 단계면
+      // 그대로 나간다 — 그래야 iOS 가장자리 밀기로도 뒤로 간다.
+      canPop: _depth.value <= 1,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         final inner = _nav.currentState;
@@ -134,6 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
               enabled: !_done,
               child: Navigator(
                 key: _nav,
+                observers: <NavigatorObserver>[_depth],
                 onGenerateInitialRoutes: (_, _) => <Route<void>>[
                   _route(
                     _OptionsStep(
@@ -239,9 +246,11 @@ class _OptionsStepState extends ConsumerState<_OptionsStep> {
                   ? null
                   : TpBarButton(
                       action: TpBarAction(
-                        label: K.close.tr(),
-                        icon: glass ? CupertinoIcons.xmark : Icons.close,
-                        symbol: 'xmark',
+                        label: K.back.tr(),
+                        icon: glass
+                            ? CupertinoIcons.chevron_back
+                            : Icons.arrow_back,
+                        symbol: 'chevron.backward',
                         onTap: widget.onClose,
                       ),
                     ),
@@ -840,49 +849,242 @@ class _ErrorLine extends StatelessWidget {
   );
 }
 
-/// 성공: 체크 원이 튀고 "로그인했습니다".
-class _Done extends StatelessWidget {
+/// 성공 장면. 액센트 원이 튀어 오르며 체크가 그려지고, 고리 두 겹이 퍼지고,
+/// 색 조각이 사방으로 터졌다 떨어진다. 그 아래 "로그인했습니다"와 계정 이름.
+///
+/// 동작 줄이기면 끝 장면만 보인다.
+class _Done extends ConsumerStatefulWidget {
   const _Done();
+
+  @override
+  ConsumerState<_Done> createState() => _DoneState();
+}
+
+class _DoneState extends ConsumerState<_Done>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1300),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_c.isAnimating || _c.value > 0) return;
+    if (context.motion.isReduced) {
+      _c.value = 1;
+    } else {
+      _c.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  static double _span(
+    double t,
+    double a,
+    double b, [
+    Curve c = Curves.easeOutCubic,
+  ]) {
+    if (t <= a) return 0;
+    if (t >= b) return 1;
+    return c.transform((t - a) / (b - a));
+  }
 
   @override
   Widget build(BuildContext context) {
     final sys = context.sys;
+    final user = ref.watch(currentUserProvider);
+    final who = user?.name ?? user?.email;
     return ColoredBox(
       color: sys.background,
       child: Semantics(
         liveRegion: true,
-        label: K.signedIn.tr(),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            TpPopIn(
-              from: 0.4,
-              child: Container(
-                width: 96,
-                height: 96,
-                decoration: const BoxDecoration(
-                  color: TpSys.accent,
-                  shape: BoxShape.circle,
+        label: <String>[K.signedIn.tr(), ?who].join(', '),
+        child: ExcludeSemantics(
+          child: AnimatedBuilder(
+            animation: _c,
+            builder: (context, _) {
+              final t = _c.value;
+              final pop = _span(t, 0, .35, Curves.easeOutBack);
+              final text = _span(t, .35, .6);
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    SizedBox.square(
+                      dimension: 260,
+                      child: CustomPaint(
+                        painter: _Burst(t: t, accent: TpSys.accent),
+                        child: Center(
+                          child: Transform.scale(
+                            scale: pop,
+                            child: Container(
+                              width: 104,
+                              height: 104,
+                              decoration: BoxDecoration(
+                                color: TpSys.accent,
+                                shape: BoxShape.circle,
+                                boxShadow: <BoxShadow>[
+                                  BoxShadow(
+                                    color: TpSys.accent.withValues(alpha: .35),
+                                    blurRadius: 30 * pop,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              child: CustomPaint(
+                                painter: _Check(_span(t, .18, .5)),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Opacity(
+                      opacity: text,
+                      child: Transform.translate(
+                        offset: Offset(0, (1 - text) * 12),
+                        child: Column(
+                          children: <Widget>[
+                            Text(
+                              K.signedIn.tr(),
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w700,
+                                color: sys.label,
+                              ),
+                            ),
+                            if (who != null) ...<Widget>[
+                              const SizedBox(height: 6),
+                              Text(
+                                who,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  color: sys.label2,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.check, color: Colors.white, size: 54),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ExcludeSemantics(
-              child: Text(
-                K.signedIn.tr(),
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: sys.label,
-                ),
-              ),
-            ),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
+}
+
+/// 원 안의 흰 체크. [k] 만큼 그어진다.
+class _Check extends CustomPainter {
+  const _Check(this.k);
+
+  final double k;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (k <= 0) return;
+    final w = size.width;
+    final path = Path()
+      ..moveTo(w * .29, w * .52)
+      ..lineTo(w * .44, w * .66)
+      ..lineTo(w * .72, w * .37);
+    final metric = path.computeMetrics().first;
+    canvas.drawPath(
+      metric.extractPath(0, metric.length * k),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = w * .085
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..color = Colors.white,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_Check old) => old.k != k;
+}
+
+/// 퍼지는 고리 두 겹 + 사방으로 터졌다 떨어지는 색 조각.
+class _Burst extends CustomPainter {
+  const _Burst({required this.t, required this.accent});
+
+  final double t;
+  final Color accent;
+
+  static const List<Color> _colors = <Color>[
+    Color(0xFF0C78D8),
+    Color(0xFF34C759),
+    Color(0xFFFF9500),
+    Color(0xFFFF2D55),
+    Color(0xFFAF52DE),
+    Color(0xFF5AC8FA),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    // 고리: 원이 튀는 순간부터 바깥으로 퍼지며 옅어진다.
+    for (var i = 0; i < 2; i++) {
+      final k = ((t - .12 - .12 * i) / .55).clamp(0.0, 1.0);
+      if (k <= 0 || k >= 1) continue;
+      final r = 52 + 78 * Curves.easeOutCubic.transform(k);
+      canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3 * (1 - k) + .5
+          ..color = accent.withValues(alpha: .45 * (1 - k)),
+      );
+    }
+    // 조각: 정해진 각도로 튀어 나가고 중력으로 조금 떨어진다.
+    final k = ((t - .15) / .85).clamp(0.0, 1.0);
+    if (k <= 0) return;
+    const n = 28;
+    for (var i = 0; i < n; i++) {
+      final angle = i / n * 2 * math.pi + (i.isEven ? .12 : -.08);
+      final speed = 90 + (i * 37 % 50);
+      final out = Curves.easeOutCubic.transform(k) * speed;
+      final drop = 60 * k * k;
+      final p =
+          c +
+          Offset(
+            math.cos(angle) * (58 + out),
+            math.sin(angle) * (58 + out) + drop,
+          );
+      final fade = (1 - ((k - .55) / .45).clamp(0.0, 1.0));
+      final paint = Paint()
+        ..color = _colors[i % _colors.length].withValues(alpha: fade);
+      canvas.save();
+      canvas.translate(p.dx, p.dy);
+      canvas.rotate(angle + k * 6);
+      if (i % 3 == 0) {
+        canvas.drawCircle(Offset.zero, 3.2, paint);
+      } else {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: Offset.zero, width: 9, height: 4.5),
+            const Radius.circular(2),
+          ),
+          paint,
+        );
+      }
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_Burst old) => old.t != t;
 }
 
 /// 한 줄 입력. iOS 는 inset grouped 칸 안에 왼쪽 레이블 + 테두리 없는 필드,
@@ -983,5 +1185,34 @@ class LoginField extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// 안쪽 Navigator 의 깊이.
+class _Depth extends NavigatorObserver {
+  _Depth(this.onChange);
+
+  final VoidCallback onChange;
+  int value = 0;
+
+  void _changed() =>
+      WidgetsBinding.instance.addPostFrameCallback((_) => onChange());
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    value++;
+    _changed();
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    value--;
+    _changed();
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    value--;
+    _changed();
   }
 }

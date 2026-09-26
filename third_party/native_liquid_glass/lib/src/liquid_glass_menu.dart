@@ -107,6 +107,9 @@ class LiquidGlassMenu extends StatefulWidget {
   /// 스크린 리더 이름. 아이콘만 있는 버튼에 준다.
   final String? accessibilityLabel;
 
+  /// TechPicks 패치: 아이콘을 글자 뒤에(설정 앱의 "한국어 ⌃⌄" 같은 풀다운).
+  final bool imageTrailing;
+
   /// Named constructor for icon-only menu triggers.
   const LiquidGlassMenu.icon({
     super.key,
@@ -119,6 +122,7 @@ class LiquidGlassMenu extends StatefulWidget {
     this.height = 44,
     this.glass = false,
     this.accessibilityLabel,
+    this.imageTrailing = false,
   }) : label = null,
        labelTextStyle = null;
 
@@ -135,6 +139,7 @@ class LiquidGlassMenu extends StatefulWidget {
     this.height = 44,
     this.glass = false,
     this.accessibilityLabel,
+    this.imageTrailing = false,
   });
 
   @override
@@ -235,6 +240,7 @@ class _LiquidGlassMenuState extends State<LiquidGlassMenu>
       widget.menuTitle,
       widget.glass,
       widget.accessibilityLabel,
+      widget.imageTrailing,
     ]);
   }
 
@@ -261,6 +267,7 @@ class _LiquidGlassMenuState extends State<LiquidGlassMenu>
       'menuTitle': widget.menuTitle,
       'glass': widget.glass,
       'accessibilityLabel': widget.accessibilityLabel,
+      'imageTrailing': widget.imageTrailing,
     };
   }
 

@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme/tp_motion.dart';
+import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
@@ -130,16 +131,32 @@ class _YouScreenState extends ConsumerState<YouScreen> {
       String value,
       Widget leading,
       List<TpMenuItem> items,
-    ) => TpMenu(
-      items: items,
-      builder: (context, open) => _SettingRow(
-        label: label,
-        value: value,
-        leading: leading,
-        onTap: open,
-        menu: true,
-      ),
-    );
+    ) => TpNativeGlass.enabled
+        // iOS 26: 설정 앱처럼 줄 오른쪽 유리 풀다운 "값 ⌃⌄", 누르면 UIMenu.
+        ? TpRow(
+            title: label,
+            leading: leading,
+            chevron: false,
+            trailing: TpNativeMenuPicker(
+              value: value,
+              label: label,
+              entries: <TpNativeMenuEntry>[
+                for (final i in items)
+                  TpNativeMenuEntry(label: i.label, checked: i.checked),
+              ],
+              onSelected: (i) => items[i].onTap(),
+            ),
+          )
+        : TpMenu(
+            items: items,
+            builder: (context, open) => _SettingRow(
+              label: label,
+              value: value,
+              leading: leading,
+              onTap: open,
+              menu: true,
+            ),
+          );
 
     var row = 0;
     Widget arrive(Widget child) => TpArrive(index: row++, child: child);

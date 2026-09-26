@@ -139,6 +139,14 @@ final class LiquidGlassMenuPlatformView: NSObject, FlutterPlatformView {
       if let label { config.title = label }
       config.baseForegroundColor = color ?? .label
       config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
+      // TechPicks 패치: 풀다운 값 버튼. 글자 뒤에 작은 위아래 화살표.
+      if args?["imageTrailing"] as? Bool == true {
+        config.imagePlacement = .trailing
+        config.imagePadding = 5
+        config.preferredSymbolConfigurationForImage =
+          UIImage.SymbolConfiguration(pointSize: 11, weight: .semibold)
+        config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 14, bottom: 0, trailing: 14)
+      }
       button.configuration = config
       if let label { button.accessibilityLabel = label }
       if let a11y = args?["accessibilityLabel"] as? String { button.accessibilityLabel = a11y }
