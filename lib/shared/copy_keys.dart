@@ -200,6 +200,8 @@ abstract final class K {
   static const String searchKindPhone = 'searchKindPhone';
   static const String searchKindCpu = 'searchKindCpu';
   static const String searchKindLaptop = 'searchKindLaptop';
+  static const String searchLoading = 'searchLoading';
+  static const String recentClear = 'recentClear';
   static const String searchCount = 'searchCount';
 
   /// 갈래 라벨. SearchKind 가 아니라 여기 둔다 — 도메인 열거형이 화면

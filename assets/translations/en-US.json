@@ -304,6 +304,8 @@
   "searchKindPhone": "Phone",
   "searchKindCpu": "Processor",
   "searchKindLaptop": "Laptop",
+  "searchLoading": "Loading devices…",
+  "recentClear": "Clear",
   "searchCount": "{} results",
   "currencyAuto": "Match language",
   "currencyUsd": "US dollar",
