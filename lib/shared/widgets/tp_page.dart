@@ -20,6 +20,50 @@ import '../coach/tp_coach.dart';
 import 'tp_arrive.dart';
 import 'tp_surface.dart';
 
+/// 화면 맨 위 버튼 줄. **모든 화면이 같은 자리**다: 안전 영역 바로 아래
+/// [height] 줄, 좌우 [side], 44pt 버튼이 세로 가운데. 로그인 화면의 X 가 기준.
+///
+/// 한동안 화면마다 달랐다 — 큰 제목 화면 +0.5, 작은 제목 +8, 3D 뷰어·질문 +8,
+/// 온보딩 +14. 넘나들 때 버튼이 들썩였다.
+class TpTopBar extends StatelessWidget {
+  const TpTopBar({
+    super.key,
+    this.leading,
+    this.middle,
+    this.trailing,
+    this.safeTop = true,
+  });
+
+  static const double height = 52;
+  static const double side = 16;
+
+  final Widget? leading;
+  final Widget? middle;
+  final Widget? trailing;
+
+  /// 안전 영역을 여기서 비울지. 이미 SafeArea 안이면 false.
+  final bool safeTop;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.only(
+      top: safeTop ? MediaQuery.paddingOf(context).top : 0,
+    ),
+    child: SizedBox(
+      height: height,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: side),
+        child: NavigationToolbar(
+          leading: leading,
+          middle: middle,
+          trailing: trailing,
+          middleSpacing: 12,
+        ),
+      ),
+    ),
+  );
+}
+
 /// 툴바 버튼 하나.
 class TpBarAction {
   const TpBarAction({
@@ -242,17 +286,23 @@ class TpPage extends StatelessWidget {
       return SliverPersistentHeader(
         pinned: true,
         delegate: _SmallBar(
-          height: top + 52,
-          bar: CupertinoNavigationBar(
-            middle: titleText,
-            leading: lead,
-            trailing: trail,
-            automaticallyImplyLeading: false,
-            automaticallyImplyMiddle: false,
-            transitionBetweenRoutes: false,
-            border: null,
-            backgroundColor: sys.background.withValues(alpha: .92),
-            padding: const EdgeInsetsDirectional.symmetric(horizontal: 16),
+          height: top + TpTopBar.height,
+          bar: ColoredBox(
+            color: sys.background.withValues(alpha: .92),
+            child: TpTopBar(
+              leading: lead,
+              trailing: trail,
+              middle: DefaultTextStyle(
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: sys.label,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                child: titleText,
+              ),
+            ),
           ),
         ),
       );
@@ -540,7 +590,7 @@ class _GlassEdge extends SliverPersistentHeaderDelegate {
   final Widget? leading;
   final Widget? trailing;
 
-  static const double bar = 45;
+  static const double bar = TpTopBar.height;
 
   @override
   double get minExtent => top + bar;
@@ -570,11 +620,15 @@ class _GlassEdge extends SliverPersistentHeaderDelegate {
             ),
           ),
           Positioned(
-            left: 16,
-            right: 16,
+            left: 0,
+            right: 0,
             top: top,
             height: bar,
-            child: Row(children: <Widget>[?leading, const Spacer(), ?trailing]),
+            child: TpTopBar(
+              safeTop: false,
+              leading: leading,
+              trailing: trailing,
+            ),
           ),
         ],
       );

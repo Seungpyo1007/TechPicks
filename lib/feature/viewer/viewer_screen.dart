@@ -8,6 +8,7 @@ import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_group.dart';
+import '../../shared/widgets/tp_page.dart';
 import 'viewer_stage.dart';
 import '../../shared/tp_haptics.dart';
 
@@ -95,22 +96,16 @@ class _ViewerScreenState extends State<ViewerScreen> {
           type: MaterialType.transparency,
           child: Column(
             children: <Widget>[
-              Padding(
-                padding: EdgeInsets.fromLTRB(16, safe.top + 8, 16, 0),
-                child: SizedBox(
-                  height: glass ? 44 : 56,
-                  child: NavigationToolbar(
-                    leading: close,
-                    middle: Text(
-                      widget.deviceName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+              TpTopBar(
+                leading: close,
+                middle: Text(
+                  widget.deviceName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
               ),

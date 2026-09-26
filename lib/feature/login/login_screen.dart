@@ -233,13 +233,11 @@ class _OptionsStepState extends ConsumerState<_OptionsStep> {
       child: SafeArea(
         child: Column(
           children: <Widget>[
-            SizedBox(
-              height: 52,
-              child: Row(
-                children: <Widget>[
-                  const SizedBox(width: 16),
-                  if (widget.onClose != null)
-                    TpBarButton(
+            TpTopBar(
+              safeTop: false,
+              leading: widget.onClose == null
+                  ? null
+                  : TpBarButton(
                       action: TpBarAction(
                         label: K.close.tr(),
                         icon: glass ? CupertinoIcons.xmark : Icons.close,
@@ -247,8 +245,6 @@ class _OptionsStepState extends ConsumerState<_OptionsStep> {
                         onTap: widget.onClose,
                       ),
                     ),
-                ],
-              ),
             ),
             Expanded(
               child: LayoutBuilder(

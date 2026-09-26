@@ -4,15 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../app/providers.dart';
-import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../core/error_reporter.dart';
 import '../../domain/model/tp_profile.dart';
 import '../../shared/copy_keys.dart';
-import '../../shared/widgets/tp_button.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../../shared/widgets/tp_page.dart';
 
 /// 프로필 편집.
 ///
@@ -139,68 +138,71 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final profile = ref.watch(profileProvider).value ?? const TpProfile();
     _fill(profile);
 
-    return TpShell(
-      mode: TpChromeMode.plain,
-      child: Builder(
-        builder: (context) => ListView(
-          padding:
-              const EdgeInsets.fromLTRB(16, 8, 16, 24) +
-              tpContentInset(context),
-          children: <Widget>[
-            Row(
+    // `iOS-ProfileEdit`: "취소" / 프로필 수정 / 채운 "저장". 버튼 자리는
+    // 다른 화면과 같다([TpTopBar]).
+    return TpPage(
+      title: K.editProfile.tr(),
+      largeTitle: false,
+      leading: TpBarAction(
+        label: K.cancel.tr(),
+        text: true,
+        onTap: widget.onBack,
+      ),
+      actions: <TpBarAction>[
+        TpBarAction(
+          label: K.save.tr(),
+          text: true,
+          filled: true,
+          onTap: _busy ? null : () => _save(profile),
+        ),
+      ],
+      slivers: <Widget>[
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                Expanded(
-                  child: Text(K.editProfile.tr(), style: type.largeTitle),
+                _PhotoRow(
+                  url: profile.photoUrl,
+                  onTap: _busy ? null : _pickPhoto,
                 ),
-                TpTapTarget(
-                  onTap: widget.onBack,
-                  label: K.back.tr(),
-                  child: Text(
-                    K.cancel.tr(),
-                    style: type.body.copyWith(color: context.tp.link),
+                const SizedBox(height: 18),
+                TpSurface(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: <Widget>[
+                      _Field(label: K.nameLabel.tr(), controller: _name),
+                      _Field(
+                        label: K.usernameLabel.tr(),
+                        controller: _username,
+                      ),
+                      _Field(
+                        label: K.pronounsLabel.tr(),
+                        controller: _pronouns,
+                      ),
+                      _Field(
+                        label: K.phoneLabel.tr(),
+                        controller: _phone,
+                        keyboard: TextInputType.phone,
+                      ),
+                      _Field(
+                        label: K.genderLabel.tr(),
+                        controller: _gender,
+                        last: true,
+                      ),
+                    ],
                   ),
                 ),
+                if (_notice != null) ...<Widget>[
+                  const SizedBox(height: 10),
+                  Text(_notice!, style: type.caption),
+                ],
               ],
             ),
-            const SizedBox(height: 16),
-
-            _PhotoRow(url: profile.photoUrl, onTap: _busy ? null : _pickPhoto),
-            const SizedBox(height: 18),
-
-            TpSurface(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: <Widget>[
-                  _Field(label: K.nameLabel.tr(), controller: _name),
-                  _Field(label: K.usernameLabel.tr(), controller: _username),
-                  _Field(label: K.pronounsLabel.tr(), controller: _pronouns),
-                  _Field(
-                    label: K.phoneLabel.tr(),
-                    controller: _phone,
-                    keyboard: TextInputType.phone,
-                  ),
-                  _Field(
-                    label: K.genderLabel.tr(),
-                    controller: _gender,
-                    last: true,
-                  ),
-                ],
-              ),
-            ),
-
-            if (_notice != null) ...<Widget>[
-              const SizedBox(height: 10),
-              Text(_notice!, style: type.caption),
-            ],
-            const SizedBox(height: 18),
-
-            TpButton(
-              label: K.save.tr(),
-              onTap: _busy ? null : () => _save(profile),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -259,39 +259,28 @@ class _Header extends StatelessWidget {
         ],
       );
     }
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        MediaQuery.paddingOf(context).top + 8,
-        16,
-        4,
-      ),
-      child: SizedBox(
-        height: 44,
-        child: NavigationToolbar(
-          leading: onBack == null
-              ? null
-              : TpBarButton(
-                  action: TpBarAction(
-                    label: K.back.tr(),
-                    icon: CupertinoIcons.chevron_back,
-                    symbol: 'chevron.backward',
-                    onTap: onBack,
-                  ),
-                ),
-          middle: title,
-          trailing: onClose == null
-              ? null
-              : TpBarButton(
-                  action: TpBarAction(
-                    label: K.close.tr(),
-                    icon: CupertinoIcons.xmark,
-                    symbol: 'xmark',
-                    onTap: onClose,
-                  ),
-                ),
-        ),
-      ),
+    return TpTopBar(
+      leading: onBack == null
+          ? null
+          : TpBarButton(
+              action: TpBarAction(
+                label: K.back.tr(),
+                icon: CupertinoIcons.chevron_back,
+                symbol: 'chevron.backward',
+                onTap: onBack,
+              ),
+            ),
+      middle: title,
+      trailing: onClose == null
+          ? null
+          : TpBarButton(
+              action: TpBarAction(
+                label: K.close.tr(),
+                icon: CupertinoIcons.xmark,
+                symbol: 'xmark',
+                onTap: onClose,
+              ),
+            ),
     );
   }
 }
