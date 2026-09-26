@@ -16,11 +16,16 @@ class TpChip extends StatefulWidget {
     required this.label,
     required this.selected,
     this.onTap,
+    this.color,
   });
 
   final String label;
   final bool selected;
   final VoidCallback? onTap;
+
+  /// 안 고른 칩의 바탕. 없으면 [TpTokens] 의 chipBg — 흰 셀 위에서는 안
+  /// 보이니 그런 자리는 따로 넘긴다.
+  final Color? color;
 
   @override
   State<TpChip> createState() => _TpChipState();
@@ -50,7 +55,7 @@ class _TpChipState extends State<TpChip> {
             curve: motion.selection.curve,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             decoration: BoxDecoration(
-              color: widget.selected ? TpTokens.blue : t.chipBg,
+              color: widget.selected ? TpTokens.blue : widget.color ?? t.chipBg,
               borderRadius: BorderRadius.circular(TpTokens.rControl),
             ),
             child: Text(

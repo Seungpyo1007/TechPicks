@@ -13,10 +13,11 @@ import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
 import '../../domain/model/build_estimate.dart';
-import '../../domain/model/device_specs.dart';
+import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_chip.dart';
 import '../../shared/widgets/tp_error_state.dart';
+import '../../shared/widgets/tp_shimmer.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_slider.dart';
 
@@ -41,6 +42,12 @@ class BuildScreen extends ConsumerWidget {
     final parts = ref.watch(partsProvider);
     final query = ref.watch(buildQueryProvider);
     final picks = ref.watch(buildPicksProvider);
+    final money = ref.watch(moneyProvider);
+    final loading = parts.isLoading && !parts.hasError;
+    final cheapest = switch (parts.value) {
+      final p? => BuildEstimate.cheapestUsd(p.cpus, p.gpus),
+      null => null,
+    };
 
     final sys = context.sys;
     return TpPage(
@@ -83,6 +90,7 @@ class BuildScreen extends ConsumerWidget {
                   ),
                   _Budget(
                     usd: query.budgetUsd,
+                    money: money,
                     onChanged: (v) =>
                         ref.read(buildQueryProvider.notifier).budget(v),
                   ),
@@ -93,13 +101,25 @@ class BuildScreen extends ConsumerWidget {
                 switchInCurve: motion.contentSwap.curve,
                 switchOutCurve: motion.contentSwap.curve,
                 child: parts.hasError
-                    ? const TpCatalogError(key: ValueKey<String>('error'))
+                    ? TpCatalogError(
+                        key: const ValueKey<String>('error'),
+                        also: partsProvider,
+                      )
+                    // 읽는 동안 "맞는 조합 없음"이 잠깐 비치지 않게.
+                    : loading
+                    ? const _ComboSkeleton(key: ValueKey<String>('loading'))
                     : picks.isEmpty
                     ? Padding(
                         key: const ValueKey<String>('empty'),
                         padding: const EdgeInsets.fromLTRB(32, 0, 32, 24),
                         child: Text(
-                          K.buildEmpty.tr(),
+                          <String>[
+                            K.buildEmpty.tr(),
+                            if (cheapest != null)
+                              K.buildEmptyFrom.tr(
+                                args: <String>[money.format(cheapest)],
+                              ),
+                          ].join(' '),
                           style: TextStyle(fontSize: 15, color: sys.label2),
                         ),
                       )
@@ -115,6 +135,7 @@ class BuildScreen extends ConsumerWidget {
                                 combo: combo,
                                 useCase: query.useCase,
                                 budgetUsd: query.budgetUsd,
+                                money: money,
                               ),
                           ],
                         ),
@@ -150,14 +171,21 @@ class BuildScreen extends ConsumerWidget {
 }
 
 class _Budget extends StatelessWidget {
-  const _Budget({required this.usd, required this.onChanged});
+  const _Budget({
+    required this.usd,
+    required this.money,
+    required this.onChanged,
+  });
 
   final int usd;
+  final TpMoney money;
   final ValueChanged<int> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final type = context.tpText;
+    // iOS 칩 바탕(흰색 70%)은 흰 셀 위에서 사라진다. 채움색으로 모양을 낸다.
+    final chipColor = context.tp.isGlass ? context.sys.fill3 : null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -167,7 +195,7 @@ class _Budget extends StatelessWidget {
           Row(
             children: <Widget>[
               Expanded(child: Text(K.buildBudget.tr(), style: type.body)),
-              Text(DeviceSpecs.formatPrice(usd), style: type.cardTitle),
+              Text(money.format(usd), style: type.cardTitle),
             ],
           ),
           TpSlider(
@@ -177,7 +205,7 @@ class _Budget extends StatelessWidget {
             // 50달러 단위. 1달러씩 끌면 추천이 안 바뀌는데도 계속 다시 센다.
             divisions:
                 (BuildEstimate.maxBudget - BuildEstimate.minBudget) ~/ 50,
-            label: DeviceSpecs.formatPrice(usd),
+            label: money.format(usd),
             onChanged: (v) => onChanged(v.round()),
           ),
           // 프리셋은 넘칠 수 있다 — 원화로 바뀌면 자릿수가 길어진다.
@@ -190,8 +218,9 @@ class _Budget extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(right: 8, bottom: 4),
                     child: TpChip(
-                      label: DeviceSpecs.formatPrice(preset),
+                      label: money.format(preset),
                       selected: preset == usd,
+                      color: chipColor,
                       onTap: () => onChanged(preset),
                     ),
                   ),
@@ -210,11 +239,13 @@ class _ComboCard extends StatelessWidget {
     required this.combo,
     required this.useCase,
     required this.budgetUsd,
+    required this.money,
   });
 
   final BuildCombo combo;
   final BuildUseCase useCase;
   final int budgetUsd;
+  final TpMoney money;
 
   @override
   Widget build(BuildContext context) {
@@ -271,10 +302,10 @@ class _ComboCard extends StatelessWidget {
     );
     final headroom = budgetUsd - combo.priceUsd;
     final rest = headroom > 100
-        ? K.buildHeadroom.tr(args: <String>[DeviceSpecs.formatPrice(headroom)])
+        ? K.buildHeadroom.tr(args: <String>[money.format(headroom)])
         : K.buildTight.tr();
     final psu = K.buildPsu.tr(args: <String>['${combo.psuWatts}']);
-    return '$lead · ${DeviceSpecs.formatPrice(combo.priceUsd)} · $rest · $psu';
+    return '$lead · ${money.format(combo.priceUsd)} · $rest · $psu';
   }
 
   static String? _bottleneck(Bottleneck b) => switch (b) {
@@ -282,6 +313,48 @@ class _ComboCard extends StatelessWidget {
     CpuBound(:final gap) => K.buildBottleneckCpu.tr(args: <String>['$gap']),
     GpuBound(:final gap) => K.buildBottleneckGpu.tr(args: <String>['$gap']),
   };
+}
+
+/// 부품을 읽는 동안. 조합 카드 세 장 자리.
+class _ComboSkeleton extends StatelessWidget {
+  const _ComboSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: TpShimmer(
+      child: Column(
+        children: <Widget>[
+          for (var i = 0; i < 3; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: TpSurface(
+                padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    for (final width in <double>[0.6, 0.5, 0.8])
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: FractionallySizedBox(
+                          widthFactor: width,
+                          child: Container(
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: context.sys.fill3,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 }
 
 /// 나머지 부품 요구사양. 1등 조합 기준이다.

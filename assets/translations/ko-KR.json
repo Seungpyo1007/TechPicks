@@ -278,6 +278,7 @@
   "buildUseAiSub": "모델이 올라가려면 VRAM 용량이 먼저입니다. 그다음이 연산 성능입니다.",
   "buildBudget": "예산",
   "buildEmpty": "이 예산으로 살 수 있는 조합이 없습니다. 예산을 올려 보세요.",
+  "buildEmptyFrom": "가장 싼 조합은 {}부터예요.",
   "buildReasonGpu": "GPU {}",
   "buildReasonCpu": "CPU 멀티 {}",
   "buildHeadroom": "예산 {} 여유",

@@ -278,6 +278,7 @@
   "buildUseAiSub": "VRAM decides whether a model fits at all. Compute comes second.",
   "buildBudget": "Budget",
   "buildEmpty": "No pair fits this budget. Try raising it.",
+  "buildEmptyFrom": "The cheapest pair starts at {}.",
   "buildReasonGpu": "GPU {}",
   "buildReasonCpu": "CPU multi {}",
   "buildHeadroom": "{} to spare",
