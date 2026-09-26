@@ -280,18 +280,22 @@ class TpPage extends StatelessWidget {
             ),
           )
         : (leading == null ? null : TpBarButton(action: leading!));
+    // 아이콘만 둘 이상이면 캡슐 하나로 묶는다(시스템 앱과 같게).
+    final grouped = actions.length > 1 && actions.every(TpBarGroup.groupable);
     final trail = actions.isEmpty
         ? null
         : _ActionsArrive(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                for (var i = 0; i < actions.length; i++) ...<Widget>[
-                  if (i > 0) const SizedBox(width: 8),
-                  TpBarButton(action: actions[i]),
-                ],
-              ],
-            ),
+            child: grouped
+                ? TpBarGroup(actions: actions)
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      for (var i = 0; i < actions.length; i++) ...<Widget>[
+                        if (i > 0) const SizedBox(width: 8),
+                        TpBarButton(action: actions[i]),
+                      ],
+                    ],
+                  ),
           );
     final titleText = Text(title);
     if (!largeTitle) {
@@ -782,6 +786,88 @@ class TpBarButton extends StatelessWidget {
       return TpMenu(items: a.menu!, builder: (context, open) => tappable(open));
     }
     return tappable(a.onTap);
+  }
+}
+
+/// 오른쪽 아이콘 버튼 여럿을 유리 캡슐 하나로. iOS 26 시스템 앱이 그렇다
+/// (미리 알림의 "더 보기 + 검색"). 버튼은 44pt 씩, 캡슐 높이 44.
+class TpBarGroup extends StatelessWidget {
+  const TpBarGroup({super.key, required this.actions});
+
+  final List<TpBarAction> actions;
+
+  /// 묶을 수 있는 버튼: 아이콘만 있고 메뉴·글자·채움이 아닌 것.
+  static bool groupable(TpBarAction a) =>
+      a.symbol != null &&
+      a.menu == null &&
+      !a.text &&
+      !a.filled &&
+      a.child == null;
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    // 스크린 리더와 화면 안 안내가 버튼 하나하나를 잡을 수 있게, 각 칸
+    // 자리에 이름을 붙인다. 누르는 건 아래 캡슐이 받는다.
+    Widget slot(TpBarAction a, {required bool native}) {
+      Widget cell = Semantics(
+        button: true,
+        label: a.label,
+        excludeSemantics: true,
+        onTap: a.onTap,
+        child: native
+            ? const SizedBox(width: 44, height: 44)
+            : TpTappable(
+                onTap: a.onTap,
+                press: true,
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Icon(
+                    a.icon,
+                    size: 20,
+                    color: a.active ? TpSys.accent : sys.label,
+                  ),
+                ),
+              ),
+      );
+      if (native) cell = IgnorePointer(child: cell);
+      return a.coach == null ? cell : TpCoachTarget(id: a.coach!, child: cell);
+    }
+
+    if (TpNativeGlass.enabled) {
+      return Stack(
+        children: <Widget>[
+          TpNativeIconGroup(
+            items: <({String symbol, VoidCallback? onTap, Color? tint})>[
+              for (final a in actions)
+                (
+                  symbol: a.symbol!,
+                  onTap: a.onTap,
+                  tint: a.active ? TpSys.accent : null,
+                ),
+            ],
+          ),
+          Positioned.fill(
+            child: Row(
+              children: <Widget>[
+                for (final a in actions) slot(a, native: true),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    return SizedBox(
+      height: 44,
+      child: TpSurface.chrome(
+        radius: TpTokens.rControl,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[for (final a in actions) slot(a, native: false)],
+        ),
+      ),
+    );
   }
 }
 
