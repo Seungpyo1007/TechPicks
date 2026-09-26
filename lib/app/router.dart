@@ -433,10 +433,9 @@ class YouSheet extends ConsumerWidget {
       onLogout: () =>
           unawaited(ref.read(currentUserProvider.notifier).signOut()),
       onSignIn: () => context.push(TpRoute.login),
-      onDeviceTap: (s) {
-        context.pop();
-        context.push('/device/$s');
-      },
+      // 내 정보 위에 그대로 쌓는다. 닫고 다시 밀면 두 전환이 겹쳐 그
+      // 사이로 오늘 화면(툴바 유리 버튼)이 한 번 비친다.
+      onDeviceTap: (s) => context.push('/device/$s'),
     );
   }
 }
