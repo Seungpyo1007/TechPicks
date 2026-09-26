@@ -193,6 +193,8 @@ class _YouScreenState extends ConsumerState<YouScreen> {
               else
                 TpGroup(
                   footer: _notice,
+                  // 손님 머리는 제 여백이 있는 면이라 M3 줄로 펴지 않는다.
+                  m3: hasAccount,
                   children: <Widget>[
                     arrive(
                       hasAccount
@@ -230,8 +232,10 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                     onDeviceTap: widget.onDeviceTap,
                   ),
                 )
-              else
+              else ...<Widget>[
+                const TpM3Divider(),
                 TpGroup(
+                  m3: true,
                   children: <Widget>[
                     arrive(
                       _SettingRow(
@@ -249,8 +253,10 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                     arrive(_YourDevice(onTap: widget.onDeviceTap)),
                   ],
                 ),
-              if (glass) _BigHeader(K.settings.tr()),
+              ],
+              if (glass) _BigHeader(K.settings.tr()) else const TpM3Divider(),
               TpGroup(
+                m3: true,
                 footer: _fxLine(rate),
                 children: <Widget>[
                   arrive(
@@ -357,7 +363,9 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                   ),
                 ],
               ),
+              if (!glass) const TpM3Divider(),
               TpGroup(
+                m3: true,
                 footer: _coachNotice,
                 children: <Widget>[
                   arrive(
@@ -577,6 +585,7 @@ class _AiEnginePage extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.only(top: 16),
             child: TpGroup(
+              m3: true,
               footer: note?.tr(),
               children: <Widget>[
                 for (final option in TpAiEngine.values)
@@ -687,8 +696,8 @@ class _ProfileHeader extends StatelessWidget {
       title: name ?? email ?? '',
       subtitle: subtitle.isEmpty ? null : subtitle,
       titleStyle: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontSize: context.tp.isGlass ? 20 : 22,
+        fontWeight: context.tp.isGlass ? FontWeight.w600 : FontWeight.w400,
         color: sys.label,
       ),
       leading: avatar,

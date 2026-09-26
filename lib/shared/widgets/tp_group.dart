@@ -21,6 +21,7 @@ class TpGroup extends StatelessWidget {
     this.headerAction,
     this.big = false,
     this.padding,
+    this.m3 = false,
   });
 
   final List<Widget> children;
@@ -36,12 +37,21 @@ class TpGroup extends StatelessWidget {
   /// 칸 안쪽 여백. 카드처럼 쓰는 묶음(판정 카드)에 준다.
   final EdgeInsets? padding;
 
+  /// Android 에서 M3 목록으로. 줄이 화면 끝까지 가서 들여쓰기는 줄 안쪽
+  /// 16 하나뿐이고, 줄 높이는 56 / 72(부제). iOS 는 그대로.
+  final bool m3;
+
   static const double radius = 26;
+
+  /// 이 줄이 M3 목록 안에 있는가.
+  static bool m3Of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_M3Rows>() != null;
 
   @override
   Widget build(BuildContext context) {
     final sys = context.sys;
     final glass = context.tp.isGlass;
+    final flush = m3 && !glass;
     final rows = <Widget>[
       // 화면이 나타날 때 행이 차례로 들어온다(TpArrive).
       for (var i = 0; i < children.length; i++)
@@ -54,9 +64,9 @@ class TpGroup extends StatelessWidget {
         ? null
         : Padding(
             padding: EdgeInsets.fromLTRB(
-              glass ? 16 : 0,
+              glass || flush ? 16 : 0,
               big ? 12 : 0,
-              glass ? 16 : 0,
+              glass || flush ? 16 : 0,
               big ? 4 : 7,
             ),
             child: Row(
@@ -104,11 +114,15 @@ class TpGroup extends StatelessWidget {
             padding: padding ?? EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: children,
+              children: flush
+                  ? <Widget>[for (final c in children) _M3Rows(child: c)]
+                  : children,
             ),
           );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      padding: flush
+          ? const EdgeInsets.only(bottom: 8)
+          : const EdgeInsets.fromLTRB(16, 0, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -117,20 +131,48 @@ class TpGroup extends StatelessWidget {
           if (footer != null)
             Padding(
               padding: EdgeInsets.fromLTRB(
-                glass ? 16 : 0,
-                7,
-                glass ? 16 : 0,
+                glass || flush ? 16 : 0,
+                flush ? 4 : 7,
+                glass || flush ? 16 : 0,
                 0,
               ),
               child: Text(
                 footer!,
-                style: TextStyle(fontSize: 13, height: 1.38, color: sys.label2),
+                style: flush
+                    ? TextStyle(
+                        fontSize: 12,
+                        height: 16 / 12,
+                        color: sys.label2,
+                      )
+                    : TextStyle(fontSize: 13, height: 1.38, color: sys.label2),
               ),
             ),
         ],
       ),
     );
   }
+}
+
+/// [TpGroup.m3] 안의 줄. [TpRow] 가 보고 높이와 글자 크기를 바꾼다.
+class _M3Rows extends InheritedWidget {
+  const _M3Rows({required super.child});
+
+  @override
+  bool updateShouldNotify(_M3Rows oldWidget) => false;
+}
+
+/// M3 목록 묶음 사이 구분선. 1pt, outline 35%.
+class TpM3Divider extends StatelessWidget {
+  const TpM3Divider({super.key});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Container(
+      height: 1,
+      color: Theme.of(context).colorScheme.outline.withValues(alpha: .35),
+    ),
+  );
 }
 
 /// 긴 목록(랭킹)용. 화면에 보이는 행만 짓는다.
@@ -308,6 +350,7 @@ class _TpRowState extends State<TpRow> {
         ? sys.label2
         : sys.label;
     final chevron = w.chevron ?? (w.onTap != null && !w.checked);
+    final m3 = !glass && TpGroup.m3Of(context);
     final centred = w.destructive && w.leading == null && w.value == null;
 
     final text = Column(
@@ -319,8 +362,8 @@ class _TpRowState extends State<TpRow> {
         Text(
           w.title,
           style: TextStyle(
-            fontSize: 17,
-            height: 1.29,
+            fontSize: m3 ? 16 : 17,
+            height: m3 ? 1.5 : 1.29,
             color: titleColor,
           ).merge(w.titleStyle),
         ),
@@ -331,7 +374,11 @@ class _TpRowState extends State<TpRow> {
               w.subtitle!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13, height: 1.38, color: sys.label2),
+              style: TextStyle(
+                fontSize: m3 ? 14 : 13,
+                height: m3 ? 20 / 14 : 1.38,
+                color: sys.label2,
+              ),
             ),
           ),
         ?w.below,
@@ -339,7 +386,11 @@ class _TpRowState extends State<TpRow> {
     );
 
     Widget rowOf(double maxValue) => Container(
-      constraints: BoxConstraints(minHeight: w.subtitle == null ? 48 : 60),
+      constraints: BoxConstraints(
+        minHeight: m3
+            ? (w.subtitle == null ? 56 : 72)
+            : (w.subtitle == null ? 48 : 60),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: _down
           ? (glass ? sys.fill3 : sys.fill.withValues(alpha: .4))
@@ -348,7 +399,7 @@ class _TpRowState extends State<TpRow> {
         children: <Widget>[
           if (w.leading != null) ...<Widget>[
             w.leading!,
-            const SizedBox(width: 12),
+            SizedBox(width: m3 ? 16 : 12),
           ],
           Expanded(child: text),
           if (w.value != null) ...<Widget>[
@@ -361,7 +412,7 @@ class _TpRowState extends State<TpRow> {
                       w.value!,
                       textAlign: TextAlign.end,
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: m3 ? 14 : 17,
                         color: sys.label2,
                       ).merge(w.valueStyle),
                     )
@@ -369,7 +420,7 @@ class _TpRowState extends State<TpRow> {
                       w.value!,
                       textAlign: TextAlign.end,
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: m3 ? 14 : 17,
                         color: sys.label2,
                         fontFeatures: const <FontFeature>[
                           FontFeature.tabularFigures(),
@@ -386,7 +437,7 @@ class _TpRowState extends State<TpRow> {
             const SizedBox(width: 8),
             Icon(
               glass ? CupertinoIcons.check_mark : Icons.check,
-              size: 20,
+              size: m3 ? 24 : 20,
               color: TpSys.accent,
             ),
           ],
