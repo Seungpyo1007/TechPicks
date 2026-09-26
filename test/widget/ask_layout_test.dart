@@ -190,4 +190,63 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Galaxy S26 vs iPhone 17'), findsOneWidget);
   });
+
+  testWidgets('맥락 알약을 누르면 지워진다', (tester) async {
+    final container = await pumpScreen(
+      tester,
+      const AskScreen(),
+      overrides: <Override>[
+        askServiceProvider.overrideWithValue(const _LongAsk()),
+      ],
+    );
+    await container
+        .read(askProvider.notifier)
+        .askAbout('Galaxy S26', 'iPhone 17');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Galaxy S26 vs iPhone 17'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Galaxy S26 vs iPhone 17'), findsNothing);
+    expect(container.read(askTopicProvider), isNull);
+  });
+
+  // 짧은 문장 답도 78% 로 넓었다. 표가 없으면 글 길이만큼.
+  testWidgets('표 없는 말풍선은 글만큼, 표 있는 답은 78%', (tester) async {
+    const frame = Size(402, 874);
+    await pumpScreen(
+      tester,
+      const AskScreen(),
+      size: frame,
+      overrides: <Override>[
+        askServiceProvider.overrideWithValue(const _ShortSay()),
+      ],
+    );
+    await tester.enterText(find.byType(TextField), '뭐가 좋아?');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    final list = tester.getRect(find.byType(ListView).first);
+    final max = (list.width - 32) * 0.78;
+    final say = _bubbleOf(tester, find.text('Yes.'));
+    expect(say.width, lessThan(max / 2));
+
+    // 안내 말풍선은 여러 줄이라 78% 에 가깝지만 넘지는 않는다.
+    final seed = _bubbleOf(tester, find.textContaining('Give me a budget'));
+    expect(seed.width, lessThanOrEqualTo(max + 0.5));
+  });
 }
+
+/// 한 낱말로 답한다.
+class _ShortSay implements AskService {
+  const _ShortSay();
+
+  @override
+  Future<AskReply?> ask(String question, List<Smartphone> catalog) async =>
+      const AskReply.say('Yes.');
+}
+
+/// 글을 감싼 말풍선 상자.
+Rect _bubbleOf(WidgetTester tester, Finder text) => tester.getRect(
+  find.ancestor(of: text, matching: find.byType(DecoratedBox)).first,
+);

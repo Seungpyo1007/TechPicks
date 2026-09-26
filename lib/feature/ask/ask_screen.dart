@@ -89,6 +89,17 @@ class _AskScreenState extends ConsumerState<AskScreen>
     await ref.read(askProvider.notifier).send(text);
   }
 
+  /// 기다리던 질문을 거둔다. 입력이 비어 있으면 그 글을 돌려놓는다.
+  void _cancel() {
+    final text = ref.read(askProvider.notifier).cancel();
+    // 새로 치던 글은 덮지 않는다.
+    if (text == null || _input.text.trim().isNotEmpty) return;
+    _input.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
   /// 마지막 말풍선까지 내린다.
   ///
   /// **다음 프레임에** 내려야 한다. 상태가 바뀐 직후의 `maxScrollExtent` 는
@@ -154,7 +165,12 @@ class _AskScreenState extends ConsumerState<AskScreen>
                       if (i == 0) {
                         return topic == null
                             ? const SizedBox.shrink()
-                            : _Topic(label: topic);
+                            : _Topic(
+                                label: topic,
+                                onClear: () => ref
+                                    .read(askTopicProvider.notifier)
+                                    .set(null),
+                              );
                       }
                       final m = i - 1;
                       if (m == messages.length) {
@@ -193,6 +209,7 @@ class _AskScreenState extends ConsumerState<AskScreen>
                       key: askComposerKey,
                       controller: _input,
                       onSend: _send,
+                      onCancel: _cancel,
                       busy: busy,
                       fresh: fresh,
                     ),
@@ -212,6 +229,9 @@ const double _keyboardGap = 8;
 
 /// 말풍선 모서리.
 const double _bubbleRadius = 20;
+
+/// 말풍선 최대 폭. 화면 폭에 대한 비율.
+const double _maxWidth = 0.78;
 
 /// 컴포저가 실제로 차지한 높이를 재는 자리.
 @visibleForTesting
@@ -285,50 +305,66 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// 들고 온 기기. 대화 맨 위 가운데.
+/// 들고 온 기기. 대화 맨 위 가운데. 누르면 지운다.
 class _Topic extends StatelessWidget {
-  const _Topic({required this.label});
+  const _Topic({required this.label, required this.onClear});
 
   final String label;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
     final sys = context.sys;
     final glass = context.tp.isGlass;
+    // 알약은 작아도 누르는 자리는 44/48. 넓어진 만큼 아래 여백을 줄인다.
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 4),
       child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: glass ? sys.fill3 : null,
-            border: glass ? null : Border.all(color: sys.separator),
-            borderRadius: BorderRadius.circular(glass ? 16 : 8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(
-                glass
-                    ? CupertinoIcons.arrow_right_arrow_left
-                    : Icons.compare_arrows,
-                size: 14,
-                color: sys.label2,
+        child: TpTapTarget(
+          onTap: onClear,
+          label: '${K.clear.tr()}, $label',
+          minSize: glass ? 44 : 48,
+          // 이름은 위에서 한 번만 읽는다.
+          child: ExcludeSemantics(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: glass ? sys.fill3 : null,
+                border: glass ? null : Border.all(color: sys.separator),
+                borderRadius: BorderRadius.circular(glass ? 16 : 8),
               ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    glass
+                        ? CupertinoIcons.arrow_right_arrow_left
+                        : Icons.compare_arrows,
+                    size: 14,
                     color: sys.label2,
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: sys.label2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    glass ? CupertinoIcons.xmark : Icons.close,
+                    size: 12,
+                    color: sys.label3,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -338,31 +374,44 @@ class _Topic extends StatelessWidget {
 
 /// 답 말풍선 모양. 카드색, 왼쪽, 최대 78%.
 class _AiShape extends StatelessWidget {
-  const _AiShape({required this.child});
+  const _AiShape({required this.child, this.hug = false});
 
   final Widget child;
 
+  /// 글에 맞춰 좁아진다. 표가 있는 답과 뼈대는 78% 그대로.
+  final bool hug;
+
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerLeft,
-    child: FractionallySizedBox(
-      alignment: Alignment.centerLeft,
-      widthFactor: 0.78,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.sys.cell,
-            borderRadius: BorderRadius.circular(_bubbleRadius),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: child,
-          ),
+  Widget build(BuildContext context) {
+    final bubble = Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.sys.cell,
+          borderRadius: BorderRadius.circular(_bubbleRadius),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: child,
         ),
       ),
-    ),
-  );
+    );
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: hug
+          ? LayoutBuilder(
+              builder: (context, box) => ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: box.maxWidth * _maxWidth),
+                child: bubble,
+              ),
+            )
+          : FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: _maxWidth,
+              child: bubble,
+            ),
+    );
+  }
 }
 
 /// 답을 기다리는 동안 답 자리에 놓이는 뼈대.
@@ -500,6 +549,8 @@ class _Bubble extends StatelessWidget {
               ),
               child: Text(
                 message.text,
+                // 여러 줄이어도 가장 긴 줄만큼만.
+                textWidthBasis: TextWidthBasis.longestLine,
                 style: body.copyWith(color: Colors.white),
               ),
             ),
@@ -515,11 +566,14 @@ class _Bubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _AiShape(
+            // 표가 없는 답은 글 길이만큼.
+            hug: answer == null,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
                   message.text,
+                  textWidthBasis: TextWidthBasis.longestLine,
                   style: answer == null
                       ? body
                       : body.copyWith(fontWeight: FontWeight.w600),
@@ -722,6 +776,7 @@ class _Composer extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onSend,
+    this.onCancel,
     this.busy = false,
     this.fresh = false,
   });
@@ -766,6 +821,9 @@ class _Composer extends StatelessWidget {
 
   final TextEditingController controller;
   final ValueChanged<String> onSend;
+
+  /// 기다리는 동안 보내기 자리가 멈춤이 된다.
+  final VoidCallback? onCancel;
 
   /// 답을 기다리는 중. 보내기를 잠근다.
   final bool busy;
@@ -867,10 +925,10 @@ class _Composer extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   TpTapTarget(
-                    onTap: busy ? null : () => onSend(controller.text),
+                    onTap: busy ? onCancel : () => onSend(controller.text),
                     // 입력창과 같은 이름을 주면 버튼도 "무엇이든
                     // 물어보세요"라고 읽는다.
-                    label: K.send.tr(),
+                    label: (busy ? K.cancel : K.send).tr(),
                     minSize: minTap(context),
                     child: AnimatedContainer(
                       duration: context.motion.selection.duration,
@@ -882,11 +940,22 @@ class _Composer extends StatelessWidget {
                         shape: glass ? BoxShape.circle : BoxShape.rectangle,
                         borderRadius: glass ? null : BorderRadius.circular(16),
                       ),
-                      child: Icon(
-                        glass ? CupertinoIcons.arrow_up : context.icons.send,
-                        color: ready ? Colors.white : sys.label3,
-                        size: glass ? 20 : 24,
-                      ),
+                      child: busy
+                          // 기다리는 동안은 멈춤. 누르면 질문을 거둔다.
+                          ? Icon(
+                              glass
+                                  ? CupertinoIcons.stop_fill
+                                  : Icons.stop_rounded,
+                              color: sys.label,
+                              size: glass ? 16 : 24,
+                            )
+                          : Icon(
+                              glass
+                                  ? CupertinoIcons.arrow_up
+                                  : context.icons.send,
+                              color: ready ? Colors.white : sys.label3,
+                              size: glass ? 20 : 24,
+                            ),
                     ),
                   ),
                 ],

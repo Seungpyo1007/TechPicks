@@ -55,8 +55,14 @@ class _FailingApi implements TechApiRepository {
 
   final Failure failure;
 
+  /// 불린 횟수. 다시 받았는지 본다.
+  int calls = 0;
+
   @override
-  Future<Result<Smartphone>> smartphone(String slug) async => Err(failure);
+  Future<Result<Smartphone>> smartphone(String slug) async {
+    calls++;
+    return Err(failure);
+  }
 
   @override
   Future<Result<Cpu>> cpu(String slug) => throw UnimplementedError();
@@ -78,21 +84,23 @@ class _FailingApi implements TechApiRepository {
   Future<Result<Map<String, dynamic>>> index() => throw UnimplementedError();
 }
 
-Future<void> _pump(
+Future<_FailingApi> _pump(
   WidgetTester tester, {
   required ConnectivityService connectivity,
   Failure failure = const NetworkFailure('연결 실패'),
 }) async {
+  final api = _FailingApi(failure);
   await pumpScreen(
     tester,
     const DetailScreen(slug: '카탈로그에-없는-기기'),
     size: const Size(1200, 2000),
     overrides: <Override>[
       connectivityServiceProvider.overrideWithValue(connectivity),
-      techApiRepositoryProvider.overrideWithValue(_FailingApi(failure)),
+      techApiRepositoryProvider.overrideWithValue(api),
     ],
   );
   await tester.pumpAndSettle();
+  return api;
 }
 
 void main() {
@@ -141,5 +149,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(K.offlineTitle.tr()), findsOneWidget);
+  });
+
+  testWidgets('끊긴 화면에도 다시 시도가 있다', (tester) async {
+    final api = await _pump(tester, connectivity: _FakeConnectivity(true));
+    expect(find.text(K.retry.tr()), findsOneWidget);
+
+    await tester.tap(find.text(K.retry.tr()));
+    await tester.pumpAndSettle();
+
+    expect(api.calls, 2);
+  });
+
+  testWidgets('다시 연결되면 알아서 다시 받는다', (tester) async {
+    final connectivity = _FakeConnectivity(true);
+    final api = await _pump(tester, connectivity: connectivity);
+    expect(api.calls, 1);
+
+    connectivity.set(false);
+    await tester.pumpAndSettle();
+
+    expect(api.calls, 2);
   });
 }

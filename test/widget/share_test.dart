@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -7,6 +8,7 @@ import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/service/share_service.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 
 import '../support/harness.dart';
 import 'package:techpicks/app/theme/tp_icons.dart';
@@ -115,6 +117,23 @@ techpicks://device/galaxy-s25''');
 
       expect(tester.takeException(), isNull);
       expect(find.text('Galaxy S25'), findsWidgets);
+    });
+
+    testWidgets('시트가 실패하면 안 됐다고 말하고 잠시 뒤 사라진다', (tester) async {
+      await _pump(
+        tester,
+        const DetailScreen(slug: 'galaxy-s25'),
+        service: _ThrowingShare(),
+      );
+      expect(find.text(K.shareFailed.tr()), findsNothing);
+
+      await tester.tap(_icon((i) => i.share));
+      await tester.pumpAndSettle();
+      expect(find.text(K.shareFailed.tr()), findsOneWidget);
+
+      await tester.pump(DetailScreen.noticeFor);
+      await tester.pumpAndSettle();
+      expect(find.text(K.shareFailed.tr()), findsNothing);
     });
   });
 

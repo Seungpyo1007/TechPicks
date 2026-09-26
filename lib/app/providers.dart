@@ -930,11 +930,15 @@ class AskNotifier extends Notifier<List<AskMessage>> {
 
   bool _busy = false;
 
+  /// 보낼 때마다 하나씩 는다. 취소한 질문의 답이 늦게 와도 버린다.
+  int _turn = 0;
+
   Future<void> send(String question) async {
     final text = question.trim();
     if (text.isEmpty || _busy) return;
 
     _busy = true;
+    final turn = ++_turn;
     ref.read(askBusyProvider.notifier).set(true);
     // 사용자 말풍선을 먼저 올린다. 응답을 기다리는 동안 화면이 멈춘 것처럼
     // 보이지 않게 한다.
@@ -951,6 +955,8 @@ class AskNotifier extends Notifier<List<AskMessage>> {
       reply = null;
     }
 
+    // 기다리는 동안 취소했다.
+    if (turn != _turn) return;
     _busy = false;
     if (ref.mounted) ref.read(askBusyProvider.notifier).set(false);
     TpAnalytics.asked(length: text.length, answered: reply != null);
@@ -972,6 +978,20 @@ class AskNotifier extends Notifier<List<AskMessage>> {
       else
         AskMessage.ai(reply.text!, fromCatalog: reply.fromCatalog),
     ];
+  }
+
+  /// 기다리던 질문을 거둔다. 말풍선도 내리고 그 글을 돌려준다.
+  ///
+  /// 답이 나중에 와도 [send] 가 차례를 보고 버린다.
+  String? cancel() {
+    if (!_busy) return null;
+    _turn++;
+    _busy = false;
+    ref.read(askBusyProvider.notifier).set(false);
+    final last = state.isEmpty ? null : state.last;
+    if (last == null || !last.isUser) return null;
+    state = state.sublist(0, state.length - 1);
+    return last.text;
   }
 
   /// 실패한 답을 걷어내고 같은 질문을 다시 보낸다.

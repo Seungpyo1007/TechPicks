@@ -33,10 +33,31 @@ void main() {
       expect(by[SpecKind.chipset]!.value, 'Snapdragon 8 Elite');
       expect(by[SpecKind.screen]!.value, contains('6.2"'));
       expect(by[SpecKind.screen]!.value, contains('120Hz'));
-      expect(by[SpecKind.battery]!.value, '4000mAh · 25W');
+      expect(by[SpecKind.battery]!.value, '4,000mAh · 25W');
       expect(by[SpecKind.os]!.value, 'Android 15');
       expect(by[SpecKind.thickness]!.value, '7.2 mm');
       expect(by[SpecKind.released]!.value, '2025-02-07');
+    });
+
+    test('배터리는 천 단위 쉼표, 소수 .0 없이', () {
+      expect(DeviceSpecs.battery(5000, 60), '5,000mAh · 60W');
+      expect(DeviceSpecs.battery(5000, 60.0), '5,000mAh · 60W');
+      expect(DeviceSpecs.battery(4500, 67.5), '4,500mAh · 67.5W');
+      expect(DeviceSpecs.battery(5000), '5,000mAh');
+      expect(DeviceSpecs.battery(null, 60), DeviceSpecs.empty);
+    });
+
+    test('화면 값은 패널 종류만 짧게', () {
+      expect(
+        DeviceSpecs.panel('Dynamic LTPO AMOLED 2X (Privacy Display)'),
+        'LTPO AMOLED',
+      );
+      expect(DeviceSpecs.panel('LTPO Super Retina XDR OLED'), 'LTPO OLED');
+      expect(DeviceSpecs.panel('PLS LCD Infinity-V'), 'PLS LCD');
+      expect(DeviceSpecs.panel('pOLED'), 'pOLED');
+      expect(DeviceSpecs.panel('LTPO OLED (foldable)'), 'LTPO OLED');
+      // 모르는 이름은 괄호만 뗀다.
+      expect(DeviceSpecs.panel('Retina (wide)'), 'Retina');
     });
 
     test('후면 카메라만 큰 순서로 붙인다', () {
