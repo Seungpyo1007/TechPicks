@@ -80,35 +80,39 @@ class HomeScreen extends ConsumerWidget {
           ? null
           : _subtitle(shortlist.length),
       tab: TpTab.today,
-      coach: <TpCoachStep>[
-        if (verdict != null) ...const <TpCoachStep>[
-          TpCoachStep(
-            target: 'verdict',
-            title: K.coachVerdict,
-            body: K.coachVerdictBody,
-          ),
-          TpCoachStep(
-            target: 'weights',
-            title: K.coachWeights,
-            body: K.coachWeightsBody,
-          ),
-        ],
-        const TpCoachStep(
-          target: 'ask',
-          title: K.coachAsk,
-          body: K.coachAskBody,
-        ),
-        const TpCoachStep(
-          target: 'you',
-          title: K.coachYou,
-          body: K.coachYouBody,
-        ),
-        const TpCoachStep(
-          target: 'search',
-          title: K.coachSearch,
-          body: K.coachSearchBody,
-        ),
-      ],
+      // 불러오는 중엔 비워 둔다. 결론 카드가 뜨기 전에 안내가 시작되면 앞의
+      // 두 단계를 건너뛴다(시뮬레이터에서 1/3 으로 떴다).
+      coach: loading
+          ? const <TpCoachStep>[]
+          : <TpCoachStep>[
+              if (verdict != null) ...const <TpCoachStep>[
+                TpCoachStep(
+                  target: 'verdict',
+                  title: K.coachVerdict,
+                  body: K.coachVerdictBody,
+                ),
+                TpCoachStep(
+                  target: 'weights',
+                  title: K.coachWeights,
+                  body: K.coachWeightsBody,
+                ),
+              ],
+              const TpCoachStep(
+                target: 'ask',
+                title: K.coachAsk,
+                body: K.coachAskBody,
+              ),
+              const TpCoachStep(
+                target: 'you',
+                title: K.coachYou,
+                body: K.coachYouBody,
+              ),
+              const TpCoachStep(
+                target: 'search',
+                title: K.coachSearch,
+                body: K.coachSearchBody,
+              ),
+            ],
       onRefresh: () async {
         ref.invalidate(catalogProvider);
         await ref.read(catalogProvider.future);
