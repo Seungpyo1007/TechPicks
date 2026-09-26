@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme/tp_motion.dart';
+import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
@@ -140,7 +141,12 @@ class _YouScreenState extends ConsumerState<YouScreen> {
       onBack: widget.onBack,
       actions: <TpBarAction>[
         if (widget.onClose != null)
-          TpBarAction(label: K.done.tr(), text: true, onTap: widget.onClose),
+          TpBarAction(
+            label: K.done.tr(),
+            role: TpBarRole.confirm,
+            text: true,
+            onTap: widget.onClose,
+          ),
       ],
       slivers: <Widget>[
         SliverToBoxAdapter(
@@ -1049,6 +1055,23 @@ class _Link extends StatelessWidget {
 
 /// 로그아웃 확인. 경고색이 없는 팔레트라 버튼 순서와 문구로 구분한다.
 Future<void> _confirmLogout(BuildContext context, VoidCallback onLogout) async {
+  // iOS 26: 시스템 액션 시트(유리). 예전 아래쪽 흰 시트가 아니다.
+  if (context.tp.isGlass && TpNativeGlass.enabled) {
+    final picked = await showTpNativeActionSheet(
+      context,
+      message: K.logoutConfirm.tr(),
+      actions: <TpNativeSheetAction>[
+        TpNativeSheetAction(
+          id: 'logout',
+          label: K.logout.tr(),
+          destructive: true,
+        ),
+        TpNativeSheetAction(id: 'cancel', label: K.cancel.tr(), cancel: true),
+      ],
+    );
+    if (picked == 'logout') onLogout();
+    return;
+  }
   if (context.tp.isGlass) {
     final confirmed = await showCupertinoModalPopup<bool>(
       context: context,

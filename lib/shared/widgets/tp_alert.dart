@@ -122,7 +122,8 @@ class _TpAlert<T> extends StatelessWidget {
                       header: true,
                       child: Text(
                         title,
-                        textAlign: TextAlign.center,
+                        // iOS 26 알림은 글자를 왼쪽에 붙인다.
+                        textAlign: TextAlign.start,
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
@@ -134,7 +135,7 @@ class _TpAlert<T> extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         message!,
-                        textAlign: TextAlign.center,
+                        textAlign: TextAlign.start,
                         style: TextStyle(
                           fontSize: 13,
                           height: 1.38,
