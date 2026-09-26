@@ -37,6 +37,7 @@ import '../../shared/widgets/tp_sheet.dart';
 import '../../shared/widgets/tp_slider.dart';
 import '../../shared/widgets/tp_switch.dart';
 import '../../shared/widgets/tp_number.dart';
+import '../../shared/widgets/tp_alert.dart';
 import '../../shared/widgets/tp_arrive.dart';
 import '../../shared/widgets/tp_pop_in.dart';
 
@@ -1002,11 +1003,58 @@ Future<void> _confirmLogout(BuildContext context, VoidCallback onLogout) async {
 /// 계정 삭제 확인. 이메일 가입이면 비밀번호도 받는다(다시 인증).
 ///
 /// 지우기로 하면 비밀번호(없으면 빈 문자열), 그만두면 null.
+///
+/// iOS 는 iOS 26 알림 모양(캡슐 버튼)으로 우리가 그린다. 시스템 알림은
+/// 비밀번호 칸을 못 붙인다.
 Future<String?> _confirmDelete(
   BuildContext context, {
   required bool askPassword,
 }) {
   final password = TextEditingController();
+  if (context.tp.isGlass) {
+    final sys = context.sys;
+    return showTpAlert<String>(
+          context: context,
+          title: K.deleteAccount.tr(),
+          message: K.deleteConfirm.tr(),
+          content: askPassword
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    Text(
+                      K.deletePassword.tr(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: sys.label2),
+                    ),
+                    const SizedBox(height: 10),
+                    CupertinoTextField(
+                      controller: password,
+                      obscureText: true,
+                      autofocus: true,
+                      autofillHints: const <String>[AutofillHints.password],
+                      placeholder: K.passwordLabel.tr(),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: sys.fill3,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ],
+                )
+              : null,
+          actions: <TpAlertAction<String>>[
+            TpAlertAction<String>(label: K.cancel.tr(), cancel: true),
+            TpAlertAction<String>(
+              label: K.delete.tr(),
+              destructive: true,
+              // 비밀번호는 닫힌 뒤 칸에서 읽는다.
+              value: '',
+            ),
+          ],
+        )
+        .then((answer) => answer == null ? null : password.text)
+        .whenComplete(password.dispose);
+  }
   final body = Column(
     mainAxisSize: MainAxisSize.min,
     children: <Widget>[
@@ -1015,64 +1063,34 @@ Future<String?> _confirmDelete(
         const SizedBox(height: 8),
         Text(K.deletePassword.tr()),
         const SizedBox(height: 10),
-        if (context.tp.isGlass)
-          CupertinoTextField(
-            controller: password,
-            obscureText: true,
-            autofocus: true,
-            autofillHints: const <String>[AutofillHints.password],
-            placeholder: K.passwordLabel.tr(),
-          )
-        else
-          TextField(
-            controller: password,
-            obscureText: true,
-            autofocus: true,
-            autofillHints: const <String>[AutofillHints.password],
-            decoration: InputDecoration(labelText: K.passwordLabel.tr()),
-          ),
+        TextField(
+          controller: password,
+          obscureText: true,
+          autofocus: true,
+          autofillHints: const <String>[AutofillHints.password],
+          decoration: InputDecoration(labelText: K.passwordLabel.tr()),
+        ),
       ],
     ],
   );
-  final Future<String?> shown = context.tp.isGlass
-      ? showCupertinoDialog<String>(
-          context: context,
-          builder: (dialog) => CupertinoAlertDialog(
-            title: Text(K.deleteAccount.tr()),
-            content: body,
-            actions: <Widget>[
-              CupertinoDialogAction(
-                isDefaultAction: true,
-                onPressed: () => Navigator.of(dialog).pop(),
-                child: Text(K.cancel.tr()),
-              ),
-              CupertinoDialogAction(
-                isDestructiveAction: true,
-                onPressed: () => Navigator.of(dialog).pop(password.text),
-                child: Text(K.delete.tr()),
-              ),
-            ],
+  return showDialog<String>(
+    context: context,
+    builder: (dialog) => AlertDialog(
+      title: Text(K.deleteAccount.tr()),
+      content: body,
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(),
+          child: Text(K.cancel.tr()),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(password.text),
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(dialog).colorScheme.error,
           ),
-        )
-      : showDialog<String>(
-          context: context,
-          builder: (dialog) => AlertDialog(
-            title: Text(K.deleteAccount.tr()),
-            content: body,
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(dialog).pop(),
-                child: Text(K.cancel.tr()),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(dialog).pop(password.text),
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(dialog).colorScheme.error,
-                ),
-                child: Text(K.delete.tr()),
-              ),
-            ],
-          ),
-        );
-  return shown.whenComplete(password.dispose);
+          child: Text(K.delete.tr()),
+        ),
+      ],
+    ),
+  ).whenComplete(password.dispose);
 }

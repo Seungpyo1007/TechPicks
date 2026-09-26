@@ -338,5 +338,7 @@
   "settings": "Settings",
   "aiEngineAutoBody": "On this phone first, then the cloud.",
   "aiEngineOnDeviceBody": "The question never leaves this phone.",
-  "aiEngineCloudBody": "Questions are sent to Gemini."
+  "aiEngineCloudBody": "Questions are sent to Gemini.",
+  "deleteNote": "Deleting removes your shortlist, weights and recent searches from every device.",
+  "emailConfirmed": "Email confirmed"
 }
