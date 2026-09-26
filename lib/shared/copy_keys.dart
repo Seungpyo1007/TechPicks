@@ -34,6 +34,7 @@ abstract final class K {
   static const String buildRowSub = 'buildRowSub';
   static const String weights = 'weights';
   static const String removeShort = 'removeShort';
+  static const String shortlistRemoved = 'shortlistRemoved';
   static const String browseByKind = 'browseByKind';
   static const String recent = 'recent';
   static const String searchTry = 'searchTry';
@@ -56,6 +57,7 @@ abstract final class K {
   static const String compareAll = 'compareAll';
   static const String askWhy = 'askWhy';
   static const String movers = 'movers';
+  static const String moversFirstRun = 'moversFirstRun';
   static const String emptyShortlist = 'emptyShortlist';
   static const String emptyShortlistBody = 'emptyShortlistBody';
   static const String emptyShortlistCta = 'emptyShortlistCta';
@@ -200,6 +202,8 @@ abstract final class K {
   static const String searchKindPhone = 'searchKindPhone';
   static const String searchKindCpu = 'searchKindCpu';
   static const String searchKindLaptop = 'searchKindLaptop';
+  static const String searchLoading = 'searchLoading';
+  static const String recentClear = 'recentClear';
   static const String searchCount = 'searchCount';
 
   /// 갈래 라벨. SearchKind 가 아니라 여기 둔다 — 도메인 열거형이 화면
@@ -302,6 +306,7 @@ abstract final class K {
   static const String resetBody = 'resetBody';
   static const String resetSend = 'resetSend';
   static const String resetSent = 'resetSent';
+  static const String resetBackToSignIn = 'resetBackToSignIn';
   static const String pwHint = 'pwHint';
   static const String signedIn = 'signedIn';
   static const String guestTitle = 'guestTitle';

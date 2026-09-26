@@ -37,6 +37,7 @@ class TpTopBar extends StatelessWidget {
     this.middle,
     this.trailing,
     this.safeTop = true,
+    this.padding,
   });
 
   static const double height = 54;
@@ -49,6 +50,9 @@ class TpTopBar extends StatelessWidget {
 
   /// 안전 영역을 여기서 비울지. 이미 SafeArea 안이면 false.
   final bool safeTop;
+
+  /// 좌우 여백. 없으면 [side] 20. Android M3 앱 바는 앞 4 · 뒤 16.
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -63,7 +67,7 @@ class TpTopBar extends StatelessWidget {
         child: SizedBox(
           height: context.tp.isGlass ? row : 48,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: side),
+            padding: padding ?? const EdgeInsets.symmetric(horizontal: side),
             child: NavigationToolbar(
               leading: leading,
               middle: middle,

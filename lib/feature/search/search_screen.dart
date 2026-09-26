@@ -17,6 +17,7 @@ import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_glass_search.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
+import '../../shared/widgets/tp_tap_target.dart';
 import '../rank/rank_category.dart';
 import '../../shared/figures/tp_figure.dart';
 import '../../shared/figures/tp_figures.dart';
@@ -76,13 +77,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     final sys = context.sys;
     final glass = context.tp.isGlass;
-    final catalog = ref.watch(catalogProvider).value;
+    final catalogAsync = ref.watch(catalogProvider);
+    final catalog = catalogAsync.value;
+    final laptops = ref.watch(laptopsProvider);
     // iOS 26 은 검색창이 시스템 탭 바 안에 있다. 글자는 탭 바가 넣어준다.
     final native = glass && TpNativeGlass.enabled;
     final query = native ? ref.watch(searchQueryProvider) : _query;
     final hits = SearchIndex.filter(ref.watch(searchIndexProvider), query);
     final typing = query.trim().isNotEmpty;
     final index = ref.watch(searchIndexProvider);
+    // 카탈로그를 읽는 중. 빈 색인으로 "없음"이나 0 을 말하지 않는다.
+    final loading =
+        catalog == null && catalogAsync.isLoading && !catalogAsync.hasError;
     final recent = <SearchHit>[
       for (final key in ref.watch(recentHitsProvider))
         ?index.where((h) => RecentHitsNotifier.keyOf(h) == key).firstOrNull,
@@ -107,10 +113,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             child: field,
           ),
         ),
-      if (!typing && recent.isNotEmpty)
+      if (loading)
+        const SliverToBoxAdapter(child: _Loading())
+      else if (!typing && recent.isNotEmpty)
         SliverToBoxAdapter(
           child: TpGroup(
             header: K.recent.tr(),
+            headerAction: _ClearButton(
+              onTap: () =>
+                  unawaited(ref.read(recentHitsProvider.notifier).clear()),
+            ),
             children: <Widget>[
               for (final hit in recent)
                 TpRow(
@@ -124,7 +136,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ],
           ),
         ),
-      if (!typing)
+      if (!typing && !loading)
         SliverToBoxAdapter(
           child: TpGroup(
             header: K.searchTry.tr(),
@@ -152,7 +164,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             children: <Widget>[
               TpRow(
                 title: K.phones.tr(),
-                value: '${catalog?.smartphones.length ?? 0}',
+                value: catalog == null ? null : '${catalog.smartphones.length}',
                 leading: TpIconTile(
                   icon: glass
                       ? CupertinoIcons.device_phone_portrait
@@ -164,8 +176,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               TpRow(
                 title: K.cpus.tr(),
-                value:
-                    '${(catalog?.socs.length ?? 0) + (catalog?.cpus.length ?? 0)}',
+                value: catalog == null
+                    ? null
+                    : '${catalog.socs.length + catalog.cpus.length}',
                 leading: TpIconTile(icon: Icons.memory),
                 onTap: widget.onKind == null
                     ? null
@@ -173,8 +186,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               TpRow(
                 title: K.laptops.tr(),
-                value:
-                    '${ref.watch(laptopsProvider).value?.byPrice.length ?? 0}',
+                value: laptops.value == null
+                    ? null
+                    : '${laptops.value!.byPrice.length}',
                 leading: TpIconTile(
                   icon: glass ? CupertinoIcons.device_laptop : Icons.laptop,
                 ),
@@ -185,6 +199,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             ],
           ),
         )
+      else if (loading)
+        const SliverToBoxAdapter(child: SizedBox.shrink())
       else if (hits.isEmpty)
         SliverToBoxAdapter(
           child: Padding(
@@ -226,7 +242,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               builder: (context, i) => TpRow(
                 title: group[i].name,
                 subtitle: group[i].meta,
+                value: group[i].index?.toString(),
+                numeric: true,
                 onTap: widget.onHit == null ? null : () => open(group[i]),
+                semanticsLabel: group[i].index == null
+                    ? null
+                    : <String>[
+                        group[i].name,
+                        ?group[i].meta,
+                        K.a11yIndex.tr(args: <String>['${group[i].index}']),
+                      ].join(', '),
               ),
             ),
     ];
@@ -276,6 +301,63 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// 카탈로그를 읽는 동안. 최근·예시 자리에 돌림 표시와 한 줄.
+class _Loading extends StatelessWidget {
+  const _Loading();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(40, 28, 40, 28),
+    child: Semantics(
+      liveRegion: true,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          SizedBox.square(
+            dimension: 18,
+            child: context.tp.isGlass
+                ? const CupertinoActivityIndicator()
+                : const CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              K.searchLoading.tr(),
+              style: TextStyle(fontSize: 15, color: context.sys.label2),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// 최근 그룹 머리의 "지우기".
+class _ClearButton extends StatelessWidget {
+  const _ClearButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final glass = context.tp.isGlass;
+    return TpTapTarget(
+      onTap: onTap,
+      label: K.recentClear.tr(),
+      minSize: glass ? 44 : 48,
+      pressScale: 1,
+      child: Text(
+        K.recentClear.tr(),
+        style: TextStyle(
+          fontSize: glass ? 13 : 14,
+          fontWeight: glass ? FontWeight.w400 : FontWeight.w500,
+          color: context.sys.accentText,
+        ),
+      ),
     );
   }
 }

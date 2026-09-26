@@ -38,10 +38,10 @@ String? authMessage(AuthFailure failure) => switch (failure) {
   AuthFailure.unknown => K.authFailed.tr(),
 };
 
-/// 로그인 화면(전체 화면 모달). 방법 고르기 → 이메일 → 비밀번호 재설정이 화면
-/// 안에서 옆으로 밀린다. 로그인은 선택이라 언제든 X 로 닫는다.
+/// 로그인 화면. 옆에서 밀려 들어온다(push). 방법 고르기 → 이메일 → 비밀번호
+/// 재설정이 화면 안에서 옆으로 밀린다. 로그인은 선택이라 언제든 뒤로 나간다.
 ///
-/// 성공하면 체크가 한 번 튀고 시트가 닫힌다.
+/// 성공하면 체크가 한 번 튀고 화면이 닫힌다.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, this.onClose, this.onSignedIn});
 
@@ -208,17 +208,10 @@ class _OptionsStepState extends ConsumerState<_OptionsStep> {
 
     final buttons = <Widget>[
       if (glass)
-        SizedBox(
-          height: 50,
-          child: SignInWithAppleButton(
-            text: K.continueApple.tr(),
-            height: 50,
-            style: dark
-                ? SignInWithAppleButtonStyle.white
-                : SignInWithAppleButtonStyle.black,
-            borderRadius: const BorderRadius.all(Radius.circular(25)),
-            onPressed: () => unawaited(_tap(AuthMethod.apple)),
-          ),
+        _AppleButton(
+          dark: dark,
+          busy: _busy == AuthMethod.apple,
+          onTap: _busy == null ? () => unawaited(_tap(AuthMethod.apple)) : null,
         ),
       if (google)
         _GoogleButton(
@@ -242,17 +235,25 @@ class _OptionsStepState extends ConsumerState<_OptionsStep> {
           children: <Widget>[
             TpTopBar(
               safeTop: false,
+              // Android 는 M3 앱 바 여백(앞 4 · 뒤 16)에 IconButton.
+              padding: glass
+                  ? null
+                  : const EdgeInsetsDirectional.only(start: 4, end: 16),
               leading: widget.onClose == null
                   ? null
-                  : TpBarButton(
+                  : glass
+                  ? TpBarButton(
                       action: TpBarAction(
                         label: K.back.tr(),
-                        icon: glass
-                            ? CupertinoIcons.chevron_back
-                            : Icons.arrow_back,
+                        icon: CupertinoIcons.chevron_back,
                         symbol: 'chevron.backward',
                         onTap: widget.onClose,
                       ),
+                    )
+                  : IconButton(
+                      onPressed: widget.onClose,
+                      tooltip: K.back.tr(),
+                      icon: const Icon(Icons.arrow_back),
                     ),
             ),
             Expanded(
@@ -282,12 +283,20 @@ class _OptionsStepState extends ConsumerState<_OptionsStep> {
                               child: Text(
                                 K.loginTitle.tr(),
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 30,
-                                  height: 1.2,
-                                  fontWeight: FontWeight.w700,
-                                  color: sys.label,
-                                ),
+                                // Android 는 M3 headlineMedium 28/36.
+                                style: glass
+                                    ? TextStyle(
+                                        fontSize: 30,
+                                        height: 1.2,
+                                        fontWeight: FontWeight.w700,
+                                        color: sys.label,
+                                      )
+                                    : Theme.of(
+                                        context,
+                                      ).textTheme.headlineMedium!.copyWith(
+                                        height: 36 / 28,
+                                        color: sys.label,
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 10),
@@ -351,7 +360,7 @@ class _OptionsStepState extends ConsumerState<_OptionsStep> {
   }
 }
 
-/// 온보딩 마지막 장과 같은 그림. 거기서 넘어오면 이어져 보인다.
+/// 기기 사이 동기화 그림. 관심 목록이 어느 기기에서든 이어진다는 뜻.
 class _SyncCard extends StatelessWidget {
   const _SyncCard({required this.height});
 
@@ -452,12 +461,14 @@ class _GoogleButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           if (busy)
-            const SizedBox.square(
+            SizedBox.square(
               dimension: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Color(0xFF1F1F1F),
-              ),
+              child: glass
+                  ? const CupertinoActivityIndicator(color: Color(0xFF1F1F1F))
+                  : const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF1F1F1F),
+                    ),
             )
           else
             Image.asset('assets/logo/google_logo.png', width: 18, height: 18),
@@ -487,7 +498,87 @@ class _GoogleButton extends StatelessWidget {
   }
 }
 
-/// 이메일 로그인·가입. 위의 세그먼트로 오간다.
+/// Apple 버튼. 기다리는 동안은 로고 자리에 돌림 표시를 띄우고 흐려진다 —
+/// 공식 버튼에는 바쁜 모양이 없어서 같은 색·크기로 직접 그린다.
+class _AppleButton extends StatelessWidget {
+  const _AppleButton({
+    required this.dark,
+    required this.onTap,
+    this.busy = false,
+  });
+
+  final bool dark;
+  final VoidCallback? onTap;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = dark
+        ? SignInWithAppleButtonStyle.white
+        : SignInWithAppleButtonStyle.black;
+    final Widget face;
+    if (busy) {
+      final bg = dark ? Colors.white : Colors.black;
+      final fg = dark ? Colors.black : Colors.white;
+      face = Semantics(
+        button: true,
+        enabled: false,
+        label: K.continueApple.tr(),
+        excludeSemantics: true,
+        child: Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              SizedBox.square(
+                dimension: 18,
+                child: CupertinoActivityIndicator(color: fg),
+              ),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  K.continueApple.tr(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  // 공식 버튼과 같은 글자(높이의 43%).
+                  style: TextStyle(
+                    fontSize: 50 * .43,
+                    letterSpacing: -.41,
+                    color: fg,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      face = SignInWithAppleButton(
+        text: K.continueApple.tr(),
+        height: 50,
+        style: style,
+        borderRadius: const BorderRadius.all(Radius.circular(25)),
+        onPressed: onTap ?? () {},
+      );
+    }
+    // 다른 방법을 기다리는 동안은 눌리지 않는다.
+    return SizedBox(
+      height: 50,
+      child: AnimatedOpacity(
+        opacity: busy ? .6 : 1,
+        duration: context.motion.selection.duration,
+        child: IgnorePointer(ignoring: onTap == null, child: face),
+      ),
+    );
+  }
+}
+
+/// 이메일 로그인·가입. 맨 아래 한 줄로 오간다.
 class _EmailStep extends ConsumerStatefulWidget {
   const _EmailStep({
     required this.onBack,
@@ -510,6 +601,9 @@ class _EmailStepState extends ConsumerState<_EmailStep> {
   bool _busy = false;
   String? _error;
 
+  /// 오류가 가리키는 칸. 고치기 시작하면 그 칸부터 풀린다.
+  Set<_Field> _bad = const <_Field>{};
+
   @override
   void dispose() {
     _email.dispose();
@@ -517,27 +611,55 @@ class _EmailStepState extends ConsumerState<_EmailStep> {
     super.dispose();
   }
 
-  void _fail(String message) {
+  void _fail(String message, Set<_Field> bad) {
     TpHaptics.error();
     setState(() {
       _busy = false;
       _error = message;
+      _bad = bad;
     });
   }
+
+  void _edited(_Field field) {
+    if (!_bad.contains(field)) return;
+    setState(() {
+      _bad = <_Field>{..._bad}..remove(field);
+      if (_bad.isEmpty) _error = null;
+    });
+  }
+
+  /// 서버 오류가 어느 칸 탓인지. 네트워크처럼 칸과 상관없으면 빈 집합.
+  static Set<_Field> _blame(AuthFailure failure) => switch (failure) {
+    AuthFailure.badCredentials => const <_Field>{_Field.email, _Field.password},
+    AuthFailure.invalidEmail ||
+    AuthFailure.emailInUse ||
+    AuthFailure.otherProvider ||
+    AuthFailure.disabled => const <_Field>{_Field.email},
+    AuthFailure.weakPassword => const <_Field>{_Field.password},
+    _ => const <_Field>{},
+  };
 
   Future<void> _submit() async {
     if (_busy) return;
     final email = _email.text.trim();
     final password = _password.text;
     // 빈 칸에 "형식이 아닙니다"는 고장 난 것처럼 읽힌다.
-    if (email.isEmpty || password.isEmpty) return _fail(K.emailNeeded.tr());
-    if (!LoginScreen.looksLikeEmail(email)) return _fail(K.emailInvalid.tr());
+    if (email.isEmpty || password.isEmpty) {
+      return _fail(K.emailNeeded.tr(), <_Field>{
+        if (email.isEmpty) _Field.email,
+        if (password.isEmpty) _Field.password,
+      });
+    }
+    if (!LoginScreen.looksLikeEmail(email)) {
+      return _fail(K.emailInvalid.tr(), const <_Field>{_Field.email});
+    }
     if (password.length < LoginScreen.minPasswordLength) {
-      return _fail(K.passwordShort.tr());
+      return _fail(K.passwordShort.tr(), const <_Field>{_Field.password});
     }
     setState(() {
       _busy = true;
       _error = null;
+      _bad = const <_Field>{};
     });
     final notifier = ref.read(currentUserProvider.notifier);
     final result = _signingUp
@@ -554,7 +676,8 @@ class _EmailStepState extends ConsumerState<_EmailStep> {
       widget.onSignedIn();
       return;
     }
-    _fail(authMessage(result.failure!) ?? K.authFailed.tr());
+    final failure = result.failure!;
+    _fail(authMessage(failure) ?? K.authFailed.tr(), _blame(failure));
   }
 
   @override
@@ -563,8 +686,15 @@ class _EmailStepState extends ConsumerState<_EmailStep> {
     void toggle() => setState(() {
       _signingUp = !_signingUp;
       _error = null;
+      _bad = const <_Field>{};
     });
     final safe = MediaQuery.viewPaddingOf(context).bottom;
+    // Android 는 칸의 errorText 로 말한다. 두 칸 다 틀렸으면 문장은 아래 칸에.
+    final inField = !context.tp.isGlass && _bad.isNotEmpty;
+    final says = _bad.contains(_Field.password)
+        ? _Field.password
+        : _Field.email;
+    String? fieldError(_Field f) => inField && says == f ? _error : null;
 
     // `iOS-EmailLogin` · `iOS-SignUp` · `iOS-EmailLogin-Error`.
     // 큰 제목, 칸 둘, 그 아래 한 줄(오류는 빨강, 가입은 비밀번호 규칙), 채운
@@ -594,6 +724,9 @@ class _EmailStepState extends ConsumerState<_EmailStep> {
                             AutofillHints.email,
                           ],
                           action: TextInputAction.next,
+                          invalid: _bad.contains(_Field.email),
+                          errorText: fieldError(_Field.email),
+                          onChanged: (_) => _edited(_Field.email),
                         ),
                         LoginField(
                           controller: _password,
@@ -608,6 +741,9 @@ class _EmailStepState extends ConsumerState<_EmailStep> {
                           ],
                           action: TextInputAction.done,
                           onSubmitted: (_) => unawaited(_submit()),
+                          invalid: _bad.contains(_Field.password),
+                          errorText: fieldError(_Field.password),
+                          onChanged: (_) => _edited(_Field.password),
                         ),
                       ],
                     ),
@@ -618,7 +754,7 @@ class _EmailStepState extends ConsumerState<_EmailStep> {
                     duration: context.motion.reveal.duration,
                     curve: context.motion.reveal.curve,
                     alignment: Alignment.topCenter,
-                    child: _error != null
+                    child: _error != null && !inField
                         ? _ErrorLine(_error!)
                         : _signingUp
                         ? _Footnote(K.pwRule.tr())
@@ -726,6 +862,9 @@ class _ResetStepState extends ConsumerState<_ResetStep> {
   bool _sent = false;
   String? _error;
 
+  /// 이메일 칸 탓인 오류인지.
+  bool _bad = false;
+
   @override
   void dispose() {
     _email.dispose();
@@ -736,12 +875,16 @@ class _ResetStepState extends ConsumerState<_ResetStep> {
     final email = _email.text.trim();
     if (!LoginScreen.looksLikeEmail(email)) {
       TpHaptics.error();
-      setState(() => _error = K.emailInvalid.tr());
+      setState(() {
+        _error = K.emailInvalid.tr();
+        _bad = true;
+      });
       return;
     }
     setState(() {
       _busy = true;
       _error = null;
+      _bad = false;
     });
     final failure = await ref
         .read(currentUserProvider.notifier)
@@ -759,12 +902,14 @@ class _ResetStepState extends ConsumerState<_ResetStep> {
     setState(() {
       _busy = false;
       _error = authMessage(failure) ?? K.authFailed.tr();
+      _bad = _EmailStepState._blame(failure).contains(_Field.email);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final sys = context.sys;
+    final inField = !context.tp.isGlass && _bad;
     return TpPage(
       title: K.resetTitle.tr(),
       largeTitle: false,
@@ -781,11 +926,22 @@ class _ResetStepState extends ConsumerState<_ResetStep> {
                 autofillHints: const <String>[AutofillHints.email],
                 action: TextInputAction.send,
                 onSubmitted: (_) => unawaited(_send()),
+                invalid: _bad,
+                errorText: inField ? _error : null,
+                onChanged: (_) {
+                  if (_bad) {
+                    setState(() {
+                      _bad = false;
+                      _error = null;
+                    });
+                  }
+                },
               ),
             ],
           ),
         ),
-        if (_error != null) SliverToBoxAdapter(child: _ErrorLine(_error!)),
+        if (_error != null && !inField)
+          SliverToBoxAdapter(child: _ErrorLine(_error!)),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
@@ -821,6 +977,19 @@ class _ResetStepState extends ConsumerState<_ResetStep> {
                   ),
           ),
         ),
+        // 보낸 뒤엔 할 일이 로그인뿐이다. 뒤로만 두면 찾아야 한다.
+        if (_sent)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              child: TpPill(
+                label: K.resetBackToSignIn.tr(),
+                kind: TpPillKind.tinted,
+                height: context.tp.isGlass ? 50 : 48,
+                onTap: widget.onBack,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -1100,6 +1269,9 @@ class LoginField extends StatelessWidget {
     this.action,
     this.onSubmitted,
     this.placeholder,
+    this.onChanged,
+    this.invalid = false,
+    this.errorText,
   });
 
   final TextEditingController controller;
@@ -1112,6 +1284,13 @@ class LoginField extends StatelessWidget {
   final Iterable<String>? autofillHints;
   final TextInputAction? action;
   final ValueChanged<String>? onSubmitted;
+  final ValueChanged<String>? onChanged;
+
+  /// 오류가 이 칸을 가리킨다. iOS 는 이름이 빨개진다.
+  final bool invalid;
+
+  /// Android 칸 아래 오류 문장. [invalid] 인데 null 이면 빨간 밑줄만.
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) {
@@ -1130,7 +1309,10 @@ class LoginField extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 17, color: sys.label),
+                    style: TextStyle(
+                      fontSize: 17,
+                      color: invalid ? sys.destructive : sys.label,
+                    ),
                   ),
                 ),
               ),
@@ -1149,6 +1331,7 @@ class LoginField extends StatelessWidget {
                     enableSuggestions: !obscure && keyboardType == null,
                     onTapOutside: (_) => FocusScope.of(context).unfocus(),
                     onSubmitted: onSubmitted,
+                    onChanged: onChanged,
                     placeholder: placeholder,
                     placeholderStyle: TextStyle(
                       fontSize: 17,
@@ -1178,15 +1361,20 @@ class LoginField extends StatelessWidget {
         enableSuggestions: !obscure && keyboardType == null,
         onTapOutside: (_) => FocusScope.of(context).unfocus(),
         onSubmitted: onSubmitted,
+        onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
           hintText: placeholder,
           filled: true,
+          errorText: invalid ? (errorText ?? '') : null,
         ),
       ),
     );
   }
 }
+
+/// 이메일 단계의 칸.
+enum _Field { email, password }
 
 /// 안쪽 Navigator 의 깊이.
 class _Depth extends NavigatorObserver {

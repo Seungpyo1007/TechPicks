@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -97,6 +100,25 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(K.authNetwork.tr()), findsOneWidget);
+    });
+
+    testWidgets('Apple 을 기다리는 동안 돌림 표시가 뜨고 다른 버튼은 잠긴다', (tester) async {
+      final auth = _HangingAuth();
+      await _pump(tester, auth);
+
+      await tester.tap(find.byType(SignInWithAppleButton));
+      await tester.pump();
+
+      expect(auth.signIns, <AuthMethod>[AuthMethod.apple]);
+      expect(find.byType(SignInWithAppleButton), findsNothing);
+      expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
+      await tester.tap(find.text(K.continueGoogle.tr()));
+      await tester.pump();
+      expect(auth.signIns, <AuthMethod>[AuthMethod.apple]);
+
+      auth.finish(const AuthResult.failed(AuthFailure.canceled));
+      await tester.pumpAndSettle();
+      expect(find.byType(SignInWithAppleButton), findsOneWidget);
     });
 
     test('오류마다 문장이 있다, 취소만 빼고', () {
@@ -200,6 +222,44 @@ void main() {
       expect(find.text(K.signedIn.tr()), findsNothing);
     });
 
+    testWidgets('Android 는 틀린 칸의 errorText 로 말한다', (tester) async {
+      await _pump(tester, FakeAuthService(), chrome: TpChrome.android);
+      await _toEmail(tester);
+
+      await _fill(tester, 'nope', 'longenough');
+      await _submit(tester, K.signIn);
+
+      final fields = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .toList();
+      expect(fields.first.decoration!.errorText, K.emailInvalid.tr());
+      expect(fields.last.decoration!.errorText, isNull);
+      expect(find.text(K.emailInvalid.tr()), findsOneWidget);
+
+      // 고치기 시작하면 풀린다.
+      await tester.enterText(find.byType(EditableText).first, 'a@b.com');
+      await tester.pump();
+      expect(
+        tester
+            .widget<TextField>(find.byType(TextField).first)
+            .decoration!
+            .errorText,
+        isNull,
+      );
+    });
+
+    testWidgets('iOS 는 틀린 칸의 이름이 빨개진다', (tester) async {
+      await _pump(tester, FakeAuthService());
+      await _toEmail(tester);
+
+      await _fill(tester, 'a@b.com', '12345');
+      await _submit(tester, K.signIn);
+
+      Color? color(String label) =>
+          tester.widget<Text>(find.text(label)).style?.color;
+      expect(color(K.passwordLabel.tr()), isNot(color(K.emailLabel.tr())));
+    });
+
     testWidgets('가입으로 바꾸면 가입을 부른다', (tester) async {
       final auth = FakeAuthService();
       await _pump(tester, auth);
@@ -253,6 +313,12 @@ void main() {
 
       expect(auth.resets, <String>['a@b.com']);
       expect(find.text(K.resetSent.tr()), findsOneWidget);
+
+      // 보낸 뒤엔 로그인으로 돌아가는 버튼이 있다.
+      await tester.tap(find.text(K.resetBackToSignIn.tr()));
+      await tester.pumpAndSettle();
+      expect(find.text(K.resetTitle.tr()), findsNothing);
+      expect(find.text(K.emailTitle.tr()), findsOneWidget);
     });
 
     testWidgets('한국어로도 그려진다', (tester) async {
@@ -265,4 +331,21 @@ void main() {
       expect(find.text('로그인'), findsWidgets);
     });
   });
+}
+
+/// 로그인이 [finish] 전까지 안 돌아온다(OS 계정 시트가 떠 있는 동안).
+class _HangingAuth extends FakeAuthService {
+  Completer<AuthResult>? _wait;
+
+  void finish(AuthResult result) => _wait?.complete(result);
+
+  @override
+  Future<AuthResult> signIn(
+    AuthMethod method, {
+    String? email,
+    String? password,
+  }) {
+    signIns.add(method);
+    return (_wait = Completer<AuthResult>()).future;
+  }
 }
