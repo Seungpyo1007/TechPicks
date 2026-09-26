@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_gemma_builtin_ai/flutter_gemma_builtin_ai.dart'
+    show BuiltInAiAvailability;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -392,6 +394,42 @@ void main() {
     await tester.tap(find.text('Log out').last);
     await tester.pumpAndSettle();
     expect(logouts, 1);
+  });
+
+  group('AI 엔진', () {
+    Future<void> open(WidgetTester tester, TpChrome chrome) async {
+      await pumpScreen(
+        tester,
+        const YouScreen(),
+        chrome: chrome,
+        size: const Size(1200, 3600),
+        overrides: <Override>[
+          onDeviceAiProvider.overrideWith(
+            (ref) async => BuiltInAiAvailability.unavailableDisabled,
+          ),
+        ],
+      );
+      await tester.tap(find.text(K.aiEngine.tr()));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('선택지마다 부제가 있다', (tester) async {
+      await open(tester, TpChrome.ios);
+      for (final key in <String>[
+        K.aiEngineAutoBody,
+        K.aiEngineOnDeviceBody,
+        K.aiEngineCloudBody,
+      ]) {
+        expect(find.text(key.tr()), findsOneWidget, reason: key);
+      }
+      expect(find.text(K.aiEngineDisabled.tr()), findsOneWidget);
+    });
+
+    testWidgets('Android 각주는 Apple Intelligence 를 말하지 않는다', (tester) async {
+      await open(tester, TpChrome.android);
+      expect(find.text(K.aiEngineDisabled.tr()), findsNothing);
+      expect(find.text(K.aiEngineUnavailable.tr()), findsOneWidget);
+    });
   });
 
   group('나눈 화면', () {

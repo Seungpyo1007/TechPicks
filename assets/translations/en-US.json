@@ -335,5 +335,8 @@
   "buildUse": "Use",
   "thisPhone": "This phone",
   "yourPicks": "Your picks",
-  "settings": "Settings"
+  "settings": "Settings",
+  "aiEngineAutoBody": "On this phone first, then the cloud.",
+  "aiEngineOnDeviceBody": "The question never leaves this phone.",
+  "aiEngineCloudBody": "Questions are sent to Gemini."
 }

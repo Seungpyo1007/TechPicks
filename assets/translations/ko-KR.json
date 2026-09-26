@@ -335,5 +335,8 @@
   "buildUse": "용도",
   "thisPhone": "이 기기",
   "yourPicks": "내 선택",
-  "settings": "설정"
+  "settings": "설정",
+  "aiEngineAutoBody": "이 기기 먼저, 안 되면 클라우드",
+  "aiEngineOnDeviceBody": "질문이 기기 밖으로 안 나감",
+  "aiEngineCloudBody": "질문을 Gemini로 보냄"
 }

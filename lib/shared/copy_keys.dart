@@ -141,6 +141,9 @@ abstract final class K {
   static const String aiEngineCloud = 'aiEngineCloud';
   static const String aiEngineUnavailable = 'aiEngineUnavailable';
   static const String aiEngineDisabled = 'aiEngineDisabled';
+  static const String aiEngineAutoBody = 'aiEngineAutoBody';
+  static const String aiEngineOnDeviceBody = 'aiEngineOnDeviceBody';
+  static const String aiEngineCloudBody = 'aiEngineCloudBody';
   static const String themeSystem = 'themeSystem';
   static const String themeLight = 'themeLight';
   static const String themeDark = 'themeDark';
