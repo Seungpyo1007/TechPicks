@@ -55,12 +55,13 @@ class TpTopBar extends StatelessWidget {
     padding: EdgeInsets.only(
       top: safeTop ? MediaQuery.paddingOf(context).top : 0,
     ),
+    // Android 는 터치 최소가 48 이라 줄도 48(바 56).
     child: SizedBox(
-      height: height,
+      height: context.tp.isGlass ? height : 56,
       child: Align(
         alignment: Alignment.topCenter,
         child: SizedBox(
-          height: row,
+          height: context.tp.isGlass ? row : 48,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: side),
             child: NavigationToolbar(
