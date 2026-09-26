@@ -582,12 +582,38 @@ class _ShortlistRow extends ConsumerWidget {
 
     final swipeable = Dismissible(
       key: ValueKey<String>('shortlist-${device.slug}'),
-      direction: DismissDirection.endToStart,
+      // 오른쪽으로 밀면 비교. Android 는 길게 누르기 메뉴가 없어서 비교로
+      // 가는 길이 이것뿐이다. 줄은 안 빠진다.
+      direction: onCompare == null
+          ? DismissDirection.endToStart
+          : DismissDirection.horizontal,
+      confirmDismiss: (direction) async {
+        if (direction != DismissDirection.startToEnd) return true;
+        onCompare?.call();
+        return false;
+      },
       onDismissed: (_) => onRemove?.call(),
       onUpdate: (d) {
         if (d.reached && !d.previousReached) TpHaptics.impact();
       },
       background: ColoredBox(
+        color: TpSys.accent,
+        child: Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(start: 20),
+            child: Text(
+              K.compareButton.tr(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      ),
+      secondaryBackground: ColoredBox(
         color: sys.destructive,
         child: Align(
           alignment: AlignmentDirectional.centerEnd,
