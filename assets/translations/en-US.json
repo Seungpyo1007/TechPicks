@@ -99,6 +99,7 @@
   "logout": "Log out",
   "logoutConfirm": "You’ll be signed out on this device. Your shortlist and priorities stay with your account and are cleared here.",
   "movers": "Movers this week",
+  "moversFirstRun": "Changes show up from your next visit.",
   "nameLabel": "Name",
   "next": "Next",
   "noDevices": "No devices yet.",
@@ -331,6 +332,7 @@
   "buildRowSub": "CPU and GPU pairs for a budget",
   "weights": "Weights",
   "removeShort": "Remove from shortlist",
+  "shortlistRemoved": "Removed {} · Undo",
   "browseByKind": "Browse by kind",
   "done": "Done",
   "buildUse": "Use"

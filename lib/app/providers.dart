@@ -524,6 +524,14 @@ class ShortlistNotifier extends Notifier<List<String>> with RestoreGuard {
     state = <String>[...state.where((s) => s != slug)];
     unawaited(_persist());
   }
+
+  /// 되돌리기. 지운 자리([at])에 다시 넣는다.
+  void insert(int at, String slug) {
+    if (state.contains(slug)) return;
+    touch();
+    state = <String>[...state]..insert(at.clamp(0, state.length), slug);
+    unawaited(_persist());
+  }
 }
 
 final shortlistProvider = NotifierProvider<ShortlistNotifier, List<String>>(
@@ -766,7 +774,7 @@ final rankSnapshotSlugsProvider = Provider<List<String>>(
       .toList(growable: false),
 );
 
-/// 이번 주 변동. 저장된 순위가 없으면 빈 목록이라 섹션이 통째로 빠진다.
+/// 이번 주 변동. 저장된 순위가 없으면 빈 목록이다(오늘은 첫 실행 안내 한 줄).
 final moversProvider = Provider<List<Mover>>((ref) {
   return Movers.between(
     previous: ref.watch(rankSnapshotProvider),

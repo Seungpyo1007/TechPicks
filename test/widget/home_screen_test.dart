@@ -83,9 +83,12 @@ void main() {
     );
   });
 
-  testWidgets('저장된 순위가 없으면 Movers 섹션이 없다', (tester) async {
+  testWidgets('저장된 순위가 없으면 변동을 지어내지 않고 다음부터 보인다고 한다', (tester) async {
     await _pump(tester);
-    expect(find.text('Movers this week'), findsNothing);
+    expect(find.text('Movers this week'), findsOneWidget);
+    expect(find.text(K.moversFirstRun.tr()), findsOneWidget);
+    expect(find.textContaining('▲'), findsNothing);
+    expect(find.textContaining('▼'), findsNothing);
   });
 
   testWidgets('저장된 순위가 있으면 Movers 가 나온다', (tester) async {
@@ -172,6 +175,84 @@ void _shortlistRemoval() {
       find.text('iPhone 16 Pro Max').first,
       const Offset(-500, 0),
     );
+    await tester.pumpAndSettle();
+
+    expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
+  });
+
+  for (final chrome in <TpChrome>[TpChrome.ios, TpChrome.android]) {
+    testWidgets('지운 뒤 되돌리기로 제자리에 돌아온다 · ${chrome.name}', (tester) async {
+      await initLocalization();
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'shortlist_slugs': <String>['iphone-16-pro-max', 'galaxy-s25-ultra'],
+      });
+
+      final container = await pumpScreen(
+        tester,
+        const HomeScreen(),
+        chrome: chrome,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+        find.text('iPhone 16 Pro Max').first,
+        const Offset(-500, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
+
+      final undo = K.shortlistRemoved
+          .tr(args: <String>['iPhone 16 Pro Max'])
+          .split(' · ')
+          .last;
+      await tester.tap(find.text(undo));
+      await tester.pumpAndSettle();
+
+      expect(container.read(shortlistProvider), <String>[
+        'iphone-16-pro-max',
+        'galaxy-s25-ultra',
+      ]);
+      expect(find.text(undo), findsNothing);
+    });
+  }
+
+  testWidgets('되돌리기는 잠깐 뒤 사라진다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
+    });
+
+    await pumpScreen(tester, const HomeScreen());
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.text('iPhone 16 Pro Max').first,
+      const Offset(-500, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('iPhone 16 Pro Max'), findsOneWidget);
+
+    await tester.pump(HomeScreen.undoHold);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('iPhone 16 Pro Max'), findsNothing);
+  });
+
+  testWidgets('Android 도 길게 누르면 메뉴에서 지운다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
+    });
+
+    final container = await pumpScreen(
+      tester,
+      const HomeScreen(),
+      chrome: TpChrome.android,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.text('iPhone 16 Pro Max').first);
+    await tester.pumpAndSettle();
+    expect(find.text(K.compareButton.tr()), findsNothing);
+    await tester.tap(find.text(K.removeShort.tr()));
     await tester.pumpAndSettle();
 
     expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);

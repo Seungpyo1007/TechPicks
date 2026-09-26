@@ -34,6 +34,7 @@ abstract final class K {
   static const String buildRowSub = 'buildRowSub';
   static const String weights = 'weights';
   static const String removeShort = 'removeShort';
+  static const String shortlistRemoved = 'shortlistRemoved';
   static const String browseByKind = 'browseByKind';
   static const String recent = 'recent';
   static const String searchTry = 'searchTry';
@@ -56,6 +57,7 @@ abstract final class K {
   static const String compareAll = 'compareAll';
   static const String askWhy = 'askWhy';
   static const String movers = 'movers';
+  static const String moversFirstRun = 'moversFirstRun';
   static const String emptyShortlist = 'emptyShortlist';
   static const String emptyShortlistBody = 'emptyShortlistBody';
   static const String emptyShortlistCta = 'emptyShortlistCta';
