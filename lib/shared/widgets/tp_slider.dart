@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/tp_native_glass.dart';
+import '../../app/theme/tp_sys.dart';
+
 import '../../app/theme/tp_tokens.dart';
 import '../tp_haptics.dart';
 
-/// 모양과 눈금 햅틱을 통일한 Material 슬라이더.
+/// 모양과 눈금 햅틱을 통일한 슬라이더. iOS 26 은 진짜 UISlider(끌면
+/// 손잡이가 유리로 늘어난다), 나머지는 Material.
 class TpSlider extends StatefulWidget {
   const TpSlider({
     super.key,
@@ -46,10 +50,34 @@ class _TpSliderState extends State<TpSlider> {
         .round();
   }
 
+  void _changed(double value) {
+    final divisions = widget.divisions;
+    if (divisions != null && divisions > 0) {
+      final division = _divisionFor(value)!;
+      if (_lastDivision != null && division != _lastDivision) {
+        TpHaptics.selection();
+      }
+      _lastDivision = division;
+    }
+    widget.onChanged(value);
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
     final divisions = widget.divisions;
+    if (t.isGlass && TpNativeGlass.enabled) {
+      return TpNativeSlider(
+        value: widget.value.clamp(widget.min, widget.max),
+        min: widget.min,
+        max: widget.max,
+        step: divisions == null || divisions <= 0
+            ? null
+            : (widget.max - widget.min) / divisions,
+        color: TpSys.accent,
+        onChanged: _changed,
+      );
+    }
     return SliderTheme(
       data: SliderTheme.of(context).copyWith(
         trackHeight: t.isGlass ? 2 : 4,
@@ -70,16 +98,7 @@ class _TpSliderState extends State<TpSlider> {
         divisions: divisions,
         label: widget.label,
         semanticFormatterCallback: widget.semanticFormatterCallback,
-        onChanged: (value) {
-          if (divisions != null && divisions > 0) {
-            final division = _divisionFor(value)!;
-            if (_lastDivision != null && division != _lastDivision) {
-              TpHaptics.selection();
-            }
-            _lastDivision = division;
-          }
-          widget.onChanged(value);
-        },
+        onChanged: _changed,
       ),
     );
   }

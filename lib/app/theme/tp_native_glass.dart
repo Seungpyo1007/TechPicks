@@ -484,3 +484,86 @@ class TpNativeMenuLink extends StatelessWidget {
     onItemSelected: (id) => onSelected(int.parse(id)),
   );
 }
+
+/// iOS 26 스위치(UISwitch). 누르면 손잡이가 유리 렌즈로 바뀐다.
+class TpNativeSwitch extends StatelessWidget {
+  const TpNativeSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) =>
+      LiquidGlassToggle(value: value, onChanged: onChanged);
+}
+
+/// iOS 26 슬라이더(UISlider). 끌면 손잡이가 유리로 늘어난다.
+class TpNativeSlider extends StatelessWidget {
+  const TpNativeSlider({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.min = 0,
+    this.max = 1,
+    this.step,
+    this.color,
+  });
+
+  final double value;
+  final ValueChanged<double> onChanged;
+  final double min;
+  final double max;
+  final double? step;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassSlider(
+    value: value,
+    min: min,
+    max: max,
+    step: step,
+    color: color,
+    onChanged: onChanged,
+  );
+}
+
+/// 시스템 액션 시트 한 줄.
+class TpNativeSheetAction {
+  const TpNativeSheetAction({
+    required this.id,
+    required this.label,
+    this.destructive = false,
+    this.cancel = false,
+  });
+
+  final String id;
+  final String label;
+  final bool destructive;
+  final bool cancel;
+}
+
+/// iOS 26 시스템 액션 시트(UIAlertController). 고른 줄의 [TpNativeSheetAction.id].
+Future<String?> showTpNativeActionSheet(
+  BuildContext context, {
+  String? title,
+  String? message,
+  required List<TpNativeSheetAction> actions,
+}) => LiquidGlassAlert.show(
+  context: context,
+  title: title,
+  message: message,
+  style: LiquidGlassAlertStyle.actionSheet,
+  actions: <LiquidGlassAlertAction>[
+    for (final a in actions)
+      LiquidGlassAlertAction(
+        id: a.id,
+        title: a.label,
+        isDestructive: a.destructive,
+        isCancel: a.cancel,
+      ),
+  ],
+);
