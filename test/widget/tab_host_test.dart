@@ -216,33 +216,7 @@ void _moversRoundTrip() {
 
 /// 비교 화면의 "왜?".
 void _askFromCompare() {
-  testWidgets('비교 중인 두 기기를 상담이 물어본다', (tester) async {
-    await initLocalization();
-    final container = await pumpApp(
-      tester,
-      initialLocation: TpRoute.compare,
-      overrides: <Override>[
-        authServiceProvider.overrideWithValue(_NoAuth()),
-        askServiceProvider.overrideWithValue(const LocalAskService()),
-      ],
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text(K.askWhy.tr()));
-    await tester.pumpAndSettle();
-
-    final messages = container.read(askProvider);
-    // 씨앗 인사 + 질문 + 답.
-    expect(messages.length, 3);
-    final ranked = readRanking();
-    expect(
-      messages[1].text,
-      '${ranked[0].device.name} or ${ranked[1].device.name}?',
-    );
-    expect(messages[2].answer, isNotNull);
-  });
-
-  testWidgets('비교할 게 없으면 물어볼 버튼도 없다', (tester) async {
+  testWidgets('비교 탭에는 이유 물어보기 버튼이 없다', (tester) async {
     await initLocalization();
     final container = await pumpApp(
       tester,

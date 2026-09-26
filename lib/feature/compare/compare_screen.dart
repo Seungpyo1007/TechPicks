@@ -30,12 +30,11 @@ double _lines(BuildContext context, TextStyle style, int lines) =>
     (style.height ?? 1.25) *
     lines;
 
-/// 비교. 두 기기 머리 카드, 한 장의 표, 탭 바 위에 떠 있는 "이유 물어보기".
+/// 비교. 두 기기 머리 카드, 한 장의 표.
 class CompareScreen extends ConsumerWidget {
-  const CompareScreen({super.key, this.onPick, this.onAskWhy});
+  const CompareScreen({super.key, this.onPick});
 
   final ValueChanged<CompareSide>? onPick;
-  final VoidCallback? onAskWhy;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -59,7 +58,6 @@ class CompareScreen extends ConsumerWidget {
     final linkMissing =
         catalog.hasValue &&
         ((slots.a != null && a == null) || (slots.b != null && b == null));
-    final glass = context.tp.isGlass;
 
     final Widget table;
     if (loading) {
@@ -87,23 +85,6 @@ class CompareScreen extends ConsumerWidget {
     return TpPage(
       title: K.compareTitle.tr(),
       tab: TpTab.compare,
-      // iOS 는 가운데 캡슐, Android 는 오른쪽 아래 확장 FAB.
-      floating: pairs.isEmpty || onAskWhy == null
-          ? null
-          : glass
-          ? TpPill(
-              label: K.askWhy.tr(),
-              icon: CupertinoIcons.sparkles,
-              expand: false,
-              onTap: onAskWhy,
-            )
-          : FloatingActionButton.extended(
-              // 탭마다 FAB 가 살아 있어서 기본 hero 태그가 겹친다.
-              heroTag: null,
-              onPressed: onAskWhy,
-              icon: const Icon(Icons.auto_awesome),
-              label: Text(K.askWhy.tr()),
-            ),
       coach: const <TpCoachStep>[
         TpCoachStep(
           target: 'compare-heads',
