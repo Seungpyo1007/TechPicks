@@ -99,6 +99,7 @@
   "logout": "로그아웃",
   "logoutConfirm": "이 기기에서 로그아웃합니다. 관심 목록과 가중치는 계정에 남고, 이 기기에서는 비워집니다.",
   "movers": "이번 주 변동",
+  "moversFirstRun": "순위 변동은 다음 방문부터 보입니다.",
   "nameLabel": "이름",
   "next": "다음",
   "noDevices": "아직 기기가 없습니다.",
@@ -331,6 +332,7 @@
   "buildRowSub": "예산에 맞는 CPU와 GPU 조합",
   "weights": "가중치",
   "removeShort": "관심 목록에서 지우기",
+  "shortlistRemoved": "{} 지움 · 되돌리기",
   "browseByKind": "종류별로 보기",
   "done": "완료",
   "buildUse": "용도"
