@@ -165,6 +165,10 @@ abstract final class K {
   static const String yourDevice = 'yourDevice';
   static const String yourDeviceUnknown = 'yourDeviceUnknown';
   static const String yourDeviceUnavailable = 'yourDeviceUnavailable';
+  // iOS 머리 카드의 통계 띠와 "내 선택" 두 칸.
+  static const String thisPhone = 'thisPhone';
+  static const String yourPicks = 'yourPicks';
+  static const String settings = 'settings';
 
   static const String seeAll = 'seeAll';
   static const String askPlaceholder = 'askPlaceholder';
