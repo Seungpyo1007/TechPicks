@@ -89,6 +89,17 @@ class _AskScreenState extends ConsumerState<AskScreen>
     await ref.read(askProvider.notifier).send(text);
   }
 
+  /// 기다리던 질문을 거둔다. 입력이 비어 있으면 그 글을 돌려놓는다.
+  void _cancel() {
+    final text = ref.read(askProvider.notifier).cancel();
+    // 새로 치던 글은 덮지 않는다.
+    if (text == null || _input.text.trim().isNotEmpty) return;
+    _input.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
   /// 마지막 말풍선까지 내린다.
   ///
   /// **다음 프레임에** 내려야 한다. 상태가 바뀐 직후의 `maxScrollExtent` 는
@@ -193,6 +204,7 @@ class _AskScreenState extends ConsumerState<AskScreen>
                       key: askComposerKey,
                       controller: _input,
                       onSend: _send,
+                      onCancel: _cancel,
                       busy: busy,
                       fresh: fresh,
                     ),
@@ -722,6 +734,7 @@ class _Composer extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onSend,
+    this.onCancel,
     this.busy = false,
     this.fresh = false,
   });
@@ -766,6 +779,9 @@ class _Composer extends StatelessWidget {
 
   final TextEditingController controller;
   final ValueChanged<String> onSend;
+
+  /// 기다리는 동안 보내기 자리가 멈춤이 된다.
+  final VoidCallback? onCancel;
 
   /// 답을 기다리는 중. 보내기를 잠근다.
   final bool busy;
@@ -867,10 +883,10 @@ class _Composer extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   TpTapTarget(
-                    onTap: busy ? null : () => onSend(controller.text),
+                    onTap: busy ? onCancel : () => onSend(controller.text),
                     // 입력창과 같은 이름을 주면 버튼도 "무엇이든
                     // 물어보세요"라고 읽는다.
-                    label: K.send.tr(),
+                    label: (busy ? K.cancel : K.send).tr(),
                     minSize: minTap(context),
                     child: AnimatedContainer(
                       duration: context.motion.selection.duration,
@@ -882,11 +898,22 @@ class _Composer extends StatelessWidget {
                         shape: glass ? BoxShape.circle : BoxShape.rectangle,
                         borderRadius: glass ? null : BorderRadius.circular(16),
                       ),
-                      child: Icon(
-                        glass ? CupertinoIcons.arrow_up : context.icons.send,
-                        color: ready ? Colors.white : sys.label3,
-                        size: glass ? 20 : 24,
-                      ),
+                      child: busy
+                          // 기다리는 동안은 멈춤. 누르면 질문을 거둔다.
+                          ? Icon(
+                              glass
+                                  ? CupertinoIcons.stop_fill
+                                  : Icons.stop_rounded,
+                              color: sys.label,
+                              size: glass ? 16 : 24,
+                            )
+                          : Icon(
+                              glass
+                                  ? CupertinoIcons.arrow_up
+                                  : context.icons.send,
+                              color: ready ? Colors.white : sys.label3,
+                              size: glass ? 20 : 24,
+                            ),
                     ),
                   ),
                 ],
