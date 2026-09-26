@@ -159,6 +159,7 @@
   "send": "Send",
   "share": "Share",
   "shareDevice": "{} — TP Index {}",
+  "shareFailed": "Could not share this device.",
   "shareSubject": "TechPicks — {}",
   "shortlist": "Shortlist",
   "signIn": "Sign in",

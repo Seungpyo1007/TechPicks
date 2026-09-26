@@ -1,4 +1,4 @@
-import 'dart:async' show unawaited;
+import 'dart:async' show Timer, unawaited;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -32,7 +32,7 @@ import '../../shared/widgets/tp_pulse.dart';
 import '../viewer/viewer_stage.dart';
 
 /// 기기 상세. 이름이 large title 이고, 스크롤하면 바의 작은 제목이 된다.
-class DetailScreen extends ConsumerWidget {
+class DetailScreen extends ConsumerStatefulWidget {
   const DetailScreen({
     super.key,
     required this.slug,
@@ -50,8 +50,27 @@ class DetailScreen extends ConsumerWidget {
   /// 첫 담기 뒤 로그인 권유에서.
   final VoidCallback? onSignIn;
 
+  /// 공유 실패 안내가 떠 있는 시간.
+  static const Duration noticeFor = Duration(seconds: 4);
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends ConsumerState<DetailScreen> {
+  /// 공유 시트를 못 띄웠다는 안내. 잠깐 떠 있다가 사라진다.
+  bool _shareFailed = false;
+  Timer? _noticeTimer;
+
+  @override
+  void dispose() {
+    _noticeTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final slug = widget.slug;
     final device = ref.watch(deviceProvider(slug));
     final loaded = device.value;
     final name =
@@ -67,16 +86,17 @@ class DetailScreen extends ConsumerWidget {
 
     return TpPage(
       title: name,
-      onBack: onBack,
+      onBack: widget.onBack,
       actions: <TpBarAction>[
         if (loaded != null)
           TpBarAction(
             label: K.share.tr(),
             icon: context.icons.share,
             symbol: 'square.and.arrow.up',
-            onTap: () => unawaited(_share(ref, loaded)),
+            onTap: () => unawaited(_share(loaded)),
           ),
       ],
+      floating: _shareFailed ? const _Notice(key: _Notice.shareKey) : null,
       slivers: <Widget>[
         device.when(
           loading: () => const SliverToBoxAdapter(child: _DetailSkeleton()),
@@ -86,9 +106,9 @@ class DetailScreen extends ConsumerWidget {
           data: (d) => SliverToBoxAdapter(
             child: _DetailBody(
               device: d,
-              onCompare: onCompare,
-              onView3D: onView3D,
-              onSignIn: onSignIn,
+              onCompare: widget.onCompare,
+              onView3D: widget.onView3D,
+              onSignIn: widget.onSignIn,
             ),
           ),
         ),
@@ -96,7 +116,7 @@ class DetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _share(WidgetRef ref, Smartphone device) async {
+  Future<void> _share(Smartphone device) async {
     final index = TpIndex.of(device.score, ref.read(weightsProvider));
     TpAnalytics.shared('device');
     try {
@@ -112,7 +132,43 @@ class DetailScreen extends ConsumerWidget {
           );
     } catch (e, s) {
       TpErrors.record(e, s, reason: 'share.device');
+      // 아무 일도 안 일어난 것처럼 보이면 또 누른다. 안 됐다고 말해 준다.
+      if (!mounted) return;
+      setState(() => _shareFailed = true);
+      _noticeTimer?.cancel();
+      _noticeTimer = Timer(DetailScreen.noticeFor, () {
+        if (mounted) setState(() => _shareFailed = false);
+      });
     }
+  }
+}
+
+/// 공유 실패 한 줄. 바닥에 잠깐 뜬다.
+class _Notice extends StatelessWidget {
+  const _Notice({super.key});
+
+  static const Key shareKey = ValueKey<String>('detail-share-failed');
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    return TpPopIn(
+      from: 0.9,
+      child: Semantics(
+        liveRegion: true,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: sys.label,
+            borderRadius: BorderRadius.circular(context.tp.isGlass ? 22 : 8),
+          ),
+          child: Text(
+            K.shareFailed.tr(),
+            style: TextStyle(fontSize: 15, color: sys.background),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -280,7 +336,8 @@ class _DetailBody extends ConsumerWidget {
         _BrandCard(slug: device.brand?.slug),
         if (device.sourceUrls.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(32, 0, 32, 0),
+            // iOS 는 묶음 글자와 같은 32, Android 는 카드가 없어 16.
+            padding: EdgeInsets.symmetric(horizontal: glass ? 32 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -514,6 +571,13 @@ class _DetailError extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 다시 연결되면 사용자가 누르기 전에 다시 받는다.
+    ref.listen<AsyncValue<bool>>(offlineProvider, (prev, next) {
+      if (prev?.value == true && next.value == false) {
+        ref.invalidate(deviceProvider(slug));
+      }
+    });
+
     // 연결 상태를 못 읽으면 지금까지대로 일반 실패다.
     final offline = ref.watch(offlineProvider).value ?? false;
     final unreachable = offline && error is NetworkFailure;
@@ -523,7 +587,8 @@ class _DetailError extends ConsumerWidget {
     return TpErrorState(
       title: unreachable ? K.offlineTitle.tr() : K.loadFailed.tr(),
       body: unreachable ? K.offlineBody.tr() : K.loadFailedBody.tr(),
-      onRetry: unreachable ? null : () => ref.invalidate(deviceProvider(slug)),
+      // 끊긴 채로도 누를 수 있다. 연결 표시가 틀릴 때가 있다.
+      onRetry: () => ref.invalidate(deviceProvider(slug)),
     );
   }
 }

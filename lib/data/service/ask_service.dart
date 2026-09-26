@@ -40,7 +40,7 @@ List<AskRow> askRowsFor(
   AskRow(label: K.spec(SpecKind.price).tr(), value: money.format(d.msrpUsd)),
   AskRow(
     label: K.spec(SpecKind.battery).tr(),
-    value: d.batteryMah == null ? DeviceSpecs.empty : '${d.batteryMah}mAh',
+    value: DeviceSpecs.battery(d.batteryMah),
   ),
   AskRow(
     label: K.spec(SpecKind.camera).tr(),
