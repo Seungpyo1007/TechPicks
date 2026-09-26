@@ -113,7 +113,7 @@ GoRouter buildRouter(Ref ref) {
       GoRoute(
         path: TpRoute.onboarding,
         // 명세 흐름: 온보딩 → 로그인. 완료 표시가 먼저 남으므로 로그인 화면은
-        // 게이트를 지난다. 로그인은 선택이라 X 로 닫으면 오늘.
+        // 게이트를 지난다. 로그인은 선택이라 뒤로 가면 오늘.
         builder: (context, state) =>
             OnboardingScreen(onDone: () => context.go(TpRoute.login)),
       ),
