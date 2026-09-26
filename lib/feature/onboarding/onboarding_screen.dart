@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
-import '../../app/shell/tp_shell.dart';
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
@@ -66,141 +65,138 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final sys = context.sys;
     final last = _index == _count - 1;
 
-    return TpShell(
-      mode: TpChromeMode.plain,
-      child: Column(
-        children: <Widget>[
-          // 툴바 자리(44). 오른쪽 위 유리 캡슐 "건너뛰기", 마지막 장에는 없다.
-          SizedBox(
-            height: 48,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: AnimatedOpacity(
-                  opacity: last ? 0 : 1,
-                  duration: context.motion.selection.duration,
-                  child: IgnorePointer(
-                    ignoring: last,
-                    // iOS 는 유리 캡슐, Android 는 48 높이 글자 버튼.
-                    child: context.tp.isGlass
-                        ? TpBarButton(
-                            action: TpBarAction(
-                              label: K.skip.tr(),
-                              text: true,
-                              onTap: _finish,
-                            ),
-                          )
-                        : TextButton(
-                            onPressed: _finish,
-                            style: TextButton.styleFrom(
-                              minimumSize: const Size(48, 48),
-                            ),
-                            child: Text(K.skip.tr()),
+    return Material(
+      color: sys.background,
+      child: SafeArea(
+        child: Column(
+          children: <Widget>[
+            // 툴바 자리. 오른쪽 위 유리 캡슐 "건너뛰기", 마지막 장에는 없다.
+            // 버튼 자리는 로그인 X 와 같다([TpTopBar]).
+            TpTopBar(
+              safeTop: false,
+              trailing: AnimatedOpacity(
+                opacity: last ? 0 : 1,
+                duration: context.motion.selection.duration,
+                child: IgnorePointer(
+                  ignoring: last,
+                  // iOS 는 유리 캡슐, Android 는 48 높이 글자 버튼.
+                  child: context.tp.isGlass
+                      ? TpBarButton(
+                          action: TpBarAction(
+                            label: K.skip.tr(),
+                            text: true,
+                            onTap: _finish,
                           ),
-                  ),
+                        )
+                      : TextButton(
+                          onPressed: _finish,
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                          ),
+                          child: Text(K.skip.tr()),
+                        ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: PageView.builder(
-              controller: _pages,
-              onPageChanged: (i) => setState(() => _index = i),
-              itemCount: _count,
-              itemBuilder: (context, i) {
-                final pane = K.onboarding[i];
-                return AnimatedBuilder(
-                  animation: _pages,
-                  builder: (context, child) {
-                    // 카드는 손가락보다 조금 느리게 따라온다(시차).
-                    final off = (_page - i).clamp(-1.0, 1.0);
-                    final w = MediaQuery.sizeOf(context).width;
-                    return Transform.translate(
-                      offset: Offset(off * w * .18, 0),
-                      child: child,
-                    );
-                  },
-                  // 큰 글씨면 한 화면에 안 들어간다. 잘리는 대신 스크롤된다.
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.only(top: 32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                          height: 300,
-                          padding: EdgeInsets.all(i == 0 ? 28 : 24),
-                          decoration: BoxDecoration(
-                            color: sys.cell,
-                            borderRadius: BorderRadius.circular(32),
+            Expanded(
+              child: PageView.builder(
+                controller: _pages,
+                onPageChanged: (i) => setState(() => _index = i),
+                itemCount: _count,
+                itemBuilder: (context, i) {
+                  final pane = K.onboarding[i];
+                  return AnimatedBuilder(
+                    animation: _pages,
+                    builder: (context, child) {
+                      // 카드는 손가락보다 조금 느리게 따라온다(시차).
+                      final off = (_page - i).clamp(-1.0, 1.0);
+                      final w = MediaQuery.sizeOf(context).width;
+                      return Transform.translate(
+                        offset: Offset(off * w * .18, 0),
+                        child: child,
+                      );
+                    },
+                    // 큰 글씨면 한 화면에 안 들어간다. 잘리는 대신 스크롤된다.
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(top: 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16),
+                            height: 300,
+                            padding: EdgeInsets.all(i == 0 ? 28 : 24),
+                            decoration: BoxDecoration(
+                              color: sys.cell,
+                              borderRadius: BorderRadius.circular(32),
+                            ),
+                            child: ExcludeSemantics(
+                              child: switch (i) {
+                                0 => _IndexPane(active: i == _index),
+                                1 => _ComparePane(active: i == _index),
+                                _ => _AskPane(active: i == _index),
+                              },
+                            ),
                           ),
-                          child: ExcludeSemantics(
-                            child: switch (i) {
-                              0 => _IndexPane(active: i == _index),
-                              1 => _ComparePane(active: i == _index),
-                              _ => _AskPane(active: i == _index),
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 36),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              _Rise(
-                                active: i == _index,
-                                delay: const Duration(milliseconds: 180),
-                                child: Text(
-                                  pane.title.tr(),
-                                  style: TextStyle(
-                                    fontSize: 34,
-                                    height: 40 / 34,
-                                    fontWeight: FontWeight.w700,
-                                    color: sys.label,
+                          const SizedBox(height: 36),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                _Rise(
+                                  active: i == _index,
+                                  delay: const Duration(milliseconds: 180),
+                                  child: Text(
+                                    pane.title.tr(),
+                                    style: TextStyle(
+                                      fontSize: 34,
+                                      height: 40 / 34,
+                                      fontWeight: FontWeight.w700,
+                                      color: sys.label,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              _Rise(
-                                active: i == _index,
-                                delay: const Duration(milliseconds: 280),
-                                child: Text(
-                                  pane.body.tr(),
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    height: 24 / 17,
-                                    color: sys.label2,
+                                const SizedBox(height: 12),
+                                _Rise(
+                                  active: i == _index,
+                                  delay: const Duration(milliseconds: 280),
+                                  child: Text(
+                                    pane.body.tr(),
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      height: 24 / 17,
+                                      color: sys.label2,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                          const SizedBox(height: 16),
+                        ],
+                      ),
                     ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Semantics(
+                    label: '${_index + 1} / $_count',
+                    child: _Dots(index: _index, count: _count),
                   ),
-                );
-              },
+                  const SizedBox(height: 24),
+                  TpButton(label: (last ? K.start : K.next).tr(), onTap: _next),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Semantics(
-                  label: '${_index + 1} / $_count',
-                  child: _Dots(index: _index, count: _count),
-                ),
-                const SizedBox(height: 24),
-                TpButton(label: (last ? K.start : K.next).tr(), onTap: _next),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
