@@ -54,6 +54,12 @@ class CompareScreen extends ConsumerWidget {
     final a = find(slots.a);
     final b = find(slots.b);
     final loading = catalog is AsyncLoading && !catalog.hasError;
+    // 링크로 온 slug 가 카탈로그에 없으면 "두 대를 고르세요"만으론 왜 비었는지
+    // 모른다.
+    final linkMissing =
+        catalog.hasValue &&
+        ((slots.a != null && a == null) || (slots.b != null && b == null));
+    final glass = context.tp.isGlass;
 
     final Widget table;
     if (loading) {
@@ -64,7 +70,7 @@ class CompareScreen extends ConsumerWidget {
       table = Padding(
         padding: const EdgeInsets.fromLTRB(32, 0, 32, 0),
         child: Text(
-          K.chooseTwo.tr(),
+          (linkMissing ? K.compareLinkMissing : K.chooseTwo).tr(),
           style: TextStyle(fontSize: 15, color: context.sys.label2),
         ),
       );
@@ -81,6 +87,23 @@ class CompareScreen extends ConsumerWidget {
     return TpPage(
       title: K.compareTitle.tr(),
       tab: TpTab.compare,
+      // iOS 는 가운데 캡슐, Android 는 오른쪽 아래 확장 FAB.
+      floating: pairs.isEmpty || onAskWhy == null
+          ? null
+          : glass
+          ? TpPill(
+              label: K.askWhy.tr(),
+              icon: CupertinoIcons.sparkles,
+              expand: false,
+              onTap: onAskWhy,
+            )
+          : FloatingActionButton.extended(
+              // 탭마다 FAB 가 살아 있어서 기본 hero 태그가 겹친다.
+              heroTag: null,
+              onPressed: onAskWhy,
+              icon: const Icon(Icons.auto_awesome),
+              label: Text(K.askWhy.tr()),
+            ),
       coach: const <TpCoachStep>[
         TpCoachStep(
           target: 'compare-heads',
@@ -128,8 +151,6 @@ class CompareScreen extends ConsumerWidget {
           ),
         ),
         SliverToBoxAdapter(child: table),
-        if (pairs.isNotEmpty)
-          const SliverToBoxAdapter(child: SizedBox(height: 56)),
       ],
     );
   }
@@ -397,9 +418,10 @@ class _CompareRow extends StatelessWidget {
 
 /// 승자를 못 가리는 줄이 대신 까는 점수 막대.
 ///
-/// 축 **이름은 안 그린다.** `axCam`·`axBatt` 는 행 라벨(`detailSpecCamera`·
-/// `detailSpecBattery`)과 영어에서도 한국어에서도 같은 문자열이라, 화면에
-/// 찍는 순간 같은 글자가 둘이 된다. 이름은 스크린 리더에만 준다.
+/// 화면·프로세서·카메라 줄에만 깐다([SpecScoreAxis.scoreAxis]).
+///
+/// 축 **이름은 안 그린다.** 행 라벨과 같은 글자가 둘이 된다
+/// (`axCam`·`detailSpecCamera`). 이름은 스크린 리더에만 준다.
 class _AxisBar extends StatelessWidget {
   const _AxisBar({required this.kind, required this.score});
 
@@ -503,21 +525,25 @@ class _TableSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
-    return TpShimmer(
-      child: Column(
-        children: <Widget>[
-          for (var i = 0; i < 6; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Container(
-                height: 64,
-                decoration: BoxDecoration(
-                  color: t.track,
-                  borderRadius: BorderRadius.circular(t.rInner),
+    // 표 카드와 같은 16 여백. 없으면 화면 끝까지 붙는다.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: TpShimmer(
+        child: Column(
+          children: <Widget>[
+            for (var i = 0; i < 6; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: t.track,
+                    borderRadius: BorderRadius.circular(t.rInner),
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,12 +1,20 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod/misc.dart' show Override;
+import 'package:techpicks/app/providers.dart';
+import 'package:techpicks/app/theme/app_theme.dart';
+import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/domain/model/tp_index.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/spec_labels.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
+import 'package:techpicks/shared/widgets/tp_page.dart';
+import 'package:techpicks/shared/widgets/tp_shimmer.dart';
 
 import '../support/harness.dart';
 
@@ -91,9 +99,72 @@ void main() {
     expect(find.byType(TpBar), findsNWidgets(6));
   });
 
-  testWidgets('이유 물어보기 버튼이 없다', (tester) async {
-    await pumpScreen(tester, const CompareScreen(), size: const Size(402, 874));
-    expect(find.text(K.askWhy.tr()), findsNothing);
+  testWidgets('이유 물어보기가 표를 안 지나고 화면 안에 있다', (tester) async {
+    await pumpScreen(
+      tester,
+      CompareScreen(onAskWhy: () {}),
+      size: const Size(402, 874),
+    );
+
+    final button = tester.getRect(find.byType(TpPill));
+    expect(button.bottom, lessThanOrEqualTo(874));
+    expect(button.top, greaterThan(0));
+  });
+
+  testWidgets('Android 는 오른쪽 아래 확장 FAB', (tester) async {
+    await pumpScreen(
+      tester,
+      CompareScreen(onAskWhy: () {}),
+      chrome: TpChrome.android,
+      size: const Size(402, 874),
+    );
+
+    final fab = tester.getRect(find.byType(FloatingActionButton));
+    expect(fab.height, 56);
+    expect(fab.right, lessThanOrEqualTo(402 - 16));
+    expect(find.text(K.askWhy.tr()), findsOneWidget);
+  });
+
+  testWidgets('떠 있는 버튼이 마지막 줄을 가리지 않는다', (tester) async {
+    await pumpScreen(
+      tester,
+      CompareScreen(onAskWhy: () {}),
+      size: const Size(402, 874),
+    );
+
+    final list = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text(SpecLabels.of(SpecKind.released)),
+      400,
+      scrollable: list,
+    );
+    await tester.pumpAndSettle();
+    // 더 내려도 안 움직일 때까지 민다.
+    await tester.fling(list, const Offset(0, -600), 2000);
+    await tester.pumpAndSettle();
+
+    final button = tester.getRect(find.byType(TpPill));
+    final released = tester.getRect(
+      find.text(SpecLabels.of(SpecKind.released)),
+    );
+    expect(released.bottom, lessThanOrEqualTo(button.top));
+  });
+
+  testWidgets('스켈레톤도 표처럼 좌우 16 을 띄운다', (tester) async {
+    // 끝나지 않는 카탈로그. 읽는 중에 머문다.
+    final never = Completer<Catalog>();
+    await pumpScreenNoSettle(
+      tester,
+      const CompareScreen(),
+      size: const Size(402, 874),
+      overrides: <Override>[
+        catalogProvider.overrideWith((ref) => never.future),
+      ],
+    );
+
+    final skeleton = tester.getRect(find.byType(TpShimmer));
+    expect(skeleton.left, 16);
+    expect(skeleton.right, 402 - 16);
   });
 
   test('점수 막대는 승자를 못 가리는 줄에만 있다', () {
