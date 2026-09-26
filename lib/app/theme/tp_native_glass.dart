@@ -396,36 +396,3 @@ class TpNativeIconButton extends StatelessWidget {
     iconColor: tint,
   );
 }
-
-/// 아이콘 버튼 여럿을 **유리 캡슐 하나**로(iOS 26 시스템 앱의 오른쪽 버튼
-/// 묶음, 미리 알림의 "더 보기 + 검색"). 같은 union id 로 유리가 한 덩어리가 된다.
-class TpNativeIconGroup extends StatelessWidget {
-  const TpNativeIconGroup({super.key, required this.items});
-
-  /// (SF Symbol, 누르면, 아이콘 색).
-  final List<({String symbol, VoidCallback? onTap, Color? tint})> items;
-
-  static const double item = 44;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: item * items.length,
-    height: item,
-    child: LiquidGlassButtonGroup(
-      spacing: 0,
-      spacingForGlass: 20,
-      buttons: <LiquidGlassButtonData>[
-        for (final i in items)
-          LiquidGlassButtonData(
-            icon: NativeLiquidGlassIcon.sfSymbol(i.symbol),
-            onPressed: i.onTap,
-            iconSize: 18,
-            iconColor: i.tint,
-            width: item,
-            height: item,
-            glassEffectUnionId: 'tp.toolbar',
-          ),
-      ],
-    ),
-  );
-}
