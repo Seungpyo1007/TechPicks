@@ -351,10 +351,13 @@ class _YouScreenState extends ConsumerState<YouScreen> {
   /// "안내 다시 보기" 아래 한 줄.
   String? _coachNotice;
 
+  /// 소개 화면부터 다시. 화면 안 안내도 각 탭에서 다시 뜬다.
   Future<void> _replayCoach() async {
     await TpCoach.resetAll();
     TpHaptics.commit();
-    if (mounted) setState(() => _coachNotice = K.coachReplayed.tr());
+    if (!mounted) return;
+    setState(() => _coachNotice = K.coachReplayed.tr());
+    await ref.read(onboardingDoneProvider.notifier).replay();
   }
 
   Route<T> _route<T>(WidgetBuilder builder) => context.tp.isGlass

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,7 +10,6 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme/tp_motion.dart';
-import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../data/service/auth_service.dart';
@@ -555,112 +555,151 @@ class _EmailStepState extends ConsumerState<_EmailStep> {
   @override
   Widget build(BuildContext context) {
     final sys = context.sys;
-    final labels = <String>[K.signIn.tr(), K.signup.tr()];
-    void pick(int i) => setState(() {
-      _signingUp = i == 1;
+    void toggle() => setState(() {
+      _signingUp = !_signingUp;
       _error = null;
     });
+    final safe = MediaQuery.viewPaddingOf(context).bottom;
 
-    return TpPage(
-      title: (_signingUp ? K.signupTitle : K.emailTitle).tr(),
-      largeTitle: false,
-      onBack: widget.onBack,
-      slivers: <Widget>[
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: TpNativeGlass.enabled
-                ? SizedBox(
-                    width: double.infinity,
-                    child: TpNativeSegmented(
-                      labels: labels,
-                      index: _signingUp ? 1 : 0,
-                      onChanged: pick,
+    // `iOS-EmailLogin` · `iOS-SignUp` · `iOS-EmailLogin-Error`.
+    // 큰 제목, 칸 둘, 그 아래 한 줄(오류는 빨강, 가입은 비밀번호 규칙), 채운
+    // 알약, 로그인이면 "비밀번호를 잊으셨나요?". 모드는 맨 아래 한 줄로 바꾼다.
+    return Material(
+      color: sys.background,
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            child: TpPage(
+              title: (_signingUp ? K.signupTitle : K.emailTitle).tr(),
+              onBack: widget.onBack,
+              slivers: <Widget>[
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                SliverToBoxAdapter(
+                  // 한 묶음이어야 iCloud 키체인이 아이디와 암호를 같이 채운다.
+                  child: AutofillGroup(
+                    child: TpGroup(
+                      children: <Widget>[
+                        LoginField(
+                          controller: _email,
+                          label: K.emailLabel.tr(),
+                          placeholder: K.emailPlaceholder.tr(),
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const <String>[
+                            AutofillHints.username,
+                            AutofillHints.email,
+                          ],
+                          action: TextInputAction.next,
+                        ),
+                        LoginField(
+                          controller: _password,
+                          label: K.passwordLabel.tr(),
+                          placeholder: (_signingUp ? K.pwHint : K.pwRequired)
+                              .tr(),
+                          obscure: true,
+                          autofillHints: <String>[
+                            _signingUp
+                                ? AutofillHints.newPassword
+                                : AutofillHints.password,
+                          ],
+                          action: TextInputAction.done,
+                          onSubmitted: (_) => unawaited(_submit()),
+                        ),
+                      ],
                     ),
-                  )
-                : context.tp.isGlass
-                ? SizedBox(
-                    width: double.infinity,
-                    child: CupertinoSlidingSegmentedControl<int>(
-                      groupValue: _signingUp ? 1 : 0,
-                      onValueChanged: (i) => pick(i ?? 0),
-                      children: <int, Widget>{
-                        for (var i = 0; i < labels.length; i++)
-                          i: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            child: Text(labels[i]),
-                          ),
-                      },
-                    ),
-                  )
-                : SegmentedButton<int>(
-                    segments: <ButtonSegment<int>>[
-                      for (var i = 0; i < labels.length; i++)
-                        ButtonSegment<int>(value: i, label: Text(labels[i])),
-                    ],
-                    selected: <int>{_signingUp ? 1 : 0},
-                    onSelectionChanged: (s) => pick(s.first),
                   ),
-          ),
-        ),
-        SliverToBoxAdapter(
-          // 한 묶음이어야 iCloud 키체인이 아이디와 암호를 같이 채워 준다.
-          child: AutofillGroup(
-            child: TpGroup(
-              footer: _signingUp ? K.pwHint.tr() : null,
-              children: <Widget>[
-                LoginField(
-                  controller: _email,
-                  label: K.emailLabel.tr(),
-                  keyboardType: TextInputType.emailAddress,
-                  autofillHints: const <String>[
-                    AutofillHints.username,
-                    AutofillHints.email,
-                  ],
-                  action: TextInputAction.next,
                 ),
-                LoginField(
-                  controller: _password,
-                  label: K.passwordLabel.tr(),
-                  obscure: true,
-                  autofillHints: <String>[
-                    _signingUp
-                        ? AutofillHints.newPassword
-                        : AutofillHints.password,
-                  ],
-                  action: TextInputAction.done,
-                  onSubmitted: (_) => unawaited(_submit()),
+                SliverToBoxAdapter(
+                  child: AnimatedSize(
+                    duration: context.motion.reveal.duration,
+                    curve: context.motion.reveal.curve,
+                    alignment: Alignment.topCenter,
+                    child: _error != null
+                        ? _ErrorLine(_error!)
+                        : _signingUp
+                        ? _Footnote(K.pwRule.tr())
+                        : const SizedBox(width: double.infinity),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        TpPill(
+                          label: (_signingUp ? K.signup : K.signIn).tr(),
+                          busy: _busy,
+                          onTap: () => unawaited(_submit()),
+                        ),
+                        if (!_signingUp) ...<Widget>[
+                          const SizedBox(height: 8),
+                          TpPill(
+                            label: K.forgotPw.tr(),
+                            kind: TpPillKind.plain,
+                            height: 44,
+                            onTap: () => widget.onForgot(_email.text.trim()),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-        if (_error != null) SliverToBoxAdapter(child: _ErrorLine(_error!)),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-            child: TpPill(
-              label: (_signingUp ? K.signup : K.signIn).tr(),
-              busy: _busy,
-              onTap: () => unawaited(_submit()),
-            ),
-          ),
-        ),
-        if (!_signingUp)
-          SliverToBoxAdapter(
-            child: Center(
-              child: TextButton(
-                onPressed: () => widget.onForgot(_email.text.trim()),
-                child: Text(
-                  K.forgotPw.tr(),
-                  style: TextStyle(fontSize: 15, color: sys.accentText),
+          Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, math.max(safe, 16) + 10),
+            child: Semantics(
+              button: true,
+              onTap: toggle,
+              child: TpTappable(
+                onTap: toggle,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 44),
+                  child: Center(
+                    child: Text.rich(
+                      TextSpan(
+                        text:
+                            '${(_signingUp ? K.haveAccount : K.noAccount).tr()} ',
+                        style: TextStyle(fontSize: 15, color: sys.label2),
+                        children: <InlineSpan>[
+                          TextSpan(
+                            text: (_signingUp ? K.signIn : K.signup).tr(),
+                            style: TextStyle(color: sys.accentText),
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
+}
+
+/// 칸 아래 회색 한 줄(가입의 비밀번호 규칙).
+class _Footnote extends StatelessWidget {
+  const _Footnote(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(32, 7, 32, 0),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontSize: 13,
+        height: 18 / 13,
+        color: context.sys.label2,
+      ),
+    ),
+  );
 }
 
 /// 비밀번호 재설정 메일.
@@ -790,12 +829,16 @@ class _ErrorLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(32, 0, 32, 12),
+    padding: const EdgeInsets.fromLTRB(32, 7, 32, 0),
     child: Semantics(
       liveRegion: true,
       child: Text(
         message,
-        style: TextStyle(fontSize: 13, color: context.sys.destructive),
+        style: TextStyle(
+          fontSize: 13,
+          height: 18 / 13,
+          color: context.sys.destructive,
+        ),
       ),
     ),
   );
@@ -858,10 +901,14 @@ class LoginField extends StatelessWidget {
     this.autofillHints,
     this.action,
     this.onSubmitted,
+    this.placeholder,
   });
 
   final TextEditingController controller;
   final String label;
+
+  /// 빈 칸 안의 흐린 안내("name@example.com", "필수").
+  final String? placeholder;
   final bool obscure;
   final TextInputType? keyboardType;
   final Iterable<String>? autofillHints;
@@ -904,8 +951,13 @@ class LoginField extends StatelessWidget {
                     enableSuggestions: !obscure && keyboardType == null,
                     onTapOutside: (_) => FocusScope.of(context).unfocus(),
                     onSubmitted: onSubmitted,
+                    placeholder: placeholder,
+                    placeholderStyle: TextStyle(
+                      fontSize: 17,
+                      color: sys.label3,
+                    ),
                     decoration: null,
-                    padding: const EdgeInsets.fromLTRB(4, 14, 16, 14),
+                    padding: const EdgeInsets.fromLTRB(12, 14, 16, 14),
                     style: TextStyle(fontSize: 17, color: sys.label),
                   ),
                 ),
@@ -928,7 +980,11 @@ class LoginField extends StatelessWidget {
         enableSuggestions: !obscure && keyboardType == null,
         onTapOutside: (_) => FocusScope.of(context).unfocus(),
         onSubmitted: onSubmitted,
-        decoration: InputDecoration(labelText: label, filled: true),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: placeholder,
+          filled: true,
+        ),
       ),
     );
   }

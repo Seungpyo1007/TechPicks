@@ -45,7 +45,7 @@ void main() {
 
   test('줄바꿈 위치가 두 언어에서 같다', () {
     // 온보딩과 로그인 제목은 하드 브레이크가 디자인의 일부다.
-    for (final key in <String>['onb1', 'onb2', 'onb3', 'onb4', 'welcome']) {
+    for (final key in <String>['onb1', 'onb2', 'onb3', 'welcome']) {
       expect(
         '\n'.allMatches(en[key] as String).length,
         '\n'.allMatches(ko[key] as String).length,

@@ -187,7 +187,7 @@ void main() {
       size: frameOf(chrome),
       overrides: <Override>[authServiceProvider.overrideWithValue(_StubAuth())],
     );
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < 2; i++) {
       await tester.tap(find.text(K.next.tr()));
       await tester.pumpAndSettle();
     }
