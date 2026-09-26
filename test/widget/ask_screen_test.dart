@@ -236,8 +236,8 @@ void main() {
     await tester.enterText(find.byType(TextField), '두 번째');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-    await tester.tap(_icon((i) => i.send));
-    await tester.pump();
+    // 기다리는 동안 보내기 자리는 멈춤이다.
+    expect(_icon((i) => i.send), findsNothing);
 
     // 두 번째 질문은 안 나갔고,
     expect(slow.asked, <String>['첫 번째']);
@@ -274,6 +274,62 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(askProvider), hasLength(3));
+  });
+  testWidgets('생각 중에 멈추면 질문을 거두고 글을 돌려놓는다', (tester) async {
+    final answer = Completer<AskReply?>();
+    final container = await pumpScreen(
+      tester,
+      const AskScreen(),
+      size: const Size(1200, 2400),
+      overrides: <Override>[
+        askServiceProvider.overrideWithValue(_SlowAsk(answer.future)),
+      ],
+    );
+
+    await tester.enterText(find.byType(TextField), '뭐가 좋아?');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(find.byKey(AskScreen.thinkingKey), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel(K.cancel.tr()));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(AskScreen.thinkingKey), findsNothing);
+    expect(container.read(askBusyProvider), isFalse);
+    // 씨앗만 남는다.
+    expect(container.read(askProvider), hasLength(1));
+    expect(find.widgetWithText(TextField, '뭐가 좋아?'), findsOneWidget);
+
+    // 늦게 온 답은 버린다.
+    answer.complete(const AskReply.pick(_answer));
+    await tester.pumpAndSettle();
+    expect(container.read(askProvider), hasLength(1));
+    expect(find.text('OnePlus 13'), findsNothing);
+  });
+
+  testWidgets('멈춰도 새로 친 글은 덮지 않는다', (tester) async {
+    final answer = Completer<AskReply?>();
+    await pumpScreen(
+      tester,
+      const AskScreen(),
+      size: const Size(1200, 2400),
+      overrides: <Override>[
+        askServiceProvider.overrideWithValue(_SlowAsk(answer.future)),
+      ],
+    );
+
+    await tester.enterText(find.byType(TextField), '첫 번째');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), '두 번째');
+    await tester.pump();
+
+    await tester.tap(find.bySemanticsLabel(K.cancel.tr()));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextField, '두 번째'), findsOneWidget);
+    answer.complete(null);
+    await tester.pumpAndSettle();
   });
 }
 
