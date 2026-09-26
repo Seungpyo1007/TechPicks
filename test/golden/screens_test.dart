@@ -154,6 +154,20 @@ void main() {
     );
   });
 
+  goldenScenario('onboarding_last', '온보딩 마지막 장', (tester, chrome) async {
+    await pumpScreen(
+      tester,
+      const OnboardingScreen(),
+      chrome: chrome,
+      size: frameOf(chrome),
+      overrides: <Override>[authServiceProvider.overrideWithValue(_StubAuth())],
+    );
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.text(K.next.tr()));
+      await tester.pumpAndSettle();
+    }
+  });
+
   goldenScenario('login_email', '로그인 · 이메일', (tester, chrome) async {
     await pumpScreen(
       tester,

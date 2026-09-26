@@ -112,7 +112,10 @@ GoRouter buildRouter(Ref ref) {
     routes: <RouteBase>[
       GoRoute(
         path: TpRoute.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        // 마지막 장 "로그인하고 시작": 완료 표시가 먼저 남으므로 로그인 화면은
+        // 게이트를 지난다. 닫거나 끝나면 오늘로.
+        builder: (context, state) =>
+            OnboardingScreen(onSignIn: () => context.go(TpRoute.login)),
       ),
       // 로그인 시트. 어디서 열든 닫으면 그 자리로 돌아간다.
       GoRoute(
