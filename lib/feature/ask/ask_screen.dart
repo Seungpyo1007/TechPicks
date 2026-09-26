@@ -165,7 +165,12 @@ class _AskScreenState extends ConsumerState<AskScreen>
                       if (i == 0) {
                         return topic == null
                             ? const SizedBox.shrink()
-                            : _Topic(label: topic);
+                            : _Topic(
+                                label: topic,
+                                onClear: () => ref
+                                    .read(askTopicProvider.notifier)
+                                    .set(null),
+                              );
                       }
                       final m = i - 1;
                       if (m == messages.length) {
@@ -297,50 +302,66 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// 들고 온 기기. 대화 맨 위 가운데.
+/// 들고 온 기기. 대화 맨 위 가운데. 누르면 지운다.
 class _Topic extends StatelessWidget {
-  const _Topic({required this.label});
+  const _Topic({required this.label, required this.onClear});
 
   final String label;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
     final sys = context.sys;
     final glass = context.tp.isGlass;
+    // 알약은 작아도 누르는 자리는 44/48. 넓어진 만큼 아래 여백을 줄인다.
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 4),
       child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: glass ? sys.fill3 : null,
-            border: glass ? null : Border.all(color: sys.separator),
-            borderRadius: BorderRadius.circular(glass ? 16 : 8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(
-                glass
-                    ? CupertinoIcons.arrow_right_arrow_left
-                    : Icons.compare_arrows,
-                size: 14,
-                color: sys.label2,
+        child: TpTapTarget(
+          onTap: onClear,
+          label: '${K.clear.tr()}, $label',
+          minSize: glass ? 44 : 48,
+          // 이름은 위에서 한 번만 읽는다.
+          child: ExcludeSemantics(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: glass ? sys.fill3 : null,
+                border: glass ? null : Border.all(color: sys.separator),
+                borderRadius: BorderRadius.circular(glass ? 16 : 8),
               ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    glass
+                        ? CupertinoIcons.arrow_right_arrow_left
+                        : Icons.compare_arrows,
+                    size: 14,
                     color: sys.label2,
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: sys.label2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    glass ? CupertinoIcons.xmark : Icons.close,
+                    size: 12,
+                    color: sys.label3,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
