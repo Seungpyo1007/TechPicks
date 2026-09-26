@@ -54,6 +54,11 @@ class CompareScreen extends ConsumerWidget {
     final a = find(slots.a);
     final b = find(slots.b);
     final loading = catalog is AsyncLoading && !catalog.hasError;
+    // 링크로 온 slug 가 카탈로그에 없으면 "두 대를 고르세요"만으론 왜 비었는지
+    // 모른다.
+    final linkMissing =
+        catalog.hasValue &&
+        ((slots.a != null && a == null) || (slots.b != null && b == null));
     final glass = context.tp.isGlass;
 
     final Widget table;
@@ -65,7 +70,7 @@ class CompareScreen extends ConsumerWidget {
       table = Padding(
         padding: const EdgeInsets.fromLTRB(32, 0, 32, 0),
         child: Text(
-          K.chooseTwo.tr(),
+          (linkMissing ? K.compareLinkMissing : K.chooseTwo).tr(),
           style: TextStyle(fontSize: 15, color: context.sys.label2),
         ),
       );

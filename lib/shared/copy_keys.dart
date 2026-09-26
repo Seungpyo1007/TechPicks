@@ -87,6 +87,7 @@ abstract final class K {
   static const String close = 'close';
   static const String back = 'back';
   static const String chooseTwo = 'chooseTwo';
+  static const String compareLinkMissing = 'compareLinkMissing';
   static const String searchHint = 'searchHint';
   static const String tapToChange = 'tapToChange';
 
