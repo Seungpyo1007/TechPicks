@@ -48,10 +48,11 @@ void main() {
     await tester.tap(find.text(K.continueEmail.tr()));
     await tester.pumpAndSettle();
 
-    expect(
-      _fields(tester).map((d) => d.label),
-      containsAll(<String>[K.emailLabel.tr(), K.passwordLabel.tr()]),
-    );
+    // 빈 칸이면 이름 뒤에 흐린 안내("name@example.com")가 붙어 읽힌다.
+    final labels = _fields(tester).map((d) => d.label).toList();
+    for (final name in <String>[K.emailLabel.tr(), K.passwordLabel.tr()]) {
+      expect(labels.any((l) => l.startsWith(name)), isTrue, reason: name);
+    }
 
     await tester.enterText(find.byType(EditableText).first, 'a@b.com');
     await tester.pumpAndSettle();

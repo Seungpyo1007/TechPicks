@@ -718,7 +718,8 @@ class TpBarButton extends StatelessWidget {
 }
 
 /// 캡슐 버튼. 채움은 화면당 하나, 나머지는 tinted.
-enum TpPillKind { filled, tinted, gray }
+/// `plain` 은 바탕 없는 글자 버튼("비밀번호를 잊으셨나요?").
+enum TpPillKind { filled, tinted, gray, plain }
 
 class TpPill extends StatelessWidget {
   const TpPill({
@@ -749,6 +750,7 @@ class TpPill extends StatelessWidget {
       TpPillKind.filled => (TpSys.accent, Colors.white),
       TpPillKind.tinted => (sys.tint, sys.accentText),
       TpPillKind.gray => (sys.fill3, sys.label),
+      TpPillKind.plain => (Colors.transparent, sys.accentText),
     };
     final disabled = onTap == null || busy;
     final move = context.motion.selection;
@@ -759,7 +761,7 @@ class TpPill extends StatelessWidget {
       height: height,
       padding: const EdgeInsets.symmetric(horizontal: 18),
       decoration: BoxDecoration(
-        color: disabled ? sys.fill3 : bg,
+        color: disabled && kind != TpPillKind.plain ? sys.fill3 : bg,
         borderRadius: BorderRadius.circular(height / 2),
       ),
       child: Row(

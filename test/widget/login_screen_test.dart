@@ -205,7 +205,7 @@ void main() {
       await _pump(tester, auth);
       await _toEmail(tester);
 
-      await tester.tap(find.text(K.signup.tr()).first);
+      await tester.tap(find.textContaining(K.noAccount.tr()));
       await tester.pumpAndSettle();
       expect(find.text(K.signupTitle.tr()), findsOneWidget);
       expect(find.text(K.pwHint.tr()), findsOneWidget);
@@ -228,7 +228,7 @@ void main() {
       );
       await _toEmail(tester);
 
-      await tester.tap(find.text(K.signup.tr()).first);
+      await tester.tap(find.textContaining(K.noAccount.tr()));
       await tester.pumpAndSettle();
       await _fill(tester, 'new@b.com', 'longenough');
       await _submit(tester, K.signup);

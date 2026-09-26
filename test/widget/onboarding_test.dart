@@ -48,13 +48,13 @@ void main() {
     });
 
     Future<void> toLast(WidgetTester tester) async {
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < 2; i++) {
         await tester.tap(find.text('Next'));
         await tester.pumpAndSettle();
       }
     }
 
-    testWidgets('Next 로 넘기면 마지막 장에 로그인 두 갈래', (tester) async {
+    testWidgets('Next 로 넘기면 마지막에 Get started', (tester) async {
       await _pump(tester, const OnboardingScreen(), auth: FakeAuthService());
 
       expect(find.text('Next'), findsOneWidget);
@@ -65,12 +65,7 @@ void main() {
       await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
       expect(find.text('Ask.\nThen decide.'), findsOneWidget);
-
-      await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
-      expect(find.text('One list.\nEvery device.'), findsOneWidget);
-      expect(find.text(K.startSignIn.tr()), findsOneWidget);
-      expect(find.text(K.startGuest.tr()), findsOneWidget);
+      expect(find.text('Get started'), findsOneWidget);
     });
 
     testWidgets('마지막 장에는 건너뛰기가 없다', (tester) async {
@@ -80,22 +75,20 @@ void main() {
       expect(find.text('Skip').hitTestable(), findsNothing);
     });
 
-    testWidgets('로그인하고 시작은 완료 표시를 남기고 로그인으로', (tester) async {
-      var signIn = 0;
-      var done = 0;
-      await _pump(
-        tester,
-        OnboardingScreen(onSignIn: () => signIn++, onDone: () => done++),
-        auth: FakeAuthService(),
-      );
-      await toLast(tester);
+    testWidgets('카드 안은 실제 부품이다: 지수 숫자, 비교표, 답 카드', (tester) async {
+      await _pump(tester, const OnboardingScreen(), auth: FakeAuthService());
+      expect(find.text('79'), findsOneWidget);
+      expect(find.text(K.tpIndex.tr()), findsOneWidget);
 
-      await tester.tap(find.text(K.startSignIn.tr()));
+      await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
+      expect(find.text('Galaxy S26 Ultra'), findsOneWidget);
+      expect(find.text('iPhone 17 Pro Max'), findsOneWidget);
 
-      expect(signIn, 1);
-      expect(done, 0);
-      expect(_container!.read(onboardingDoneProvider), isTrue);
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      expect(find.text(K.onbAsk.tr()), findsOneWidget);
+      expect(find.text('Vivo X300s'), findsOneWidget);
     });
 
     testWidgets('Skip 은 경고 없이 바로 끝난다', (tester) async {
@@ -115,7 +108,7 @@ void main() {
       expect(_container!.read(onboardingDoneProvider), isTrue);
     });
 
-    testWidgets('로그인 없이 시작도 완료 표시를 남긴다', (tester) async {
+    testWidgets('Get started 가 완료 표시를 남기고 끝낸다', (tester) async {
       var done = 0;
       await _pump(
         tester,
@@ -124,7 +117,7 @@ void main() {
       );
       await toLast(tester);
 
-      await tester.tap(find.text(K.startGuest.tr()));
+      await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
 
       expect(done, 1);

@@ -453,6 +453,8 @@ void main() {
       expect(find.text(K.coachReplayed.tr()), findsOneWidget);
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool('coach_seen_today'), isNull);
+      // 소개 화면도 다시(라우터가 온보딩으로 보낸다).
+      expect(_container!.read(onboardingDoneProvider), isFalse);
     });
   });
 }

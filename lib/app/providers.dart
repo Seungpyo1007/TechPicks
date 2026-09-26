@@ -1341,6 +1341,14 @@ class OnboardingNotifier extends Notifier<bool?> with RestoreGuard {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefsKey, true);
   }
+
+  /// "안내 다시 보기". 라우터 게이트가 곧바로 온보딩으로 보낸다.
+  Future<void> replay() async {
+    touch();
+    state = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsKey, false);
+  }
 }
 
 final onboardingDoneProvider = NotifierProvider<OnboardingNotifier, bool?>(

@@ -9,6 +9,7 @@ import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
 import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
+import 'package:techpicks/feature/you/profile_edit_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
 import '../support/harness.dart';
@@ -51,13 +52,13 @@ void main() {
   testWidgets('온보딩 다음', (tester) async {
     await pumpScreen(tester, const OnboardingScreen());
 
-    // 네 장이라 모서리 세 번이면 마지막 장이다.
-    for (final point in _corners(_pill(tester, K.next.tr())).take(3)) {
+    // 세 장이라 모서리 두 번이면 마지막 장이다.
+    for (final point in _corners(_pill(tester, K.next.tr())).take(2)) {
       await tester.tapAt(point);
       await tester.pumpAndSettle();
     }
 
-    expect(find.text(K.startSignIn.tr()), findsOneWidget);
+    expect(find.text(K.start.tr()), findsOneWidget);
   });
 
   testWidgets('홈 결론 카드 버튼', (tester) async {
@@ -142,7 +143,8 @@ void main() {
   });
 
   testWidgets('링크도 같은 박자로 반응한다', (tester) async {
-    await pumpScreen(tester, const OnboardingScreen());
+    // 프로필 편집의 "사진 바꾸기" 글자 링크.
+    await pumpScreen(tester, ProfileEditScreen(onBack: () {}));
 
     final skip = find.byType(TpTapTarget).first;
     final press = await tester.startGesture(tester.getCenter(skip));
