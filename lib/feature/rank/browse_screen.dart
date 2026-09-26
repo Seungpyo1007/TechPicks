@@ -10,6 +10,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../../data/dto/laptop.dart';
 import '../../domain/model/processor.dart';
 import '../../domain/model/ranking.dart';
+import '../../shared/coach/tp_coach.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_arrive.dart';
 import '../../shared/widgets/tp_error_state.dart';
@@ -116,6 +117,18 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
     return TpPage(
       title: K.tab(TpTab.browse).tr(),
       tab: TpTab.browse,
+      coach: const <TpCoachStep>[
+        TpCoachStep(
+          target: 'category',
+          title: K.coachCategory,
+          body: K.coachCategoryBody,
+        ),
+        TpCoachStep(
+          target: 'filter',
+          title: K.coachFilter,
+          body: K.coachFilterBody,
+        ),
+      ],
       actions: <TpBarAction>[
         parts.filter,
         // Android 는 정렬을 칩 줄로 보여준다(M3 에서는 칩이 표준).
@@ -132,9 +145,12 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-            child: CategoryChips(
-              current: widget.category,
-              onSelect: widget.onCategory ?? (_) {},
+            child: TpCoachTarget(
+              id: 'category',
+              child: CategoryChips(
+                current: widget.category,
+                onSelect: widget.onCategory ?? (_) {},
+              ),
             ),
           ),
         ),
@@ -188,6 +204,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
         ? CupertinoIcons.line_horizontal_3_decrease
         : Icons.filter_list,
     symbol: 'line.3.horizontal.decrease',
+    coach: 'filter',
     active: active,
     menu: menu,
   );

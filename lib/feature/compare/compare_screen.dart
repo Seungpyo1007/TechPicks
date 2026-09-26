@@ -14,6 +14,7 @@ import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
 import '../../domain/model/tp_weights.dart';
+import '../../shared/coach/tp_coach.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_bar.dart';
@@ -80,33 +81,49 @@ class CompareScreen extends ConsumerWidget {
     return TpPage(
       title: K.compareTitle.tr(),
       tab: TpTab.compare,
+      coach: const <TpCoachStep>[
+        TpCoachStep(
+          target: 'compare-heads',
+          title: K.coachCompare,
+          body: K.coachCompareBody,
+        ),
+      ],
       slivers: <Widget>[
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Expanded(
-                  child: _ColumnHead(
-                    device: a,
-                    weights: weights,
-                    winner:
-                        pairs.isNotEmpty && pairs.first.winner == CompareSide.a,
-                    onTap: onPick == null ? null : () => onPick!(CompareSide.a),
+            child: TpCoachTarget(
+              id: 'compare-heads',
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: _ColumnHead(
+                      device: a,
+                      weights: weights,
+                      winner:
+                          pairs.isNotEmpty &&
+                          pairs.first.winner == CompareSide.a,
+                      onTap: onPick == null
+                          ? null
+                          : () => onPick!(CompareSide.a),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ColumnHead(
-                    device: b,
-                    weights: weights,
-                    winner:
-                        pairs.isNotEmpty && pairs.first.winner == CompareSide.b,
-                    onTap: onPick == null ? null : () => onPick!(CompareSide.b),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ColumnHead(
+                      device: b,
+                      weights: weights,
+                      winner:
+                          pairs.isNotEmpty &&
+                          pairs.first.winner == CompareSide.b,
+                      onTap: onPick == null
+                          ? null
+                          : () => onPick!(CompareSide.b),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
