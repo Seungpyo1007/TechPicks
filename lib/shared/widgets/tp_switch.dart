@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 
 import '../../app/theme/tp_motion.dart';
+import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 
-/// 켜고 끄기. iOS 는 iOS 26 모양, Android 는 M3 [Switch].
+/// 켜고 끄기. iOS 26 은 진짜 UISwitch, 그 아래 iOS 는 같은 치수로 그린 것,
+/// Android 는 M3 [Switch].
 ///
 /// Flutter 의 CupertinoSwitch 는 iOS 18 까지의 둥근 손잡이라 설정 목록에서
-/// 혼자 옛날 모양이다. 네이티브 UISwitch 는 플랫폼 뷰라 목록 안에서 화면
-/// 전환과 따로 논다. 그래서 iOS 26 치수로 직접 그린다.
+/// 혼자 옛날 모양이다. 유리 손잡이는 UIKit 만 그릴 수 있다.
 class TpSwitch extends StatelessWidget {
   const TpSwitch({super.key, required this.value, required this.onChanged});
 
@@ -16,9 +18,14 @@ class TpSwitch extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) => context.tp.isGlass
-      ? _GlassSwitch(value: value, onChanged: onChanged)
-      : Switch(value: value, onChanged: onChanged);
+  Widget build(BuildContext context) {
+    if (!context.tp.isGlass) return Switch(value: value, onChanged: onChanged);
+    // iOS 26: 진짜 UISwitch. 누르면 손잡이가 유리 렌즈로 바뀐다.
+    if (TpNativeGlass.enabled) {
+      return LiquidGlassToggle(value: value, onChanged: onChanged);
+    }
+    return _GlassSwitch(value: value, onChanged: onChanged);
+  }
 }
 
 /// iOS 26 스위치: 트랙 64 × 28, 손잡이 38 × 24 캡슐, 안쪽 2.
