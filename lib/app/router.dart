@@ -407,34 +407,14 @@ class _CompareWithState extends ConsumerState<_CompareWith> {
   Widget build(BuildContext context) => const _Compare();
 }
 
-/// 비교 탭. 프로바이더를 만지는 행동 둘이 있어서 감싼다.
-class _Compare extends ConsumerWidget {
+/// 비교 탭.
+class _Compare extends StatelessWidget {
   const _Compare();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => CompareScreen(
+  Widget build(BuildContext context) => CompareScreen(
     onPick: (side) => context.push('${TpRoute.compare}/pick/${side.name}'),
-    onAskWhy: () => _askAboutCompared(context, ref),
   );
-
-  /// 비교 중인 두 기기를 그대로 상담으로 넘긴다.
-  ///
-  /// 한쪽이라도 비어 있으면 빈 질문 시트만 연다.
-  static void _askAboutCompared(BuildContext context, WidgetRef ref) {
-    unawaited(context.push(TpRoute.ask));
-
-    final slots = ref.read(compareProvider);
-    final catalog = ref.read(catalogProvider).value;
-    if (catalog == null || slots.a == null || slots.b == null) return;
-
-    String? nameOf(String slug) =>
-        catalog.smartphones.where((d) => d.slug == slug).firstOrNull?.name;
-
-    final a = nameOf(slots.a!);
-    final b = nameOf(slots.b!);
-    if (a == null || b == null) return;
-    unawaited(ref.read(askProvider.notifier).askAbout(a, b));
-  }
 }
 
 /// 내 정보 시트. 로그인 상태를 읽어야 해서 감싼다.
