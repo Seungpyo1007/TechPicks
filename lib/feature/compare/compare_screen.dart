@@ -418,9 +418,10 @@ class _CompareRow extends StatelessWidget {
 
 /// 승자를 못 가리는 줄이 대신 까는 점수 막대.
 ///
-/// 축 **이름은 안 그린다.** `axCam`·`axBatt` 는 행 라벨(`detailSpecCamera`·
-/// `detailSpecBattery`)과 영어에서도 한국어에서도 같은 문자열이라, 화면에
-/// 찍는 순간 같은 글자가 둘이 된다. 이름은 스크린 리더에만 준다.
+/// 화면·프로세서·카메라 줄에만 깐다([SpecScoreAxis.scoreAxis]).
+///
+/// 축 **이름은 안 그린다.** 행 라벨과 같은 글자가 둘이 된다
+/// (`axCam`·`detailSpecCamera`). 이름은 스크린 리더에만 준다.
 class _AxisBar extends StatelessWidget {
   const _AxisBar({required this.kind, required this.score});
 
