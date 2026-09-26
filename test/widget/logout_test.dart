@@ -37,6 +37,9 @@ void main() {
   );
 
   Future<void> logout(WidgetTester tester) async {
+    // 맨 위 카드 → 계정 화면.
+    await tester.tap(find.text(FakeAuthService.defaultUser.name!).first);
+    await tester.pumpAndSettle();
     await tester.tap(find.text(K.logout.tr()).last);
     await tester.pumpAndSettle();
     // 확인 시트의 빨간 "로그아웃".
