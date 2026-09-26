@@ -230,6 +230,9 @@ const double _keyboardGap = 8;
 /// 말풍선 모서리.
 const double _bubbleRadius = 20;
 
+/// 말풍선 최대 폭. 화면 폭에 대한 비율.
+const double _maxWidth = 0.78;
+
 /// 컴포저가 실제로 차지한 높이를 재는 자리.
 @visibleForTesting
 const Key askComposerKey = ValueKey<String>('ask-composer');
@@ -371,31 +374,44 @@ class _Topic extends StatelessWidget {
 
 /// 답 말풍선 모양. 카드색, 왼쪽, 최대 78%.
 class _AiShape extends StatelessWidget {
-  const _AiShape({required this.child});
+  const _AiShape({required this.child, this.hug = false});
 
   final Widget child;
 
+  /// 글에 맞춰 좁아진다. 표가 있는 답과 뼈대는 78% 그대로.
+  final bool hug;
+
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerLeft,
-    child: FractionallySizedBox(
-      alignment: Alignment.centerLeft,
-      widthFactor: 0.78,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: context.sys.cell,
-            borderRadius: BorderRadius.circular(_bubbleRadius),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: child,
-          ),
+  Widget build(BuildContext context) {
+    final bubble = Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.sys.cell,
+          borderRadius: BorderRadius.circular(_bubbleRadius),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: child,
         ),
       ),
-    ),
-  );
+    );
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: hug
+          ? LayoutBuilder(
+              builder: (context, box) => ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: box.maxWidth * _maxWidth),
+                child: bubble,
+              ),
+            )
+          : FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: _maxWidth,
+              child: bubble,
+            ),
+    );
+  }
 }
 
 /// 답을 기다리는 동안 답 자리에 놓이는 뼈대.
@@ -533,6 +549,8 @@ class _Bubble extends StatelessWidget {
               ),
               child: Text(
                 message.text,
+                // 여러 줄이어도 가장 긴 줄만큼만.
+                textWidthBasis: TextWidthBasis.longestLine,
                 style: body.copyWith(color: Colors.white),
               ),
             ),
@@ -548,11 +566,14 @@ class _Bubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _AiShape(
+            // 표가 없는 답은 글 길이만큼.
+            hug: answer == null,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
                   message.text,
+                  textWidthBasis: TextWidthBasis.longestLine,
                   style: answer == null
                       ? body
                       : body.copyWith(fontWeight: FontWeight.w600),
