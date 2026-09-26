@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
@@ -15,6 +16,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../copy_keys.dart';
 import 'tp_group.dart';
 import 'tp_menu.dart';
+import '../coach/tp_coach.dart';
 import 'tp_arrive.dart';
 import 'tp_surface.dart';
 
@@ -30,6 +32,7 @@ class TpBarAction {
     this.menu,
     this.symbol,
     this.active = false,
+    this.coach,
   });
 
   /// 스크린 리더 이름. [text] 면 화면에도 이 글자가 나온다.
@@ -54,6 +57,9 @@ class TpBarAction {
 
   /// 걸려 있는 상태(필터). 모양은 그대로 두고 아이콘만 액센트로.
   final bool active;
+
+  /// 화면 안 안내가 가리킬 이름([TpCoachTarget.id]).
+  final String? coach;
 }
 
 /// v3 화면 뼈대. 큰 제목 + 슬리버 목록.
@@ -75,6 +81,7 @@ class TpPage extends StatelessWidget {
     this.onRefresh,
     this.floating,
     this.largeTitle = true,
+    this.coach = const <TpCoachStep>[],
   });
 
   final String title;
@@ -98,6 +105,9 @@ class TpPage extends StatelessWidget {
 
   /// false 면 처음부터 작은 제목(시트 안 push 화면).
   final bool largeTitle;
+
+  /// 이 화면에 처음 들어왔을 때 한 번 보여줄 안내. 이름은 [tab] 으로 정한다.
+  final List<TpCoachStep> coach;
 
   static void scrollToTop(BuildContext context) {
     final controller = PrimaryScrollController.maybeOf(context);
@@ -171,6 +181,7 @@ class TpPage extends StatelessWidget {
                 Positioned.fill(
                   child: _Stamp(
                     tab: tab,
+                    coach: coach,
                     child: onRefresh != null && !glass
                         ? RefreshIndicator(onRefresh: onRefresh!, child: body)
                         : body,
@@ -297,33 +308,38 @@ class TpPage extends StatelessWidget {
                   onPressed: leading!.onTap,
                   child: Text(leading!.label),
                 ));
+    Widget coach(TpBarAction a, Widget child) =>
+        a.coach == null ? child : TpCoachTarget(id: a.coach!, child: child);
     final acts = <Widget>[
       for (final a in actions)
         _ActionsArrive(
-          child: a.text
-              ? (a.filled
-                    ? Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilledButton(
-                          onPressed: a.onTap,
-                          child: Text(a.label),
-                        ),
-                      )
-                    : TextButton(onPressed: a.onTap, child: Text(a.label)))
-              : a.menu != null
-              ? TpMenu(
-                  items: a.menu!,
-                  builder: (context, open) => IconButton(
-                    onPressed: open,
+          child: coach(
+            a,
+            a.text
+                ? (a.filled
+                      ? Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilledButton(
+                            onPressed: a.onTap,
+                            child: Text(a.label),
+                          ),
+                        )
+                      : TextButton(onPressed: a.onTap, child: Text(a.label)))
+                : a.menu != null
+                ? TpMenu(
+                    items: a.menu!,
+                    builder: (context, open) => IconButton(
+                      onPressed: open,
+                      tooltip: a.label,
+                      icon: a.child ?? Icon(a.icon),
+                    ),
+                  )
+                : IconButton(
+                    onPressed: a.onTap,
                     tooltip: a.label,
                     icon: a.child ?? Icon(a.icon),
                   ),
-                )
-              : IconButton(
-                  onPressed: a.onTap,
-                  tooltip: a.label,
-                  icon: a.child ?? Icon(a.icon),
-                ),
+          ),
         ),
       const SizedBox(width: 4),
     ];
@@ -348,10 +364,13 @@ class TpPage extends StatelessWidget {
 /// 화면이 보이게 된 순간을 찍는다. 탭 화면은 그 탭이 켜질 때마다, 나머지는
 /// 처음 지어질 때 한 번.
 class _Stamp extends StatefulWidget {
-  const _Stamp({required this.tab, required this.child});
+  const _Stamp({required this.tab, required this.child, this.coach = const []});
 
   final TpTab? tab;
   final Widget child;
+
+  /// 이 탭에 처음 들어왔을 때 띄울 안내.
+  final List<TpCoachStep> coach;
 
   @override
   State<_Stamp> createState() => _StampState();
@@ -375,8 +394,37 @@ class _StampState extends State<_Stamp> {
       _at ??= DateTime.now();
       return;
     }
-    if (active == tab && _active != tab) _at = DateTime.now();
+    if (active == tab && _active != tab) {
+      _at = DateTime.now();
+      _coachLater(tab);
+    } else if (active != tab && _active == tab) {
+      _coachTimer?.cancel();
+      TpCoach.dismissFor(tab.name);
+    }
     _active = active;
+  }
+
+  Timer? _coachTimer;
+
+  /// 도착 연출(줄·툴바 버튼)이 끝난 뒤에 띄운다. 움직이는 버튼을 가리키면
+  /// 구멍이 엉뚱한 자리에 뚫린다.
+  static const Duration coachDelay = Duration(milliseconds: 900);
+
+  void _coachLater(TpTab tab) {
+    if (widget.coach.isEmpty) return;
+    _coachTimer?.cancel();
+    _coachTimer = Timer(coachDelay, () {
+      if (!mounted) return;
+      unawaited(
+        TpCoach.maybeShow(context, screen: tab.name, steps: widget.coach),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _coachTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -534,6 +582,12 @@ class TpBarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final button = _build(context);
+    final coach = action.coach;
+    return coach == null ? button : TpCoachTarget(id: coach, child: button);
+  }
+
+  Widget _build(BuildContext context) {
     final sys = context.sys;
     final a = action;
     // iOS 26: 아이콘 버튼은 시스템 유리 버튼. 누르면 OS 가 유리를 눌러 준다 —

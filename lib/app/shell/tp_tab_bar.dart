@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../shared/coach/tp_coach.dart';
 import '../../shared/copy_keys.dart';
 import '../providers.dart';
 import '../../shared/widgets/tp_press.dart';
@@ -96,37 +97,55 @@ class TpTabBar extends ConsumerWidget {
       final total =
           iosHeight + TpNativeTabBar.overflow + safe.bottom + keyboardRoom;
       final area = iosHeight + math.max(safe.bottom, keyboard);
+      // 검색 원은 UIKit 이 그려서 잴 수 없다. 같은 자리에 빈 칸을 두고 안내가
+      // 그걸 가리킨다(오른쪽 21, 바닥은 시스템 탭 캡슐 바닥).
       return SizedBox(
         height: total,
-        child: _BarHit(
-          hits: (local) => local.dy >= total - area,
-          child: TpNativeTabBar(
-            index: TpTab.bar.indexOf(searching ? returnTo : current),
-            onSelected: (i) => onSelected(TpTab.bar[i]),
-            onSearch: () => onSelected(TpTab.search),
-            searchLabel: K.tab(TpTab.search).tr(),
-            nativeSearch: true,
-            searchActive: searching,
-            searchPlaceholder: K.searchAllHint.tr(),
-            onSearchChanged: (q) =>
-                ref.read(searchQueryProvider.notifier).set(q),
-            onSearchKeyboard: (h) =>
-                ref.read(searchKeyboardHeightProvider.notifier).set(h),
-            keyboardDismissToken: ref.watch(searchKeyboardProvider),
-            searchText: command.text,
-            searchTextToken: command.textToken,
-            searchFocusToken: command.focusToken,
-            height: iosHeight + safe.bottom + keyboardRoom,
-            tint: TpTokens.blue,
-            items: <TpNativeTabItem>[
-              for (final t in TpTab.bar)
-                TpNativeTabItem(
-                  label: K.tab(t).tr(),
-                  symbol: t.symbol,
-                  activeSymbol: t.activeSymbol,
+        child: Stack(
+          children: <Widget>[
+            Positioned.fill(
+              child: _BarHit(
+                hits: (local) => local.dy >= total - area,
+                child: TpNativeTabBar(
+                  index: TpTab.bar.indexOf(searching ? returnTo : current),
+                  onSelected: (i) => onSelected(TpTab.bar[i]),
+                  onSearch: () => onSelected(TpTab.search),
+                  searchLabel: K.tab(TpTab.search).tr(),
+                  nativeSearch: true,
+                  searchActive: searching,
+                  searchPlaceholder: K.searchAllHint.tr(),
+                  onSearchChanged: (q) =>
+                      ref.read(searchQueryProvider.notifier).set(q),
+                  onSearchKeyboard: (h) =>
+                      ref.read(searchKeyboardHeightProvider.notifier).set(h),
+                  keyboardDismissToken: ref.watch(searchKeyboardProvider),
+                  searchText: command.text,
+                  searchTextToken: command.textToken,
+                  searchFocusToken: command.focusToken,
+                  height: iosHeight + safe.bottom + keyboardRoom,
+                  tint: TpTokens.blue,
+                  items: <TpNativeTabItem>[
+                    for (final t in TpTab.bar)
+                      TpNativeTabItem(
+                        label: K.tab(t).tr(),
+                        symbol: t.symbol,
+                        activeSymbol: t.activeSymbol,
+                      ),
+                  ],
                 ),
-            ],
-          ),
+              ),
+            ),
+            if (!searching)
+              Positioned(
+                right: 21,
+                bottom: searchBottom(context),
+                width: iosHeight,
+                height: iosHeight,
+                child: const IgnorePointer(
+                  child: TpCoachTarget(id: 'search', child: SizedBox.expand()),
+                ),
+              ),
+          ],
         ),
       );
     }
@@ -161,11 +180,14 @@ class TpTabBar extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 10),
-            _GlassCircle(
-              size: iosHeight,
-              label: K.tab(TpTab.search).tr(),
-              icon: CupertinoIcons.search,
-              onTap: () => onSelected(TpTab.search),
+            TpCoachTarget(
+              id: 'search',
+              child: _GlassCircle(
+                size: iosHeight,
+                label: K.tab(TpTab.search).tr(),
+                icon: CupertinoIcons.search,
+                onTap: () => onSelected(TpTab.search),
+              ),
             ),
           ],
         ),

@@ -18,6 +18,7 @@ import '../../data/dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/movers.dart';
 import '../../domain/model/tp_index.dart';
+import '../../shared/coach/tp_coach.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_error_state.dart';
@@ -79,6 +80,35 @@ class HomeScreen extends ConsumerWidget {
           ? null
           : _subtitle(shortlist.length),
       tab: TpTab.today,
+      coach: <TpCoachStep>[
+        if (verdict != null) ...const <TpCoachStep>[
+          TpCoachStep(
+            target: 'verdict',
+            title: K.coachVerdict,
+            body: K.coachVerdictBody,
+          ),
+          TpCoachStep(
+            target: 'weights',
+            title: K.coachWeights,
+            body: K.coachWeightsBody,
+          ),
+        ],
+        const TpCoachStep(
+          target: 'ask',
+          title: K.coachAsk,
+          body: K.coachAskBody,
+        ),
+        const TpCoachStep(
+          target: 'you',
+          title: K.coachYou,
+          body: K.coachYouBody,
+        ),
+        const TpCoachStep(
+          target: 'search',
+          title: K.coachSearch,
+          body: K.coachSearchBody,
+        ),
+      ],
       onRefresh: () async {
         ref.invalidate(catalogProvider);
         await ref.read(catalogProvider.future);
@@ -89,6 +119,7 @@ class HomeScreen extends ConsumerWidget {
             label: K.askTitle.tr(),
             icon: glass ? CupertinoIcons.sparkles : Icons.auto_awesome,
             symbol: 'sparkles',
+            coach: 'ask',
             onTap: onAsk,
           ),
         if (onYou != null)
@@ -98,6 +129,7 @@ class HomeScreen extends ConsumerWidget {
                 ? CupertinoIcons.person_crop_circle
                 : Icons.account_circle_outlined,
             symbol: 'person.crop.circle',
+            coach: 'you',
             onTap: onYou,
           ),
       ],
@@ -105,27 +137,30 @@ class HomeScreen extends ConsumerWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.only(top: 16),
-            child: AnimatedSwitcher(
-              duration: context.motion.contentSwap.duration,
-              switchInCurve: context.motion.contentSwap.curve,
-              switchOutCurve: context.motion.contentSwap.curve,
-              child: loading
-                  ? const _HomeSkeleton(key: ValueKey<String>('skeleton'))
-                  : catalog.hasError
-                  ? const TpCatalogError(key: ValueKey<String>('error'))
-                  : verdict == null
-                  ? _EmptyShortlist(
-                      key: const ValueKey<String>('empty'),
-                      onAdd: onAdd,
-                    )
-                  // 판정 기기가 바뀌어도 카드는 그대로 두고 안의 값만 움직인다.
-                  : _VerdictCard(
-                      key: const ValueKey<String>('verdict'),
-                      device: verdict,
-                      onCompareAll: onCompareAll,
-                      onAskWhy: onAskWhy,
-                      onWeights: onWeights,
-                    ),
+            child: TpCoachTarget(
+              id: 'verdict',
+              child: AnimatedSwitcher(
+                duration: context.motion.contentSwap.duration,
+                switchInCurve: context.motion.contentSwap.curve,
+                switchOutCurve: context.motion.contentSwap.curve,
+                child: loading
+                    ? const _HomeSkeleton(key: ValueKey<String>('skeleton'))
+                    : catalog.hasError
+                    ? const TpCatalogError(key: ValueKey<String>('error'))
+                    : verdict == null
+                    ? _EmptyShortlist(
+                        key: const ValueKey<String>('empty'),
+                        onAdd: onAdd,
+                      )
+                    // 판정 기기가 바뀌어도 카드는 그대로 두고 안의 값만 움직인다.
+                    : _VerdictCard(
+                        key: const ValueKey<String>('verdict'),
+                        device: verdict,
+                        onCompareAll: onCompareAll,
+                        onAskWhy: onAskWhy,
+                        onWeights: onWeights,
+                      ),
+              ),
             ),
           ),
         ),
@@ -253,12 +288,15 @@ class _VerdictCard extends ConsumerWidget {
                   ),
                 ),
                 if (onWeights != null && glass)
-                  _TextButton(
-                    label: K.weights.tr(),
-                    icon: glass
-                        ? CupertinoIcons.slider_horizontal_3
-                        : Icons.tune,
-                    onTap: onWeights!,
+                  TpCoachTarget(
+                    id: 'weights',
+                    child: _TextButton(
+                      label: K.weights.tr(),
+                      icon: glass
+                          ? CupertinoIcons.slider_horizontal_3
+                          : Icons.tune,
+                      onTap: onWeights!,
+                    ),
                   ),
                 Semantics(
                   button: true,
@@ -356,12 +394,15 @@ class _VerdictCard extends ConsumerWidget {
                       if (!glass) ...<Widget>[
                         const SizedBox(width: 10),
                         Expanded(
-                          child: TpPill(
-                            label: K.weights.tr(),
-                            kind: TpPillKind.tinted,
-                            height: 44,
-                            icon: Icons.tune,
-                            onTap: onWeights,
+                          child: TpCoachTarget(
+                            id: 'weights',
+                            child: TpPill(
+                              label: K.weights.tr(),
+                              kind: TpPillKind.tinted,
+                              height: 44,
+                              icon: Icons.tune,
+                              onTap: onWeights,
+                            ),
                           ),
                         ),
                       ],
