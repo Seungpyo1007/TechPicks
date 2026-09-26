@@ -361,5 +361,6 @@
   "photoUploading": "Uploading…",
   "photoUpdated": "Photo updated",
   "photoRemoved": "Photo removed",
-  "a11yPhotoUploading": "Uploading, {} percent"
+  "a11yPhotoUploading": "Uploading, {} percent",
+  "about": "About"
 }

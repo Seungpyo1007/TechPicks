@@ -11,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme/tp_motion.dart';
-import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
@@ -30,7 +29,6 @@ import '../../domain/model/tp_index.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/tp_haptics.dart';
 import '../../shared/widgets/tp_group.dart';
-import '../../shared/widgets/tp_menu.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_button.dart';
 import '../../shared/widgets/tp_sheet.dart';
@@ -129,48 +127,16 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     final hasAccount = name != null || (email?.isNotEmpty ?? false);
 
     final glass = t.isGlass;
-    final rate = ref.watch(fxRateProvider).value ?? FxRate.fallback;
     IconData icon(IconData ios, IconData android) => glass ? ios : android;
-
-    Widget menuRow(
-      String label,
-      String value,
-      Widget leading,
-      List<TpMenuItem> items,
-    ) => TpNativeGlass.enabled
-        // iOS 26: 설정 앱처럼 줄 오른쪽 유리 풀다운 "값 ⌃⌄", 누르면 UIMenu.
-        ? TpRow(
-            title: label,
-            leading: leading,
-            chevron: false,
-            trailing: TpNativeMenuPicker(
-              value: value,
-              label: label,
-              entries: <TpNativeMenuEntry>[
-                for (final i in items)
-                  TpNativeMenuEntry(label: i.label, checked: i.checked),
-              ],
-              onSelected: (i) => items[i].onTap(),
-            ),
-          )
-        : TpMenu(
-            items: items,
-            builder: (context, open) => _SettingRow(
-              label: label,
-              value: value,
-              leading: leading,
-              onTap: open,
-              menu: true,
-            ),
-          );
 
     var row = 0;
     Widget arrive(Widget child) => TpArrive(index: row++, child: child);
 
     return TpPage(
       title: K.you.tr(),
-      // 밀려 들어온 화면이면 큰 제목과 뒤로 버튼, 시트면 작은 제목과 완료.
-      largeTitle: widget.onBack != null,
+      // 첫 카드가 곧 제목이라 바에는 뒤로 버튼만. 시트면 작은 제목과 완료.
+      largeTitle: false,
+      showTitle: widget.onBack == null,
       onBack: widget.onBack,
       actions: <TpBarAction>[
         if (widget.onClose != null)
@@ -259,82 +225,46 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 ),
               ],
               if (glass) _BigHeader(K.settings.tr()) else const TpM3Divider(),
+              // 설정 앱처럼 줄마다 값과 화살표, 누르면 고르는 화면으로.
               TpGroup(
                 m3: true,
-                footer: _fxLine(rate),
                 children: <Widget>[
                   arrive(
-                    locale != null
-                        ? menuRow(
-                            K.language.tr(),
-                            locale.current.label,
-                            TpIconTile(
-                              icon: icon(CupertinoIcons.globe, Icons.language),
-                              color: const Color(0xFF007AFF),
-                            ),
-                            <TpMenuItem>[
-                              for (final option in TpLocale.values)
-                                TpMenuItem(
-                                  label: option.label,
-                                  checked: option == locale.current,
-                                  onTap: () => unawaited(locale.set(option)),
-                                ),
-                            ],
-                          )
-                        : _SettingRow(
-                            label: K.language.tr(),
-                            value: TpLocale.en.label,
-                            leading: TpIconTile(
-                              icon: icon(CupertinoIcons.globe, Icons.language),
-                              color: const Color(0xFF007AFF),
-                            ),
-                          ),
-                  ),
-                  arrive(
-                    menuRow(
-                      K.darkMode.tr(),
-                      _themeLabel(themeMode).tr(),
-                      TpIconTile(
-                        icon: icon(CupertinoIcons.moon_fill, Icons.dark_mode),
-                        color: const Color(0xFF5856D6),
+                    _SettingRow(
+                      label: K.language.tr(),
+                      value: (locale?.current ?? TpLocale.en).label,
+                      leading: TpIconTile(
+                        icon: icon(CupertinoIcons.globe, Icons.language),
+                        color: const Color(0xFF007AFF),
                       ),
-                      <TpMenuItem>[
-                        for (final mode in <ThemeMode>[
-                          ThemeMode.system,
-                          ThemeMode.light,
-                          ThemeMode.dark,
-                        ])
-                          TpMenuItem(
-                            label: _themeLabel(mode).tr(),
-                            checked: mode == themeMode,
-                            onTap: () => unawaited(
-                              ref.read(themeModeProvider.notifier).set(mode),
-                            ),
-                          ),
-                      ],
+                      onTap: locale == null
+                          ? null
+                          : () => unawaited(_openLanguage()),
                     ),
                   ),
                   arrive(
-                    menuRow(
-                      K.currency.tr(),
-                      K.currencyOf(currency).tr(),
-                      TpIconTile(
+                    _SettingRow(
+                      label: K.darkMode.tr(),
+                      value: _themeLabel(themeMode).tr(),
+                      leading: TpIconTile(
+                        icon: icon(CupertinoIcons.moon_fill, Icons.dark_mode),
+                        color: const Color(0xFF5856D6),
+                      ),
+                      onTap: () => unawaited(_openTheme()),
+                    ),
+                  ),
+                  arrive(
+                    _SettingRow(
+                      label: K.currency.tr(),
+                      value: K.currencyOf(currency).tr(),
+                      leading: TpIconTile(
                         icon: icon(
                           CupertinoIcons.money_dollar_circle_fill,
                           Icons.payments,
                         ),
                         color: const Color(0xFF34C759),
                       ),
-                      <TpMenuItem>[
-                        for (final option in TpCurrency.values)
-                          TpMenuItem(
-                            label: K.currencyOf(option).tr(),
-                            checked: option == currency,
-                            onTap: () => unawaited(
-                              ref.read(currencyProvider.notifier).set(option),
-                            ),
-                          ),
-                      ],
+                      onTap: () => unawaited(_openCurrency()),
                     ),
                   ),
                   arrive(
@@ -365,45 +295,17 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                           .set(!notifications),
                     ),
                   ),
-                ],
-              ),
-              if (!glass) const TpM3Divider(),
-              TpGroup(
-                m3: true,
-                footer: _coachNotice,
-                children: <Widget>[
                   arrive(
                     _SettingRow(
-                      label: K.coachReplay.tr(),
+                      label: K.about.tr(),
                       leading: TpIconTile(
-                        icon: icon(
-                          CupertinoIcons.lightbulb_fill,
-                          Icons.lightbulb,
-                        ),
-                        color: const Color(0xFFFF9500),
-                      ),
-                      onTap: () => unawaited(_replayCoach()),
-                      plain: true,
-                    ),
-                  ),
-                  arrive(
-                    _SettingRow(
-                      label: K.sources.tr(),
-                      leading: TpIconTile(
-                        icon: icon(CupertinoIcons.doc_text_fill, Icons.article),
+                        icon: icon(CupertinoIcons.info, Icons.info_outline),
                         color: const Color(0xFF8E8E93),
                       ),
-                      onTap: widget.onSources ?? _openSources,
+                      onTap: () => unawaited(_openAbout()),
                     ),
                   ),
                 ],
-              ),
-              Center(
-                child: _Link(
-                  label: YouScreen.versionLine,
-                  small: true,
-                  onTap: () => unawaited(_openLicense()),
-                ),
               ),
               if (!glass) const SizedBox(height: 8),
             ],
@@ -411,18 +313,6 @@ class _YouScreenState extends ConsumerState<YouScreen> {
         ),
       ],
     );
-  }
-
-  /// "안내 다시 보기" 아래 한 줄.
-  String? _coachNotice;
-
-  /// 소개 화면부터 다시. 화면 안 안내도 각 탭에서 다시 뜬다.
-  Future<void> _replayCoach() async {
-    await TpCoach.resetAll();
-    TpHaptics.commit();
-    if (!mounted) return;
-    setState(() => _coachNotice = K.coachReplayed.tr());
-    await ref.read(onboardingDoneProvider.notifier).replay();
   }
 
   Route<T> _route<T>(WidgetBuilder builder) => context.tp.isGlass
@@ -468,19 +358,81 @@ class _YouScreenState extends ConsumerState<YouScreen> {
           ),
   );
 
-  Future<void> _openSources() => Navigator.of(context).push(
+  Future<void> _openLanguage() => Navigator.of(context).push(
     _route<void>(
-      (context) => SourcesScreen(onBack: () => Navigator.of(context).pop()),
+      (_) => _ChoicePage(
+        title: K.language.tr(),
+        choices: (ref) {
+          final locale = ref.watch(localeControllerProvider);
+          if (locale == null) return const <_Choice>[];
+          return <_Choice>[
+            for (final option in TpLocale.values)
+              _Choice(
+                label: option.label,
+                checked: option == locale.current,
+                onTap: () => unawaited(locale.set(option)),
+              ),
+          ];
+        },
+      ),
     ),
   );
 
-  Future<void> _openLicense() async {
-    try {
-      await ref.read(linkOpenerProvider).open(TpUrls.appLicense);
-    } catch (e, s) {
-      TpErrors.record(e, s, reason: 'link.open');
-    }
-  }
+  Future<void> _openTheme() => Navigator.of(context).push(
+    _route<void>(
+      (_) => _ChoicePage(
+        title: K.darkMode.tr(),
+        choices: (ref) {
+          final current = ref.watch(themeModeProvider);
+          return <_Choice>[
+            for (final mode in <ThemeMode>[
+              ThemeMode.system,
+              ThemeMode.light,
+              ThemeMode.dark,
+            ])
+              _Choice(
+                label: _themeLabel(mode).tr(),
+                checked: mode == current,
+                onTap: () =>
+                    unawaited(ref.read(themeModeProvider.notifier).set(mode)),
+              ),
+          ];
+        },
+      ),
+    ),
+  );
+
+  /// 통화. 환율 한 줄은 여기 아래에 둔다.
+  Future<void> _openCurrency() => Navigator.of(context).push(
+    _route<void>(
+      (_) => _ChoicePage(
+        title: K.currency.tr(),
+        footer: (ref) =>
+            _fxLine(ref.watch(fxRateProvider).value ?? FxRate.fallback),
+        choices: (ref) {
+          final current = ref.watch(currencyProvider);
+          return <_Choice>[
+            for (final option in TpCurrency.values)
+              _Choice(
+                label: K.currencyOf(option).tr(),
+                checked: option == current,
+                onTap: () =>
+                    unawaited(ref.read(currencyProvider.notifier).set(option)),
+              ),
+          ];
+        },
+      ),
+    ),
+  );
+
+  Future<void> _openAbout() => Navigator.of(context).push(
+    _route<void>(
+      (context) => _AboutPage(
+        onSources: widget.onSources,
+        onBack: () => Navigator.of(context).pop(),
+      ),
+    ),
+  );
 }
 
 /// 내 기기 한 줄.
@@ -609,6 +561,158 @@ class _AiEnginePage extends ConsumerWidget {
         ),
       ],
     );
+  }
+}
+
+/// 고르는 화면의 한 줄.
+class _Choice {
+  const _Choice({
+    required this.label,
+    required this.checked,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool checked;
+  final VoidCallback onTap;
+}
+
+/// 언어·다크 모드·통화. AI 엔진처럼 한 화면에 선택지와 체크 표시.
+class _ChoicePage extends ConsumerWidget {
+  const _ChoicePage({required this.title, required this.choices, this.footer});
+
+  final String title;
+  final List<_Choice> Function(WidgetRef ref) choices;
+  final String Function(WidgetRef ref)? footer;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => TpPage(
+    title: title,
+    largeTitle: false,
+    onBack: () => Navigator.of(context).pop(),
+    slivers: <Widget>[
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: TpGroup(
+            m3: true,
+            footer: footer?.call(ref),
+            children: <Widget>[
+              for (final c in choices(ref))
+                TpRow(
+                  title: c.label,
+                  checked: c.checked,
+                  chevron: false,
+                  onTap: c.onTap,
+                ),
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+/// 정보. 안내 다시 보기, 데이터 출처, 버전.
+class _AboutPage extends ConsumerStatefulWidget {
+  const _AboutPage({required this.onBack, this.onSources});
+
+  final VoidCallback onBack;
+
+  /// 데이터 출처 화면으로. 없으면 여기서 민다.
+  final VoidCallback? onSources;
+
+  @override
+  ConsumerState<_AboutPage> createState() => _AboutPageState();
+}
+
+class _AboutPageState extends ConsumerState<_AboutPage> {
+  /// "안내 다시 보기" 아래 한 줄.
+  String? _coachNotice;
+
+  @override
+  Widget build(BuildContext context) {
+    final glass = context.tp.isGlass;
+    IconData icon(IconData ios, IconData android) => glass ? ios : android;
+    return TpPage(
+      title: K.about.tr(),
+      largeTitle: false,
+      onBack: widget.onBack,
+      slivers: <Widget>[
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                TpGroup(
+                  m3: true,
+                  footer: _coachNotice,
+                  children: <Widget>[
+                    _SettingRow(
+                      label: K.coachReplay.tr(),
+                      leading: TpIconTile(
+                        icon: icon(
+                          CupertinoIcons.lightbulb_fill,
+                          Icons.lightbulb,
+                        ),
+                        color: const Color(0xFFFF9500),
+                      ),
+                      onTap: () => unawaited(_replayCoach()),
+                      plain: true,
+                    ),
+                    _SettingRow(
+                      label: K.sources.tr(),
+                      leading: TpIconTile(
+                        icon: icon(CupertinoIcons.doc_text_fill, Icons.article),
+                        color: const Color(0xFF8E8E93),
+                      ),
+                      onTap: widget.onSources ?? _openSources,
+                    ),
+                  ],
+                ),
+                Center(
+                  child: _Link(
+                    label: YouScreen.versionLine,
+                    small: true,
+                    onTap: () => unawaited(_openLicense()),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 소개 화면부터 다시. 화면 안 안내도 각 탭에서 다시 뜬다.
+  Future<void> _replayCoach() async {
+    await TpCoach.resetAll();
+    TpHaptics.commit();
+    if (!mounted) return;
+    setState(() => _coachNotice = K.coachReplayed.tr());
+    await ref.read(onboardingDoneProvider.notifier).replay();
+  }
+
+  Future<void> _openSources() => Navigator.of(context).push(
+    context.tp.isGlass
+        ? CupertinoPageRoute<void>(
+            builder: (context) =>
+                SourcesScreen(onBack: () => Navigator.of(context).pop()),
+          )
+        : MaterialPageRoute<void>(
+            builder: (context) =>
+                SourcesScreen(onBack: () => Navigator.of(context).pop()),
+          ),
+  );
+
+  Future<void> _openLicense() async {
+    try {
+      await ref.read(linkOpenerProvider).open(TpUrls.appLicense);
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'link.open');
+    }
   }
 }
 
@@ -874,7 +978,6 @@ class _SettingRow extends StatelessWidget {
     this.onTap,
     this.toggled,
     this.switchValue,
-    this.menu = false,
     this.leading,
     this.plain = false,
   });
@@ -893,12 +996,8 @@ class _SettingRow extends StatelessWidget {
   final bool? toggled;
   final bool? switchValue;
 
-  /// 누르면 풀다운 메뉴가 뜨는 줄. 오른쪽에 위아래 화살표.
-  final bool menu;
-
   @override
   Widget build(BuildContext context) {
-    final sys = context.sys;
     return TpRow(
       title: label,
       value: value,
@@ -906,18 +1005,10 @@ class _SettingRow extends StatelessWidget {
       toggled: toggled,
       dimmed: onTap == null,
       leading: leading,
-      chevron: !menu && !plain && switchValue == null && onTap != null,
+      chevron: !plain && switchValue == null && onTap != null,
       semanticsLabel: value == null ? label : '$label, $value',
       trailing: switchValue != null
           ? TpSwitch(value: switchValue!, onChanged: (_) => onTap?.call())
-          : menu
-          ? Icon(
-              context.tp.isGlass
-                  ? CupertinoIcons.chevron_up_chevron_down
-                  : Icons.unfold_more,
-              size: 16,
-              color: sys.label3,
-            )
           : null,
     );
   }

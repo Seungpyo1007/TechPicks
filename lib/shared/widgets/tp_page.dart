@@ -142,6 +142,7 @@ class TpPage extends StatelessWidget {
     this.onRefresh,
     this.floating,
     this.largeTitle = true,
+    this.showTitle = true,
     this.coach = const <TpCoachStep>[],
   });
 
@@ -166,6 +167,10 @@ class TpPage extends StatelessWidget {
 
   /// false 면 처음부터 작은 제목(시트 안 push 화면).
   final bool largeTitle;
+
+  /// false 면 제목을 그리지 않고 바에 버튼만 둔다. [largeTitle] 이 false 일
+  /// 때만 쓴다. 첫 카드가 곧 제목인 화면(내 정보).
+  final bool showTitle;
 
   /// 이 화면에 처음 들어왔을 때 한 번 보여줄 안내. 이름은 [tab] 으로 정한다.
   final List<TpCoachStep> coach;
@@ -297,7 +302,7 @@ class TpPage extends StatelessWidget {
               ],
             ),
           );
-    final titleText = Text(title);
+    final titleText = showTitle ? Text(title) : const SizedBox.shrink();
     if (!largeTitle) {
       final top = MediaQuery.paddingOf(context).top;
       return SliverPersistentHeader(
@@ -433,7 +438,7 @@ class TpPage extends StatelessWidget {
     if (!largeTitle) {
       return SliverAppBar(
         pinned: true,
-        title: Text(title),
+        title: showTitle ? Text(title) : null,
         leading: back,
         leadingWidth: leadingWidth,
         automaticallyImplyLeading: false,

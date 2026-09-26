@@ -19,6 +19,7 @@ import 'package:techpicks/domain/model/tp_weights.dart';
 import 'package:techpicks/app/locale_controller.dart';
 import 'package:techpicks/data/service/device_info_service.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
+import 'package:techpicks/shared/widgets/tp_switch.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
 ProviderContainer? _container;
@@ -175,7 +176,7 @@ void main() {
     expect(_container!.read(weightsProvider).performance, 0.5);
   });
 
-  testWidgets('설정 줄과 버전 푸터', (tester) async {
+  testWidgets('설정 줄, 정보 안의 버전 줄', (tester) async {
     await _pump(tester);
     for (final label in <String>[
       'Language',
@@ -185,12 +186,19 @@ void main() {
       // 원화가 들어오면서 고를 것이 생겼다.
       'Currency',
       'Notifications',
+      'About',
       // 계정이 없으면 맨 위 카드에 로그인이 있다.
       'Sign in',
     ]) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
+    // 버전·안내 다시 보기·데이터 출처는 정보 안에 있다.
+    expect(find.text(YouScreen.versionLine), findsNothing);
+    await tester.tap(find.text('About'));
+    await tester.pumpAndSettle();
     expect(find.text(YouScreen.versionLine), findsOneWidget);
+    expect(find.text(K.coachReplay.tr()), findsOneWidget);
+    expect(find.text(K.sources.tr()), findsOneWidget);
   });
 
   testWidgets('통화를 고르면 그 값이 남는다', (tester) async {
@@ -303,11 +311,8 @@ void main() {
     await tester.tap(find.text('Notifications'));
     await tester.pumpAndSettle();
     expect(_container!.read(notificationsProvider), isFalse);
-    expect(find.byType(CupertinoSwitch), findsOneWidget);
-    expect(
-      tester.widget<CupertinoSwitch>(find.byType(CupertinoSwitch)).value,
-      isFalse,
-    );
+    expect(find.byType(TpSwitch), findsOneWidget);
+    expect(tester.widget<TpSwitch>(find.byType(TpSwitch)).value, isFalse);
   });
 
   group('내 기기', () {
@@ -485,6 +490,8 @@ void main() {
       });
       await _pump(tester);
 
+      await tester.tap(find.text(K.about.tr()));
+      await tester.pumpAndSettle();
       await tester.tap(find.text(K.coachReplay.tr()));
       await tester.pumpAndSettle();
 
