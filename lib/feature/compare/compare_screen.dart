@@ -54,6 +54,7 @@ class CompareScreen extends ConsumerWidget {
     final a = find(slots.a);
     final b = find(slots.b);
     final loading = catalog is AsyncLoading && !catalog.hasError;
+    final glass = context.tp.isGlass;
 
     final Widget table;
     if (loading) {
@@ -81,6 +82,23 @@ class CompareScreen extends ConsumerWidget {
     return TpPage(
       title: K.compareTitle.tr(),
       tab: TpTab.compare,
+      // iOS 는 가운데 캡슐, Android 는 오른쪽 아래 확장 FAB.
+      floating: pairs.isEmpty || onAskWhy == null
+          ? null
+          : glass
+          ? TpPill(
+              label: K.askWhy.tr(),
+              icon: CupertinoIcons.sparkles,
+              expand: false,
+              onTap: onAskWhy,
+            )
+          : FloatingActionButton.extended(
+              // 탭마다 FAB 가 살아 있어서 기본 hero 태그가 겹친다.
+              heroTag: null,
+              onPressed: onAskWhy,
+              icon: const Icon(Icons.auto_awesome),
+              label: Text(K.askWhy.tr()),
+            ),
       coach: const <TpCoachStep>[
         TpCoachStep(
           target: 'compare-heads',
@@ -128,8 +146,6 @@ class CompareScreen extends ConsumerWidget {
           ),
         ),
         SliverToBoxAdapter(child: table),
-        if (pairs.isNotEmpty)
-          const SliverToBoxAdapter(child: SizedBox(height: 56)),
       ],
     );
   }
