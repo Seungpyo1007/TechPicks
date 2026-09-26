@@ -42,6 +42,7 @@ import '../../shared/widgets/tp_pop_in.dart';
 
 part 'account_screen.dart';
 part 'priorities_screen.dart';
+part 'you_header.dart';
 
 /// 내 정보.
 class YouScreen extends ConsumerStatefulWidget {
@@ -176,44 +177,78 @@ class _YouScreenState extends ConsumerState<YouScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const SizedBox(height: 8),
-              TpGroup(
-                footer: _notice,
-                children: <Widget>[
-                  arrive(
-                    hasAccount
-                        ? _ProfileHeader(
-                            photoUrl: ref
-                                .watch(profileProvider)
-                                .value
-                                ?.photoUrl,
-                            name: name,
-                            email: email,
-                            method: widget.method,
-                            unverified: !widget.emailVerified,
-                            onEdit: () => unawaited(_openAccount()),
-                          )
-                        : _SignedOut(onSignIn: widget.onSignIn),
+              // iOS 는 84 원 카드와 통계 띠, 그 아래 "내 선택" 두 칸.
+              if (glass && hasAccount)
+                arrive(
+                  _ProfileCard(
+                    photoUrl: ref.watch(profileProvider).value?.photoUrl,
+                    name: name,
+                    email: email,
+                    method: widget.method,
+                    unverified: !widget.emailVerified,
+                    onEdit: () => unawaited(_openAccount()),
                   ),
-                ],
-              ),
-              TpGroup(
-                children: <Widget>[
-                  arrive(
-                    _SettingRow(
-                      label: K.weights.tr(),
-                      value: _weightsSummary(weights),
-                      leading: TpIconTile(
-                        icon: icon(
-                          CupertinoIcons.slider_horizontal_3,
-                          Icons.tune,
-                        ),
-                      ),
-                      onTap: () => unawaited(_openPriorities()),
+                )
+              else
+                TpGroup(
+                  footer: _notice,
+                  children: <Widget>[
+                    arrive(
+                      hasAccount
+                          ? _ProfileHeader(
+                              photoUrl: ref
+                                  .watch(profileProvider)
+                                  .value
+                                  ?.photoUrl,
+                              name: name,
+                              email: email,
+                              method: widget.method,
+                              unverified: !widget.emailVerified,
+                              onEdit: () => unawaited(_openAccount()),
+                            )
+                          : _SignedOut(onSignIn: widget.onSignIn),
+                    ),
+                  ],
+                ),
+              if (glass && hasAccount && _notice != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 16),
+                  child: Text(
+                    _notice!,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.38,
+                      color: context.sys.label2,
                     ),
                   ),
-                  arrive(_YourDevice(onTap: widget.onDeviceTap)),
-                ],
-              ),
+                ),
+              if (glass)
+                arrive(
+                  _YourPicks(
+                    onWeights: () => unawaited(_openPriorities()),
+                    onDeviceTap: widget.onDeviceTap,
+                  ),
+                )
+              else
+                TpGroup(
+                  children: <Widget>[
+                    arrive(
+                      _SettingRow(
+                        label: K.weights.tr(),
+                        value: _weightsSummary(weights),
+                        leading: TpIconTile(
+                          icon: icon(
+                            CupertinoIcons.slider_horizontal_3,
+                            Icons.tune,
+                          ),
+                        ),
+                        onTap: () => unawaited(_openPriorities()),
+                      ),
+                    ),
+                    arrive(_YourDevice(onTap: widget.onDeviceTap)),
+                  ],
+                ),
+              if (glass) _BigHeader(K.settings.tr()),
               TpGroup(
                 footer: _fxLine(rate),
                 children: <Widget>[

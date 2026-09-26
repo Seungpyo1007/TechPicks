@@ -332,5 +332,8 @@
   "removeShort": "Remove from shortlist",
   "browseByKind": "Browse by kind",
   "done": "Done",
-  "buildUse": "Use"
+  "buildUse": "Use",
+  "thisPhone": "This phone",
+  "yourPicks": "Your picks",
+  "settings": "Settings"
 }

@@ -76,13 +76,7 @@ class _Radar extends StatelessWidget {
     final labels = <String>[
       for (final k in TpAxisKind.values) SpecLabels.axis(k),
     ];
-    // 가장 큰 축을 끝까지 편다. 비중은 합이 아니라 서로의 비율이라, 그대로
-    // 그리면 기본값에서 가운데 작은 점으로만 보인다.
-    final raw = <double>[
-      for (final k in TpAxisKind.values) k.weightIn(weights).clamp(0.0, 1.0),
-    ];
-    final top = raw.reduce(math.max);
-    final values = <double>[for (final v in raw) top <= 0 ? 0 : v / top];
+    final values = _radarValues(weights);
     return SizedBox(
       height: 210,
       child: TweenAnimationBuilder<List<double>>(
@@ -96,6 +90,16 @@ class _Radar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 가장 큰 축을 끝까지 편다. 비중은 합이 아니라 서로의 비율이라, 그대로
+/// 그리면 기본값에서 가운데 작은 점으로만 보인다.
+List<double> _radarValues(TpWeights weights) {
+  final raw = <double>[
+    for (final k in TpAxisKind.values) k.weightIn(weights).clamp(0.0, 1.0),
+  ];
+  final top = raw.reduce(math.max);
+  return <double>[for (final v in raw) top <= 0 ? 0 : v / top];
 }
 
 class _ListTween extends Tween<List<double>> {
@@ -115,17 +119,21 @@ class _RadarPainter extends CustomPainter {
     required this.values,
     required this.labels,
     required this.sys,
+    this.compact = false,
   });
 
   final List<double> values;
   final List<String> labels;
   final TpSys sys;
 
+  /// 내 정보 타일의 작은 그림. 바깥 테두리 하나에 라벨이 없다.
+  final bool compact;
+
   @override
   void paint(Canvas canvas, Size size) {
     final n = values.length;
-    final c = Offset(size.width / 2, size.height / 2 + 6);
-    final r = math.min(size.width, size.height) / 2 - 28;
+    final c = Offset(size.width / 2, size.height / 2 + (compact ? 0 : 6));
+    final r = math.min(size.width, size.height) / 2 - (compact ? 2 : 28);
     Offset at(int i, double k) {
       final a = -math.pi / 2 + i * 2 * math.pi / n;
       return c + Offset(math.cos(a), math.sin(a)) * r * k;
@@ -135,15 +143,17 @@ class _RadarPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1
       ..color = sys.separator;
-    for (final k in <double>[1 / 3, 2 / 3, 1]) {
+    for (final k in compact ? <double>[1] : <double>[1 / 3, 2 / 3, 1]) {
       final ring = Path()..moveTo(at(0, k).dx, at(0, k).dy);
       for (var i = 1; i < n; i++) {
         ring.lineTo(at(i, k).dx, at(i, k).dy);
       }
       canvas.drawPath(ring..close(), grid);
     }
-    for (var i = 0; i < n; i++) {
-      canvas.drawLine(c, at(i, 1), grid);
+    if (!compact) {
+      for (var i = 0; i < n; i++) {
+        canvas.drawLine(c, at(i, 1), grid);
+      }
     }
 
     // 값이 0 이어도 점 하나로 사라지지 않게 조금 띄운다.
@@ -166,6 +176,7 @@ class _RadarPainter extends CustomPainter {
         ..color = TpSys.accent,
     );
     for (var i = 0; i < n; i++) {
+      if (compact) continue;
       canvas.drawCircle(
         at(i, .08 + .92 * values[i]),
         3.5,
@@ -189,6 +200,7 @@ class _RadarPainter extends CustomPainter {
   @override
   bool shouldRepaint(_RadarPainter old) =>
       old.sys != sys ||
+      old.compact != compact ||
       old.labels.join() != labels.join() ||
       old.values.join() != values.join();
 }
