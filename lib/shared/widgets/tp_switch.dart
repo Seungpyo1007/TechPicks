@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:native_liquid_glass/native_liquid_glass.dart';
 
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_native_glass.dart';
@@ -22,7 +21,7 @@ class TpSwitch extends StatelessWidget {
     if (!context.tp.isGlass) return Switch(value: value, onChanged: onChanged);
     // iOS 26: 진짜 UISwitch. 누르면 손잡이가 유리 렌즈로 바뀐다.
     if (TpNativeGlass.enabled) {
-      return LiquidGlassToggle(value: value, onChanged: onChanged);
+      return TpNativeSwitch(value: value, onChanged: onChanged);
     }
     return _GlassSwitch(value: value, onChanged: onChanged);
   }
