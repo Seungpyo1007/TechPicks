@@ -20,7 +20,7 @@ import '../../shared/widgets/tp_page.dart';
 /// 안이 처음부터 다시 움직인다.
 ///
 /// 끝나면(건너뛰기·시작하기) 로그인 화면으로 간다. 로그인은 선택이라 거기서
-/// X 로 닫으면 오늘이다. 되돌릴 수 없다는 경고는 없다(v1 에는 있었다).
+/// 뒤로 가면 오늘이다. 되돌릴 수 없다는 경고는 없다(v1 에는 있었다).
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key, this.onDone});
 
