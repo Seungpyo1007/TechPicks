@@ -258,6 +258,15 @@ void main() {
       expect(find.text(K.deleteAccount.tr()), findsOneWidget);
     });
 
+    testWidgets('확인한 메일은 알약으로, 삭제 카드 아래 안내가 있다', (tester) async {
+      await _pump(tester, _StubAuth());
+
+      expect(find.text(K.emailConfirmed.tr()), findsOneWidget);
+      expect(find.text(K.deleteNote.tr()), findsOneWidget);
+      // 로그아웃과 삭제가 한 카드에 묶이지 않는다.
+      expect(find.text(K.logout.tr()), findsOneWidget);
+    });
+
     testWidgets('확인 안 한 메일은 다시 보낼 수 있다', (tester) async {
       final auth = _StubAuth();
       await _pump(tester, auth, emailVerified: false);

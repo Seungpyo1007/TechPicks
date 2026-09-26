@@ -338,5 +338,7 @@
   "settings": "설정",
   "aiEngineAutoBody": "이 기기 먼저, 안 되면 클라우드",
   "aiEngineOnDeviceBody": "질문이 기기 밖으로 안 나감",
-  "aiEngineCloudBody": "질문을 Gemini로 보냄"
+  "aiEngineCloudBody": "질문을 Gemini로 보냄",
+  "deleteNote": "지우면 모든 기기에서 관심 목록·가중치·최근 검색이 사라져요.",
+  "emailConfirmed": "메일 확인됨"
 }

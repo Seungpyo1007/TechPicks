@@ -321,6 +321,8 @@ abstract final class K {
   static const String deletePassword = 'deletePassword';
   static const String delete = 'delete';
   static const String deleted = 'deleted';
+  static const String deleteNote = 'deleteNote';
+  static const String emailConfirmed = 'emailConfirmed';
   static const String promptTitle = 'promptTitle';
   static const String notNow = 'notNow';
   static const String coachDone = 'coachDone';
