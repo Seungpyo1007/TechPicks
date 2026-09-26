@@ -262,6 +262,7 @@
   "laptopTierHigh": "하이엔드",
   "laptopTierPerf": "퍼포먼스",
   "laptopTierMain": "메인스트림",
+  "laptopTierEmpty": "이 가격대에 노트북이 없습니다.",
   "laptopNoScore": "지수 없음",
   "specRam": "메모리",
   "specStorage": "저장장치",

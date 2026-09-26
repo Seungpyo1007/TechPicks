@@ -233,6 +233,7 @@ abstract final class K {
   static const String laptopTierHigh = 'laptopTierHigh';
   static const String laptopTierPerf = 'laptopTierPerf';
   static const String laptopTierMain = 'laptopTierMain';
+  static const String laptopTierEmpty = 'laptopTierEmpty';
   static const String laptopNoScore = 'laptopNoScore';
   static const String specRam = 'specRam';
   static const String specStorage = 'specStorage';
