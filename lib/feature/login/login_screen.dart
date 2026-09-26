@@ -498,8 +498,9 @@ class _GoogleButton extends StatelessWidget {
   }
 }
 
-/// Apple 버튼. 기다리는 동안은 로고 자리에 돌림 표시를 띄우고 흐려진다 —
-/// 공식 버튼에는 바쁜 모양이 없어서 같은 색·크기로 직접 그린다.
+/// Apple 버튼. 공식 위젯은 로고와 글자가 높이에 비례해 Google 버튼보다
+/// 커 보인다. 같은 색·모양으로 직접 그리고, 로고와 글자를 Google 과 맞춘다.
+/// 기다리는 동안은 로고 자리에 돌림 표시를 띄우고 흐려진다.
 class _AppleButton extends StatelessWidget {
   const _AppleButton({
     required this.dark,
@@ -513,66 +514,70 @@ class _AppleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = dark
-        ? SignInWithAppleButtonStyle.white
-        : SignInWithAppleButtonStyle.black;
-    final Widget face;
-    if (busy) {
-      final bg = dark ? Colors.white : Colors.black;
-      final fg = dark ? Colors.black : Colors.white;
-      face = Semantics(
-        button: true,
-        enabled: false,
-        label: K.continueApple.tr(),
-        excludeSemantics: true,
-        child: Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              SizedBox.square(
-                dimension: 18,
-                child: CupertinoActivityIndicator(color: fg),
-              ),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  K.continueApple.tr(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  // 공식 버튼과 같은 글자(높이의 43%).
-                  style: TextStyle(
-                    fontSize: 50 * .43,
-                    letterSpacing: -.41,
-                    color: fg,
+    final bg = dark ? Colors.white : Colors.black;
+    final fg = dark ? Colors.black : Colors.white;
+    final face = Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(25),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          // Google G 와 같은 18 자리. 사과는 폭이 좁아서 높이를 맞춘다.
+          SizedBox.square(
+            dimension: 18,
+            child: busy
+                ? CupertinoActivityIndicator(color: fg)
+                : Transform.translate(
+                    // 공식 버튼처럼 글자 줄에 맞춰 살짝 위로.
+                    offset: const Offset(0, -1),
+                    child: Center(
+                      child: SizedBox(
+                        width: 18 * 25 / 31,
+                        height: 18,
+                        child: CustomPaint(
+                          painter: AppleLogoPainter(color: fg),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
           ),
-        ),
-      );
-    } else {
-      face = SignInWithAppleButton(
-        text: K.continueApple.tr(),
-        height: 50,
-        style: style,
-        borderRadius: const BorderRadius.all(Radius.circular(25)),
-        onPressed: onTap ?? () {},
-      );
-    }
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              K.continueApple.tr(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w500,
+                color: fg,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
     // 다른 방법을 기다리는 동안은 눌리지 않는다.
     return SizedBox(
       height: 50,
       child: AnimatedOpacity(
         opacity: busy ? .6 : 1,
         duration: context.motion.selection.duration,
-        child: IgnorePointer(ignoring: onTap == null, child: face),
+        child: Semantics(
+          button: true,
+          enabled: onTap != null && !busy,
+          label: K.continueApple.tr(),
+          excludeSemantics: true,
+          onTap: busy ? null : onTap,
+          child: IgnorePointer(
+            ignoring: onTap == null || busy,
+            child: TpTappable(onTap: onTap, press: true, child: face),
+          ),
+        ),
       ),
     );
   }
