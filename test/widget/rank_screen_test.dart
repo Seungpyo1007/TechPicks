@@ -107,7 +107,7 @@ void main() {
     final brand = container.read(rankBrandsProvider).first;
     final all = container.read(rankVisibleProvider).length;
 
-    await tester.tap(_button(TpChrome.ios, K.brand.tr()));
+    await tester.tap(_button(TpChrome.ios, K.filter.tr()));
     await tester.pumpAndSettle();
     await tester.tap(find.text(brand).last);
     await tester.pumpAndSettle();
@@ -115,14 +115,43 @@ void main() {
     final filtered = container.read(rankVisibleProvider);
     expect(filtered.length, lessThan(all));
     expect(filtered.every((r) => r.device.brand?.name == brand), isTrue);
-    // 버튼 모양은 그대로고, 무엇이 걸렸는지는 상태 줄이 말한다.
-    expect(find.bySemanticsLabel(K.brand.tr()), findsWidgets);
+    // 버튼 모양은 그대로고, 무엇이 걸렸는지는 상태 줄과 버튼 이름이 말한다.
+    expect(find.bySemanticsLabel('${K.filter.tr()}, $brand'), findsWidgets);
     expect(find.textContaining(brand), findsWidgets);
 
     await tester.tap(find.text(K.clear.tr()));
     await tester.pumpAndSettle();
     expect(container.read(rankVisibleProvider), hasLength(all));
   });
+
+  for (final chrome in TpChrome.values) {
+    // 브랜드 17줄은 폰 화면보다 길다. 메뉴 안에서 굴려 끝까지 닿아야 한다.
+    testWidgets('$chrome — 긴 브랜드 메뉴도 끝까지 고른다', (tester) async {
+      final container = await pumpScreen(
+        tester,
+        const RankScreen(),
+        chrome: chrome,
+        size: const Size(402, 874),
+      );
+      final last = container.read(rankBrandsProvider).last;
+
+      await tester.tap(_button(chrome, K.filter.tr()));
+      await tester.pumpAndSettle();
+      final item = find.text(last).last;
+      await tester.scrollUntilVisible(
+        item,
+        60,
+        scrollable: find
+            .ancestor(of: item, matching: find.byType(Scrollable))
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(item);
+      await tester.pumpAndSettle();
+
+      expect(container.read(rankBrandProvider), last);
+    });
+  }
 
   testWidgets('세그먼트가 카테고리를 알려준다', (tester) async {
     RankCategory? picked;

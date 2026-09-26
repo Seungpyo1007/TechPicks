@@ -36,5 +36,6 @@ class RankTab extends StatelessWidget {
     onDeviceTap: onDeviceTap,
     onCategory: onCategory,
     onBuild: onBuild,
+    onAllProcessors: onAllProcessors,
   );
 }

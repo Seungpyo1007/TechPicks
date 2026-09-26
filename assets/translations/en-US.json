@@ -262,6 +262,7 @@
   "laptopTierHigh": "High-end",
   "laptopTierPerf": "Performance",
   "laptopTierMain": "Mainstream",
+  "laptopTierEmpty": "No laptops in this price range.",
   "laptopNoScore": "No index",
   "specRam": "Memory",
   "specStorage": "Storage",
