@@ -519,21 +519,25 @@ class _TableSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = context.tp;
-    return TpShimmer(
-      child: Column(
-        children: <Widget>[
-          for (var i = 0; i < 6; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Container(
-                height: 64,
-                decoration: BoxDecoration(
-                  color: t.track,
-                  borderRadius: BorderRadius.circular(t.rInner),
+    // 표 카드와 같은 16 여백. 없으면 화면 끝까지 붙는다.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: TpShimmer(
+        child: Column(
+          children: <Widget>[
+            for (var i = 0; i < 6; i++)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Container(
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: t.track,
+                    borderRadius: BorderRadius.circular(t.rInner),
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

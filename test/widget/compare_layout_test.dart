@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod/misc.dart' show Override;
+import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
+import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/domain/model/tp_index.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
@@ -9,6 +14,7 @@ import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/spec_labels.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
 import 'package:techpicks/shared/widgets/tp_page.dart';
+import 'package:techpicks/shared/widgets/tp_shimmer.dart';
 
 import '../support/harness.dart';
 
@@ -144,6 +150,22 @@ void main() {
     expect(released.bottom, lessThanOrEqualTo(button.top));
   });
 
+  testWidgets('스켈레톤도 표처럼 좌우 16 을 띄운다', (tester) async {
+    // 끝나지 않는 카탈로그. 읽는 중에 머문다.
+    final never = Completer<Catalog>();
+    await pumpScreenNoSettle(
+      tester,
+      const CompareScreen(),
+      size: const Size(402, 874),
+      overrides: <Override>[
+        catalogProvider.overrideWith((ref) => never.future),
+      ],
+    );
+
+    final skeleton = tester.getRect(find.byType(TpShimmer));
+    expect(skeleton.left, 16);
+    expect(skeleton.right, 402 - 16);
+  });
 
   test('점수 막대는 승자를 못 가리는 줄에만 있다', () {
     // 표시할 승자가 있는 줄에까지 막대를 깔면 같은 것을 두 번 말한다.
