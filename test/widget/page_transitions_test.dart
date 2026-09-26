@@ -1,7 +1,7 @@
-import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
+import 'package:techpicks/app/theme/tp_page_transition.dart';
 import 'package:animations/animations.dart'
     show SharedAxisPageTransitionsBuilder;
 
@@ -22,7 +22,7 @@ void main() {
     for (final platform in TargetPlatform.values) {
       expect(
         builderFor(TpChrome.ios, platform),
-        isA<CupertinoPageTransitionsBuilder>(),
+        isA<TpIosPageTransitionsBuilder>(),
         reason: '$platform',
       );
       expect(
@@ -101,5 +101,111 @@ void main() {
     )) {
       expect(f.opacity.value, 1);
     }
+  });
+
+  group('iOS 26 뒤로 밀기', () {
+    Future<void> pushed(WidgetTester tester, Widget next) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.of(TpChrome.ios),
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => Scaffold(body: Center(child: next)),
+                ),
+              ),
+              child: const Text('밀기'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('밀기'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('화면 가운데서 절반 넘게 밀면 뒤로 간다', (tester) async {
+      await pushed(tester, const Text('다음'));
+
+      // 시험 화면은 800 폭.
+      await tester.dragFrom(const Offset(200, 400), const Offset(500, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('다음'), findsNothing);
+      expect(find.text('밀기'), findsOneWidget);
+    });
+
+    testWidgets('짧아도 빠르게 튕기면 뒤로 간다', (tester) async {
+      await pushed(tester, const Text('다음'));
+
+      await tester.flingFrom(const Offset(200, 400), const Offset(200, 0), 2000);
+      await tester.pumpAndSettle();
+
+      expect(find.text('다음'), findsNothing);
+    });
+
+    testWidgets('왼쪽으로 밀면 그대로다', (tester) async {
+      await pushed(tester, const Text('다음'));
+
+      await tester.dragFrom(const Offset(300, 400), const Offset(-200, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('다음'), findsOneWidget);
+    });
+
+    testWidgets('조금 밀다 놓으면 돌아온다', (tester) async {
+      await pushed(tester, const Text('다음'));
+
+      final g = await tester.startGesture(const Offset(200, 400));
+      await g.moveBy(const Offset(30, 0));
+      await g.moveBy(const Offset(30, 0));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      await g.up();
+      await tester.pumpAndSettle();
+
+      expect(find.text('다음'), findsOneWidget);
+    });
+
+    testWidgets('안쪽 가로 스크롤이 먼저다', (tester) async {
+      final controller = ScrollController();
+      addTearDown(controller.dispose);
+      await pushed(
+        tester,
+        SizedBox(
+          height: 80,
+          child: ListView(
+            controller: controller,
+            scrollDirection: Axis.horizontal,
+            children: <Widget>[
+              for (var i = 0; i < 20; i++)
+                SizedBox(width: 120, child: Text('칩 $i')),
+            ],
+          ),
+        ),
+      );
+      controller.jumpTo(600);
+      await tester.pump();
+
+      await tester.dragFrom(const Offset(200, 300), const Offset(200, 0));
+      await tester.pumpAndSettle();
+
+      // 페이지는 그대로, 목록만 되감겼다.
+      expect(find.byType(ListView), findsOneWidget);
+      expect(controller.offset, lessThan(600));
+    });
+
+    testWidgets('움직이는 동안만 모서리가 둥글다', (tester) async {
+      await pushed(tester, const Text('다음'));
+      expect(find.byType(ClipRRect), findsNothing);
+
+      final g = await tester.startGesture(const Offset(200, 400));
+      await g.moveBy(const Offset(40, 0));
+      await g.moveBy(const Offset(40, 0));
+      await tester.pump();
+      expect(find.byType(ClipRRect), findsWidgets);
+      await g.up();
+      await tester.pumpAndSettle();
+    });
   });
 }

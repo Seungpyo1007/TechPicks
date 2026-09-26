@@ -322,7 +322,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
   }
 
   Route<T> _route<T>(WidgetBuilder builder) => context.tp.isGlass
-      ? CupertinoPageRoute<T>(builder: builder)
+      ? MaterialPageRoute<T>(builder: builder)
       : MaterialPageRoute<T>(builder: builder);
 
   Future<void> _openPriorities() => Navigator.of(context).push(
@@ -356,7 +356,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     BuiltInAiAvailability? status,
   ) => Navigator.of(context).push(
     context.tp.isGlass
-        ? CupertinoPageRoute<void>(
+        ? MaterialPageRoute<void>(
             builder: (_) => _AiEnginePage(status: status),
           )
         : MaterialPageRoute<void>(
@@ -703,7 +703,7 @@ class _AboutPageState extends ConsumerState<_AboutPage> {
 
   Future<void> _openSources() => Navigator.of(context).push(
     context.tp.isGlass
-        ? CupertinoPageRoute<void>(
+        ? MaterialPageRoute<void>(
             builder: (context) =>
                 SourcesScreen(onBack: () => Navigator.of(context).pop()),
           )

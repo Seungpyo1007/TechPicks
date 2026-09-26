@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart' show CupertinoPage, CupertinoSheetRoute;
+import 'package:flutter/cupertino.dart' show CupertinoSheetRoute;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -127,7 +127,7 @@ GoRouter buildRouter(Ref ref) {
               context.canPop() ? context.pop() : context.go(TpRoute.home);
           final child = LoginScreen(onClose: back, onSignedIn: back);
           return context.tp.isGlass
-              ? CupertinoPage<void>(key: state.pageKey, child: child)
+              ? MaterialPage<void>(key: state.pageKey, child: child)
               : MaterialPage<void>(key: state.pageKey, child: child);
         },
         routes: <RouteBase>[
@@ -295,7 +295,7 @@ GoRouter buildRouter(Ref ref) {
           GoRoute(
             path: '3d',
             pageBuilder: (context, state) => context.tp.isGlass
-                ? CupertinoPage<void>(
+                ? MaterialPage<void>(
                     key: state.pageKey,
                     fullscreenDialog: true,
                     child: _Viewer(slug: state.pathParameters['slug']!),

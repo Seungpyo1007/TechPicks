@@ -207,7 +207,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Future<Uint8List?> _openCrop(BuildContext context, Uint8List bytes) =>
       Navigator.of(context).push<Uint8List>(
         context.tp.isGlass
-            ? CupertinoPageRoute<Uint8List>(
+            ? MaterialPageRoute<Uint8List>(
                 fullscreenDialog: true,
                 builder: (_) => PhotoCropScreen(bytes: bytes),
               )

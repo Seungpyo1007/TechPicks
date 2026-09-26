@@ -216,7 +216,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   /// 프로필 편집 화면. v1 은 사진과 다섯 칸을 갖고 있었다.
   Future<void> _openProfile() => Navigator.of(context).push(
     context.tp.isGlass
-        ? CupertinoPageRoute<void>(
+        ? MaterialPageRoute<void>(
             builder: (context) =>
                 ProfileEditScreen(onBack: () => Navigator.of(context).pop()),
           )

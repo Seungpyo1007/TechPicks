@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
   });
 
   Route<void> _route(Widget child) => context.tp.isGlass
-      ? CupertinoPageRoute<void>(builder: (_) => child)
+      ? MaterialPageRoute<void>(builder: (_) => child)
       : MaterialPageRoute<void>(builder: (_) => child);
 
   Future<void> _signedIn() async {
