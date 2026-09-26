@@ -71,6 +71,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               const SizedBox(height: 24),
               if (!widget.emailVerified)
                 TpGroup(
+                  m3: true,
                   children: <Widget>[
                     TpArrive(
                       index: 0,
@@ -92,7 +93,9 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     ),
                   ],
                 ),
+              if (!glass && !widget.emailVerified) const TpM3Divider(),
               TpGroup(
+                m3: true,
                 footer: _notice,
                 children: <Widget>[
                   TpArrive(
@@ -140,8 +143,10 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     onTap: delete,
                   ),
                 ),
-              ] else
+              ] else ...<Widget>[
+                const TpM3Divider(),
                 TpGroup(
+                  m3: true,
                   children: <Widget>[
                     TpRow(
                       title: K.logout.tr(),
@@ -157,6 +162,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     ),
                   ],
                 ),
+              ],
             ],
           ),
         ),
