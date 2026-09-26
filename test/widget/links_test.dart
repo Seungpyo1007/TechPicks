@@ -131,9 +131,15 @@ void main() {
     });
   });
 
-  group('You 푸터', () {
+  group('You 정보', () {
+    Future<void> openAbout(WidgetTester tester) async {
+      await tester.tap(find.text(K.about.tr()));
+      await tester.pumpAndSettle();
+    }
+
     testWidgets('버전 줄을 누르면 Apache-2.0 이 열린다', (tester) async {
       final stub = await _pump(tester, const YouScreen());
+      await openAbout(tester);
 
       await tester.tap(find.text(YouScreen.versionLine));
       await tester.pumpAndSettle();
@@ -143,6 +149,7 @@ void main() {
 
     testWidgets('명세의 푸터 문구는 그대로다', (tester) async {
       await _pump(tester, const YouScreen());
+      await openAbout(tester);
 
       expect(find.text('TechPicks version 2.0.0 · Apache-2.0'), findsOneWidget);
     });
@@ -151,6 +158,7 @@ void main() {
       // 표기가 어디에도 없으면 CC-BY-SA 를 안 지킨 것이다. You 에서 닿을
       // 수 있어야 한다.
       await _pump(tester, const YouScreen());
+      await openAbout(tester);
 
       expect(find.text(K.sources.tr()), findsOneWidget);
     });

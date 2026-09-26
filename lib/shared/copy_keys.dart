@@ -405,6 +405,7 @@ abstract final class K {
   static const String a11yCompareCell = 'a11yCompareCell';
   static const String a11yWinner = 'a11yWinner';
   static const String a11yPhotoUploading = 'a11yPhotoUploading';
+  static const String about = 'about';
 
   static String tab(TpTab tab) => switch (tab) {
     TpTab.today => tabToday,

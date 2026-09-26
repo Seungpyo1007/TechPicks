@@ -361,5 +361,6 @@
   "photoUploading": "올리는 중…",
   "photoUpdated": "사진을 바꿨어요",
   "photoRemoved": "사진을 지웠어요",
-  "a11yPhotoUploading": "올리는 중, {}퍼센트"
+  "a11yPhotoUploading": "올리는 중, {}퍼센트",
+  "about": "정보"
 }
