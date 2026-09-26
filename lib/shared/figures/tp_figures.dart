@@ -287,6 +287,147 @@ abstract final class TpFigures {
     }
   }
 
+  /// 온보딩 4·로그인: 폰에서 담은 카드가 노트북으로 건너가고 체크가 뜬다.
+  static void sync(Canvas canvas, Size size, double t, TpSys sys) {
+    final h = size.height;
+    final rise = span(t, 0, .28);
+    final dy = (1 - rise) * 16;
+    final line = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = sys.label3.withValues(alpha: rise);
+    final face = Paint()..color = sys.cell.withValues(alpha: rise);
+
+    // 폰.
+    final phone = Rect.fromLTWH(
+      size.width * .1,
+      h * .08 + dy,
+      h * .46,
+      h * .84,
+    );
+    final phoneR = RRect.fromRectAndRadius(phone, Radius.circular(h * .09));
+    canvas.drawRRect(phoneR, face);
+    canvas.drawRRect(phoneR, line);
+
+    // 노트북: 화면 + 받침.
+    final screenW = size.width * .44;
+    final screen = Rect.fromLTWH(
+      size.width * .9 - screenW,
+      h * .16 + dy * .6,
+      screenW,
+      h * .56,
+    );
+    final screenR = RRect.fromRectAndRadius(screen, Radius.circular(h * .05));
+    canvas.drawRRect(screenR, face);
+    canvas.drawRRect(screenR, line);
+    final base = Path()
+      ..moveTo(screen.left - h * .06, screen.bottom + h * .1)
+      ..lineTo(screen.right + h * .06, screen.bottom + h * .1)
+      ..lineTo(screen.right, screen.bottom + h * .02)
+      ..lineTo(screen.left, screen.bottom + h * .02)
+      ..close();
+    canvas.drawPath(base, face);
+    canvas.drawPath(base, line);
+
+    // 폰 안의 목록 세 줄. 첫 줄이 카드가 되어 떠난다.
+    for (var i = 0; i < 3; i++) {
+      final y = phone.top + phone.height * (.28 + i * .2);
+      _line(
+        canvas,
+        Offset(phone.left + phone.width * .18, y),
+        phone.width * (i == 0 ? .64 : .5) * rise,
+        i == 0 ? TpSys.accent.withValues(alpha: rise) : sys.fill,
+      );
+    }
+
+    // 건너가는 길. 점선이 먼저 그어진다.
+    final from = Offset(phone.right + 6, phone.top + phone.height * .28);
+    final to = Offset(
+      screen.left + screen.width * .5,
+      screen.top + screen.height * .38,
+    );
+    final top = Offset((from.dx + to.dx) / 2, h * .02);
+    Offset arc(double k) {
+      final a = Offset.lerp(from, top, k)!;
+      final b = Offset.lerp(top, to, k)!;
+      return Offset.lerp(a, b, k)!;
+    }
+
+    final trail = span(t, .26, .5);
+    if (trail > 0) {
+      final dash = Paint()
+        ..strokeWidth = 1.4
+        ..color = TpSys.accent.withValues(alpha: .35);
+      const steps = 22;
+      for (var i = 0; i < steps * trail; i += 2) {
+        canvas.drawLine(
+          arc(i / steps),
+          arc(math.min(i + 1, steps) / steps),
+          dash,
+        );
+      }
+    }
+
+    // 카드: 뜨고, 호를 따라 건너고, 노트북 화면 안에 내려앉는다.
+    final fly = span(t, .34, .74, Curves.easeInOutCubic);
+    final land = span(t, .72, .82);
+    if (fly > 0) {
+      final at = arc(fly);
+      final w = phone.width * .7 * (1 + .25 * math.sin(fly * math.pi));
+      final card = Rect.fromCenter(center: at, width: w, height: h * .13);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          card.shift(const Offset(0, 4)),
+          Radius.circular(h * .04),
+        ),
+        Paint()..color = const Color(0x22000000),
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(card, Radius.circular(h * .04)),
+        Paint()..color = TpSys.accent,
+      );
+      _line(
+        canvas,
+        Offset(card.left + card.width * .14, card.center.dy),
+        card.width * .5,
+        const Color(0xCCFFFFFF),
+      );
+    }
+
+    // 내려앉은 뒤 노트북 목록이 채워진다.
+    if (land > 0) {
+      for (var i = 0; i < 2; i++) {
+        final y = screen.top + screen.height * (.62 + i * .2);
+        _line(
+          canvas,
+          Offset(screen.left + screen.width * .14, y),
+          screen.width * (.6 - i * .15) * span(t, .76 + .05 * i, .9 + .05 * i),
+          sys.fill,
+        );
+      }
+    }
+
+    final check = pop(t, .84, 1);
+    if (check > 0) {
+      final c = Offset(screen.right - 4, screen.top + 4);
+      canvas.drawCircle(c, h * .085 * check, Paint()..color = TpSys.accent);
+      final k = h * .085 * check;
+      final p = Path()
+        ..moveTo(c.dx - k * .42, c.dy)
+        ..lineTo(c.dx - k * .1, c.dy + k * .32)
+        ..lineTo(c.dx + k * .45, c.dy - k * .32);
+      canvas.drawPath(
+        p,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.2
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round
+          ..color = const Color(0xFFFFFFFF),
+      );
+    }
+  }
+
   static void _line(Canvas canvas, Offset start, double width, Color color) {
     if (width <= 0) return;
     canvas.drawRRect(

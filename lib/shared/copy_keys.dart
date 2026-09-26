@@ -255,11 +255,13 @@ abstract final class K {
   // 온보딩
   static const String skip = 'skip';
   static const String next = 'next';
-  static const String start = 'start';
+  static const String startSignIn = 'startSignIn';
+  static const String startGuest = 'startGuest';
   static const List<({String title, String body})> onboarding = [
     (title: 'onb1', body: 'onb1b'),
     (title: 'onb2', body: 'onb2b'),
     (title: 'onb3', body: 'onb3b'),
+    (title: 'onb4', body: 'onb4b'),
   ];
 
   // 로그인

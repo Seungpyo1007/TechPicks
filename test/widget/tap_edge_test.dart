@@ -51,13 +51,13 @@ void main() {
   testWidgets('온보딩 다음', (tester) async {
     await pumpScreen(tester, const OnboardingScreen());
 
-    // 세 장이라 모서리 두 번이면 마지막 장이다.
-    for (final point in _corners(_pill(tester, K.next.tr())).take(2)) {
+    // 네 장이라 모서리 세 번이면 마지막 장이다.
+    for (final point in _corners(_pill(tester, K.next.tr())).take(3)) {
       await tester.tapAt(point);
       await tester.pumpAndSettle();
     }
 
-    expect(find.text(K.start.tr()), findsOneWidget);
+    expect(find.text(K.startSignIn.tr()), findsOneWidget);
   });
 
   testWidgets('홈 결론 카드 버튼', (tester) async {

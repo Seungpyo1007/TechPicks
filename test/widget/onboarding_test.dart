@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 
 ProviderContainer? _container;
 
@@ -45,7 +47,14 @@ void main() {
       );
     });
 
-    testWidgets('Next 로 넘기면 마지막에 Get started', (tester) async {
+    Future<void> toLast(WidgetTester tester) async {
+      for (var i = 0; i < 3; i++) {
+        await tester.tap(find.text('Next'));
+        await tester.pumpAndSettle();
+      }
+    }
+
+    testWidgets('Next 로 넘기면 마지막 장에 로그인 두 갈래', (tester) async {
       await _pump(tester, const OnboardingScreen(), auth: FakeAuthService());
 
       expect(find.text('Next'), findsOneWidget);
@@ -56,7 +65,37 @@ void main() {
       await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
       expect(find.text('Ask.\nThen decide.'), findsOneWidget);
-      expect(find.text('Get started'), findsOneWidget);
+
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+      expect(find.text('One list.\nEvery device.'), findsOneWidget);
+      expect(find.text(K.startSignIn.tr()), findsOneWidget);
+      expect(find.text(K.startGuest.tr()), findsOneWidget);
+    });
+
+    testWidgets('마지막 장에는 건너뛰기가 없다', (tester) async {
+      await _pump(tester, const OnboardingScreen(), auth: FakeAuthService());
+      await toLast(tester);
+
+      expect(find.text('Skip').hitTestable(), findsNothing);
+    });
+
+    testWidgets('로그인하고 시작은 완료 표시를 남기고 로그인으로', (tester) async {
+      var signIn = 0;
+      var done = 0;
+      await _pump(
+        tester,
+        OnboardingScreen(onSignIn: () => signIn++, onDone: () => done++),
+        auth: FakeAuthService(),
+      );
+      await toLast(tester);
+
+      await tester.tap(find.text(K.startSignIn.tr()));
+      await tester.pumpAndSettle();
+
+      expect(signIn, 1);
+      expect(done, 0);
+      expect(_container!.read(onboardingDoneProvider), isTrue);
     });
 
     testWidgets('Skip 은 경고 없이 바로 끝난다', (tester) async {
@@ -76,16 +115,19 @@ void main() {
       expect(_container!.read(onboardingDoneProvider), isTrue);
     });
 
-    testWidgets('Get started 가 완료 플래그를 남긴다', (tester) async {
-      await _pump(tester, const OnboardingScreen(), auth: FakeAuthService());
+    testWidgets('로그인 없이 시작도 완료 표시를 남긴다', (tester) async {
+      var done = 0;
+      await _pump(
+        tester,
+        OnboardingScreen(onDone: () => done++),
+        auth: FakeAuthService(),
+      );
+      await toLast(tester);
 
-      await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Next'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Get started'));
+      await tester.tap(find.text(K.startGuest.tr()));
       await tester.pumpAndSettle();
 
+      expect(done, 1);
       expect(_container!.read(onboardingDoneProvider), isTrue);
     });
   });
