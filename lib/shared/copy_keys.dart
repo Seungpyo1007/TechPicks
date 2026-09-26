@@ -145,6 +145,9 @@ abstract final class K {
   static const String aiEngineCloud = 'aiEngineCloud';
   static const String aiEngineUnavailable = 'aiEngineUnavailable';
   static const String aiEngineDisabled = 'aiEngineDisabled';
+  static const String aiEngineAutoBody = 'aiEngineAutoBody';
+  static const String aiEngineOnDeviceBody = 'aiEngineOnDeviceBody';
+  static const String aiEngineCloudBody = 'aiEngineCloudBody';
   static const String themeSystem = 'themeSystem';
   static const String themeLight = 'themeLight';
   static const String themeDark = 'themeDark';
@@ -159,6 +162,18 @@ abstract final class K {
   static const String genderLabel = 'genderLabel';
   static const String changePhoto = 'changePhoto';
   static const String photoFailed = 'photoFailed';
+  // 프로필 사진 바꾸기. choosePhotoGallery 는 Android 시트의 문구.
+  static const String takePhoto = 'takePhoto';
+  static const String choosePhoto = 'choosePhoto';
+  static const String choosePhotoGallery = 'choosePhotoGallery';
+  static const String removePhoto = 'removePhoto';
+  static const String removePhotoAsk = 'removePhotoAsk';
+  static const String moveAndScale = 'moveAndScale';
+  static const String moveAndScaleHint = 'moveAndScaleHint';
+  static const String cropChoose = 'cropChoose';
+  static const String photoUploading = 'photoUploading';
+  static const String photoUpdated = 'photoUpdated';
+  static const String photoRemoved = 'photoRemoved';
   static const String profileSaved = 'profileSaved';
   static const String profileFailed = 'profileFailed';
   static const String save = 'save';
@@ -169,6 +184,10 @@ abstract final class K {
   static const String yourDevice = 'yourDevice';
   static const String yourDeviceUnknown = 'yourDeviceUnknown';
   static const String yourDeviceUnavailable = 'yourDeviceUnavailable';
+  // iOS 머리 카드의 통계 띠와 "내 선택" 두 칸.
+  static const String thisPhone = 'thisPhone';
+  static const String yourPicks = 'yourPicks';
+  static const String settings = 'settings';
 
   static const String seeAll = 'seeAll';
   static const String askPlaceholder = 'askPlaceholder';
@@ -323,6 +342,8 @@ abstract final class K {
   static const String deletePassword = 'deletePassword';
   static const String delete = 'delete';
   static const String deleted = 'deleted';
+  static const String deleteNote = 'deleteNote';
+  static const String emailConfirmed = 'emailConfirmed';
   static const String promptTitle = 'promptTitle';
   static const String notNow = 'notNow';
   static const String coachDone = 'coachDone';
@@ -383,6 +404,7 @@ abstract final class K {
   static const String a11yIndex = 'a11yIndex';
   static const String a11yCompareCell = 'a11yCompareCell';
   static const String a11yWinner = 'a11yWinner';
+  static const String a11yPhotoUploading = 'a11yPhotoUploading';
 
   static String tab(TpTab tab) => switch (tab) {
     TpTab.today => tabToday,
