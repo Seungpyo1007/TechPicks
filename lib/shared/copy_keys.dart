@@ -298,6 +298,7 @@ abstract final class K {
   static const String resetBody = 'resetBody';
   static const String resetSend = 'resetSend';
   static const String resetSent = 'resetSent';
+  static const String resetBackToSignIn = 'resetBackToSignIn';
   static const String pwHint = 'pwHint';
   static const String signedIn = 'signedIn';
   static const String guestTitle = 'guestTitle';
