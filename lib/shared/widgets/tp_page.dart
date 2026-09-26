@@ -406,6 +406,19 @@ class _StampState extends State<_Stamp> {
 
   Timer? _coachTimer;
 
+  @override
+  void didUpdateWidget(_Stamp old) {
+    super.didUpdateWidget(old);
+    // 안내가 늦게 생겼다(화면이 다 불러온 뒤). 이 탭이 켜져 있으면 그때 예약.
+    final tab = widget.tab;
+    if (tab != null &&
+        old.coach.isEmpty &&
+        widget.coach.isNotEmpty &&
+        _active == tab) {
+      _coachLater(tab);
+    }
+  }
+
   /// 도착 연출(줄·툴바 버튼)이 끝난 뒤에 띄운다. 움직이는 버튼을 가리키면
   /// 구멍이 엉뚱한 자리에 뚫린다.
   static const Duration coachDelay = Duration(milliseconds: 900);
