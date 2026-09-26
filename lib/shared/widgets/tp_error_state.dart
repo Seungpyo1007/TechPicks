@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme/tp_typography.dart';
@@ -61,12 +62,18 @@ class TpErrorState extends StatelessWidget {
 /// 다시 시도는 카탈로그 프로바이더를 버린다 — 애셋을 다시 읽고, 받아둔 파일과
 /// 원격 버전도 다시 본다.
 class TpCatalogError extends ConsumerWidget {
-  const TpCatalogError({super.key});
+  const TpCatalogError({super.key, this.also});
+
+  /// 카탈로그 말고 따로 읽는 파일(노트북·부품)도 같이 버린다.
+  final ProviderOrFamily? also;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => TpErrorState(
     title: K.catalogFailedTitle.tr(),
     body: K.catalogFailedBody.tr(),
-    onRetry: () => ref.invalidate(catalogProvider),
+    onRetry: () {
+      ref.invalidate(catalogProvider);
+      if (also case final p?) ref.invalidate(p);
+    },
   );
 }

@@ -1,13 +1,18 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/build_estimate.dart';
+import 'package:techpicks/data/repository/parts_repository.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
+import 'package:techpicks/domain/model/tp_money.dart';
 import 'package:techpicks/feature/build/build_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/widgets/tp_chip.dart';
+import 'package:techpicks/shared/widgets/tp_shimmer.dart';
 
 import '../support/harness.dart';
 
@@ -82,7 +87,78 @@ void main() {
     container.read(buildQueryProvider.notifier).budget(BuildEstimate.minBudget);
     await tester.pumpAndSettle();
 
-    expect(find.text(K.buildEmpty.tr()), findsOneWidget);
+    // 얼마부터 되는지도 같이 말한다.
+    final parts = readParts();
+    final cheapest = BuildEstimate.cheapestUsd(parts.cpus, parts.gpus)!;
+    expect(cheapest, greaterThan(BuildEstimate.minBudget));
+    expect(
+      find.text(
+        '${K.buildEmpty.tr()} '
+        '${K.buildEmptyFrom.tr(args: <String>[DeviceSpecs.formatPrice(cheapest)])}',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('부품을 읽는 동안 "맞는 조합 없음"을 띄우지 않는다', (tester) async {
+    final never = Completer<DesktopParts>();
+    await pumpScreenNoSettle(
+      tester,
+      const BuildScreen(),
+      size: const Size(402, 3200),
+      overrides: [partsProvider.overrideWith((ref) => never.future)],
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.textContaining(K.buildEmpty.tr()), findsNothing);
+    expect(find.byType(TpShimmer), findsOneWidget);
+  });
+
+  testWidgets('다시 시도가 부품 파일도 다시 읽는다', (tester) async {
+    var calls = 0;
+    await pumpScreen(
+      tester,
+      const BuildScreen(),
+      size: const Size(402, 3200),
+      overrides: [
+        partsProvider.overrideWith((ref) async {
+          if (calls++ == 0) throw StateError('flaky');
+          return readParts();
+        }),
+      ],
+    );
+    expect(find.text(K.catalogFailedTitle.tr()), findsOneWidget);
+
+    await tester.tap(find.text(K.retry.tr()));
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.catalogFailedTitle.tr()), findsNothing);
+    expect(find.byType(TpChip), findsWidgets);
+    expect(calls, 2);
+  });
+
+  testWidgets('가격이 통화 설정을 따른다', (tester) async {
+    final money = TpMoney.krw(FxRate.fallback);
+    final container = await pumpScreen(
+      tester,
+      const BuildScreen(),
+      size: const Size(402, 3200),
+      overrides: [moneyProvider.overrideWithValue(money)],
+    );
+
+    final budget = container.read(buildQueryProvider).budgetUsd;
+    expect(find.text(money.format(budget)), findsWidgets);
+    expect(find.widgetWithText(TpChip, money.format(600)), findsOneWidget);
+    expect(find.textContaining(r'$'), findsNothing);
+  });
+
+  testWidgets('iOS 프리셋 칩이 흰 셀 위에서도 모양이 보인다', (tester) async {
+    await pumpScreen(tester, const BuildScreen(), size: const Size(402, 3200));
+
+    final chip = tester.widget<TpChip>(
+      find.widgetWithText(TpChip, DeviceSpecs.formatPrice(600)),
+    );
+    expect(chip.color, isNotNull);
   });
 
   testWidgets('예산이 허용 범위를 벗어나면 접는다', (tester) async {

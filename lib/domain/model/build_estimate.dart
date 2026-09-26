@@ -295,6 +295,25 @@ abstract final class BuildEstimate {
     return picked;
   }
 
+  /// 가격이 있는 CPU 와 GPU 중 가장 싼 둘의 합. 어느 쪽이든 없으면 null.
+  ///
+  /// 예산이 이보다 낮으면 어떤 조합도 안 나온다 — "맞는 조합 없음"이 이
+  /// 값을 알려준다.
+  static int? cheapestUsd(List<Cpu> cpus, List<Gpu> gpus) {
+    int? low(Iterable<int?> prices) {
+      int? min;
+      for (final p in prices) {
+        if (p == null || p <= 0) continue;
+        if (min == null || p < min) min = p;
+      }
+      return min;
+    }
+
+    final cpu = low(cpus.map((c) => c.msrpUsd));
+    final gpu = low(gpus.map((g) => g.msrpUsd));
+    return cpu == null || gpu == null ? null : cpu + gpu;
+  }
+
   /// 조합을 고른 이유에 쓰는 대표 수치.
   ///
   /// 사무·개발은 CPU 멀티코어가, 나머지는 GPU 가 결정적이다. 화면이 이
