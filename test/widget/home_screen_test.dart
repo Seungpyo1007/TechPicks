@@ -159,6 +159,32 @@ void _shortlistRemoval() {
     expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
   });
 
+  testWidgets('Android 는 오른쪽으로 밀면 비교로 간다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
+    });
+    String? compared;
+
+    final container = await pumpScreen(
+      tester,
+      HomeScreen(onCompareDevice: (s) => compared = s),
+      chrome: TpChrome.android,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.drag(
+      find.text('iPhone 16 Pro Max').first,
+      const Offset(500, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(compared, 'iphone-16-pro-max');
+    // 비교는 줄을 안 뺀다.
+    expect(container.read(shortlistProvider), hasLength(2));
+    expect(find.text('iPhone 16 Pro Max'), findsWidgets);
+  });
+
   testWidgets('스와이프도 그대로 지운다', (tester) async {
     await initLocalization();
     SharedPreferences.setMockInitialValues(<String, Object>{
