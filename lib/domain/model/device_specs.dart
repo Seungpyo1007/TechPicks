@@ -31,9 +31,11 @@ enum SpecKind {
 /// ([DeviceComparison._winner] 를 볼 것). 대신 그 줄에 대응하는 0–100 점수를
 /// 막대로 깐다 — 승자를 선언하지 않으면서 크기는 보여준다.
 ///
-/// 축 **이름은 화면에 안 찍는다.** `axCam`·`axBatt` 가 행 라벨
-/// (`detailSpecCamera`·`detailSpecBattery`)과 영어에서도 한국어에서도 같은
-/// 문자열이라, 찍는 순간 같은 글자가 화면에 둘이 된다.
+/// 막대는 화면·프로세서·카메라 줄에만 있다. 배터리는 승자를 가리니 없다.
+///
+/// 축 **이름은 화면에 안 찍는다.** `axCam` 은 `detailSpecCamera` 와,
+/// 한국어 `axDisplay` 는 `detailSpecScreen` 과 같은 문자열이라 찍는 순간
+/// 같은 글자가 화면에 둘이 된다.
 extension SpecScoreAxis on SpecKind {
   TpAxisKind? get scoreAxis => switch (this) {
     SpecKind.screen => TpAxisKind.display,
