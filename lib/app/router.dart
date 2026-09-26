@@ -117,8 +117,9 @@ GoRouter buildRouter(Ref ref) {
         builder: (context, state) =>
             OnboardingScreen(onDone: () => context.go(TpRoute.login)),
       ),
-      // 로그인. 전체 화면 모달, 아래에서 올라오고 X 로 닫는다. 어디서 열든
-      // 닫으면 그 자리로 돌아간다(온보딩에서 왔으면 오늘로).
+      // 로그인. 다른 화면처럼 옆에서 밀려 들어오고 뒤로 버튼으로 나간다(아래에서
+      // 올라오는 모달이던 때는 버튼 줄이 다른 화면과 어긋나 보였다). 온보딩에서
+      // 왔으면 뒤로가 오늘로.
       GoRoute(
         path: TpRoute.login,
         pageBuilder: (context, state) {
@@ -126,16 +127,8 @@ GoRouter buildRouter(Ref ref) {
               context.canPop() ? context.pop() : context.go(TpRoute.home);
           final child = LoginScreen(onClose: back, onSignedIn: back);
           return context.tp.isGlass
-              ? CupertinoPage<void>(
-                  key: state.pageKey,
-                  fullscreenDialog: true,
-                  child: child,
-                )
-              : MaterialPage<void>(
-                  key: state.pageKey,
-                  fullscreenDialog: true,
-                  child: child,
-                );
+              ? CupertinoPage<void>(key: state.pageKey, child: child)
+              : MaterialPage<void>(key: state.pageKey, child: child);
         },
         routes: <RouteBase>[
           // 예전 주소.

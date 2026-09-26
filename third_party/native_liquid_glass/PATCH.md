@@ -93,3 +93,12 @@ ios/.../LiquidGlassMenu/LiquidGlassMenuView.swift
 위 패치가 upstream 에 들어간 판이 나오면 이 디렉터리와 `dependency_overrides` 를
 지우고 pub 판으로 돌아간다. 확인은 탭을 눌러보는 것으로 충분하다 — 홈을 눌렀을 때
 홈이 켜지면 된 것이다.
+
+`LiquidGlassMenu` 에 **글자 뒤 아이콘**(`imageTrailing`)을 더했다. 내 정보의 언어·다크 모드·
+통화 줄이 설정 앱처럼 "값 ⌃⌄" 유리 풀다운이 된다.
+
+```
+lib/src/liquid_glass_menu.dart            + imageTrailing (생성 인자에 실음)
+ios/.../LiquidGlassMenu/LiquidGlassMenuView.swift
+  glass 설정에서 imageTrailing 이면 imagePlacement = .trailing, 11pt 화살표
+```
