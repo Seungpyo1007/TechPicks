@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/domain/model/processor.dart';
+import 'package:techpicks/domain/model/ranking.dart';
 import 'package:techpicks/feature/cpu/processor_screen.dart';
 import 'package:techpicks/feature/rank/rank_category.dart';
 import 'package:techpicks/feature/rank/browse_screen.dart';
@@ -156,5 +157,100 @@ void main() {
     final top = container.read(processorsInProvider(ProcessorSegment.mobile));
     expect(find.text(top.first.processor.name), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('전체 보기가 지금 구간의 전체 목록으로 간다', (tester) async {
+    ProcessorSegment? opened;
+    final container = await pumpScreen(
+      tester,
+      RankTab(
+        category: RankCategory.processors,
+        onAllProcessors: (s) => opened = s,
+      ),
+      size: const Size(700, 3000),
+    );
+    container
+        .read(processorSegmentProvider.notifier)
+        .set(ProcessorSegment.laptop);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(K.seeAll.tr()));
+    expect(opened, ProcessorSegment.laptop);
+  });
+
+  testWidgets('필터 버튼 이름이 무엇이 걸렸는지 말한다', (tester) async {
+    final handle = tester.ensureSemantics();
+    final container = await pumpScreen(
+      tester,
+      const ProcessorScreen(),
+      size: const Size(700, 3000),
+    );
+    expect(semanticsLabels(tester), contains(K.filter.tr()));
+
+    container
+        .read(processorSegmentProvider.notifier)
+        .set(ProcessorSegment.laptop);
+    await tester.pumpAndSettle();
+    expect(
+      semanticsLabels(tester),
+      contains('${K.filter.tr()}, ${ProcessorSegment.laptop.key.tr()}'),
+    );
+    handle.dispose();
+  });
+
+  testWidgets('가격대에 노트북이 없으면 그 가격대 탓이라고 말한다', (tester) async {
+    final container = await pumpScreen(
+      tester,
+      const RankTab(category: RankCategory.laptops),
+      size: const Size(700, 3000),
+    );
+    // 번들 아홉 대는 모두 $1,500 이상이라 메인스트림이 빈다.
+    container.read(laptopTierProvider.notifier).set(K.laptopTierMain);
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.laptopTierEmpty.tr()), findsOneWidget);
+    expect(find.text(K.noDevices.tr()), findsNothing);
+  });
+
+  testWidgets('노트북 다시 시도가 노트북 목록도 다시 읽는다', (tester) async {
+    // 처음 한 번만 못 읽는다. 다시 시도가 노트북 쪽을 버려야 풀린다.
+    var calls = 0;
+    await pumpScreen(
+      tester,
+      const RankTab(category: RankCategory.laptops),
+      size: const Size(700, 3000),
+      overrides: [
+        laptopsProvider.overrideWith((ref) async {
+          if (calls++ == 0) throw StateError('flaky');
+          return readLaptops();
+        }),
+      ],
+    );
+    expect(find.text(K.catalogFailedTitle.tr()), findsOneWidget);
+
+    await tester.tap(find.text(K.retry.tr()));
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.catalogFailedTitle.tr()), findsNothing);
+    expect(find.text(readLaptops().byPrice.first.name), findsOneWidget);
+  });
+
+  testWidgets('Android 정렬 칩이 고른 칩까지 굴러간다', (tester) async {
+    final container = await pumpScreen(
+      tester,
+      const RankTab(category: RankCategory.phones),
+      chrome: TpChrome.android,
+      size: const Size(360, 3000),
+    );
+    final price = find.widgetWithText(
+      FilterChip,
+      K.rankAxis(RankAxis.price).tr(),
+    );
+    expect(tester.getRect(price).right, greaterThan(360));
+
+    container.read(rankAxisProvider.notifier).set(RankAxis.price);
+    await tester.pumpAndSettle();
+
+    expect(tester.getRect(price).right, lessThanOrEqualTo(360));
   });
 }

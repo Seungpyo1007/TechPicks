@@ -213,6 +213,7 @@ abstract final class K {
   static const String buildTitle = 'buildTitle';
   static const String buildBudget = 'buildBudget';
   static const String buildEmpty = 'buildEmpty';
+  static const String buildEmptyFrom = 'buildEmptyFrom';
   static const String buildReasonGpu = 'buildReasonGpu';
   static const String buildReasonCpu = 'buildReasonCpu';
   static const String buildHeadroom = 'buildHeadroom';
@@ -233,6 +234,7 @@ abstract final class K {
   static const String laptopTierHigh = 'laptopTierHigh';
   static const String laptopTierPerf = 'laptopTierPerf';
   static const String laptopTierMain = 'laptopTierMain';
+  static const String laptopTierEmpty = 'laptopTierEmpty';
   static const String laptopNoScore = 'laptopNoScore';
   static const String specRam = 'specRam';
   static const String specStorage = 'specStorage';
