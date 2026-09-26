@@ -98,6 +98,10 @@ class YouScreen extends ConsumerStatefulWidget {
   static const String version = '2.0.0';
   static const String versionLine = 'TechPicks version $version · Apache-2.0';
 
+  /// 사진이 없을 때 원에 들어가는 이니셜. 프로필 수정도 같은 걸 쓴다.
+  static String initials(String? name, String? email) =>
+      _ProfileHeader.initials(name, email);
+
   @override
   ConsumerState<YouScreen> createState() => _YouScreenState();
 }
