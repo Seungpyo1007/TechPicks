@@ -42,13 +42,27 @@ Future<void> _pump(
   );
 }
 
+Future<void> _pumpPriorities(WidgetTester tester) async {
+  _container = await pumpScreen(
+    tester,
+    const PrioritiesScreen(),
+    size: const Size(1200, 3600),
+  );
+}
+
+/// 맨 위 카드를 눌러 계정 화면으로.
+Future<void> _openAccount(WidgetTester tester, String label) async {
+  await tester.tap(find.text(label).first);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUp(initLocalization);
 
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
   testWidgets('다섯 축 슬라이더가 있다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
     expect(find.byType(Slider), findsNWidgets(5));
     for (final label in <String>[
       'Performance',
@@ -65,7 +79,7 @@ void main() {
   // 카탈로그 154종이 다시 줄 세워지고, 탭 다섯이 IndexedStack 안에 다 살아
   // 있어서 랭킹·비교·홈이 같이 돈다. 한 번 끄는 데 300번쯤이었다.
   testWidgets('슬라이더가 걸음으로 움직인다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
 
     for (final slider in tester.widgetList<Slider>(find.byType(Slider))) {
       expect(slider.divisions, isNotNull);
@@ -75,7 +89,7 @@ void main() {
   // 축 이름은 옆줄에 따로 있어서 스크린 리더는 퍼센트만 읽었다 — 어느 축을
   // 만지는지 알 수 없었다.
   testWidgets('슬라이더가 어느 축인지 읽어준다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
 
     final slider = tester.widget<Slider>(find.byType(Slider).first);
     expect(
@@ -85,7 +99,7 @@ void main() {
   });
 
   testWidgets('슬라이더를 움직이면 가중치가 바뀐다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
     final before = _container!.read(weightsProvider);
 
     // 첫 슬라이더(성능)를 오른쪽 끝으로.
@@ -131,7 +145,7 @@ void main() {
   });
 
   testWidgets('Reset 이 기본값으로 돌린다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
     final container = _container!;
 
     container
@@ -207,6 +221,9 @@ void main() {
     expect(find.text('Change password'), findsNothing);
 
     await _pump(tester, name: '홍길동', email: 'a@b.com');
+    // 루트에는 없고 계정 화면에 있다.
+    expect(find.text('Change password'), findsNothing);
+    await _openAccount(tester, '홍길동');
     expect(find.text('Change password'), findsOneWidget);
   });
 
@@ -226,6 +243,7 @@ void main() {
 
   testWidgets('계정이 있으면 프로필 수정이 나온다', (tester) async {
     await _pump(tester, name: '홍길동', email: 'a@b.com');
+    await _openAccount(tester, '홍길동');
     expect(find.text('Edit profile'), findsOneWidget);
     expect(find.text('Log out'), findsOneWidget);
   });
@@ -299,7 +317,6 @@ void main() {
         ),
       );
 
-      expect(find.text('Your device'), findsOneWidget);
       expect(find.text('Galaxy S25 Ultra'), findsOneWidget);
       // 기본 가중치에서 77.
       expect(find.text('77'), findsOneWidget);
@@ -360,6 +377,7 @@ void main() {
       YouScreen(email: 'a@b.c', onLogout: () => logouts++),
       size: const Size(1200, 3600),
     );
+    await _openAccount(tester, 'a@b.c');
 
     await tester.tap(find.text('Log out'));
     await tester.pumpAndSettle();
@@ -374,6 +392,68 @@ void main() {
     await tester.tap(find.text('Log out').last);
     await tester.pumpAndSettle();
     expect(logouts, 1);
+  });
+
+  group('나눈 화면', () {
+    testWidgets('루트는 짧다: 슬라이더와 계정 줄은 하위 화면에', (tester) async {
+      await _pump(tester, name: '홍길동', email: 'a@b.com');
+      expect(find.byType(Slider), findsNothing);
+      expect(find.text('Log out'), findsNothing);
+      expect(find.text(K.weights.tr()), findsOneWidget);
+    });
+
+    testWidgets('가중치 줄은 가장 큰 축을 말하고 누르면 슬라이더로', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'tp_weights': jsonEncode(<String, dynamic>{
+          'performance': 0.1,
+          'camera': 0.6,
+          'display': 0.1,
+          'battery': 0.1,
+          'value': 0.1,
+        }),
+      });
+      await _pump(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          K.weightsLead.tr(args: <String>[SpecLabels.axis(TpAxisKind.camera)]),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(K.weights.tr()));
+      await tester.pumpAndSettle();
+      expect(find.byType(Slider), findsNWidgets(5));
+    });
+
+    testWidgets('고르면 고르게라고 한다', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'tp_weights': jsonEncode(<String, dynamic>{
+          'performance': 0.2,
+          'camera': 0.2,
+          'display': 0.2,
+          'battery': 0.2,
+          'value': 0.2,
+        }),
+      });
+      await _pump(tester);
+      await tester.pumpAndSettle();
+      expect(find.text(K.weightsBalanced.tr()), findsOneWidget);
+    });
+
+    testWidgets('안내 다시 보기는 본 표시를 지운다', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'coach_seen_today': true,
+      });
+      await _pump(tester);
+
+      await tester.tap(find.text(K.coachReplay.tr()));
+      await tester.pumpAndSettle();
+
+      expect(find.text(K.coachReplayed.tr()), findsOneWidget);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('coach_seen_today'), isNull);
+    });
   });
 }
 

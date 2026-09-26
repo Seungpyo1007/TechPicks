@@ -1,4 +1,6 @@
 import 'dart:async' show unawaited;
+import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,7 @@ import 'package:flutter_gemma_builtin_ai/flutter_gemma_builtin_ai.dart'
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../app/theme/tp_typography.dart';
@@ -16,6 +19,8 @@ import '../../core/error_reporter.dart';
 import '../../data/service/auth_service.dart';
 import '../../data/service/link_opener.dart';
 import '../../domain/model/tp_money.dart';
+import '../../domain/model/tp_weights.dart';
+import '../../shared/coach/tp_coach.dart';
 import '../../shared/copy_keys.dart';
 import '../login/login_screen.dart' show authMessage;
 import 'profile_edit_screen.dart';
@@ -31,6 +36,11 @@ import '../../shared/widgets/tp_sheet.dart';
 import '../../shared/widgets/tp_slider.dart';
 import '../../shared/widgets/tp_switch.dart';
 import '../../shared/widgets/tp_number.dart';
+import '../../shared/widgets/tp_arrive.dart';
+import '../../shared/widgets/tp_pop_in.dart';
+
+part 'account_screen.dart';
+part 'priorities_screen.dart';
 
 /// 내 정보.
 class YouScreen extends ConsumerStatefulWidget {
@@ -109,19 +119,30 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     final themeMode = ref.watch(themeModeProvider);
     final aiEngine = ref.watch(aiEngineProvider);
     final onDevice = ref.watch(onDeviceAiProvider).value;
-    // 헤더가 "로그인 없이 사용 중"이라고 적는 것과 같은 조건이다.
     final hasAccount = name != null || (email?.isNotEmpty ?? false);
 
-    final sys = context.sys;
     final glass = t.isGlass;
     final rate = ref.watch(fxRateProvider).value ?? FxRate.fallback;
+    IconData icon(IconData ios, IconData android) => glass ? ios : android;
 
-    Widget menuRow(String label, String value, List<TpMenuItem> items) =>
-        TpMenu(
-          items: items,
-          builder: (context, open) =>
-              _SettingRow(label: label, value: value, onTap: open, menu: true),
-        );
+    Widget menuRow(
+      String label,
+      String value,
+      Widget leading,
+      List<TpMenuItem> items,
+    ) => TpMenu(
+      items: items,
+      builder: (context, open) => _SettingRow(
+        label: label,
+        value: value,
+        leading: leading,
+        onTap: open,
+        menu: true,
+      ),
+    );
+
+    var row = 0;
+    Widget arrive(Widget child) => TpArrive(index: row++, child: child);
 
     return TpPage(
       title: K.you.tr(),
@@ -138,163 +159,180 @@ class _YouScreenState extends ConsumerState<YouScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const SizedBox(height: 8),
-              if (hasAccount)
-                TpGroup(
-                  footer: _notice,
-                  children: <Widget>[
-                    _ProfileHeader(
-                      photoUrl: ref.watch(profileProvider).value?.photoUrl,
-                      name: name,
-                      email: email,
-                      method: widget.method,
-                      onEdit: widget.onEditProfile ?? _openProfile,
-                    ),
-                    if (!widget.emailVerified)
-                      TpRow(
-                        title: K.verifyEmail.tr(),
-                        titleStyle: TextStyle(color: sys.label2),
-                        chevron: false,
-                        trailing: _Link(
-                          label: K.resend.tr(),
-                          onTap: () => unawaited(_resendVerification()),
-                        ),
-                      ),
-                  ],
-                )
-              else
-                TpGroup(
-                  footer: _notice,
-                  children: <Widget>[_SignedOut(onSignIn: widget.onSignIn)],
-                ),
               TpGroup(
-                header: K.priorities.tr(),
-                footer: K.prioritiesNote.tr(),
-                headerAction: _Link(
-                  label: K.reset.tr(),
-                  onTap: () => ref.read(weightsProvider.notifier).reset(),
-                ),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                footer: _notice,
                 children: <Widget>[
-                  for (final kind in TpAxisKind.values)
-                    _WeightSlider(
-                      kind: kind,
-                      value: kind.weightIn(weights),
-                      onChanged: (v) =>
-                          ref.read(weightsProvider.notifier).setAxis(kind, v),
-                    ),
+                  arrive(
+                    hasAccount
+                        ? _ProfileHeader(
+                            photoUrl: ref
+                                .watch(profileProvider)
+                                .value
+                                ?.photoUrl,
+                            name: name,
+                            email: email,
+                            method: widget.method,
+                            unverified: !widget.emailVerified,
+                            onEdit: () => unawaited(_openAccount()),
+                          )
+                        : _SignedOut(onSignIn: widget.onSignIn),
+                  ),
                 ],
               ),
               TpGroup(
-                header: K.yourDevice.tr(),
-                children: <Widget>[_YourDevice(onTap: widget.onDeviceTap)],
+                children: <Widget>[
+                  arrive(
+                    _SettingRow(
+                      label: K.weights.tr(),
+                      value: _weightsSummary(weights),
+                      leading: TpIconTile(
+                        icon: icon(
+                          CupertinoIcons.slider_horizontal_3,
+                          Icons.tune,
+                        ),
+                      ),
+                      onTap: () => unawaited(_openPriorities()),
+                    ),
+                  ),
+                  arrive(_YourDevice(onTap: widget.onDeviceTap)),
+                ],
               ),
               TpGroup(
                 footer: _fxLine(rate),
                 children: <Widget>[
-                  if (locale != null)
-                    menuRow(K.language.tr(), locale.current.label, <TpMenuItem>[
-                      for (final option in TpLocale.values)
-                        TpMenuItem(
-                          label: option.label,
-                          checked: option == locale.current,
-                          onTap: () => unawaited(locale.set(option)),
-                        ),
-                    ])
-                  else
-                    _SettingRow(
-                      label: K.language.tr(),
-                      value: TpLocale.en.label,
+                  arrive(
+                    locale != null
+                        ? menuRow(
+                            K.language.tr(),
+                            locale.current.label,
+                            TpIconTile(
+                              icon: icon(CupertinoIcons.globe, Icons.language),
+                              color: const Color(0xFF007AFF),
+                            ),
+                            <TpMenuItem>[
+                              for (final option in TpLocale.values)
+                                TpMenuItem(
+                                  label: option.label,
+                                  checked: option == locale.current,
+                                  onTap: () => unawaited(locale.set(option)),
+                                ),
+                            ],
+                          )
+                        : _SettingRow(
+                            label: K.language.tr(),
+                            value: TpLocale.en.label,
+                            leading: TpIconTile(
+                              icon: icon(CupertinoIcons.globe, Icons.language),
+                              color: const Color(0xFF007AFF),
+                            ),
+                          ),
+                  ),
+                  arrive(
+                    menuRow(
+                      K.darkMode.tr(),
+                      _themeLabel(themeMode).tr(),
+                      TpIconTile(
+                        icon: icon(CupertinoIcons.moon_fill, Icons.dark_mode),
+                        color: const Color(0xFF5856D6),
+                      ),
+                      <TpMenuItem>[
+                        for (final mode in <ThemeMode>[
+                          ThemeMode.system,
+                          ThemeMode.light,
+                          ThemeMode.dark,
+                        ])
+                          TpMenuItem(
+                            label: _themeLabel(mode).tr(),
+                            checked: mode == themeMode,
+                            onTap: () => unawaited(
+                              ref.read(themeModeProvider.notifier).set(mode),
+                            ),
+                          ),
+                      ],
                     ),
-                  menuRow(
-                    K.darkMode.tr(),
-                    _themeLabel(themeMode).tr(),
-                    <TpMenuItem>[
-                      for (final mode in <ThemeMode>[
-                        ThemeMode.system,
-                        ThemeMode.light,
-                        ThemeMode.dark,
-                      ])
-                        TpMenuItem(
-                          label: _themeLabel(mode).tr(),
-                          checked: mode == themeMode,
-                          onTap: () => unawaited(
-                            ref.read(themeModeProvider.notifier).set(mode),
-                          ),
+                  ),
+                  arrive(
+                    menuRow(
+                      K.currency.tr(),
+                      K.currencyOf(currency).tr(),
+                      TpIconTile(
+                        icon: icon(
+                          CupertinoIcons.money_dollar_circle_fill,
+                          Icons.payments,
                         ),
-                    ],
-                  ),
-                  _SettingRow(
-                    label: K.aiEngine.tr(),
-                    value: aiEngine.key.tr(),
-                    onTap: () => _openAiEngine(context, aiEngine, onDevice),
-                  ),
-                  menuRow(
-                    K.currency.tr(),
-                    K.currencyOf(currency).tr(),
-                    <TpMenuItem>[
-                      for (final option in TpCurrency.values)
-                        TpMenuItem(
-                          label: K.currencyOf(option).tr(),
-                          checked: option == currency,
-                          onTap: () => unawaited(
-                            ref.read(currencyProvider.notifier).set(option),
+                        color: const Color(0xFF34C759),
+                      ),
+                      <TpMenuItem>[
+                        for (final option in TpCurrency.values)
+                          TpMenuItem(
+                            label: K.currencyOf(option).tr(),
+                            checked: option == currency,
+                            onTap: () => unawaited(
+                              ref.read(currencyProvider.notifier).set(option),
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                  _SettingRow(
-                    label: K.notifications.tr(),
-                    switchValue: notifications,
-                    toggled: notifications,
-                    onTap: () => ref
-                        .read(notificationsProvider.notifier)
-                        .set(!notifications),
+                  arrive(
+                    _SettingRow(
+                      label: K.aiEngine.tr(),
+                      value: aiEngine.key.tr(),
+                      leading: TpIconTile(
+                        icon: icon(CupertinoIcons.sparkles, Icons.auto_awesome),
+                        color: const Color(0xFFAF52DE),
+                      ),
+                      onTap: () => _openAiEngine(context, aiEngine, onDevice),
+                    ),
+                  ),
+                  arrive(
+                    _SettingRow(
+                      label: K.notifications.tr(),
+                      leading: TpIconTile(
+                        icon: icon(
+                          CupertinoIcons.bell_fill,
+                          Icons.notifications,
+                        ),
+                        color: const Color(0xFFFF3B30),
+                      ),
+                      switchValue: notifications,
+                      toggled: notifications,
+                      onTap: () => ref
+                          .read(notificationsProvider.notifier)
+                          .set(!notifications),
+                    ),
                   ),
                 ],
               ),
               TpGroup(
+                footer: _coachNotice,
                 children: <Widget>[
-                  _SettingRow(
-                    label: K.sources.tr(),
-                    onTap: widget.onSources ?? _openSources,
+                  arrive(
+                    _SettingRow(
+                      label: K.coachReplay.tr(),
+                      leading: TpIconTile(
+                        icon: icon(
+                          CupertinoIcons.lightbulb_fill,
+                          Icons.lightbulb,
+                        ),
+                        color: const Color(0xFFFF9500),
+                      ),
+                      onTap: () => unawaited(_replayCoach()),
+                      plain: true,
+                    ),
+                  ),
+                  arrive(
+                    _SettingRow(
+                      label: K.sources.tr(),
+                      leading: TpIconTile(
+                        icon: icon(CupertinoIcons.doc_text_fill, Icons.article),
+                        color: const Color(0xFF8E8E93),
+                      ),
+                      onTap: widget.onSources ?? _openSources,
+                    ),
                   ),
                 ],
               ),
-              if (hasAccount)
-                TpGroup(
-                  header: K.account.tr(),
-                  children: <Widget>[
-                    _SettingRow(
-                      label: K.editProfile.tr(),
-                      onTap: widget.onEditProfile ?? _openProfile,
-                    ),
-                    if ((widget.method ?? AuthMethod.email) ==
-                            AuthMethod.email &&
-                        (email?.isNotEmpty ?? false))
-                      _SettingRow(
-                        label: K.changePassword.tr(),
-                        onTap:
-                            widget.onChangePassword ??
-                            () => unawaited(_resetPassword()),
-                      ),
-                    TpRow(
-                      title: K.logout.tr(),
-                      destructive: true,
-                      chevron: false,
-                      onTap: widget.onLogout == null
-                          ? null
-                          : () => unawaited(
-                              _confirmLogout(context, widget.onLogout!),
-                            ),
-                    ),
-                    TpRow(
-                      title: K.deleteAccount.tr(),
-                      destructive: true,
-                      chevron: false,
-                      onTap: () => unawaited(_deleteAccount()),
-                    ),
-                  ],
-                ),
               Center(
                 child: _Link(
                   label: YouScreen.versionLine,
@@ -308,6 +346,44 @@ class _YouScreenState extends ConsumerState<YouScreen> {
         ),
       ],
     );
+  }
+
+  /// "안내 다시 보기" 아래 한 줄.
+  String? _coachNotice;
+
+  Future<void> _replayCoach() async {
+    await TpCoach.resetAll();
+    TpHaptics.commit();
+    if (mounted) setState(() => _coachNotice = K.coachReplayed.tr());
+  }
+
+  Route<T> _route<T>(WidgetBuilder builder) => context.tp.isGlass
+      ? CupertinoPageRoute<T>(builder: builder)
+      : MaterialPageRoute<T>(builder: builder);
+
+  Future<void> _openPriorities() => Navigator.of(context).push(
+    _route<void>(
+      (context) => PrioritiesScreen(onBack: () => Navigator.of(context).pop()),
+    ),
+  );
+
+  /// 계정 화면. 지우고 나오면 무엇이 됐는지 머리 아래에 적는다.
+  Future<void> _openAccount() async {
+    final message = await Navigator.of(context).push<String>(
+      _route<String>(
+        (context) => AccountScreen(
+          name: name,
+          email: email,
+          method: widget.method,
+          emailVerified: widget.emailVerified,
+          onEditProfile: widget.onEditProfile,
+          onChangePassword: widget.onChangePassword,
+          onLogout: widget.onLogout,
+          onBack: () => Navigator.of(context).pop(),
+        ),
+      ),
+    );
+    if (mounted && message != null) setState(() => _notice = message);
   }
 
   Future<void> _openAiEngine(
@@ -324,66 +400,9 @@ class _YouScreenState extends ConsumerState<YouScreen> {
           ),
   );
 
-  Future<void> _resetPassword() async {
-    final address = email ?? '';
-    final failure = await ref
-        .read(currentUserProvider.notifier)
-        .sendPasswordReset(address);
-    if (!mounted) return;
-
-    setState(() {
-      _notice = failure == null
-          ? K.pwResetSent.tr(args: <String>[address])
-          : K.pwResetFailed.tr();
-    });
-  }
-
-  Future<void> _resendVerification() async {
-    final failure = await ref
-        .read(currentUserProvider.notifier)
-        .resendVerification();
-    if (!mounted) return;
-    setState(() {
-      _notice = failure == null
-          ? K.verifySent.tr()
-          : authMessage(failure) ?? K.authFailed.tr();
-    });
-  }
-
-  /// 확인 → (이메일 가입이면) 비밀번호 → 삭제. Apple·Google 은 삭제 중에
-  /// 시스템 로그인 창이 한 번 더 뜬다(다시 인증).
-  Future<void> _deleteAccount() async {
-    final email = (widget.method ?? AuthMethod.email) == AuthMethod.email;
-    final answer = await _confirmDelete(context, askPassword: email);
-    if (answer == null || !mounted) return;
-    final failure = await ref
-        .read(currentUserProvider.notifier)
-        .deleteAccount(password: email ? answer : null);
-    if (!mounted) return;
-    if (failure == AuthFailure.canceled) return;
-    if (failure == null) TpHaptics.commit();
-    setState(() {
-      _notice = failure == null
-          ? K.deleted.tr()
-          : authMessage(failure) ?? K.authFailed.tr();
-    });
-  }
-
-  /// 프로필 편집 화면을 연다.
-  ///
-  /// 한동안 여기에 이름 한 줄짜리 알림창이 있었다. v1 은 사진과 다섯 칸을
-  /// 갖고 있었고, 그게 없어진 건 기록조차 안 됐다.
-  Future<void> _openProfile() => Navigator.of(context).push(
-    CupertinoPageRoute<void>(
-      builder: (context) =>
-          ProfileEditScreen(onBack: () => Navigator.of(context).pop()),
-    ),
-  );
-
   Future<void> _openSources() => Navigator.of(context).push(
-    CupertinoPageRoute<void>(
-      builder: (context) =>
-          SourcesScreen(onBack: () => Navigator.of(context).pop()),
+    _route<void>(
+      (context) => SourcesScreen(onBack: () => Navigator.of(context).pop()),
     ),
   );
 
@@ -519,12 +538,16 @@ class _ProfileHeader extends StatelessWidget {
     this.method,
     this.onEdit,
     this.photoUrl,
+    this.unverified = false,
   });
 
   final String? name;
   final String? email;
   final AuthMethod? method;
   final VoidCallback? onEdit;
+
+  /// 메일 주소를 아직 확인 안 했으면 이름 옆 한 마디.
+  final bool unverified;
 
   /// 올린 사진. 없으면 이니셜 원이다.
   final String? photoUrl;
@@ -590,6 +613,7 @@ class _ProfileHeader extends StatelessWidget {
     final subtitle = <String>[
       if (email?.isNotEmpty ?? false) email!,
       ?via,
+      if (unverified) K.unverified.tr(),
     ].join(' · ');
     return TpRow(
       title: name ?? email ?? '',
@@ -770,11 +794,19 @@ class _SettingRow extends StatelessWidget {
     this.toggled,
     this.switchValue,
     this.menu = false,
+    this.leading,
+    this.plain = false,
   });
 
   final String label;
   final String? value;
   final VoidCallback? onTap;
+
+  /// 설정 앱식 색 아이콘 타일.
+  final Widget? leading;
+
+  /// 누르면 바로 일이 일어나는 줄(화면이 안 바뀜). 화살표가 없다.
+  final bool plain;
 
   /// 켜고 끄는 줄이면 지금 상태.
   final bool? toggled;
@@ -792,7 +824,8 @@ class _SettingRow extends StatelessWidget {
       onTap: onTap,
       toggled: toggled,
       dimmed: onTap == null,
-      chevron: !menu && switchValue == null && onTap != null,
+      leading: leading,
+      chevron: !menu && !plain && switchValue == null && onTap != null,
       semanticsLabel: value == null ? label : '$label, $value',
       trailing: switchValue != null
           ? TpSwitch(value: switchValue!, onChanged: (_) => onTap?.call())

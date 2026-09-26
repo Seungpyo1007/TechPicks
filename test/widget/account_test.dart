@@ -76,20 +76,28 @@ Future<void> _pump(
   AuthMethod? method,
   bool emailVerified = true,
   ProfileService? profiles,
-}) => pumpScreen(
-  tester,
-  YouScreen(
-    name: name,
-    email: email,
-    method: method,
-    emailVerified: emailVerified,
-  ),
-  size: const Size(1200, 3600),
-  overrides: <Override>[
-    authServiceProvider.overrideWithValue(auth),
-    profileServiceProvider.overrideWithValue(profiles ?? _StubProfiles()),
-  ],
-);
+}) async {
+  await pumpScreen(
+    tester,
+    YouScreen(
+      name: name,
+      email: email,
+      method: method,
+      emailVerified: emailVerified,
+    ),
+    size: const Size(1200, 3600),
+    overrides: <Override>[
+      authServiceProvider.overrideWithValue(auth),
+      profileServiceProvider.overrideWithValue(profiles ?? _StubProfiles()),
+    ],
+  );
+  // 계정 줄은 맨 위 카드를 눌러 들어간 계정 화면에 있다.
+  final label = name ?? email;
+  if (label != null) {
+    await tester.tap(find.text(label).first);
+    await tester.pumpAndSettle();
+  }
+}
 
 void main() {
   setUp(initLocalization);

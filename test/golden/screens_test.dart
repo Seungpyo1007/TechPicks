@@ -6,6 +6,7 @@ import 'package:riverpod/misc.dart' show Override;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/dto/smartphone.dart';
+import 'package:techpicks/data/service/auth_service.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/domain/model/ask_answer.dart';
 import 'package:techpicks/feature/ask/ask_screen.dart';
@@ -88,7 +89,7 @@ void main() {
     );
   });
 
-  goldenScenario('you', 'You — 가중치', (tester, chrome) async {
+  goldenScenario('you', 'You — 루트', (tester, chrome) async {
     await pumpScreen(
       tester,
       const YouScreen(name: 'Seungpyo', email: 'you@techpicks.app'),
@@ -101,6 +102,30 @@ void main() {
     await pumpScreen(
       tester,
       YouScreen(onSignIn: () {}),
+      chrome: chrome,
+      size: frameOf(chrome),
+    );
+  });
+
+  goldenScenario('priorities', 'You — 가중치 화면', (tester, chrome) async {
+    await pumpScreen(
+      tester,
+      const PrioritiesScreen(),
+      chrome: chrome,
+      size: frameOf(chrome),
+    );
+  });
+
+  goldenScenario('account', 'You — 계정', (tester, chrome) async {
+    await pumpScreen(
+      tester,
+      AccountScreen(
+        name: 'Seungpyo',
+        email: 'you@techpicks.app',
+        method: AuthMethod.apple,
+        onLogout: () {},
+        onBack: () {},
+      ),
       chrome: chrome,
       size: frameOf(chrome),
     );
