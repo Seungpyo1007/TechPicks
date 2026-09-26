@@ -110,6 +110,7 @@ abstract final class K {
   static const String share = 'share';
   static const String shareDevice = 'shareDevice';
   static const String shareSubject = 'shareSubject';
+  static const String shareFailed = 'shareFailed';
 
   // 상담
   static const String chatSeed = 'chatSeed';
