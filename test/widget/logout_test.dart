@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/tab_host.dart';
 import 'package:techpicks/data/service/ask_service.dart';
-import 'package:techpicks/feature/login/login_sheet.dart';
+import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
 import '../support/fake_auth.dart';
@@ -53,7 +53,7 @@ void main() {
     expect(auth.signOuts, 1);
     expect(find.text(K.signIn.tr()), findsWidgets);
     // 로그인 화면으로 쫓아내지 않는다.
-    expect(find.byType(LoginSheet), findsNothing);
+    expect(find.byType(LoginScreen), findsNothing);
     // 내 정보가 탭 위에 밀려 있어 탭은 무대 밖이다.
     expect(find.byType(TabHost, skipOffstage: false), findsOneWidget);
   });
@@ -77,7 +77,7 @@ void main() {
     await tester.tap(find.text(K.signIn.tr()).last);
     await tester.pumpAndSettle();
 
-    expect(find.byType(LoginSheet), findsOneWidget);
+    expect(find.byType(LoginScreen), findsOneWidget);
     expect(auth.signOuts, 0);
   });
 }

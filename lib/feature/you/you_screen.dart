@@ -17,7 +17,7 @@ import '../../data/service/auth_service.dart';
 import '../../data/service/link_opener.dart';
 import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
-import '../login/login_sheet.dart' show authMessage;
+import '../login/login_screen.dart' show authMessage;
 import 'profile_edit_screen.dart';
 import 'sources_screen.dart';
 import '../../domain/model/tp_index.dart';

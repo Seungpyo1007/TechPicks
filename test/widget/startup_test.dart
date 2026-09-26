@@ -5,7 +5,7 @@ import 'package:riverpod/misc.dart' show Override;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/service/auth_service.dart';
-import 'package:techpicks/feature/login/login_sheet.dart';
+import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/app/tab_host.dart';
 import 'package:techpicks/app/tp_launch.dart';
@@ -94,7 +94,7 @@ void main() {
 
     await _boot(tester);
     expect(find.byType(TabHost), findsOneWidget);
-    expect(find.byType(LoginSheet), findsNothing);
+    expect(find.byType(LoginScreen), findsNothing);
   });
 
   // 네이티브 스플래시가 첫 프레임에서 사라지고, 저장값을 읽는 동안 빈 화면이

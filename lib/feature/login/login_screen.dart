@@ -15,6 +15,8 @@ import '../../app/theme/tp_tokens.dart';
 import '../../data/service/auth_service.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/tp_haptics.dart';
+import '../../shared/figures/tp_figure.dart';
+import '../../shared/figures/tp_figures.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_pop_in.dart';
@@ -37,12 +39,12 @@ String? authMessage(AuthFailure failure) => switch (failure) {
   AuthFailure.unknown => K.authFailed.tr(),
 };
 
-/// 로그인 시트. 방법 고르기 → 이메일 → 비밀번호 재설정이 **시트 안에서** 옆으로
-/// 밀린다(iOS 설정 앱처럼). 로그인은 선택이라 언제든 닫을 수 있다.
+/// 로그인 화면(전체 화면 모달). 방법 고르기 → 이메일 → 비밀번호 재설정이 화면
+/// 안에서 옆으로 밀린다. 로그인은 선택이라 언제든 X 로 닫는다.
 ///
 /// 성공하면 체크가 한 번 튀고 시트가 닫힌다.
-class LoginSheet extends StatefulWidget {
-  const LoginSheet({super.key, this.onClose, this.onSignedIn});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key, this.onClose, this.onSignedIn});
 
   final VoidCallback? onClose;
   final VoidCallback? onSignedIn;
@@ -66,10 +68,10 @@ class LoginSheet extends StatefulWidget {
   static const Duration doneHold = Duration(milliseconds: 700);
 
   @override
-  State<LoginSheet> createState() => _LoginSheetState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginSheetState extends State<LoginSheet> {
+class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<NavigatorState> _nav = GlobalKey<NavigatorState>();
   bool _done = false;
 
@@ -82,7 +84,7 @@ class _LoginSheetState extends State<LoginSheet> {
     setState(() => _done = true);
     final hold = context.motion.isReduced
         ? const Duration(milliseconds: 300)
-        : LoginSheet.doneHold;
+        : LoginScreen.doneHold;
     await Future<void>.delayed(hold);
     if (mounted) widget.onSignedIn?.call();
   }
@@ -226,86 +228,198 @@ class _OptionsStepState extends ConsumerState<_OptionsStep> {
       ),
     ];
 
-    return TpPage(
-      title: '',
-      largeTitle: false,
-      actions: <TpBarAction>[
-        if (widget.onClose != null)
-          TpBarAction(
-            label: K.close.tr(),
-            icon: glass ? CupertinoIcons.xmark : Icons.close,
-            symbol: 'xmark',
-            onTap: widget.onClose,
-          ),
-      ],
-      slivers: <Widget>[
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-            child: Column(
-              children: <Widget>[
-                const Spacer(),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    'assets/logo/logo.png',
-                    width: 64,
-                    height: 64,
-                    filterQuality: FilterQuality.medium,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  K.loginTitle.tr(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: sys.label,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  K.loginWhy.tr(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    height: 1.4,
-                    color: sys.label2,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                for (var i = 0; i < buttons.length; i++) ...<Widget>[
-                  if (i > 0) const SizedBox(height: 12),
-                  buttons[i],
+    return Material(
+      color: sys.background,
+      child: SafeArea(
+        child: Column(
+          children: <Widget>[
+            SizedBox(
+              height: 52,
+              child: Row(
+                children: <Widget>[
+                  const SizedBox(width: 16),
+                  if (widget.onClose != null)
+                    TpBarButton(
+                      action: TpBarAction(
+                        label: K.close.tr(),
+                        icon: glass ? CupertinoIcons.xmark : Icons.close,
+                        symbol: 'xmark',
+                        onTap: widget.onClose,
+                      ),
+                    ),
                 ],
-                if (_error != null) ...<Widget>[
-                  const SizedBox(height: 14),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(
-                      _error!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 13, color: sys.destructive),
+              ),
+            ),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, box) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: box.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            const Spacer(),
+                            _Stagger(
+                              index: 0,
+                              child: _SyncCard(
+                                height: (box.maxHeight * .3).clamp(
+                                  130.0,
+                                  230.0,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            _Stagger(
+                              index: 1,
+                              child: Text(
+                                K.loginTitle.tr(),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 30,
+                                  height: 1.2,
+                                  fontWeight: FontWeight.w700,
+                                  color: sys.label,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _Stagger(
+                              index: 2,
+                              child: Text(
+                                K.loginWhy.tr(),
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  height: 1.4,
+                                  color: sys.label2,
+                                ),
+                              ),
+                            ),
+                            const Spacer(flex: 2),
+                            for (
+                              var i = 0;
+                              i < buttons.length;
+                              i++
+                            ) ...<Widget>[
+                              if (i > 0) const SizedBox(height: 12),
+                              _Stagger(index: 3 + i, child: buttons[i]),
+                            ],
+                            if (_error != null) ...<Widget>[
+                              const SizedBox(height: 14),
+                              Semantics(
+                                liveRegion: true,
+                                child: Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: sys.destructive,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 18),
+                            Text(
+                              K.legalLine.tr(),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1.4,
+                                color: sys.label2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ],
-                const Spacer(flex: 2),
-                Text(
-                  K.legalLine.tr(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.4,
-                    color: sys.label2,
-                  ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+/// 온보딩 마지막 장과 같은 그림. 거기서 넘어오면 이어져 보인다.
+class _SyncCard extends StatelessWidget {
+  const _SyncCard({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(24, 26, 24, 26),
+    decoration: BoxDecoration(
+      color: context.sys.cell,
+      borderRadius: BorderRadius.circular(32),
+    ),
+    child: TpFigure(
+      paint: TpFigures.sync,
+      height: height - 52,
+      delay: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 2200),
+    ),
+  );
+}
+
+/// 차례로 조금 올라오며 나타난다. 동작 줄이기면 바로.
+class _Stagger extends StatefulWidget {
+  const _Stagger({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  static const Duration step = Duration(milliseconds: 60);
+
+  @override
+  State<_Stagger> createState() => _StaggerState();
+}
+
+class _StaggerState extends State<_Stagger>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this);
+  Timer? _wait;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_c.duration != null) return;
+    final move = context.motion.listItem;
+    _c.duration = move.duration;
+    if (context.motion.isReduced) {
+      _c.value = 1;
+      return;
+    }
+    _wait = Timer(_Stagger.step * widget.index, () {
+      if (mounted) _c.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _wait?.cancel();
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
+    return FadeTransition(
+      opacity: t,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, .25),
+          end: Offset.zero,
+        ).animate(t),
+        child: widget.child,
+      ),
     );
   }
 }
@@ -412,8 +526,8 @@ class _EmailStepState extends ConsumerState<_EmailStep> {
     final password = _password.text;
     // 빈 칸에 "형식이 아닙니다"는 고장 난 것처럼 읽힌다.
     if (email.isEmpty || password.isEmpty) return _fail(K.emailNeeded.tr());
-    if (!LoginSheet.looksLikeEmail(email)) return _fail(K.emailInvalid.tr());
-    if (password.length < LoginSheet.minPasswordLength) {
+    if (!LoginScreen.looksLikeEmail(email)) return _fail(K.emailInvalid.tr());
+    if (password.length < LoginScreen.minPasswordLength) {
       return _fail(K.passwordShort.tr());
     }
     setState(() {
@@ -576,7 +690,7 @@ class _ResetStepState extends ConsumerState<_ResetStep> {
 
   Future<void> _send() async {
     final email = _email.text.trim();
-    if (!LoginSheet.looksLikeEmail(email)) {
+    if (!LoginScreen.looksLikeEmail(email)) {
       TpHaptics.error();
       setState(() => _error = K.emailInvalid.tr());
       return;
@@ -705,13 +819,13 @@ class _Done extends StatelessWidget {
             TpPopIn(
               from: 0.4,
               child: Container(
-                width: 72,
-                height: 72,
+                width: 96,
+                height: 96,
                 decoration: const BoxDecoration(
                   color: TpSys.accent,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, color: Colors.white, size: 40),
+                child: const Icon(Icons.check, color: Colors.white, size: 54),
               ),
             ),
             const SizedBox(height: 16),
