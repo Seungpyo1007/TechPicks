@@ -488,19 +488,21 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       );
     }
 
-    // `iOS-ProfileEdit`: "취소" / 프로필 수정 / 채운 "저장". 버튼 자리는
+    // `iOS-ProfileEdit`: X / 프로필 수정 / 체크(Android 는 "취소"·"저장"). 버튼 자리는
     // 다른 화면과 같다([TpTopBar]).
     final page = TpPage(
       title: K.editProfile.tr(),
       largeTitle: false,
       leading: TpBarAction(
         label: K.cancel.tr(),
+        role: TpBarRole.close,
         text: true,
         onTap: widget.onBack,
       ),
       actions: <TpBarAction>[
         TpBarAction(
           label: K.save.tr(),
+          role: TpBarRole.confirm,
           text: true,
           filled: true,
           onTap: _busy ? null : () => _save(profile),

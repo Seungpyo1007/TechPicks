@@ -202,7 +202,7 @@ void main() {
       await tester.enterText(fields.at(1), 'seungpyo');
       await tester.enterText(fields.at(2), 'they/them');
       await tester.enterText(fields.at(3), '010-0000-0000');
-      await tester.tap(find.text(K.save.tr()));
+      await tester.tap(find.bySemanticsLabel(K.save.tr()));
       await tester.pumpAndSettle();
 
       expect(auth.names, <String>['김승표']);
@@ -233,7 +233,7 @@ void main() {
       await open(tester);
 
       await tester.enterText(find.byType(TextField).first, '다른 이름');
-      await tester.tap(find.text(K.cancel.tr()));
+      await tester.tap(find.bySemanticsLabel(K.cancel.tr()));
       await tester.pumpAndSettle();
 
       expect(auth.names, isEmpty);
@@ -246,7 +246,7 @@ void main() {
       await open(tester);
 
       await tester.enterText(find.byType(TextField).first, '   ');
-      await tester.tap(find.text(K.save.tr()));
+      await tester.tap(find.bySemanticsLabel(K.save.tr()));
       await tester.pumpAndSettle();
 
       expect(auth.names, isEmpty);
@@ -262,7 +262,7 @@ void main() {
       await open(tester);
 
       await tester.enterText(find.byType(TextField).first, '새 이름');
-      await tester.tap(find.text(K.save.tr()));
+      await tester.tap(find.bySemanticsLabel(K.save.tr()));
       await tester.pumpAndSettle();
 
       expect(find.text(K.profileFailed.tr()), findsOneWidget);
@@ -468,7 +468,7 @@ void main() {
 
       await tester.tap(find.text(K.deleteAccount.tr()));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(K.cancel.tr()));
+      await tester.tap(find.bySemanticsLabel(K.cancel.tr()));
       await tester.pumpAndSettle();
 
       expect(auth.deletes, 0);
