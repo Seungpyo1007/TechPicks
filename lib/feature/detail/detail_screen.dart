@@ -336,7 +336,8 @@ class _DetailBody extends ConsumerWidget {
         _BrandCard(slug: device.brand?.slug),
         if (device.sourceUrls.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(32, 0, 32, 0),
+            // iOS 는 묶음 글자와 같은 32, Android 는 카드가 없어 16.
+            padding: EdgeInsets.symmetric(horizontal: glass ? 32 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
