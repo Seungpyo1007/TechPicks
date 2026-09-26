@@ -1,13 +1,17 @@
 import 'dart:typed_data' show Uint8List;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:riverpod/misc.dart' show Override;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/service/auth_service.dart';
+import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/service/profile_service.dart';
 import 'package:techpicks/domain/model/tp_profile.dart';
+import 'package:techpicks/feature/you/profile_edit_screen.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
@@ -61,10 +65,40 @@ class _StubProfiles implements ProfileService {
     return succeeds;
   }
 
+  final List<String> removed = <String>[];
+
   @override
-  Future<String?> uploadPhoto(String uid, Uint8List bytes) async {
+  Future<String?> uploadPhoto(
+    String uid,
+    Uint8List bytes, {
+    ValueChanged<double>? onProgress,
+  }) async {
     uploads.add('${bytes.length}B');
+    onProgress?.call(.5);
     return succeeds ? 'https://example.test/p.jpg' : null;
+  }
+
+  @override
+  Future<void> removePhoto(String uid) async => removed.add(uid);
+}
+
+/// 카메라·갤러리. 몇 바이트를 돌려주거나 권한 거절을 던진다.
+class _FakePicker extends ImagePicker {
+  _FakePicker({this.denied = false});
+
+  final bool denied;
+
+  @override
+  Future<XFile?> pickImage({
+    required ImageSource source,
+    double? maxWidth,
+    double? maxHeight,
+    int? imageQuality,
+    CameraDevice preferredCameraDevice = CameraDevice.rear,
+    bool requestFullMetadata = true,
+  }) async {
+    if (denied) throw PlatformException(code: 'camera_access_denied');
+    return XFile.fromData(Uint8List.fromList(<int>[1, 2, 3]));
   }
 }
 
@@ -234,7 +268,7 @@ void main() {
       expect(find.text(K.profileFailed.tr()), findsOneWidget);
     });
 
-    testWidgets('사진을 골라 올린다', (tester) async {
+    testWidgets('사진 바꾸기를 누르면 찍기·고르기가 나온다', (tester) async {
       final profiles = _StubProfiles();
       await _pump(tester, _StubAuth(), profiles: profiles);
       await open(tester);
@@ -242,10 +276,127 @@ void main() {
       await tester.tap(find.text(K.changePhoto.tr()));
       await tester.pumpAndSettle();
 
-      // 갤러리는 플랫폼 채널이라 테스트에서 아무것도 안 돌려준다. 화면이
-      // 죽지 않는 것까지가 여기서 볼 수 있는 전부다.
-      expect(find.text(K.editProfile.tr()), findsWidgets);
+      expect(find.text(K.takePhoto.tr()), findsOneWidget);
+      expect(find.text(K.choosePhoto.tr()), findsOneWidget);
+      // 사진이 없으면 지울 것도 없다.
+      expect(find.text(K.removePhoto.tr()), findsNothing);
       expect(profiles.uploads, isEmpty);
+    });
+  });
+
+  group('프로필 사진', () {
+    /// 편집 화면만 띄운다. 선택기와 자르기를 갈아끼운다.
+    Future<void> pumpEdit(
+      WidgetTester tester, {
+      required _StubProfiles profiles,
+      ImagePicker? picker,
+      TpChrome chrome = TpChrome.ios,
+    }) async {
+      await pumpScreen(
+        tester,
+        ProfileEditScreen(
+          onBack: () {},
+          picker: picker ?? _FakePicker(),
+          crop: (_, bytes) async => bytes,
+        ),
+        chrome: chrome,
+        size: const Size(1200, 3600),
+        overrides: <Override>[
+          authServiceProvider.overrideWithValue(_StubAuth()),
+          profileServiceProvider.overrideWithValue(profiles),
+        ],
+      );
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> choose(WidgetTester tester) async {
+      await tester.tap(find.text(K.changePhoto.tr()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(K.choosePhoto.tr()));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('고르면 바로 올리고 알린다', (tester) async {
+      final profiles = _StubProfiles();
+      await pumpEdit(tester, profiles: profiles);
+      await choose(tester);
+
+      expect(profiles.uploads, hasLength(1));
+      expect(profiles.stored.photoUrl, 'https://example.test/p.jpg');
+      expect(find.text(K.photoUpdated.tr()), findsOneWidget);
+      // 위의 저장은 안 눌렀다. 사진만 저장됐다.
+      expect(find.text(K.profileSaved.tr()), findsNothing);
+
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      expect(find.text(K.photoUpdated.tr()), findsNothing);
+    });
+
+    testWidgets('못 올리면 빨간 줄과 다시 시도', (tester) async {
+      final profiles = _StubProfiles(succeeds: false);
+      await pumpEdit(tester, profiles: profiles);
+      await choose(tester);
+
+      expect(find.text(K.photoFailed.tr()), findsOneWidget);
+      await tester.tap(find.text(K.retry.tr()));
+      await tester.pumpAndSettle();
+      expect(profiles.uploads, hasLength(2));
+    });
+
+    testWidgets('권한을 거절하면 조용히 끝난다', (tester) async {
+      final profiles = _StubProfiles();
+      await pumpEdit(
+        tester,
+        profiles: profiles,
+        picker: _FakePicker(denied: true),
+      );
+      await tester.tap(find.text(K.changePhoto.tr()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(K.takePhoto.tr()));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(profiles.uploads, isEmpty);
+      expect(find.text(K.photoFailed.tr()), findsNothing);
+    });
+
+    testWidgets('지우면 묻고, 주소를 비우고 파일을 지운다', (tester) async {
+      final profiles = _StubProfiles(
+        stored: const TpProfile(
+          username: 'seungpyo',
+          photoUrl: 'https://example.test/old.jpg',
+        ),
+      );
+      await pumpEdit(tester, profiles: profiles);
+
+      await tester.tap(find.text(K.changePhoto.tr()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(K.removePhoto.tr()));
+      await tester.pumpAndSettle();
+      expect(find.text(K.removePhotoAsk.tr()), findsOneWidget);
+
+      await tester.tap(find.text(K.removePhoto.tr()).last);
+      await tester.pumpAndSettle();
+
+      expect(profiles.stored.photoUrl, isNull);
+      expect(profiles.stored.username, 'seungpyo');
+      expect(profiles.removed, <String>['u1']);
+      expect(find.text(K.photoRemoved.tr()), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+    });
+
+    testWidgets('Android 는 아바타를 누르면 바텀 시트', (tester) async {
+      await pumpEdit(
+        tester,
+        profiles: _StubProfiles(),
+        chrome: TpChrome.android,
+      );
+      await tester.tap(find.bySemanticsLabel(K.changePhoto.tr()));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(find.text(K.choosePhotoGallery.tr()), findsOneWidget);
+      expect(find.text(K.removePhoto.tr()), findsNothing);
     });
   });
 

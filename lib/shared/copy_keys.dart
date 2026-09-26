@@ -158,6 +158,18 @@ abstract final class K {
   static const String genderLabel = 'genderLabel';
   static const String changePhoto = 'changePhoto';
   static const String photoFailed = 'photoFailed';
+  // 프로필 사진 바꾸기. choosePhotoGallery 는 Android 시트의 문구.
+  static const String takePhoto = 'takePhoto';
+  static const String choosePhoto = 'choosePhoto';
+  static const String choosePhotoGallery = 'choosePhotoGallery';
+  static const String removePhoto = 'removePhoto';
+  static const String removePhotoAsk = 'removePhotoAsk';
+  static const String moveAndScale = 'moveAndScale';
+  static const String moveAndScaleHint = 'moveAndScaleHint';
+  static const String cropChoose = 'cropChoose';
+  static const String photoUploading = 'photoUploading';
+  static const String photoUpdated = 'photoUpdated';
+  static const String photoRemoved = 'photoRemoved';
   static const String profileSaved = 'profileSaved';
   static const String profileFailed = 'profileFailed';
   static const String save = 'save';
@@ -383,6 +395,7 @@ abstract final class K {
   static const String a11yIndex = 'a11yIndex';
   static const String a11yCompareCell = 'a11yCompareCell';
   static const String a11yWinner = 'a11yWinner';
+  static const String a11yPhotoUploading = 'a11yPhotoUploading';
 
   static String tab(TpTab tab) => switch (tab) {
     TpTab.today => tabToday,

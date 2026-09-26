@@ -130,7 +130,7 @@
   "passwordShort": "비밀번호는 6자 이상입니다.",
   "phoneLabel": "전화번호",
   "phones": "스마트폰",
-  "photoFailed": "사진을 올리지 못했습니다.",
+  "photoFailed": "사진을 올리지 못했어요.",
   "priorities": "중요하게 보는 것",
   "prioritiesNote": "가중치는 사용자의 것입니다. 바꾸면 모든 지수가 다시 계산됩니다.",
   "profileFailed": "저장하지 못했습니다. 연결을 확인하고 다시 시도하세요.",
@@ -340,5 +340,17 @@
   "aiEngineOnDeviceBody": "질문이 기기 밖으로 안 나감",
   "aiEngineCloudBody": "질문을 Gemini로 보냄",
   "deleteNote": "지우면 모든 기기에서 관심 목록·가중치·최근 검색이 사라져요.",
-  "emailConfirmed": "메일 확인됨"
+  "emailConfirmed": "메일 확인됨",
+  "takePhoto": "사진 찍기",
+  "choosePhoto": "사진 고르기",
+  "choosePhotoGallery": "사진 고르기",
+  "removePhoto": "사진 지우기",
+  "removePhotoAsk": "프로필 사진을 지울까요? 이름 첫 글자가 대신 보여요.",
+  "moveAndScale": "위치와 크기",
+  "moveAndScaleHint": "두 손가락으로 확대, 끌어서 이동",
+  "cropChoose": "선택",
+  "photoUploading": "올리는 중…",
+  "photoUpdated": "사진을 바꿨어요",
+  "photoRemoved": "사진을 지웠어요",
+  "a11yPhotoUploading": "올리는 중, {}퍼센트"
 }

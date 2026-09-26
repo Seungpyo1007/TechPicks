@@ -44,6 +44,8 @@ dependencies:
   flutter_gemma: ^1.5.9
   flutter_gemma_builtin_ai: ^0.1.0
   image_picker: ^1.2.3
+  # 프로필 사진 자르기. EXIF 회전을 굽고 512 JPEG 로 다시 굽는다.
+  image: ^4.2.0
   firebase_storage: ^13.4.6
   # preserve/remove 를 앱에서 부른다. 그래서 dev 가 아니라 여기 있다.
   flutter_native_splash: ^2.4.1
