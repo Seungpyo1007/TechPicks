@@ -514,6 +514,13 @@ class _DetailError extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 다시 연결되면 사용자가 누르기 전에 다시 받는다.
+    ref.listen<AsyncValue<bool>>(offlineProvider, (prev, next) {
+      if (prev?.value == true && next.value == false) {
+        ref.invalidate(deviceProvider(slug));
+      }
+    });
+
     // 연결 상태를 못 읽으면 지금까지대로 일반 실패다.
     final offline = ref.watch(offlineProvider).value ?? false;
     final unreachable = offline && error is NetworkFailure;
@@ -523,7 +530,8 @@ class _DetailError extends ConsumerWidget {
     return TpErrorState(
       title: unreachable ? K.offlineTitle.tr() : K.loadFailed.tr(),
       body: unreachable ? K.offlineBody.tr() : K.loadFailedBody.tr(),
-      onRetry: unreachable ? null : () => ref.invalidate(deviceProvider(slug)),
+      // 끊긴 채로도 누를 수 있다. 연결 표시가 틀릴 때가 있다.
+      onRetry: () => ref.invalidate(deviceProvider(slug)),
     );
   }
 }
