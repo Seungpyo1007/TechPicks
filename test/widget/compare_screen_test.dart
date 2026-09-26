@@ -1,4 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,6 +10,7 @@ import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 
 ProviderContainer? _container;
 
@@ -113,5 +116,31 @@ void main() {
       await _pump(tester, const CompareScreen(), chrome: chrome);
       expect(find.text('Compare'), findsWidgets);
     }
+  });
+
+  testWidgets('Android 선택 시트의 취소가 잘리지 않는다', (tester) async {
+    await _pump(tester, PickerScreen(onDone: () {}), chrome: TpChrome.android);
+
+    // 앱 바 leading 기본 폭 56 에 글자 버튼을 넣으면 "Cancel" 이 줄바꿈된다.
+    final label = tester.renderObject<RenderParagraph>(find.text('Cancel'));
+    expect(
+      label.size.width,
+      greaterThanOrEqualTo(label.getMaxIntrinsicWidth(double.infinity)),
+    );
+    expect(label.didExceedMaxLines, isFalse);
+    final cancel = tester.getRect(find.text('Cancel'));
+    final title = tester.getRect(find.text('Choose a device').first);
+    expect(cancel.right, lessThanOrEqualTo(title.left));
+  });
+
+  testWidgets('카탈로그에 없는 기기가 슬롯에 있으면 원인을 말한다', (tester) async {
+    await _pump(tester, const CompareScreen());
+    _container!
+        .read(compareProvider.notifier)
+        .pick(CompareSide.b, 'no-such-phone');
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.compareLinkMissing.tr()), findsOneWidget);
+    expect(find.text(K.chooseTwo.tr()), findsNothing);
   });
 }
