@@ -368,10 +368,29 @@ class TpPage extends StatelessWidget {
           )
         : (leading == null
               ? null
-              : TextButton(
-                  onPressed: leading!.onTap,
-                  child: Text(leading!.label),
+              : Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 4),
+                  child: TextButton(
+                    onPressed: leading!.onTap,
+                    child: Text(leading!.label),
+                  ),
                 ));
+    // 글자 버튼은 기본 자리 56 에 안 들어가 "Cancel" 이 잘린다. 글자 폭만큼 연다.
+    double? leadingWidth;
+    if (onBack == null && leading != null) {
+      final label = TextPainter(
+        text: TextSpan(
+          text: leading!.label,
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        textScaler: MediaQuery.textScalerOf(context),
+        textDirection: Directionality.of(context),
+        maxLines: 1,
+      )..layout();
+      // 버튼 최소 폭 64, 안쪽 12·12, 앞 4.
+      leadingWidth = math.max(64, label.width + 24) + 4;
+      label.dispose();
+    }
     Widget coach(TpBarAction a, Widget child) =>
         a.coach == null ? child : TpCoachTarget(id: a.coach!, child: child);
     final acts = <Widget>[
@@ -412,6 +431,7 @@ class TpPage extends StatelessWidget {
         pinned: true,
         title: Text(title),
         leading: back,
+        leadingWidth: leadingWidth,
         automaticallyImplyLeading: false,
         actions: acts,
       );
@@ -419,6 +439,7 @@ class TpPage extends StatelessWidget {
     return SliverAppBar.large(
       title: Text(title),
       leading: back,
+      leadingWidth: leadingWidth,
       automaticallyImplyLeading: false,
       actions: acts,
     );
