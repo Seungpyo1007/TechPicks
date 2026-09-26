@@ -109,6 +109,7 @@ final searchIndexProvider = Provider<List<SearchHit>>((ref) {
     phones: catalog?.smartphones ?? const <Smartphone>[],
     processors: catalog?.cpus ?? const <Cpu>[],
     laptops: laptops?.items ?? const <Laptop>[],
+    weights: ref.watch(weightsProvider),
   );
 });
 

@@ -1,6 +1,12 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod/misc.dart' show Override;
+import 'package:techpicks/app/providers.dart';
+import 'package:techpicks/data/repository/catalog_repository.dart';
+import 'package:techpicks/domain/model/tp_index.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/search_index.dart';
 import 'package:techpicks/feature/search/search_screen.dart';
@@ -12,6 +18,11 @@ import '../support/harness.dart';
 Future<void> _type(WidgetTester tester, String query) async {
   await tester.enterText(find.byType(EditableText), query);
   await tester.pumpAndSettle();
+}
+
+Future<void> _typeNoSettle(WidgetTester tester, String query) async {
+  await tester.enterText(find.byType(EditableText), query);
+  await tester.pump();
 }
 
 void main() {
@@ -50,6 +61,60 @@ void main() {
 
       expect(SearchIndex.filter(index, ''), isEmpty);
       expect(SearchIndex.filter(index, '   '), isEmpty);
+    });
+
+    test('이름이 질의로 시작하는 쪽이 먼저, 부제에만 걸린 쪽이 나중', () {
+      const index = <SearchHit>[
+        SearchHit(
+          kind: SearchKind.phone,
+          slug: 'a',
+          name: 'Nord Pro',
+          meta: 'Galaxy chip',
+        ),
+        SearchHit(
+          kind: SearchKind.phone,
+          slug: 'b',
+          name: 'Big Galaxy',
+          index: 90,
+        ),
+        SearchHit(
+          kind: SearchKind.phone,
+          slug: 'c',
+          name: 'Galaxy S',
+          index: 70,
+        ),
+        SearchHit(
+          kind: SearchKind.phone,
+          slug: 'd',
+          name: 'Galaxy S Ultra',
+          index: 80,
+        ),
+      ];
+
+      expect(SearchIndex.filter(index, 'galaxy').map((h) => h.slug), <String>[
+        'd',
+        'c',
+        'b',
+        'a',
+      ]);
+      // 이름이 딱 맞으면 맨 위.
+      expect(SearchIndex.filter(index, 'galaxy s').first.slug, 'c');
+    });
+
+    test('폰은 TP Index 를, 노트북은 숫자 없이', () {
+      final catalog = readCatalog();
+      final index = SearchIndex.of(
+        phones: catalog.smartphones,
+        laptops: readLaptops().items,
+      );
+      expect(
+        index.where((h) => h.kind == SearchKind.phone && h.index != null),
+        isNotEmpty,
+      );
+      expect(
+        index.where((h) => h.kind == SearchKind.laptop && h.index != null),
+        isEmpty,
+      );
     });
 
     test('이름과 부제 어느 쪽에 걸려도 남는다', () {
@@ -176,6 +241,66 @@ void main() {
       // 예시 줄은 사라지고 결과 그룹이 뜬다.
       expect(find.text(K.searchTry.tr()), findsNothing);
       expect(find.textContaining('Galaxy S26'), findsWidgets);
+    });
+
+    testWidgets('결과 행에 지수가 있다', (tester) async {
+      await pumpScreen(
+        tester,
+        const SearchScreen(),
+        size: const Size(402, 2400),
+      );
+      final phone = readCatalog().smartphones.firstWhere(
+        (p) => TpIndex.of(p.score) != null,
+      );
+      await _type(tester, phone.name);
+
+      final row = tester.widget<TpRow>(
+        find
+            .ancestor(of: find.text(phone.name), matching: find.byType(TpRow))
+            .first,
+      );
+      expect(row.value, '${TpIndex.of(phone.score)}');
+    });
+
+    testWidgets('최근은 지울 수 있다', (tester) async {
+      await pumpScreen(
+        tester,
+        SearchScreen(onHit: (_) {}),
+        size: const Size(402, 2400),
+      );
+      final phone = readCatalog().smartphones.first;
+      await _type(tester, phone.name);
+      await tester.tap(
+        find
+            .ancestor(of: find.text(phone.name), matching: find.byType(TpRow))
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await _type(tester, '');
+      expect(find.text(K.recent.tr()), findsOneWidget);
+
+      await tester.tap(find.text(K.recentClear.tr()));
+      await tester.pumpAndSettle();
+      expect(find.text(K.recent.tr()), findsNothing);
+    });
+
+    testWidgets('카탈로그를 읽는 동안은 0 이나 없음 대신 불러오는 중', (tester) async {
+      await pumpScreenNoSettle(
+        tester,
+        const SearchScreen(),
+        overrides: <Override>[
+          catalogProvider.overrideWith((ref) => Completer<Catalog>().future),
+        ],
+      );
+      await tester.pump();
+
+      expect(find.text(K.searchLoading.tr()), findsOneWidget);
+      expect(find.text(K.searchTry.tr()), findsNothing);
+      expect(find.text('0'), findsNothing);
+
+      await _typeNoSettle(tester, 'galaxy');
+      expect(find.text(K.noMatches.tr()), findsNothing);
+      expect(find.text(K.searchLoading.tr()), findsOneWidget);
     });
 
     testWidgets('두 크롬 모두에서 그려진다', (tester) async {
