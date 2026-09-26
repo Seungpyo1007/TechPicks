@@ -90,7 +90,7 @@ void main() {
   testWidgets('picker 는 지수와 가격을 같이 보여준다', (tester) async {
     await _pump(tester, const PickerScreen());
     expect(find.text('Choose a device'), findsOneWidget);
-    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.bySemanticsLabel('Cancel'), findsOneWidget);
     // 목록 첫 기기의 가격이 통화 형태로 붙는다.
     expect(
       find.text(DeviceSpecs.formatPrice(readRanking().first.device.msrpUsd)),

@@ -52,6 +52,7 @@ class _PickerScreenState extends ConsumerState<PickerScreen> {
       largeTitle: false,
       leading: TpBarAction(
         label: K.cancel.tr(),
+        role: TpBarRole.close,
         text: true,
         onTap: widget.onDone,
       ),

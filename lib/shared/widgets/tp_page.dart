@@ -81,12 +81,16 @@ class TpTopBar extends StatelessWidget {
   );
 }
 
+/// 시트 위 버튼의 몫. iOS 26 은 글자 대신 X 와 체크 원으로 그린다.
+enum TpBarRole { none, close, confirm }
+
 /// 툴바 버튼 하나.
 class TpBarAction {
   const TpBarAction({
     required this.label,
     this.icon,
     this.onTap,
+    this.role = TpBarRole.none,
     this.text = false,
     this.filled = false,
     this.child,
@@ -100,6 +104,9 @@ class TpBarAction {
   final String label;
   final IconData? icon;
   final VoidCallback? onTap;
+
+  /// 닫기(취소)·확인(완료·저장). iOS 는 X / 액센트 체크 원, Android 는 글자.
+  final TpBarRole role;
 
   /// 아이콘 대신 글자 캡슐("완료", "취소").
   final bool text;
@@ -700,7 +707,47 @@ class TpBarButton extends StatelessWidget {
 
   Widget _build(BuildContext context) {
     final sys = context.sys;
-    final a = action;
+    var a = action;
+    // iOS 26 시트: "취소"는 X, "완료·저장"은 액센트 체크 원.
+    if (context.tp.isGlass && a.role == TpBarRole.close) {
+      a = TpBarAction(
+        label: a.label,
+        icon: CupertinoIcons.xmark,
+        symbol: 'xmark',
+        onTap: a.onTap,
+        coach: a.coach,
+      );
+    } else if (context.tp.isGlass && a.role == TpBarRole.confirm) {
+      final enabled = a.onTap != null;
+      return Semantics(
+        button: true,
+        enabled: enabled,
+        label: a.label,
+        excludeSemantics: true,
+        onTap: a.onTap,
+        child: TpTappable(
+          onTap: a.onTap,
+          press: true,
+          child: AnimatedOpacity(
+            opacity: enabled ? 1 : .4,
+            duration: context.motion.press.duration,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(
+                color: TpSys.accent,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                CupertinoIcons.checkmark,
+                size: 20,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     // iOS 26: 아이콘 버튼은 시스템 유리 버튼. 누르면 OS 가 유리를 눌러 준다 —
     // Flutter 가 플랫폼 뷰를 줄이는 것으로는 눌린 게 안 보였다.
     if (TpNativeGlass.enabled &&
