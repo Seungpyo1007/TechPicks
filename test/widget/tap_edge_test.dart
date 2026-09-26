@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
-import 'package:techpicks/feature/login/login_sheet.dart';
+import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
@@ -86,7 +86,7 @@ void main() {
   });
 
   testWidgets('로그인 버튼', (tester) async {
-    await pumpScreen(tester, const LoginSheet());
+    await pumpScreen(tester, const LoginScreen());
 
     // 글자 밖, 버튼 왼쪽 끝 가까이를 눌러도 이메일 단계로 넘어간다.
     final label = tester.getRect(find.text(K.continueEmail.tr()));

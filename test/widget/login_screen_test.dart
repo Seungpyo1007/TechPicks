@@ -7,7 +7,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/service/auth_service.dart';
-import 'package:techpicks/feature/login/login_sheet.dart';
+import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
 import '../support/fake_auth.dart';
@@ -20,7 +20,7 @@ Future<void> _pump(
   TpChrome chrome = TpChrome.ios,
 }) => pumpScreen(
   tester,
-  LoginSheet(onClose: () {}, onSignedIn: onSignedIn),
+  LoginScreen(onClose: () {}, onSignedIn: onSignedIn),
   chrome: chrome,
   size: const Size(1200, 2000),
   overrides: <Override>[authServiceProvider.overrideWithValue(auth)],
@@ -113,15 +113,15 @@ void main() {
 
   group('입력 검사', () {
     test('이메일 형태만 통과시킨다', () {
-      expect(LoginSheet.looksLikeEmail('a@b.com'), isTrue);
-      expect(LoginSheet.looksLikeEmail('  a@b.co.kr '), isTrue);
+      expect(LoginScreen.looksLikeEmail('a@b.com'), isTrue);
+      expect(LoginScreen.looksLikeEmail('  a@b.co.kr '), isTrue);
 
-      expect(LoginSheet.looksLikeEmail('a@b'), isFalse);
-      expect(LoginSheet.looksLikeEmail('@b.com'), isFalse);
-      expect(LoginSheet.looksLikeEmail('a@'), isFalse);
-      expect(LoginSheet.looksLikeEmail('a b@c.com'), isFalse);
-      expect(LoginSheet.looksLikeEmail('a@.com'), isFalse);
-      expect(LoginSheet.looksLikeEmail(''), isFalse);
+      expect(LoginScreen.looksLikeEmail('a@b'), isFalse);
+      expect(LoginScreen.looksLikeEmail('@b.com'), isFalse);
+      expect(LoginScreen.looksLikeEmail('a@'), isFalse);
+      expect(LoginScreen.looksLikeEmail('a b@c.com'), isFalse);
+      expect(LoginScreen.looksLikeEmail('a@.com'), isFalse);
+      expect(LoginScreen.looksLikeEmail(''), isFalse);
     });
 
     // 빈 칸에 "형식이 아닙니다"는 고장 난 것처럼 읽힌다.
@@ -179,7 +179,7 @@ void main() {
       expect(find.text(K.signedIn.tr()), findsOneWidget);
       expect(signedIn, isFalse);
 
-      await tester.pump(LoginSheet.doneHold);
+      await tester.pump(LoginScreen.doneHold);
       expect(signedIn, isTrue);
       await tester.pumpAndSettle();
     });

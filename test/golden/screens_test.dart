@@ -13,7 +13,7 @@ import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/feature/cpu/processor_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
-import 'package:techpicks/feature/login/login_sheet.dart';
+import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
@@ -171,7 +171,7 @@ void main() {
   goldenScenario('login_email', '로그인 · 이메일', (tester, chrome) async {
     await pumpScreen(
       tester,
-      LoginSheet(onClose: () {}),
+      LoginScreen(onClose: () {}),
       chrome: chrome,
       size: frameOf(chrome),
       overrides: <Override>[authServiceProvider.overrideWithValue(_StubAuth())],
@@ -183,7 +183,7 @@ void main() {
   goldenScenario('login', '로그인', (tester, chrome) async {
     await pumpScreen(
       tester,
-      LoginSheet(onClose: () {}),
+      LoginScreen(onClose: () {}),
       chrome: chrome,
       size: frameOf(chrome),
       overrides: <Override>[authServiceProvider.overrideWithValue(_StubAuth())],

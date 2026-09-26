@@ -15,7 +15,7 @@ import '../feature/cpu/processor_screen.dart';
 import '../domain/model/processor.dart';
 import '../feature/detail/detail_screen.dart';
 import '../feature/home/home_screen.dart';
-import '../feature/login/login_sheet.dart';
+import '../feature/login/login_screen.dart';
 import '../feature/onboarding/onboarding_screen.dart';
 import '../feature/rank/rank_category.dart';
 import '../feature/rank/rank_tab.dart';
@@ -117,19 +117,26 @@ GoRouter buildRouter(Ref ref) {
         builder: (context, state) =>
             OnboardingScreen(onSignIn: () => context.go(TpRoute.login)),
       ),
-      // 로그인 시트. 어디서 열든 닫으면 그 자리로 돌아간다.
+      // 로그인. 전체 화면 모달, 아래에서 올라오고 X 로 닫는다. 어디서 열든
+      // 닫으면 그 자리로 돌아간다(온보딩에서 왔으면 오늘로).
       GoRoute(
         path: TpRoute.login,
-        pageBuilder: (context, state) => _sheet(
-          context,
-          state,
-          LoginSheet(
-            onClose: () =>
-                context.canPop() ? context.pop() : context.go(TpRoute.home),
-            onSignedIn: () =>
-                context.canPop() ? context.pop() : context.go(TpRoute.home),
-          ),
-        ),
+        pageBuilder: (context, state) {
+          void back() =>
+              context.canPop() ? context.pop() : context.go(TpRoute.home);
+          final child = LoginScreen(onClose: back, onSignedIn: back);
+          return context.tp.isGlass
+              ? CupertinoPage<void>(
+                  key: state.pageKey,
+                  fullscreenDialog: true,
+                  child: child,
+                )
+              : MaterialPage<void>(
+                  key: state.pageKey,
+                  fullscreenDialog: true,
+                  child: child,
+                );
+        },
         routes: <RouteBase>[
           // 예전 주소.
           GoRoute(path: 'email', redirect: (_, _) => TpRoute.login),
