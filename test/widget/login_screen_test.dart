@@ -47,6 +47,10 @@ Future<void> _submit(WidgetTester tester, String key) async {
   await tester.pumpAndSettle();
 }
 
+final Finder _appleLogo = find.byWidgetPredicate(
+  (w) => w is CustomPaint && w.painter is AppleLogoPainter,
+);
+
 void main() {
   setUp(initLocalization);
 
@@ -57,7 +61,7 @@ void main() {
       await _pump(tester, FakeAuthService());
 
       expect(find.text(K.loginTitle.tr()), findsOneWidget);
-      final apple = tester.getTopLeft(find.byType(SignInWithAppleButton)).dy;
+      final apple = tester.getTopLeft(find.text(K.continueApple.tr())).dy;
       final google = tester.getTopLeft(find.text(K.continueGoogle.tr())).dy;
       final email = tester.getTopLeft(find.text(K.continueEmail.tr())).dy;
       expect(apple, lessThan(google));
@@ -69,7 +73,7 @@ void main() {
     testWidgets('Android 는 Apple 이 없고, 설정 전엔 Google 도 숨는다', (tester) async {
       await _pump(tester, FakeAuthService(), chrome: TpChrome.android);
 
-      expect(find.byType(SignInWithAppleButton), findsNothing);
+      expect(find.text(K.continueApple.tr()), findsNothing);
       expect(find.text(K.continueGoogle.tr()), findsNothing);
       expect(find.text(K.continueEmail.tr()), findsOneWidget);
     });
@@ -106,11 +110,11 @@ void main() {
       final auth = _HangingAuth();
       await _pump(tester, auth);
 
-      await tester.tap(find.byType(SignInWithAppleButton));
+      await tester.tap(find.text(K.continueApple.tr()));
       await tester.pump();
 
       expect(auth.signIns, <AuthMethod>[AuthMethod.apple]);
-      expect(find.byType(SignInWithAppleButton), findsNothing);
+      expect(_appleLogo, findsNothing);
       expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
       await tester.tap(find.text(K.continueGoogle.tr()));
       await tester.pump();
@@ -118,7 +122,23 @@ void main() {
 
       auth.finish(const AuthResult.failed(AuthFailure.canceled));
       await tester.pumpAndSettle();
-      expect(find.byType(SignInWithAppleButton), findsOneWidget);
+      expect(_appleLogo, findsOneWidget);
+    });
+
+    testWidgets('Apple 로고와 글자는 Google 과 같은 크기', (tester) async {
+      await _pump(tester, FakeAuthService());
+
+      final apple = tester.getSize(_appleLogo);
+      final google = tester.getSize(
+        find.image(const AssetImage('assets/logo/google_logo.png')),
+      );
+      expect(apple.height, google.height);
+      TextStyle? styleOf(String text) =>
+          tester.widget<Text>(find.text(text)).style;
+      expect(
+        styleOf(K.continueApple.tr())?.fontSize,
+        styleOf(K.continueGoogle.tr())?.fontSize,
+      );
     });
 
     test('오류마다 문장이 있다, 취소만 빼고', () {
