@@ -35,7 +35,15 @@ void main() {
     return tester.getRect(find.byType(TpBarButton).first);
   }
 
-  testWidgets('왼쪽 위 버튼은 로그인 X 와 같은 자리', (tester) async {
+  testWidgets('Apple 표준 자리: 안전 영역 바로 아래, 왼쪽 20', (tester) async {
+    // iOS 26 시스템 앱(설정·미리 알림)의 뒤로 버튼: (20, 안전 영역, 44, 44).
+    final login = await firstButton(tester, LoginScreen(onClose: () {}));
+    expect(login.top, moreOrLessEquals(tpPhonePadding.top, epsilon: .5));
+    expect(login.left, moreOrLessEquals(20, epsilon: .5));
+    expect(login.height, moreOrLessEquals(44, epsilon: .5));
+  });
+
+  testWidgets('왼쪽 위 버튼은 화면마다 같은 자리', (tester) async {
     final login = await firstButton(tester, LoginScreen(onClose: () {}));
 
     final screens = <String, Widget>{
@@ -57,7 +65,7 @@ void main() {
     final skip = await firstButton(tester, const OnboardingScreen());
 
     expect(skip.center.dy, moreOrLessEquals(login.center.dy, epsilon: .5));
-    expect(skip.right, moreOrLessEquals(size.width - 16, epsilon: .5));
+    expect(skip.right, moreOrLessEquals(size.width - 20, epsilon: .5));
   });
 
   testWidgets('3D 뷰어 X 도 같은 자리', (tester) async {

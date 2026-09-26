@@ -20,11 +20,16 @@ import '../coach/tp_coach.dart';
 import 'tp_arrive.dart';
 import 'tp_surface.dart';
 
-/// 화면 맨 위 버튼 줄. **모든 화면이 같은 자리**다: 안전 영역 바로 아래
-/// [height] 줄, 좌우 [side], 44pt 버튼이 세로 가운데. 로그인 화면의 X 가 기준.
+/// 화면 맨 위 버튼 줄. **Apple 표준 그대로**다(iOS 26 UINavigationBar 를
+/// 시뮬레이터에서 잰 값 — 설정·미리 알림·파일·연락처):
 ///
-/// 한동안 화면마다 달랐다 — 큰 제목 화면 +0.5, 작은 제목 +8, 3D 뷰어·질문 +8,
-/// 온보딩 +14. 넘나들 때 버튼이 들썩였다.
+/// - 바 높이 [height] 54, 안전 영역 바로 아래에서 시작.
+/// - 버튼 줄은 바 맨 위 44pt([row]). 버튼 가운데가 안전 영역 +22.
+/// - 좌우 여백 [side] 20. 뒤로 버튼 (20, 안전 영역, 44, 44).
+/// - 큰 제목은 바 아래 +4 에서 시작(안전 영역 +58), x 20.
+///
+/// 한동안 화면마다 달랐고, 그다음엔 로그인 X 에 맞췄다(+26, 16). 둘 다
+/// 시스템 앱과 나란히 두면 버튼이 4pt 낮고 안쪽이었다.
 class TpTopBar extends StatelessWidget {
   const TpTopBar({
     super.key,
@@ -34,8 +39,9 @@ class TpTopBar extends StatelessWidget {
     this.safeTop = true,
   });
 
-  static const double height = 52;
-  static const double side = 16;
+  static const double height = 54;
+  static const double row = 44;
+  static const double side = 20;
 
   final Widget? leading;
   final Widget? middle;
@@ -51,13 +57,19 @@ class TpTopBar extends StatelessWidget {
     ),
     child: SizedBox(
       height: height,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: side),
-        child: NavigationToolbar(
-          leading: leading,
-          middle: middle,
-          trailing: trailing,
-          middleSpacing: 12,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: SizedBox(
+          height: row,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: side),
+            child: NavigationToolbar(
+              leading: leading,
+              middle: middle,
+              trailing: trailing,
+              middleSpacing: 12,
+            ),
+          ),
         ),
       ),
     ),
@@ -195,7 +207,7 @@ class TpPage extends StatelessWidget {
         if (subtitle != null)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              padding: const EdgeInsets.fromLTRB(TpTopBar.side, 0, 16, 4),
               child: Text(
                 subtitle!,
                 style: TextStyle(fontSize: 15, height: 1.33, color: sys.label2),
@@ -323,7 +335,8 @@ class TpPage extends StatelessWidget {
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+            // Apple 큰 제목: 바 아래 +4, 왼쪽 20.
+            padding: const EdgeInsets.fromLTRB(TpTopBar.side, 4, 16, 8),
             child: Semantics(
               header: true,
               child: Text(
