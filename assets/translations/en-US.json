@@ -54,6 +54,7 @@
   "cmpTitle": "Compare",
   "compareAll": "Compare all",
   "compareB": "Compare",
+  "compareLinkMissing": "One device in this link isn’t in the list.",
   "cpuLaptop": "Laptop",
   "cpuMobile": "Mobile",
   "cpuNote": "Index is a TechPicks composite of sustained performance, efficiency and thermals.",

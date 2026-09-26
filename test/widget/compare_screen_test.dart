@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +9,7 @@ import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 
 ProviderContainer? _container;
 
@@ -113,5 +115,16 @@ void main() {
       await _pump(tester, const CompareScreen(), chrome: chrome);
       expect(find.text('Compare'), findsWidgets);
     }
+  });
+
+  testWidgets('카탈로그에 없는 기기가 슬롯에 있으면 원인을 말한다', (tester) async {
+    await _pump(tester, const CompareScreen());
+    _container!
+        .read(compareProvider.notifier)
+        .pick(CompareSide.b, 'no-such-phone');
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.compareLinkMissing.tr()), findsOneWidget);
+    expect(find.text(K.chooseTwo.tr()), findsNothing);
   });
 }
