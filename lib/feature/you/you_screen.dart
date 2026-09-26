@@ -519,13 +519,24 @@ class _YourDevice extends ConsumerWidget {
 }
 
 /// 기기 안 AI 를 못 쓰는 이유를 한 줄로. 쓸 수 있으면 null.
-String? _onDeviceNote(BuiltInAiAvailability? status) => switch (status) {
-  null ||
-  BuiltInAiAvailability.available ||
-  BuiltInAiAvailability.downloadable ||
-  BuiltInAiAvailability.downloading => null,
-  BuiltInAiAvailability.unavailableDisabled => K.aiEngineDisabled,
-  _ => K.aiEngineUnavailable,
+///
+/// Android 에는 Apple Intelligence 가 없다. 꺼져 있어도 못 돌린다고만 쓴다.
+String? _onDeviceNote(BuiltInAiAvailability? status, {bool apple = true}) =>
+    switch (status) {
+      null ||
+      BuiltInAiAvailability.available ||
+      BuiltInAiAvailability.downloadable ||
+      BuiltInAiAvailability.downloading => null,
+      BuiltInAiAvailability.unavailableDisabled when apple =>
+        K.aiEngineDisabled,
+      _ => K.aiEngineUnavailable,
+    };
+
+/// 선택지 아래 한 줄. 무엇이 어디로 가는지.
+String _aiEngineBody(TpAiEngine engine) => switch (engine) {
+  TpAiEngine.auto => K.aiEngineAutoBody,
+  TpAiEngine.onDevice => K.aiEngineOnDeviceBody,
+  TpAiEngine.cloud => K.aiEngineCloudBody,
 };
 
 String _themeLabel(ThemeMode mode) => switch (mode) {
@@ -555,7 +566,7 @@ class _AiEnginePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final current = ref.watch(aiEngineProvider);
-    final note = _onDeviceNote(status);
+    final note = _onDeviceNote(status, apple: context.tp.isGlass);
     return TpPage(
       title: K.aiEngine.tr(),
       largeTitle: false,
@@ -570,6 +581,7 @@ class _AiEnginePage extends ConsumerWidget {
                 for (final option in TpAiEngine.values)
                   TpRow(
                     title: option.key.tr(),
+                    subtitle: _aiEngineBody(option).tr(),
                     checked: option == current,
                     dimmed: option == TpAiEngine.onDevice && note != null,
                     chevron: false,
