@@ -57,3 +57,13 @@ docs/
 # 같은 것이라 공유할 내용이 없는데, third_party/native_liquid_glass 안에
 # 들어 있어서 열 때마다 작업 트리가 더러워졌다.
 **/xcuserdata/
+
+# Flutter 가 빌드마다 다시 쓰는 플러그인 목록. 기기마다 경로가 달라 늘 바뀐다.
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# 테스트 커버리지 결과물.
+coverage/
+
+# Firebase Hosting 배포 캐시.
+.firebase/
