@@ -504,6 +504,51 @@ img { max-width: 100%; height: auto; }
 .login-dots > i { width: 6px; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 .login-dots > i[data-active="true"] { background: var(--color-accent); }
 
+/* ── 로그인 폼 · 계정 ───────────────────────────────────── */
+.login-form-fields { display: flex; flex-direction: column; gap: 18px; max-width: 420px; width: 100%; }
+.login-form-fields h2 { margin: 0; font-size: 27px; line-height: 1.25; letter-spacing: -.02em; }
+.login-lead { margin: -8px 0 0; font-size: 13px; }
+.login-actions { display: flex; flex-direction: column; gap: 10px; }
+.login-links { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.login-or { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--color-muted); }
+.login-or::before, .login-or::after { content: ""; flex: 1; height: 1px; background: var(--color-divider); }
+.login-social { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.login-social[data-count="2"] { grid-template-columns: 1fr 1fr; }
+.login-legal { margin: 0; text-align: center; }
+.login-error, .login-notice { margin: 0; font-size: 13px; line-height: 1.45; }
+.login-error { color: #c4323a; }
+.login-notice { color: var(--color-accent-ink); }
+:root[data-theme="dark"] .login-error { color: #ff8a8f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .login-error { color: #ff8a8f; } }
+
+.link-button {
+  background: none; border: 0; padding: 4px 0; cursor: pointer;
+  font: inherit; font-size: 13px; color: var(--color-accent-ink);
+}
+.link-button:hover { text-decoration: underline; }
+.link-button:disabled { opacity: .5; cursor: default; }
+.link-danger { color: #c4323a; }
+.btn-danger { background: #c4323a; color: #fff; }
+.btn-danger:hover { background: #a82830; color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+
+.account-warn {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 14px; font-size: 13px;
+  background: color-mix(in srgb, #ff9500 14%, var(--color-bg));
+}
+.account-inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.account-inline .input { flex: 1; min-width: 180px; }
+.account-danger { border-top: 1px solid var(--color-divider); padding-top: 12px; margin-top: 4px; }
+
+/* ── 약관 · 개인정보 ───────────────────────────────────── */
+.legal { max-width: 720px; margin: 0 auto; padding: 40px 16px 80px; line-height: 1.7; }
+.legal h1 { font-size: 30px; line-height: 1.25; margin: 28px 0 4px; }
+.legal h2 { font-size: 19px; margin: 32px 0 8px; }
+.legal ul { padding-left: 20px; }
+.legal hr { border: 0; border-top: 1px solid var(--color-divider); margin: 56px 0 8px; }
+.legal-foot { margin-top: 48px; }
+
 /* ── 상태 ──────────────────────────────────────────────── */
 .empty {
   min-height: 220px; display: grid; place-content: center; gap: 8px; text-align: center;

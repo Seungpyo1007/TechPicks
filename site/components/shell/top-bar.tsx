@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AccountAvatar } from "@/components/auth/account-avatar";
 import { SearchBox, type SearchEntry } from "@/components/shell/search-box";
 import { SyncButton } from "@/components/shell/sync-button";
 import { screenTitle } from "@/lib/nav";
@@ -25,9 +26,7 @@ export function TopBar({ entries }: { entries: SearchEntry[] }) {
           비교
         </Link>
         <SyncButton />
-        <Link className="avatar" href="/profile" aria-label="프로필">
-          SP
-        </Link>
+        <AccountAvatar />
       </div>
     </header>
   );
