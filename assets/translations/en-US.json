@@ -172,6 +172,8 @@
   "continueGoogle": "Continue with Google",
   "continueEmail": "Continue with email",
   "legalLine": "By continuing you agree to the Terms and the Privacy Policy.",
+  "terms": "Terms of Use",
+  "privacy": "Privacy Policy",
   "forgotPw": "Forgot password?",
   "resetTitle": "Reset password",
   "resetBody": "We'll email you a link to set a new password.",

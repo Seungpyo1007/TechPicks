@@ -356,9 +356,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     BuiltInAiAvailability? status,
   ) => Navigator.of(context).push(
     context.tp.isGlass
-        ? MaterialPageRoute<void>(
-            builder: (_) => _AiEnginePage(status: status),
-          )
+        ? MaterialPageRoute<void>(builder: (_) => _AiEnginePage(status: status))
         : MaterialPageRoute<void>(
             builder: (_) => _AiEnginePage(status: status),
           ),
@@ -677,6 +675,30 @@ class _AboutPageState extends ConsumerState<_AboutPage> {
                     ),
                   ],
                 ),
+                TpGroup(
+                  m3: true,
+                  children: <Widget>[
+                    _SettingRow(
+                      label: K.terms.tr(),
+                      leading: TpIconTile(
+                        icon: icon(CupertinoIcons.doc_plaintext, Icons.gavel),
+                        color: const Color(0xFF8E8E93),
+                      ),
+                      onTap: () => unawaited(_open(TpUrls.terms)),
+                    ),
+                    _SettingRow(
+                      label: K.privacy.tr(),
+                      leading: TpIconTile(
+                        icon: icon(
+                          CupertinoIcons.hand_raised_fill,
+                          Icons.shield,
+                        ),
+                        color: const Color(0xFF007AFF),
+                      ),
+                      onTap: () => unawaited(_open(TpUrls.privacy)),
+                    ),
+                  ],
+                ),
                 Center(
                   child: _Link(
                     label: YouScreen.versionLine,
@@ -713,9 +735,11 @@ class _AboutPageState extends ConsumerState<_AboutPage> {
           ),
   );
 
-  Future<void> _openLicense() async {
+  Future<void> _openLicense() => _open(TpUrls.appLicense);
+
+  Future<void> _open(Uri url) async {
     try {
-      await ref.read(linkOpenerProvider).open(TpUrls.appLicense);
+      await ref.read(linkOpenerProvider).open(url);
     } catch (e, s) {
       TpErrors.record(e, s, reason: 'link.open');
     }

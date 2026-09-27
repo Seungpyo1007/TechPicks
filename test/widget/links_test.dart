@@ -7,6 +7,7 @@ import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/service/link_opener.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
+import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/you/sources_screen.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
@@ -145,6 +146,28 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(stub.opened, <Uri>[TpUrls.appLicense]);
+    });
+
+    testWidgets('약관과 개인정보 처리방침이 열린다', (tester) async {
+      // 앱스토어 심사가 앱 안에서 개인정보 처리방침에 닿기를 요구한다.
+      final stub = await _pump(tester, const YouScreen());
+      await openAbout(tester);
+
+      await tester.tap(find.text(K.terms.tr()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(K.privacy.tr()));
+      await tester.pumpAndSettle();
+
+      expect(stub.opened, <Uri>[TpUrls.terms, TpUrls.privacy]);
+    });
+
+    testWidgets('로그인 화면에서도 약관이 열린다', (tester) async {
+      final stub = await _pump(tester, const LoginScreen());
+
+      await tester.tap(find.text(K.privacy.tr()));
+      await tester.pumpAndSettle();
+
+      expect(stub.opened, <Uri>[TpUrls.privacy]);
     });
 
     testWidgets('명세의 푸터 문구는 그대로다', (tester) async {
