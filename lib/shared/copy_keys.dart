@@ -320,6 +320,8 @@ abstract final class K {
   static const String continueGoogle = 'continueGoogle';
   static const String continueEmail = 'continueEmail';
   static const String legalLine = 'legalLine';
+  static const String terms = 'terms';
+  static const String privacy = 'privacy';
   static const String forgotPw = 'forgotPw';
   static const String resetTitle = 'resetTitle';
   static const String resetBody = 'resetBody';

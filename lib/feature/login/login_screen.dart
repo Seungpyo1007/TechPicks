@@ -12,7 +12,9 @@ import '../../app/providers.dart';
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
+import '../../core/error_reporter.dart';
 import '../../data/service/auth_service.dart';
+import '../../data/service/link_opener.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/tp_haptics.dart';
 import '../../shared/figures/tp_figure.dart';
@@ -345,6 +347,21 @@ class _OptionsStepState extends ConsumerState<_OptionsStep> {
                                 color: sys.label2,
                               ),
                             ),
+                            _LegalLinks(
+                              open: (url) => unawaited(
+                                ref
+                                    .read(linkOpenerProvider)
+                                    .open(url)
+                                    .catchError((Object e, StackTrace s) {
+                                      TpErrors.record(
+                                        e,
+                                        s,
+                                        reason: 'link.open',
+                                      );
+                                      return false;
+                                    }),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -494,6 +511,43 @@ class _GoogleButton extends StatelessWidget {
       excludeSemantics: true,
       onTap: onTap,
       child: TpTappable(onTap: onTap, press: true, child: face),
+    );
+  }
+}
+
+/// 약관 두 개. 한 줄 문구 안의 글자보다 누르기 쉽게 따로 둔다.
+class _LegalLinks extends StatelessWidget {
+  const _LegalLinks({required this.open});
+
+  final ValueChanged<Uri> open;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+      fontSize: 12,
+      height: 1.4,
+      fontWeight: FontWeight.w600,
+      color: context.sys.label2,
+    );
+    Widget link(String label, Uri url) => Semantics(
+      link: true,
+      child: TpTappable(
+        onTap: () => open(url),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          child: Text(label, style: style),
+        ),
+      ),
+    );
+    // 글자를 키우면 두 줄로 내려간다.
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: <Widget>[
+        link(K.terms.tr(), TpUrls.terms),
+        Text('·', style: style),
+        link(K.privacy.tr(), TpUrls.privacy),
+      ],
     );
   }
 }

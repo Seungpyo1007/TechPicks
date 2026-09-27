@@ -172,6 +172,8 @@
   "continueGoogle": "Google로 계속",
   "continueEmail": "이메일로 계속",
   "legalLine": "계속하면 이용약관과 개인정보 처리방침에 동의합니다.",
+  "terms": "이용약관",
+  "privacy": "개인정보 처리방침",
   "forgotPw": "비밀번호를 잊으셨나요?",
   "resetTitle": "비밀번호 재설정",
   "resetBody": "새 비밀번호를 정할 링크를 메일로 보내 드립니다.",

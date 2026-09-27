@@ -33,4 +33,10 @@ abstract final class TpUrls {
   /// 카탈로그의 원본. CC-BY-SA 는 귀속이 "출처를 적는 것"에서 끝나지 않고
   /// 원본에 닿을 수 있어야 한다 — 라이선스 본문과 이 주소가 한 쌍이다.
   static final Uri techApi = Uri.parse('https://github.com/GetTechAPI/TechAPI');
+
+  /// 이용약관과 개인정보 처리방침. 웹 사이트(`site/`, Vercel)에 있다.
+  static final Uri terms = Uri.parse('https://techpicks-mu.vercel.app/terms');
+  static final Uri privacy = Uri.parse(
+    'https://techpicks-mu.vercel.app/privacy',
+  );
 }
