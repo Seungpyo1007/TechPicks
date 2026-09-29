@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
 import 'theme/tp_motion.dart';
@@ -27,6 +28,19 @@ class TpLaunch extends StatefulWidget {
 
   /// 네이티브 스플래시의 로고 크기. `LaunchImage@3x.png` 375px ÷ 3.
   static const double logoSize = 125;
+
+  /// 네이티브 스플래시와 같은 로고(pubspec 의 flutter_native_splash).
+  ///
+  /// 스플래시는 크롬이 아니라 진짜 OS 와 시스템 다크 모드를 따른다. iOS 는
+  /// 유리 아이콘, Android 는 M3 적응형 아이콘 모양이다.
+  static String logoFor(TargetPlatform platform, Brightness brightness) {
+    final dark = brightness == Brightness.dark;
+    return platform == TargetPlatform.android
+        ? (dark
+              ? 'assets/logo/logo_android_dark.png'
+              : 'assets/logo/logo_android.png')
+        : (dark ? 'assets/logo/logo_dark.png' : 'assets/logo/logo.png');
+  }
 
   /// 로고가 열리는 시간.
   ///
@@ -132,10 +146,13 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
             );
           },
           child: Image.asset(
-            'assets/logo/logo.png',
+            TpLaunch.logoFor(
+              defaultTargetPlatform,
+              MediaQuery.platformBrightnessOf(context),
+            ),
             width: TpLaunch.logoSize,
             height: TpLaunch.logoSize,
-            // 로고 자체가 둥근 사각형이라 여기서 또 깎지 않는다.
+            // 로고 자체가 둥근 사각형(Android 는 원)이라 여기서 또 깎지 않는다.
             filterQuality: FilterQuality.medium,
           ),
         ),
