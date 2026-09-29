@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 적응형 아이콘 전경. 막대 셋 + M3 스위치. tool/icons/README.md 참고. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <group android:pivotX="512" android:pivotY="512" android:scaleX="0.68" android:scaleY="0.68">
+        <group android:rotation="30" android:pivotX="543" android:pivotY="808">
+            <path android:fillColor="#5A7FBF" android:pathData="M466.0,733.0h154.0a75.0,75.0 0 0 1 0,150.0h-154.0a75.0,75.0 0 0 1 0,-150.0z"/>
+        </group>
+        <group android:rotation="30" android:pivotX="500" android:pivotY="522">
+            <path android:fillColor="#3D64A3" android:pathData="M271.5,447.0h457.0a75.0,75.0 0 0 1 0,150.0h-457.0a75.0,75.0 0 0 1 0,-150.0z"/>
+        </group>
+        <group android:rotation="30" android:pivotX="541" android:pivotY="282">
+            <path android:fillColor="#9DB5E0" android:pathData="M331.5,207.0h419.0a75.0,75.0 0 0 1 0,150.0h-419.0a75.0,75.0 0 0 1 0,-150.0z"/>
+        </group>
+        <group android:rotation="30" android:pivotX="541" android:pivotY="282">
+            <clip-path android:pathData="M331.5,207.0h419.0a75.0,75.0 0 0 1 0,150.0h-419.0a75.0,75.0 0 0 1 0,-150.0z"/>
+            <path android:fillColor="#2A5CAA" android:pathData="M441.7,207.0h383.8v150h-383.8z"/>
+            <path android:fillColor="#FFFFFF" android:pathData="M462.7,282.0a54.0,54.0 0 1 0 108.0,0a54.0,54.0 0 1 0 -108.0,0z"/>
+        </group>
+    </group>
+</vector>
