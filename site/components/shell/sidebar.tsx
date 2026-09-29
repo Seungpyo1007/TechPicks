@@ -14,7 +14,7 @@ export function Sidebar() {
     <aside className="sidebar">
       <Link className="sidebar-brand" href="/">
         <span className="brand-mark">
-          <Image src="/brand/NBlogo.png" alt="" width={21} height={21} priority />
+          <Image src="/brand/NBlogo.png" alt="" width={24} height={24} priority />
         </span>
         <span className="brand-name">TechPicks</span>
       </Link>

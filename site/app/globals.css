@@ -127,12 +127,13 @@ img { max-width: 100%; height: auto; }
 .sidebar-brand:hover { text-decoration: none; }
 .brand-mark {
   width: 34px; height: 34px; flex: none; border-radius: 12px;
-  background: var(--color-accent-fill); color: var(--color-on-accent);
+  /* 앱 아이콘(Android M3)과 같은 판: primaryContainer 톤 위에 파란 막대. 테마와 상관없이 같은 색. */
+  background: #D8E2FF; color: #2A5CAA;
   display: flex; align-items: center; justify-content: center;
   transition: transform .5s cubic-bezier(.2,0,0,1);
 }
 .sidebar-brand:hover .brand-mark { transform: rotate(360deg); }
-.brand-mark img { width: 21px; height: 21px; object-fit: contain; display: block; }
+.brand-mark img { width: 24px; height: 24px; object-fit: contain; display: block; }
 .brand-name { font-family: var(--font-heading); font-weight: 600; font-size: 21px; line-height: 1.1; color: var(--color-text); }
 .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
 .nav-item {

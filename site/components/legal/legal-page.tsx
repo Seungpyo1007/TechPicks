@@ -7,7 +7,7 @@ export function LegalPage({ children }: { children: React.ReactNode }) {
     <main className="legal">
       <Link className="sidebar-brand" href="/">
         <span className="brand-mark">
-          <Image src="/brand/NBlogo.png" alt="" width={21} height={21} />
+          <Image src="/brand/NBlogo.png" alt="" width={24} height={24} />
         </span>
         <span className="brand-name">TechPicks</span>
       </Link>

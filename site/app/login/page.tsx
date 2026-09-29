@@ -93,7 +93,7 @@ export default async function LoginPage() {
       <section className="login-form">
         <div className="sidebar-brand">
           <span className="brand-mark">
-            <Image src="/brand/NBlogo.png" alt="" width={21} height={21} priority />
+            <Image src="/brand/NBlogo.png" alt="" width={24} height={24} priority />
           </span>
           <span className="brand-name">TechPicks</span>
         </div>
