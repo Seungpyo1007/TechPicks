@@ -218,6 +218,8 @@
   "coachFilterBody": "Narrow the list by brand, price or tier.",
   "coachCompare": "Swap a device",
   "coachCompareBody": "Tap either side to pick another device.",
+  "coachKinds": "Browse by kind",
+  "coachKindsBody": "No name in mind? Jump straight to phone, processor or laptop rankings.",
   "weightsBalanced": "Balanced",
   "weightsLead": "{} first",
   "unverified": "Email not confirmed",

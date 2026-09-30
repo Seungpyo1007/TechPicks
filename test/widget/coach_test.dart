@@ -63,7 +63,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(K.next.tr()));
     await tester.pumpAndSettle();
-    expect(find.text(K.coachSearch.tr()), findsOneWidget);
+    expect(find.text(K.coachSearchBody.tr()), findsOneWidget);
     await tester.tap(find.text(K.coachDone.tr()));
     await tester.pumpAndSettle();
 
@@ -112,5 +112,18 @@ void main() {
 
     expect(find.text(K.coachCategory.tr()), findsOneWidget);
     expect(await TpCoach.seen('browse'), isTrue);
+  });
+
+  testWidgets('검색 탭도 처음 갈 때 자기 안내가 뜬다', (tester) async {
+    await _pump(tester, prefs: <String, Object>{'coach_seen_today': true});
+    await _arrive(tester);
+
+    final at = tester.element(find.byType(Navigator).first);
+    GoRouter.of(at).go(TpRoute.search);
+    await _arrive(tester);
+
+    // 테스트는 Android 라 검색창이 Flutter 안에 있다. 검색창부터 짚는다.
+    expect(find.text(K.coachSearchBody.tr()), findsOneWidget);
+    expect(await TpCoach.seen('search'), isTrue);
   });
 }

@@ -218,6 +218,8 @@
   "coachFilterBody": "브랜드·가격·등급으로 목록을 좁힙니다.",
   "coachCompare": "기기 바꾸기",
   "coachCompareBody": "양쪽 중 하나를 눌러 다른 기기를 고릅니다.",
+  "coachKinds": "종류별로 보기",
+  "coachKindsBody": "이름을 몰라도 스마트폰·프로세서·노트북 순위로 바로 갑니다.",
   "weightsBalanced": "고르게",
   "weightsLead": "{} 중심",
   "unverified": "메일 미확인",
