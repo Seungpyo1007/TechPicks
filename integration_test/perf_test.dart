@@ -15,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:techpicks/feature/viewer/viewer_stage.dart';
 import 'package:techpicks/main.dart' as app;
 
 void main() {
@@ -34,7 +35,8 @@ void main() {
     app.main();
     await _settle(tester);
 
-    GoRouter router() => GoRouter.of(tester.element(find.byType(Scrollable).first));
+    GoRouter router() =>
+        GoRouter.of(tester.element(find.byType(Scrollable).first));
 
     // binding.watchPerformance 는 GC 수를 세려고 VM 서비스에 붙는데, 무선
     // 기기에서는 그 포트에 못 닿는다. 프레임 시간만 앱 안에서 모은다.
@@ -88,6 +90,29 @@ void main() {
           await _settle(tester);
         }
       }, 'weight_slider');
+    }
+
+    // 뷰어: 드래그 회전과 분해도. 부품 칩은 언어와 무관하게 셋째 줄 첫 버튼.
+    router().go('/device/galaxy-s26-ultra/3d');
+    await _settle(tester);
+    final stage = find.byType(ViewerStage);
+    if (stage.evaluate().isNotEmpty) {
+      await watch(() async {
+        for (var i = 0; i < 3; i++) {
+          await tester.fling(stage, const Offset(260, 40), 1800);
+          await _settle(tester);
+          await tester.fling(stage, const Offset(-260, -40), 1800);
+          await _settle(tester);
+        }
+        final chips = find.descendant(
+          of: find.byType(Wrap),
+          matching: find.byType(GestureDetector),
+        );
+        for (var i = 0; i < 4; i++) {
+          await tester.tap(chips.at(i % 4));
+          await _settle(tester);
+        }
+      }, 'viewer');
     }
   });
 }
