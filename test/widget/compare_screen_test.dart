@@ -111,6 +111,32 @@ void main() {
     expect(container.read(compareProvider).b, a);
   });
 
+  testWidgets('맞바꾸면 새 기기가 반대편에서 밀려 들어온다', (tester) async {
+    final container = await pumpScreen(tester, const CompareScreen());
+    final ranked = readRanking();
+    final first = ranked[0].device;
+    final second = ranked[1].device;
+
+    container.read(compareProvider.notifier).pick(CompareSide.a, second.slug);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+
+    // A 칸으로 들어오는 기기는 오른쪽(B 쪽)에서 온다.
+    final slide = tester.widget<SlideTransition>(
+      find
+          .ancestor(
+            of: find.text(second.name).first,
+            matching: find.byType(SlideTransition),
+          )
+          .first,
+    );
+    expect(slide.position.value.dx, greaterThan(0));
+
+    await tester.pumpAndSettle();
+    expect(find.text(first.name), findsWidgets);
+    expect(find.byType(SlideTransition), findsWidgets);
+  });
+
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
     for (final chrome in TpChrome.values) {
       await _pump(tester, const CompareScreen(), chrome: chrome);
