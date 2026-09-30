@@ -36,9 +36,10 @@ Future<void> _shoot(WidgetTester tester, Widget logo, String path) async {
 
 void main() {
   testWidgets('스플래시 PNG', (tester) async {
-    tester.view.physicalSize = const Size(600, 600);
+    tester.view.physicalSize = const Size(1000, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    // iOS 125pt·Android 160dp 를 4배로(스플래시 도구는 xxxhdpi 로 본다).
     for (final (name, android, dark) in <(String, bool, bool)>[
       ('logo', false, false),
       ('logo_dark', false, true),
@@ -47,7 +48,30 @@ void main() {
     ]) {
       await _shoot(
         tester,
-        TpLogo(size: 500, on: 0, android: android, dark: dark),
+        TpLogo(size: android ? 640 : 500, on: 0, android: android, dark: dark),
+        'assets/logo/$name.png',
+      );
+    }
+    // Android 12+: 바탕 원은 시스템이 칠하고(icon_background_color), 그림은
+    // 960 안의 지름 640 원에 막대만.
+    for (final (name, dark) in <(String, bool)>[
+      ('splash_android12', false),
+      ('splash_android12_dark', true),
+    ]) {
+      await _shoot(
+        tester,
+        SizedBox.square(
+          dimension: 960,
+          child: Center(
+            child: TpLogo(
+              size: 640,
+              on: 0,
+              android: true,
+              dark: dark,
+              plate: false,
+            ),
+          ),
+        ),
         'assets/logo/$name.png',
       );
     }

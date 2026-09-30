@@ -167,6 +167,8 @@ void main() {
       // LaunchImage@3x 가 375px 이라 화면에서는 125pt 다. 이 값이 어긋나면
       // 넘어오는 순간 로고가 한 번 튄다.
       expect(TpLaunch.logoSize, 125);
+      // Android 12+ 시스템 스플래시의 아이콘 바탕 원.
+      expect(TpLaunch.androidLogoSize, 160);
     });
   });
 }

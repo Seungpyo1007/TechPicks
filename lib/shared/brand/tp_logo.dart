@@ -123,9 +123,10 @@ class _GlassPainter extends CustomPainter {
     const full = Rect.fromLTWH(0, 0, 1024, 1024);
     canvas.save();
     if (plate) {
+      // iOS 아이콘처럼 연속 곡률 모서리. 시작 장면의 판도 같은 모양으로 커진다.
       canvas
-        ..clipRRect(
-          RRect.fromRectAndRadius(
+        ..clipRSuperellipse(
+          RSuperellipse.fromRectAndRadius(
             full,
             const Radius.circular(1024 * TpLogo.cornerRatio),
           ),
