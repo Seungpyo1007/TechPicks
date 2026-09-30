@@ -13,6 +13,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: canonicalUrl("/laptops"), changeFrequency: "weekly", priority: 0.6 },
     { url: canonicalUrl("/build"), changeFrequency: "weekly", priority: 0.7 },
     { url: canonicalUrl("/compare"), changeFrequency: "weekly", priority: 0.7 },
+    { url: canonicalUrl("/terms"), changeFrequency: "yearly", priority: 0.2 },
+    { url: canonicalUrl("/privacy"), changeFrequency: "yearly", priority: 0.2 },
     ...phones.map((phone) => ({
       url: canonicalUrl(`/phones/${phone.slug}`),
       lastModified: phone.release_date ? new Date(`${phone.release_date}T00:00:00Z`) : undefined,

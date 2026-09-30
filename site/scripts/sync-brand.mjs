@@ -6,7 +6,7 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const siteDirectory = path.resolve(scriptDirectory, "..");
 const repositoryRoot = path.resolve(siteDirectory, "..");
 const outputDirectory = path.join(siteDirectory, "public", "brand");
-// 사이드바·로그인 락업은 액센트 배경 위 흰 로고를 쓴다(정본 디자인).
+// 사이드바·로그인 락업의 앱 마크. 옅은 파랑 판 위 평면 로고(앱 아이콘과 같은 그림).
 const files = ["NBlogo.png", "NBlogo_black.png"];
 
 // 배포 빌드는 site/ 만 받으므로 저장소 루트의 원본이 없다. 그때는 public/brand 에

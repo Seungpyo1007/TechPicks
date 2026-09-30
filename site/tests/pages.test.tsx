@@ -8,6 +8,9 @@ import HomePage from "@/app/(shell)/page";
 import LaptopsPage from "@/app/(shell)/laptops/page";
 import PhoneDetailPage, { generateMetadata as detailMetadata } from "@/app/(shell)/phones/[slug]/page";
 import PhonesPage from "@/app/(shell)/phones/page";
+import LoginPage from "@/app/login/page";
+import PrivacyPage from "@/app/privacy/page";
+import TermsPage from "@/app/terms/page";
 import sitemap from "@/app/sitemap";
 
 vi.mock("next/navigation", async (importOriginal) => {
@@ -197,5 +200,23 @@ describe("shell", () => {
     }
     // 베타 표기는 제거했다.
     expect(html).not.toContain("beta");
+  });
+});
+
+describe("login and legal", () => {
+  it("renders a working email form with terms links, no disabled placeholder", async () => {
+    const html = renderToStaticMarkup(await LoginPage());
+    expect(html).toContain("계정으로 계속하기");
+    expect(html).toContain("Google로 계속");
+    expect(html).toContain('href="/terms"');
+    expect(html).toContain('href="/privacy"');
+    expect(html).not.toContain("인증 연동은 아직 준비 중입니다");
+  });
+
+  it("serves the terms and privacy pages the app links to", () => {
+    expect(renderToStaticMarkup(TermsPage())).toContain("이용약관");
+    const privacy = renderToStaticMarkup(PrivacyPage());
+    expect(privacy).toContain("개인정보 처리방침");
+    expect(privacy).toContain("계정 삭제");
   });
 });

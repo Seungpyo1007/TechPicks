@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, Outfit } from "next/font/google";
+import { AuthProvider } from "@/components/auth/auth-provider";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/components/shell/theme";
 import { isPreviewDeployment, siteOrigin } from "@/lib/seo";
 import "./globals.css";
@@ -27,7 +28,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

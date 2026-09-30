@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
+import { LoginForm } from "@/components/auth/login-form";
 import { LoginPreview, type PreviewCategory } from "@/components/shell/login-preview";
 import { getCatalogCpus, getCatalogPhones, rankCpus, rankPhones } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 /**
  * 정본 로그인 화면(`login-c.dc.html` 스타일).
  *
- * 게이트가 아니다 — 랭킹·상세·비교는 로그인 없이 열린다. 인증 백엔드는 아직 붙지 않아
- * 폼은 동작하지 않는 상태로 두고, 그 사실을 화면에 적었다.
+ * 게이트가 아니다 — 랭킹·상세·비교는 로그인 없이 열린다. 계정은 앱과 같은 Firebase 프로젝트라
+ * 앱에서 만든 계정으로 그대로 들어온다.
  */
 export default async function LoginPage() {
   const [phones, cpus, laptops] = await Promise.all([
@@ -93,42 +93,12 @@ export default async function LoginPage() {
       <section className="login-form">
         <div className="sidebar-brand">
           <span className="brand-mark">
-            <Image src="/brand/NBlogo.png" alt="" width={21} height={21} priority />
+            <Image src="/brand/NBlogo.png" alt="" width={24} height={24} priority />
           </span>
           <span className="brand-name">TechPicks</span>
         </div>
 
-        <h2>계정으로 계속하기</h2>
-
-        <div className="login-field">
-          <label htmlFor="tp-email">이메일</label>
-          <input id="tp-email" className="input" type="email" placeholder="you@techpicks.app" style={{ minHeight: 50 }} />
-        </div>
-        <div className="login-field">
-          <label htmlFor="tp-pw">비밀번호</label>
-          <input id="tp-pw" className="input" type="password" placeholder="••••••••" style={{ minHeight: 50 }} />
-        </div>
-
-        <p className="note" style={{ margin: 0 }}>
-          인증 연동은 아직 준비 중입니다. 랭킹 · 상세 · 비교는 로그인 없이 볼 수 있습니다.
-        </p>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <button className="btn btn-primary" type="button" style={{ height: 46 }} disabled>
-            로그인
-          </button>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <button className="btn btn-secondary" type="button" style={{ height: 44 }} disabled>
-              Google
-            </button>
-            <button className="btn btn-secondary" type="button" style={{ height: 44 }} disabled>
-              Apple
-            </button>
-          </div>
-          <Link className="btn btn-ghost" href="/">
-            익명으로 둘러보기
-          </Link>
-        </div>
+        <LoginForm />
       </section>
     </div>
   );

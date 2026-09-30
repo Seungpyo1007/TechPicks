@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Switch, useNotifications, useTheme } from "@/components/shell/theme";
 
-/** 정본 프로필 화면의 설정 행. 값은 이 브라우저에만 남는다(계정 저장은 아직 없다). */
+/** 정본 프로필 화면의 설정 행. 값은 이 브라우저에만 남는다. 로그아웃은 위 계정 카드에 있다. */
 export function ProfileSettings() {
   const [theme, setTheme] = useTheme();
   const [notifications, setNotifications] = useNotifications();
@@ -37,13 +37,13 @@ export function ProfileSettings() {
           TechAPI · CC-BY-SA 4.0
         </a>
       </div>
-      <Link
-        className="btn btn-secondary btn-block"
-        href="/login"
-        style={{ height: 42, margin: "12px 0 16px" }}
-      >
-        로그아웃
-      </Link>
+      <div className="setting-row">
+        <span>약관</span>
+        <span style={{ display: "flex", gap: 12, fontSize: 13 }}>
+          <Link href="/terms">이용약관</Link>
+          <Link href="/privacy">개인정보 처리방침</Link>
+        </span>
+      </div>
     </div>
   );
 }
