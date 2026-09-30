@@ -1,7 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
+import '../shared/brand/tp_logo.dart';
+import '../shared/tp_haptics.dart';
 import 'theme/tp_motion.dart';
+import 'theme/tp_sys.dart';
 import 'theme/tp_tokens.dart';
 
 /// 네이티브 스플래시에서 앱으로 넘어오는 장면.
@@ -16,7 +21,10 @@ import 'theme/tp_tokens.dart';
 ///    크기(125pt — `LaunchImage@3x` 가 375px)로 같은 자리에 그린다. 넘어오는
 ///    순간이 화면에서는 안 보인다.
 /// 2. **읽는 동안 로고를 들고 있는다.** 빈 화면 대신 로고가 그대로 있다.
-/// 3. **로고가 열리며 앱이 나온다.** 로고는 커지며 옅어지고 그 아래에서
+/// 3. **토글이 켜진다.** 로고가 토글이라 앱을 켜는 장면으로 쓴다. 스플래시는
+///    꺼진 로고이고, 첫 프레임부터 손잡이가 미끄러지며 지나간 자리가 파랗게
+///    남는다. 다 켜지면 틱 한 번.
+/// 4. **로고가 열리며 앱이 나온다.** 로고는 커지며 옅어지고 그 아래에서
 ///    첫 화면이 올라온다 — iOS 가 아이콘에서 앱을 여는 것과 같은 방향이다.
 class TpLaunch extends StatefulWidget {
   const TpLaunch({super.key, required this.ready, required this.child});
@@ -29,25 +37,16 @@ class TpLaunch extends StatefulWidget {
   /// 네이티브 스플래시의 로고 크기. `LaunchImage@3x.png` 375px ÷ 3.
   static const double logoSize = 125;
 
-  /// 네이티브 스플래시와 같은 로고(pubspec 의 flutter_native_splash).
-  ///
-  /// 스플래시는 크롬이 아니라 진짜 OS 와 시스템 다크 모드를 따른다. iOS 는
-  /// 유리 아이콘, Android 는 M3 적응형 아이콘 모양이다.
-  static String logoFor(TargetPlatform platform, Brightness brightness) {
-    final dark = brightness == Brightness.dark;
-    return platform == TargetPlatform.android
-        ? (dark
-              ? 'assets/logo/logo_android_dark.png'
-              : 'assets/logo/logo_android.png')
-        : (dark ? 'assets/logo/logo_dark.png' : 'assets/logo/logo.png');
-  }
+  /// 토글이 켜지는 시간. 저장값을 읽는 동안 같이 돌아서 켜는 시간을 늘리지
+  /// 않는다. 준비가 먼저 끝나도 이것만은 끝까지 본다.
+  static const Duration toggle = Duration(milliseconds: 620);
 
   /// 로고가 열리는 시간.
   ///
   /// [TpMotion] 의 어느 역할도 아니다 — 앱을 켜는 것은 화면 안에서 일어나는
   /// 일이 아니라 그 앞의 장면이고, 명세에 값이 없다. iOS 가 아이콘에서 앱을
   /// 열 때와 비슷한 길이로 잡았다.
-  static const Duration open = Duration(milliseconds: 420);
+  static const Duration open = Duration(milliseconds: 560);
 
   @override
   State<TpLaunch> createState() => _TpLaunchState();
@@ -55,6 +54,10 @@ class TpLaunch extends StatefulWidget {
 
 class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
   late final AnimationController _c;
+  late final AnimationController _on = AnimationController(
+    vsync: this,
+    duration: TpLaunch.toggle,
+  );
 
   /// 로고가 다 열렸는가. 그 뒤로는 이 위젯이 아무것도 안 얹는다.
   bool _done = false;
@@ -68,25 +71,42 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
           setState(() => _done = true);
         }
       });
-    if (widget.ready) _start();
+    _on.addStatusListener((status) {
+      if (status != AnimationStatus.completed) return;
+      TpHaptics.selection();
+      if (widget.ready) _start();
+    });
+    // 첫 프레임은 스플래시와 같은 꺼진 로고. 그다음부터 켠다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _on.value = 1;
+        if (widget.ready) _start();
+      } else {
+        _on.forward();
+      }
+    });
   }
 
   @override
   void didUpdateWidget(TpLaunch old) {
     super.didUpdateWidget(old);
-    if (widget.ready && !old.ready) _start();
+    if (widget.ready && !old.ready && _on.isCompleted) _start();
   }
 
   void _start() {
     // 저장값을 이미 들고 있으면(두 번째 실행 등) 한 프레임 안에 준비가 끝난다.
     // 그래도 한 번은 로고를 보여준다 — 켜자마자 화면이 튀는 것보다 낫다.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _c.forward();
-    });
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (mounted) _c.forward();
+      })
+      ..scheduleFrame();
   }
 
   @override
   void dispose() {
+    _on.dispose();
     _c.dispose();
     super.dispose();
   }
@@ -96,67 +116,125 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
     if (_done) return widget.child;
 
     final t = context.tp;
+    final android = defaultTargetPlatform == TargetPlatform.android;
+    // 스플래시는 크롬이 아니라 진짜 OS 와 시스템 다크 모드를 따른다.
+    final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     // "동작 줄이기" 면 크기 변화 없이 페이드만 한다. 로고는 여전히 읽는 동안 떠 있다.
     final reduced = MediaQuery.disableAnimationsOf(context);
+    final screen = MediaQuery.sizeOf(context);
+    final end = context.sys.background;
+    final from = TpLogo.plateColors(android: android, dark: dark);
+    const size = TpLaunch.logoSize;
 
-    return Stack(
-      fit: StackFit.expand,
-      children: <Widget>[
-        // 첫 화면. 로고가 열리는 동안 그 아래에서 자리를 잡는다.
-        AnimatedBuilder(
-          animation: _c,
-          builder: (context, child) {
-            final t = Curves.easeOutCubic.transform(_c.value);
-            return Opacity(
-              opacity: reduced ? _c.value : t,
-              child: reduced
-                  ? child
-                  : Transform.scale(scale: 0.98 + 0.02 * t, child: child),
-            );
-          },
-          child: widget.child,
-        ),
+    // 막대: 판 위에 따로. 토글이 켜지고, 열릴 때는 먼저 빠진다.
+    final mark = AnimatedBuilder(
+      animation: _on,
+      builder: (context, _) => TpLogo(
+        size: size,
+        on: Curves.easeInOutCubic.transform(_on.value),
+        android: android,
+        dark: dark,
+        plate: false,
+      ),
+    );
 
-        // 스플래시 판. 네이티브 것과 같은 색·같은 로고다.
-        AnimatedBuilder(
-          animation: _c,
-          builder: (context, child) {
-            final v = _c.value;
-            if (v == 1) return const SizedBox.shrink();
-            // 배경은 먼저 사라지고(60%까지) 로고가 조금 더 남는다. 반대로 하면
-            // 로고가 허공에 뜬 것처럼 보인다.
-            final plate = (1 - v / 0.6).clamp(0.0, 1.0);
-            final logo = (1 - v).clamp(0.0, 1.0);
-            return IgnorePointer(
-              child: ColoredBox(
-                color: t.scrim.withValues(alpha: reduced ? logo : plate),
-                child: Center(
-                  child: Opacity(
-                    opacity: reduced ? logo : Curves.easeIn.transform(logo),
-                    child: Transform.scale(
-                      // 커지며 열린다. 작아지면 앱이 뒤로 물러나는 것처럼 읽힌다.
-                      scale: reduced
-                          ? 1
-                          : 1 + 0.35 * Curves.easeInCubic.transform(v),
-                      child: child,
+    return AnimatedBuilder(
+      animation: _c,
+      child: widget.child,
+      builder: (context, app) {
+        final v = _c.value;
+        double part(double a, double b, [Curve curve = Curves.linear]) =>
+            curve.transform(((v - a) / (b - a)).clamp(0.0, 1.0));
+
+        if (reduced) {
+          return Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              Opacity(opacity: v, child: app),
+              IgnorePointer(
+                child: Opacity(
+                  opacity: 1 - v,
+                  child: ColoredBox(
+                    color: t.scrim,
+                    child: Center(
+                      child: TpLogo(size: size, android: android, dark: dark),
                     ),
                   ),
                 ),
               ),
-            );
-          },
-          child: Image.asset(
-            TpLaunch.logoFor(
-              defaultTargetPlatform,
-              MediaQuery.platformBrightnessOf(context),
+            ],
+          );
+        }
+
+        // 판이 화면만큼 커진다(iOS 는 앱이 열리듯 네모, Android 는 원형 리빌).
+        final grow = part(0, .62, Curves.easeInOutCubic);
+        // 판 색은 아이콘 색에서 앱 바탕색으로. 다 커지면 첫 화면과 같은 색이다.
+        final tint = part(.05, .62);
+        final colors = <Color>[for (final c in from) Color.lerp(c, end, tint)!];
+        final gone = part(0, .25, Curves.easeIn);
+        final appIn = part(.42, .95, Curves.easeOut);
+
+        final Widget plate;
+        if (android) {
+          final diagonal =
+              math.sqrt(
+                screen.width * screen.width + screen.height * screen.height,
+              ) /
+              2;
+          final r = size / 2 + (diagonal - size / 2) * grow;
+          plate = Center(
+            child: Container(
+              width: r * 2,
+              height: r * 2,
+              decoration: BoxDecoration(
+                color: colors.first,
+                shape: BoxShape.circle,
+              ),
             ),
-            width: TpLaunch.logoSize,
-            height: TpLaunch.logoSize,
-            // 로고 자체가 둥근 사각형(Android 는 원)이라 여기서 또 깎지 않는다.
-            filterQuality: FilterQuality.medium,
-          ),
-        ),
-      ],
+          );
+        } else {
+          plate = Center(
+            child: Container(
+              width: size + (screen.width - size) * grow,
+              height: size + (screen.height - size) * grow,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(
+                  size * TpLogo.cornerRatio * (1 - grow),
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: colors,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            // 스플래시 바탕. 판이 화면을 다 덮으면 할 일이 없다.
+            if (grow < 1) IgnorePointer(child: ColoredBox(color: t.scrim)),
+            IgnorePointer(child: plate),
+            if (gone < 1)
+              IgnorePointer(
+                child: Center(
+                  child: Opacity(
+                    opacity: 1 - gone,
+                    child: Transform.scale(scale: 1 + .18 * gone, child: mark),
+                  ),
+                ),
+              ),
+            // 첫 화면. 처음부터 그려 두고(자리 잡기), 판이 앱 바탕색이 된 뒤에
+            // 그 위로 떠오른다.
+            Opacity(
+              opacity: appIn,
+              child: Transform.scale(scale: .985 + .015 * appIn, child: app),
+            ),
+          ],
+        );
+      },
     );
   }
 }
