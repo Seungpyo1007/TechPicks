@@ -20,7 +20,7 @@ class TpPress extends StatelessWidget {
     this.onLongPress,
     this.semanticsButton = true,
     this.semanticsLabel,
-    this.haptic = TpHaptic.selection,
+    this.haptic = TpHaptic.none,
     this.tint = true,
   });
 
@@ -35,6 +35,8 @@ class TpPress extends StatelessWidget {
   /// 스크린 리더가 "버튼"만 읽는다.
   final String? semanticsLabel;
 
+  /// 기본은 없음. iOS 는 목록 행·카드·탭을 눌러 이동할 때 울리지 않는다.
+  /// 무언가를 **고르는** 면(세그먼트, 시트 선택지)만 selection 을 준다.
   final TpHaptic haptic;
 
   /// 눌린 동안 배경을 깔지.

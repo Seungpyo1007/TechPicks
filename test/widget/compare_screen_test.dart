@@ -1,4 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,6 +10,7 @@ import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 
 ProviderContainer? _container;
 
@@ -87,7 +90,7 @@ void main() {
   testWidgets('picker 는 지수와 가격을 같이 보여준다', (tester) async {
     await _pump(tester, const PickerScreen());
     expect(find.text('Choose a device'), findsOneWidget);
-    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.bySemanticsLabel('Cancel'), findsOneWidget);
     // 목록 첫 기기의 가격이 통화 형태로 붙는다.
     expect(
       find.text(DeviceSpecs.formatPrice(readRanking().first.device.msrpUsd)),
@@ -108,10 +111,62 @@ void main() {
     expect(container.read(compareProvider).b, a);
   });
 
+  testWidgets('맞바꾸면 새 기기가 반대편에서 밀려 들어온다', (tester) async {
+    final container = await pumpScreen(tester, const CompareScreen());
+    final ranked = readRanking();
+    final first = ranked[0].device;
+    final second = ranked[1].device;
+
+    container.read(compareProvider.notifier).pick(CompareSide.a, second.slug);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+
+    // A 칸으로 들어오는 기기는 오른쪽(B 쪽)에서 온다.
+    final slide = tester.widget<SlideTransition>(
+      find
+          .ancestor(
+            of: find.text(second.name).first,
+            matching: find.byType(SlideTransition),
+          )
+          .first,
+    );
+    expect(slide.position.value.dx, greaterThan(0));
+
+    await tester.pumpAndSettle();
+    expect(find.text(first.name), findsWidgets);
+    expect(find.byType(SlideTransition), findsWidgets);
+  });
+
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
     for (final chrome in TpChrome.values) {
       await _pump(tester, const CompareScreen(), chrome: chrome);
       expect(find.text('Compare'), findsWidgets);
     }
+  });
+
+  testWidgets('Android 선택 시트의 취소가 잘리지 않는다', (tester) async {
+    await _pump(tester, PickerScreen(onDone: () {}), chrome: TpChrome.android);
+
+    // 앱 바 leading 기본 폭 56 에 글자 버튼을 넣으면 "Cancel" 이 줄바꿈된다.
+    final label = tester.renderObject<RenderParagraph>(find.text('Cancel'));
+    expect(
+      label.size.width,
+      greaterThanOrEqualTo(label.getMaxIntrinsicWidth(double.infinity)),
+    );
+    expect(label.didExceedMaxLines, isFalse);
+    final cancel = tester.getRect(find.text('Cancel'));
+    final title = tester.getRect(find.text('Choose a device').first);
+    expect(cancel.right, lessThanOrEqualTo(title.left));
+  });
+
+  testWidgets('카탈로그에 없는 기기가 슬롯에 있으면 원인을 말한다', (tester) async {
+    await _pump(tester, const CompareScreen());
+    _container!
+        .read(compareProvider.notifier)
+        .pick(CompareSide.b, 'no-such-phone');
+    await tester.pumpAndSettle();
+
+    expect(find.text(K.compareLinkMissing.tr()), findsOneWidget);
+    expect(find.text(K.chooseTwo.tr()), findsNothing);
   });
 }

@@ -1,5 +1,6 @@
 import '../../data/dto/smartphone.dart';
 import 'tp_index.dart';
+import 'tp_money.dart';
 import 'tp_weights.dart';
 
 /// 상세와 비교가 같은 순서로 보여주는 속성.
@@ -30,9 +31,11 @@ enum SpecKind {
 /// ([DeviceComparison._winner] 를 볼 것). 대신 그 줄에 대응하는 0–100 점수를
 /// 막대로 깐다 — 승자를 선언하지 않으면서 크기는 보여준다.
 ///
-/// 축 **이름은 화면에 안 찍는다.** `axCam`·`axBatt` 가 행 라벨
-/// (`detailSpecCamera`·`detailSpecBattery`)과 영어에서도 한국어에서도 같은
-/// 문자열이라, 찍는 순간 같은 글자가 화면에 둘이 된다.
+/// 막대는 화면·프로세서·카메라 줄에만 있다. 배터리는 승자를 가리니 없다.
+///
+/// 축 **이름은 화면에 안 찍는다.** `axCam` 은 `detailSpecCamera` 와,
+/// 한국어 `axDisplay` 는 `detailSpecScreen` 과 같은 문자열이라 찍는 순간
+/// 같은 글자가 화면에 둘이 된다.
 extension SpecScoreAxis on SpecKind {
   TpAxisKind? get scoreAxis => switch (this) {
     SpecKind.screen => TpAxisKind.display,
@@ -71,6 +74,7 @@ abstract final class DeviceSpecs {
   static List<DeviceSpec> of(
     Smartphone d, [
     TpWeights weights = TpWeights.defaults,
+    TpMoney money = const TpMoney.usd(),
   ]) {
     final index = TpIndex.of(d.score, weights);
 
@@ -82,7 +86,9 @@ abstract final class DeviceSpecs {
       ),
       DeviceSpec(
         kind: SpecKind.price,
-        value: formatPrice(d.msrpUsd),
+        // 환산은 **보여줄 때만**. 아래 comparable 은 USD 그대로다 —
+        // 환율이 움직여도 어느 쪽이 싼지는 안 바뀌어야 한다.
+        value: money.format(d.msrpUsd),
         comparable: d.msrpUsd?.toDouble(),
         // 싼 쪽이 이긴다.
         higherIsBetter: false,
@@ -114,23 +120,63 @@ abstract final class DeviceSpecs {
   }
 
   /// `$1,299`. 값이 없으면 대시.
+  ///
+  /// 환율을 모르는 자리가 쓴다. 로케일을 아는 화면은 [TpMoney] 를 받아서
+  /// 쓴다 — 이건 그 기본값과 같다.
   static String formatPrice(int? usd) {
     if (usd == null) return empty;
-    final s = usd.toString();
-    final buf = StringBuffer();
+    return '\$${group(usd)}';
+  }
+
+  /// 천 단위 쉼표. `5000` → `5,000`.
+  static String group(int n) {
+    final s = n.abs().toString();
+    final buf = StringBuffer(n < 0 ? '-' : '');
     for (var i = 0; i < s.length; i++) {
       if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
       buf.write(s[i]);
     }
-    return '\$$buf';
+    return buf.toString();
   }
+
+  /// `5,000mAh · 60W`. 충전 값이 없으면 용량만.
+  static String battery(int? mah, [num? watts]) {
+    if (mah == null) return empty;
+    final cell = '${group(mah)}mAh';
+    return watts == null ? cell : '$cell · ${_trim(watts.toDouble())}W';
+  }
+
+  /// 패널 이름에서 종류만 남긴다. 제조사 상표와 괄호 설명은 뺀다.
+  ///
+  /// `Dynamic LTPO AMOLED 2X (Privacy Display)` → `LTPO AMOLED`.
+  /// 아는 낱말이 하나도 없으면 괄호만 떼고 그대로.
+  static String panel(String type) {
+    final plain = type.replaceAll(RegExp(r'\s*\(.*?\)'), '').trim();
+    final kept = plain
+        .split(RegExp(r'\s+'))
+        .where((w) => _panelWords.contains(w.toUpperCase()))
+        .toList();
+    return kept.isEmpty ? plain : kept.join(' ');
+  }
+
+  static const Set<String> _panelWords = <String>{
+    'LTPO',
+    'LTPS',
+    'IPS',
+    'PLS',
+    'AMOLED',
+    'OLED',
+    'POLED',
+    'LCD',
+  };
 
   static String _screen(Smartphone d) {
     final disp = d.display;
     if (disp == null) return empty;
     final parts = <String>[
       if (disp.sizeInch != null) '${_trim(disp.sizeInch!)}"',
-      if (disp.type != null) disp.type!,
+      // 전체 이름을 쓰면 값이 세 줄까지 늘어난다.
+      if (disp.type != null) panel(disp.type!),
       if (disp.refreshHz != null) '${disp.refreshHz}Hz',
     ];
     return parts.isEmpty ? empty : parts.join(' · ');
@@ -148,11 +194,8 @@ abstract final class DeviceSpecs {
     return rear.map((mp) => '${_trim(mp)}MP').join(' + ');
   }
 
-  static String _battery(Smartphone d) {
-    if (d.batteryMah == null) return empty;
-    final w = d.chargingWiredW;
-    return w == null ? '${d.batteryMah}mAh' : '${d.batteryMah}mAh · ${w}W';
-  }
+  static String _battery(Smartphone d) =>
+      battery(d.batteryMah, d.chargingWiredW);
 
   static String _os(Smartphone d) {
     if (d.os == null) return empty;
@@ -195,9 +238,10 @@ abstract final class DeviceComparison {
     Smartphone a,
     Smartphone b, [
     TpWeights weights = TpWeights.defaults,
+    TpMoney money = const TpMoney.usd(),
   ]) {
-    final left = DeviceSpecs.of(a, weights);
-    final right = DeviceSpecs.of(b, weights);
+    final left = DeviceSpecs.of(a, weights, money);
+    final right = DeviceSpecs.of(b, weights, money);
 
     return <SpecPair>[
       for (var i = 0; i < left.length; i++)

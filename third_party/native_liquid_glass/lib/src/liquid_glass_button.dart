@@ -21,8 +21,8 @@ import 'utils/text_style_utils.dart';
 /// lazy-forwarding pipeline drops or cancels the release event.
 final Set<Factory<OneSequenceGestureRecognizer>> _buttonGestureRecognizers =
     <Factory<OneSequenceGestureRecognizer>>{
-  Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-};
+      Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+    };
 
 /// Image placement options for buttons with both image and label.
 enum LiquidGlassImagePlacement {
@@ -284,7 +284,10 @@ class LiquidGlassButton extends StatefulWidget {
        size = null,
        tooltip = null,
        assert(width == null || width > 0, 'width must be > 0 when provided.'),
-       assert(height == null || height > 0, 'height must be > 0 when provided.'),
+       assert(
+         height == null || height > 0,
+         'height must be > 0 when provided.',
+       ),
        assert(iconSize > 0, 'iconSize must be > 0.'),
        assert(imagePadding >= 0, 'imagePadding must be >= 0.');
 
@@ -333,9 +336,11 @@ class LiquidGlassButton extends StatefulWidget {
   State<LiquidGlassButton> createState() => _LiquidGlassButtonState();
 }
 
-class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassRouteSuppression {
+class _LiquidGlassButtonState extends State<LiquidGlassButton>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   NativeLiquidGlassIconPayload? _iconPayload;
   int _nativePayloadRequestId = 0;
   bool _nativeIconPayloadResolved = false;
@@ -418,7 +423,10 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
     if (!widget._iconOnly || widget.size == null) {
       _syncPropsToNativeIfNeeded().then((appliedSize) {
         if (!appliedSize && mounted) {
-          Future.delayed(const Duration(milliseconds: 10), _requestIntrinsicSize);
+          Future.delayed(
+            const Duration(milliseconds: 10),
+            _requestIntrinsicSize,
+          );
         }
       });
     } else {
@@ -575,7 +583,9 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
     final ch = _nativeChannel;
     if (ch == null || !mounted) return;
     try {
-      final size = await ch.invokeMethod<Map<Object?, Object?>>('getIntrinsicSize');
+      final size = await ch.invokeMethod<Map<Object?, Object?>>(
+        'getIntrinsicSize',
+      );
       final w = (size?['width'] as num?)?.toDouble();
       final h = (size?['height'] as num?)?.toDouble();
       if (mounted && (w != null || h != null)) {
@@ -630,10 +640,18 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
     const horizontalInsets = 32.0;
     const verticalInsets = 20.0;
 
-    final iconContribution = hasIcon ? widget.iconSize + widget.imagePadding : 0.0;
+    final iconContribution = hasIcon
+        ? widget.iconSize + widget.imagePadding
+        : 0.0;
 
-    final estimatedWidth = math.max(44.0, (horizontalInsets + textPainter.width + iconContribution).ceilToDouble());
-    final estimatedHeight = math.max(32.0, (verticalInsets + textPainter.height).ceilToDouble());
+    final estimatedWidth = math.max(
+      44.0,
+      (horizontalInsets + textPainter.width + iconContribution).ceilToDouble(),
+    );
+    final estimatedHeight = math.max(
+      32.0,
+      (verticalInsets + textPainter.height).ceilToDouble(),
+    );
 
     final size = Size(estimatedWidth, estimatedHeight);
     _estimateCacheKey = cacheKey;
@@ -646,7 +664,10 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
       return Size(widget.width!, widget.height!);
     }
     final estimatedSize = _estimateWrapContentSize(context);
-    return Size(widget.width ?? estimatedSize.width, widget.height ?? estimatedSize.height);
+    return Size(
+      widget.width ?? estimatedSize.width,
+      widget.height ?? estimatedSize.height,
+    );
   }
 
   // — Icon button size helper —
@@ -674,7 +695,8 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
 
   Map<String, Object?> _buildNativeCreationParams({Size? resolvedSize}) {
     final isIconOnly = widget._iconOnly;
-    final iconMap = widget.icon?.toNativeMap(_iconPayload) ?? <String, Object?>{};
+    final iconMap =
+        widget.icon?.toNativeMap(_iconPayload) ?? <String, Object?>{};
     final p = widget.padding;
     final iconOnlySide = isIconOnly ? _resolveIconOnlySize() : null;
     return <String, Object?>{
@@ -685,7 +707,8 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
       'enabled': widget.onPressed != null,
       'iconOnly': isIconOnly,
       'iconSize': widget.iconSize,
-      'foregroundColor': (isIconOnly ? widget.iconColor : widget.foregroundColor)?.toARGB32(),
+      'foregroundColor':
+          (isIconOnly ? widget.iconColor : widget.foregroundColor)?.toARGB32(),
       'iconColor': widget.iconColor?.toARGB32(),
       'tint': widget.tint?.toARGB32(),
       'imagePadding': widget.imagePadding,
@@ -694,14 +717,22 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
       'glassEffectId': widget.glassEffectId,
       'buttonStyle': widget.style.name,
       if (widget.borderRadius != null) 'borderRadius': widget.borderRadius,
-      if (p != null) ...{'paddingTop': p.top, 'paddingBottom': p.bottom, 'paddingLeft': p.left, 'paddingRight': p.right},
+      if (p != null) ...{
+        'paddingTop': p.top,
+        'paddingBottom': p.bottom,
+        'paddingLeft': p.left,
+        'paddingRight': p.right,
+      },
       'interaction': widget.interaction,
-      if (widget.labelColor != null) 'labelColor': widget.labelColor!.toARGB32(),
+      if (widget.labelColor != null)
+        'labelColor': widget.labelColor!.toARGB32(),
       if (!isIconOnly) 'imagePlacement': widget.imagePlacement.name,
       'badgeValue': widget.badgeValue,
       'showBadge': widget.showBadge || widget.badgeValue != null,
-      if (widget.badgeColor != null) 'badgeColor': widget.badgeColor!.toARGB32(),
-      if (widget.badgeTextColor != null) 'badgeTextColor': widget.badgeTextColor!.toARGB32(),
+      if (widget.badgeColor != null)
+        'badgeColor': widget.badgeColor!.toARGB32(),
+      if (widget.badgeTextColor != null)
+        'badgeTextColor': widget.badgeTextColor!.toARGB32(),
       if (widget.badgeSize != null) 'badgeSize': widget.badgeSize,
       if (!isIconOnly) 'labelStyle': textStylePayload(widget.labelTextStyle),
       if (!isIconOnly && widget.maxLines != null) 'maxLines': widget.maxLines,
@@ -711,7 +742,8 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
 
   @override
   Widget build(BuildContext context) {
-    final nativePayloadReady = !_needsNativeIconPayload || _nativeIconPayloadResolved;
+    final nativePayloadReady =
+        !_needsNativeIconPayload || _nativeIconPayloadResolved;
     final isIconOnly = widget._iconOnly;
 
     if (NativeLiquidGlassUtils.supportsLiquidGlass) {
@@ -748,8 +780,10 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
 
       if (!nativePayloadReady) {
         final fallbackSize = _resolveNativeSize(context);
-        Widget placeholder =
-            SizedBox(width: fallbackSize.width, height: fallbackSize.height);
+        Widget placeholder = SizedBox(
+          width: fallbackSize.width,
+          height: fallbackSize.height,
+        );
         if (widget.width == null) {
           placeholder = UnconstrainedBox(
             constrainedAxis: Axis.vertical,
@@ -761,7 +795,10 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> with LiquidGlassR
       }
 
       final estimated = _resolveNativeSize(context);
-      final nativeSize = Size(widget.width ?? _nativeWidth ?? estimated.width, widget.height ?? _nativeHeight ?? estimated.height);
+      final nativeSize = Size(
+        widget.width ?? _nativeWidth ?? estimated.width,
+        widget.height ?? _nativeHeight ?? estimated.height,
+      );
 
       Widget textContent = SizedBox(
         width: nativeSize.width,

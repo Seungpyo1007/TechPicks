@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// 각자 자기 uid 아래만. 프로필(users/{uid})과 계정 데이터(users/{uid}/state/*).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      match /state/{doc} {
+        allow read, write: if request.auth != null
+          && request.auth.uid == uid
+          && doc in ['shortlist', 'weights', 'recents'];
+      }
+    }
+  }
+}

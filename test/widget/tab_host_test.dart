@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:techpicks/feature/rank/rank_category.dart';
+import 'package:go_router/go_router.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:riverpod/misc.dart' show Override;
 
+import '../support/fake_auth.dart';
 import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
@@ -12,42 +15,15 @@ import 'package:techpicks/app/shell/tp_tab.dart';
 import 'package:techpicks/app/router.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/service/ask_service.dart';
-import 'package:techpicks/data/service/auth_service.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
-import 'package:techpicks/feature/rank/rank_screen.dart';
-import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
+import 'package:techpicks/feature/rank/browse_screen.dart';
+import 'package:techpicks/app/theme/tp_icons.dart';
+import 'package:techpicks/feature/you/you_screen.dart';
 
-class _NoAuth implements AuthService {
-  @override
-  Stream<TpUser?> changes() => const Stream<TpUser?>.empty();
-  @override
-  TpUser? get current => null;
-
-  @override
-  Future<TpUser?> signIn(
-    AuthMethod m, {
-    String? email,
-    String? password,
-  }) async => null;
-
-  @override
-  Future<TpUser?> signUp({
-    required String email,
-    required String password,
-  }) async => null;
-
-  @override
-  Future<bool> sendPasswordReset(String email) async => false;
-
-  @override
-  Future<TpUser?> updateName(String name) async => null;
-
-  @override
-  Future<void> signOut() async {}
-}
+class _NoAuth extends FakeAuthService {}
 
 ProviderContainer? _container;
 
@@ -76,6 +52,7 @@ void main() {
   group('비교 열 고르기', _pickerSlots);
   group('밀려 올라오는 화면', _pushedScreens);
   group('시스템 뒤로 가기', _systemBack);
+  group('둘러보기 카테고리', _browseInPlace);
 
   setUp(initLocalization);
 
@@ -83,34 +60,38 @@ void main() {
 
   testWidgets('홈으로 시작한다', (tester) async {
     await _pump(tester);
-    expect(find.text('Today'), findsOneWidget);
+    // 화면 제목과 탭 라벨이 같은 단어다.
+    expect(find.text('Today'), findsWidgets);
   });
 
-  testWidgets('탭을 눌러 다섯 화면을 오간다', (tester) async {
+  testWidgets('탭을 눌러 네 화면을 오간다', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
+    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
-    expect(find.text('Rankings'), findsOneWidget);
+    expect(find.text('Browse'), findsWidgets);
 
     await tester.tap(find.text(K.tab(TpTab.compare).tr()));
     await tester.pumpAndSettle();
     expect(find.text('Compare'), findsWidgets);
 
-    await tester.tap(find.text(K.tab(TpTab.ask).tr()));
+    await tester.tap(find.bySemanticsLabel(K.tab(TpTab.search).tr()).last);
     await tester.pumpAndSettle();
-    expect(find.textContaining('Give me a budget'), findsOneWidget);
+    expect(find.text(K.searchTitle.tr()), findsWidgets);
+  });
 
-    await tester.tap(find.text(K.tab(TpTab.you).tr()));
+  testWidgets('프로필 버튼이 내 정보 시트를 연다', (tester) async {
+    await _pump(tester);
+
+    await tester.tap(find.bySemanticsLabel(K.you.tr()).first);
     await tester.pumpAndSettle();
-    // 탭 라벨과 화면 제목이 같은 단어다.
-    expect(find.text('You'), findsWidgets);
+    expect(find.byType(YouScreen), findsOneWidget);
   });
 
   testWidgets('랭킹에서 기기를 누르면 상세가 올라온다', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
+    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
     await tester.tap(find.text(readRanking().first.device.name));
     await tester.pumpAndSettle();
@@ -122,7 +103,7 @@ void main() {
   testWidgets('상세의 Compare 가 비교 탭으로 보내고 A 슬롯을 채운다', (tester) async {
     await _pump(tester);
 
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
+    await tester.tap(find.text(K.tab(TpTab.browse).tr()));
     await tester.pumpAndSettle();
     await tester.tap(find.text('OnePlus 13'));
     await tester.pumpAndSettle();
@@ -146,48 +127,13 @@ void main() {
     expect(_container!.read(pickSlotProvider), CompareSide.a);
   });
 
-  testWidgets('랭킹에서 스캔을 연다', (tester) async {
-    await _pump(tester);
-
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
-    await tester.pumpAndSettle();
-
-    // 랭킹 목록이 길어져 스캔 버튼이 화면 아래로 밀렸다.
-    await tester.scrollUntilVisible(
-      find.text('Find a device by name'),
-      400,
-      scrollable: find
-          .descendant(
-            of: find.byType(RankScreen),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await tester.tap(find.text('Find a device by name'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.byType(ScanScreen), findsOneWidget);
-  });
-
-  testWidgets('Android 는 스캔이 FAB 로 나온다', (tester) async {
-    await _pump(tester, chrome: TpChrome.android);
-
-    await tester.tap(find.text(K.tab(TpTab.rank).tr()));
-    await tester.pumpAndSettle();
-
-    // iOS 인라인 버튼은 없고 FAB 라벨만 있다.
-    expect(find.text('Find a device by name'), findsNothing);
-    expect(find.text('Find device'), findsOneWidget);
-  });
-
-  testWidgets('홈의 Ask why 가 상담 탭으로 간다', (tester) async {
+  testWidgets('홈 툴바의 반짝이 버튼이 질문 화면을 연다', (tester) async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       'shortlist_slugs': <String>['galaxy-s25'],
     });
     await _pump(tester);
 
-    await tester.tap(find.text('Ask why'));
+    await tester.tap(find.bySemanticsLabel(K.askTitle.tr()).first);
     await tester.pumpAndSettle();
     expect(find.textContaining('Give me a budget'), findsOneWidget);
   });
@@ -270,33 +216,7 @@ void _moversRoundTrip() {
 
 /// 비교 화면의 "왜?".
 void _askFromCompare() {
-  testWidgets('비교 중인 두 기기를 상담이 물어본다', (tester) async {
-    await initLocalization();
-    final container = await pumpApp(
-      tester,
-      initialLocation: TpRoute.compare,
-      overrides: <Override>[
-        authServiceProvider.overrideWithValue(_NoAuth()),
-        askServiceProvider.overrideWithValue(const LocalAskService()),
-      ],
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text(K.askWhy.tr()));
-    await tester.pumpAndSettle();
-
-    final messages = container.read(askProvider);
-    // 씨앗 인사 + 질문 + 답.
-    expect(messages.length, 3);
-    final ranked = readRanking();
-    expect(
-      messages[1].text,
-      '${ranked[0].device.name} or ${ranked[1].device.name}?',
-    );
-    expect(messages[2].answer, isNotNull);
-  });
-
-  testWidgets('비교할 게 없으면 물어볼 버튼도 없다', (tester) async {
+  testWidgets('비교 탭에는 이유 물어보기 버튼이 없다', (tester) async {
     await initLocalization();
     final container = await pumpApp(
       tester,
@@ -333,7 +253,13 @@ void _pickerSlots() {
       await tester.scrollUntilVisible(
         target,
         300,
-        scrollable: find.byType(Scrollable).last,
+        // 검색 필드 안에도 Scrollable 이 있다. 목록 쪽을 집는다.
+        scrollable: find
+            .descendant(
+              of: find.byType(PickerScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
       );
     }
     await tester.ensureVisible(target.first);
@@ -388,7 +314,7 @@ void _pushedScreens() {
     await initLocalization();
     await pumpApp(
       tester,
-      initialLocation: TpRoute.rank,
+      initialLocation: TpRoute.browse,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -409,31 +335,11 @@ void _pushedScreens() {
     expect(find.text(readRanking().first.device.name), findsWidgets);
   });
 
-  testWidgets('스캔 결과에서 상세로 넘어간다', (tester) async {
-    await initLocalization();
-    await pumpApp(
-      tester,
-      initialLocation: TpRoute.rank,
-      // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
-      // 화면을 그만큼 키워야 한다.
-      size: const Size(1200, 4400),
-      overrides: <Override>[
-        authServiceProvider.overrideWithValue(_NoAuth()),
-        askServiceProvider.overrideWithValue(const LocalAskService()),
-      ],
-    );
-
-    await tester.tap(find.text(K.scanCta.tr()));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(find.byType(ScanScreen), findsOneWidget);
-  });
-
   testWidgets('뒤로 가면 원래 탭으로 돌아온다', (tester) async {
     await initLocalization();
     await pumpApp(
       tester,
-      initialLocation: TpRoute.rank,
+      initialLocation: TpRoute.browse,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -447,12 +353,12 @@ void _pushedScreens() {
     await tester.pumpAndSettle();
     expect(find.byType(DetailScreen), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.chevron_left).first);
+    await tester.tap(_icon((i) => i.back).first);
     await tester.pumpAndSettle();
 
     // 명세의 back stack 은 한 단계다 — 랭킹으로 돌아온다.
     expect(find.byType(DetailScreen), findsNothing);
-    expect(find.text(K.rankNote.tr()), findsOneWidget);
+    expect(find.byType(BrowseScreen), findsOneWidget);
   });
 }
 
@@ -470,7 +376,7 @@ void _systemBack() {
     await initLocalization();
     await pumpApp(
       tester,
-      initialLocation: TpRoute.rank,
+      initialLocation: TpRoute.browse,
       // 랭킹은 상한(50행)까지 그리므로 세로가 길다. 아래쪽 문구까지 보려면
       // 화면을 그만큼 키워야 한다.
       size: const Size(1200, 4400),
@@ -479,11 +385,11 @@ void _systemBack() {
         askServiceProvider.overrideWithValue(const LocalAskService()),
       ],
     );
-    expect(find.text(K.rankNote.tr()), findsOneWidget);
+    expect(find.byType(BrowseScreen), findsOneWidget);
 
     await back(tester);
 
-    expect(find.text(K.rankNote.tr()), findsNothing);
+    expect(find.byType(BrowseScreen), findsNothing);
     expect(find.text(K.homeTitle.tr()), findsWidgets);
   });
 
@@ -502,5 +408,74 @@ void _systemBack() {
         tester.widgetList(find.byWidgetPredicate((w) => w is PopScope)).first
             as PopScope;
     expect(scope.canPop, isTrue);
+  });
+}
+
+/// 크롬마다 아이콘이 다르다. 어느 쪽이든 찾는다.
+Finder _icon(IconData Function(TpIcons) pick) => find.byWidgetPredicate(
+  (w) =>
+      w is Icon &&
+      (w.icon == pick(TpIcons.ios) || w.icon == pick(TpIcons.android)),
+);
+
+/// 세그먼트를 눌러도 새 화면이 밀려 들어오지 않는다.
+void _browseInPlace() {
+  testWidgets('카테고리를 바꾸면 같은 화면 안에서 내용만 바뀐다', (tester) async {
+    await initLocalization();
+    await pumpApp(
+      tester,
+      initialLocation: TpRoute.browse,
+      size: const Size(700, 3000),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    final before = tester.state(find.byType(BrowseScreen));
+
+    await tester.tap(find.text(K.cpus.tr()));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    // 오른쪽 칸을 골랐으니 내용이 오른쪽에서 들어온다.
+    final sliding = tester
+        .widgetList<SlideTransition>(
+          find.descendant(
+            of: find.byType(BrowseScreen),
+            matching: find.byType(SlideTransition),
+          ),
+        )
+        .where((w) => w.position.value.dx > 0);
+    expect(sliding, isNotEmpty);
+    await tester.pumpAndSettle();
+
+    final after = tester.state(find.byType(BrowseScreen));
+    expect(identical(before, after), isTrue);
+    expect(
+      tester.widget<BrowseScreen>(find.byType(BrowseScreen)).category,
+      RankCategory.processors,
+    );
+    // 뒤로 갈 곳이 생기지 않았다.
+    expect(find.byType(BrowseScreen), findsOneWidget);
+    expect(
+      GoRouter.of(tester.element(find.byType(BrowseScreen))).canPop(),
+      isFalse,
+    );
+  });
+
+  testWidgets('예전 주소는 쿼리로 옮겨진다', (tester) async {
+    await initLocalization();
+    await pumpApp(
+      tester,
+      initialLocation: '/browse/laptops',
+      size: const Size(700, 3000),
+      overrides: <Override>[
+        authServiceProvider.overrideWithValue(_NoAuth()),
+        askServiceProvider.overrideWithValue(const LocalAskService()),
+      ],
+    );
+    expect(
+      tester.widget<BrowseScreen>(find.byType(BrowseScreen)).category,
+      RankCategory.laptops,
+    );
   });
 }

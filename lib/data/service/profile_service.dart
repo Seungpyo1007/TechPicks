@@ -2,6 +2,7 @@ import 'dart:typed_data' show Uint8List;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' show ValueChanged;
 
 import '../../core/error_reporter.dart';
 import '../../domain/model/tp_profile.dart';
@@ -20,7 +21,14 @@ abstract class ProfileService {
   /// 경로가 아니라 바이트를 받는다. 웹에서 `XFile.path` 는 `blob:` URL 이라
   /// `File(...)` 로 열 수 없다 — `putData` 는 어디서나 되므로 구현이 하나로
   /// 남고 `dart:io` 의존도 사라진다.
-  Future<String?> uploadPhoto(String uid, Uint8List bytes);
+  Future<String?> uploadPhoto(
+    String uid,
+    Uint8List bytes, {
+    ValueChanged<double>? onProgress,
+  });
+
+  /// 올린 사진 파일을 지운다. 없거나 못 지워도 던지지 않는다.
+  Future<void> removePhoto(String uid);
 }
 
 /// Firestore `users/{uid}` + Storage `profile_images/{uid}`.
@@ -64,18 +72,49 @@ class FirebaseProfileService implements ProfileService {
     }
   }
 
+  Reference _photo(String uid) => (_storage ??= FirebaseStorage.instance)
+      .ref()
+      .child('profile_images')
+      .child(uid);
+
   @override
-  Future<String?> uploadPhoto(String uid, Uint8List bytes) async {
+  Future<String?> uploadPhoto(
+    String uid,
+    Uint8List bytes, {
+    ValueChanged<double>? onProgress,
+  }) async {
     try {
-      final ref = (_storage ??= FirebaseStorage.instance)
-          .ref()
-          .child('profile_images')
-          .child(uid);
-      await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      final ref = _photo(uid);
+      final task = ref.putData(
+        bytes,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+      // 진행 원이 실제 바이트 비율로 찬다.
+      final sub = onProgress == null
+          ? null
+          : task.snapshotEvents.listen((snap) {
+              if (snap.totalBytes > 0) {
+                onProgress(snap.bytesTransferred / snap.totalBytes);
+              }
+            }, onError: (_) {});
+      try {
+        await task;
+      } finally {
+        await sub?.cancel();
+      }
       return await ref.getDownloadURL();
     } catch (e, s) {
       TpErrors.record(e, s, reason: 'profile.photo');
       return null;
+    }
+  }
+
+  @override
+  Future<void> removePhoto(String uid) async {
+    try {
+      await _photo(uid).delete();
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'profile.photo.remove');
     }
   }
 }

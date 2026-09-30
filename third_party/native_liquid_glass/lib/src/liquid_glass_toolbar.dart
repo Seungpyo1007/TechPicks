@@ -17,8 +17,8 @@ import 'utils/text_style_utils.dart';
 /// by Flutter's default lazy-forwarding for platform views.
 final Set<Factory<OneSequenceGestureRecognizer>> _toolbarGestureRecognizers =
     <Factory<OneSequenceGestureRecognizer>>{
-  Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-};
+      Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+    };
 
 /// A toolbar item.
 class LiquidGlassToolbarItem {
@@ -90,16 +90,32 @@ class LiquidGlassToolbarSpacer extends LiquidGlassToolbarItem {
   /// Width for fixed spacers. Defaults to 16 on iOS.
   final double? width;
 
-  const LiquidGlassToolbarSpacer({this.flexible = true, this.width}) : super(id: flexible ? '__flexible_space__' : '__fixed_space__');
+  const LiquidGlassToolbarSpacer({this.flexible = true, this.width})
+    : super(id: flexible ? '__flexible_space__' : '__fixed_space__');
 
   @override
   Map<String, Object?> toMap([NativeLiquidGlassIconPayload? payload]) {
-    return <String, Object?>{'id': id, 'spacer': true, 'flexible': flexible, if (!flexible && width != null) 'width': width};
+    return <String, Object?>{
+      'id': id,
+      'spacer': true,
+      'flexible': flexible,
+      if (!flexible && width != null) 'width': width,
+    };
   }
 }
 
 /// SF Symbol weight for toolbar icons.
-enum LiquidGlassToolbarIconWeight { ultraLight, thin, light, regular, medium, semibold, bold, heavy, black }
+enum LiquidGlassToolbarIconWeight {
+  ultraLight,
+  thin,
+  light,
+  regular,
+  medium,
+  semibold,
+  bold,
+  heavy,
+  black,
+}
 
 /// A native iOS toolbar (UIToolbar) with Liquid Glass effects on iOS 26+.
 ///
@@ -212,9 +228,11 @@ class LiquidGlassToolbar extends StatefulWidget {
   State<LiquidGlassToolbar> createState() => _LiquidGlassToolbarState();
 }
 
-class _LiquidGlassToolbarState extends State<LiquidGlassToolbar> with LiquidGlassRouteSuppression {
+class _LiquidGlassToolbarState extends State<LiquidGlassToolbar>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   int? _lastConfigHash;
   List<NativeLiquidGlassIconPayload>? _itemPayloads;
   int _nativePayloadRequestId = 0;
@@ -257,12 +275,16 @@ class _LiquidGlassToolbarState extends State<LiquidGlassToolbar> with LiquidGlas
   }
 
   int _computeItemsSignature() {
-    return Object.hashAll(widget.items.map((i) => Object.hash(i.id, i.icon?.nativeSignature)));
+    return Object.hashAll(
+      widget.items.map((i) => Object.hash(i.id, i.icon?.nativeSignature)),
+    );
   }
 
   Future<void> _prepareIconPayloads() async {
     final requestId = ++_nativePayloadRequestId;
-    final payloads = await Future.wait(widget.items.map((item) => resolveIconPayload(item.icon)));
+    final payloads = await Future.wait(
+      widget.items.map((item) => resolveIconPayload(item.icon)),
+    );
     if (!mounted || requestId != _nativePayloadRequestId) return;
     setState(() {
       _itemPayloads = payloads;
@@ -277,7 +299,18 @@ class _LiquidGlassToolbarState extends State<LiquidGlassToolbar> with LiquidGlas
   int _computeConfigHash() {
     return Object.hashAll([
       widget.items.length,
-      Object.hashAll(widget.items.map((i) => Object.hash(i.id, i.enabled, i.icon?.nativeSignature, i.label, i.tintColor?.toARGB32(), i.iconSize))),
+      Object.hashAll(
+        widget.items.map(
+          (i) => Object.hash(
+            i.id,
+            i.enabled,
+            i.icon?.nativeSignature,
+            i.label,
+            i.tintColor?.toARGB32(),
+            i.iconSize,
+          ),
+        ),
+      ),
       widget.shadowColor?.toARGB32(),
       widget.iconWeight,
       textStyleSignature(widget.labelTextStyle),
@@ -354,8 +387,14 @@ class _LiquidGlassToolbarState extends State<LiquidGlassToolbar> with LiquidGlas
     final payloads = _itemPayloads;
     final padding = resolvedPadding ?? EdgeInsets.zero;
     return <String, Object?>{
-      'items': [for (var i = 0; i < widget.items.length; i++) widget.items[i].toMap(payloads != null && i < payloads.length ? payloads[i] : null)],
-      if (widget.shadowColor != null) 'shadowColor': widget.shadowColor!.toARGB32(),
+      'items': [
+        for (var i = 0; i < widget.items.length; i++)
+          widget.items[i].toMap(
+            payloads != null && i < payloads.length ? payloads[i] : null,
+          ),
+      ],
+      if (widget.shadowColor != null)
+        'shadowColor': widget.shadowColor!.toARGB32(),
       'iconWeight': widget.iconWeight.name,
       'labelStyle': textStylePayload(widget.labelTextStyle),
       'itemSpacing': widget.itemSpacing,
@@ -378,7 +417,10 @@ class _LiquidGlassToolbarState extends State<LiquidGlassToolbar> with LiquidGlas
   /// here — there's no leftover room to distribute when the toolbar
   /// hugs its content (and `width: null` + flex spacer auto-promotes
   /// to fill-parent anyway, so the estimator isn't used in that case).
-  double _estimateToolbarWidth(BuildContext context, EdgeInsets resolvedPadding) {
+  double _estimateToolbarWidth(
+    BuildContext context,
+    EdgeInsets resolvedPadding,
+  ) {
     final labelTextDirection =
         Directionality.maybeOf(context) ?? TextDirection.ltr;
     final cacheKey = Object.hashAll([
@@ -400,7 +442,8 @@ class _LiquidGlassToolbarState extends State<LiquidGlassToolbar> with LiquidGlas
     double total = 0;
 
     final labelFontSize = widget.labelTextStyle?.fontSize ?? 17;
-    final labelFontWeight = widget.labelTextStyle?.fontWeight ?? FontWeight.w400;
+    final labelFontWeight =
+        widget.labelTextStyle?.fontWeight ?? FontWeight.w400;
 
     bool groupOpen = false;
     int groupCount = 0;
@@ -438,7 +481,10 @@ class _LiquidGlassToolbarState extends State<LiquidGlassToolbar> with LiquidGlas
         final painter = TextPainter(
           text: TextSpan(
             text: item.label,
-            style: TextStyle(fontSize: labelFontSize, fontWeight: labelFontWeight),
+            style: TextStyle(
+              fontSize: labelFontSize,
+              fontWeight: labelFontWeight,
+            ),
           ),
           maxLines: 1,
           textDirection: labelTextDirection,
@@ -471,8 +517,8 @@ class _LiquidGlassToolbarState extends State<LiquidGlassToolbar> with LiquidGlas
   /// stuck together at one edge, which is rarely what a caller using a
   /// flex spacer actually wants.
   bool get _hasFlexibleSpacer => widget.items.any(
-        (item) => item is LiquidGlassToolbarSpacer && item.flexible,
-      );
+    (item) => item is LiquidGlassToolbarSpacer && item.flexible,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -493,9 +539,11 @@ class _LiquidGlassToolbarState extends State<LiquidGlassToolbar> with LiquidGlas
       final textDirection =
           Directionality.maybeOf(context) ?? TextDirection.ltr;
       final padding = widget.padding.resolve(textDirection);
-      final fillParent =
-          widget.width == null ? _hasFlexibleSpacer : !widget.width!.isFinite;
-      final resolvedWidth = widget.width ??
+      final fillParent = widget.width == null
+          ? _hasFlexibleSpacer
+          : !widget.width!.isFinite;
+      final resolvedWidth =
+          widget.width ??
           (_hasFlexibleSpacer
               ? double.infinity
               : _estimateToolbarWidth(context, padding));

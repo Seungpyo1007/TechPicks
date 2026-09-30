@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show PlatformViewHitTestBehavior;
 import 'package:flutter/services.dart';
 
 import 'shares/liquid_glass_icon.dart';
@@ -24,8 +25,8 @@ import 'utils/native_liquid_glass_utils.dart';
 /// on a tab bar.
 final Set<Factory<OneSequenceGestureRecognizer>> _tabBarGestureRecognizers =
     <Factory<OneSequenceGestureRecognizer>>{
-  Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer()),
-};
+      Factory<EagerGestureRecognizer>(() => EagerGestureRecognizer()),
+    };
 
 /// Extra height added above the native platform view frame so the iOS liquid
 /// glass visual effects (blur / glow) are not clipped when Flutter composites
@@ -117,7 +118,10 @@ class LiquidGlassTabItem {
     this.iosBadgeTextColor,
     this.iconSize,
     this.selectedItemColor,
-  }) : assert(iconSize == null || iconSize > 0, 'iconSize must be > 0 when provided.');
+  }) : assert(
+         iconSize == null || iconSize > 0,
+         'iconSize must be > 0 when provided.',
+       );
 
   int get nativeSignature => Object.hash(
     label,
@@ -208,6 +212,42 @@ class LiquidGlassTabBar extends StatefulWidget {
   /// Optional iOS native item width.
   final double? iosItemWidth;
 
+  /// TechPicks 패치: [iosActionButton] 을 진짜 검색 탭으로. 누르면 UIKit 이 탭
+  /// 칸을 밀어내고 검색창을 바 자리로 펼친다. [onActionButtonPressed] 대신
+  /// [onSearchActiveChanged] 가 불린다.
+  final bool iosNativeSearch;
+
+  /// 검색창 자리표시.
+  final String? searchPlaceholder;
+
+  /// 검색 탭이 켜져 있어야 하는가. 바뀌면 네이티브를 따라 바꾼다.
+  final bool searchActive;
+
+  final ValueChanged<bool>? onSearchActiveChanged;
+  final ValueChanged<String>? onSearchChanged;
+  final ValueChanged<String>? onSearchSubmitted;
+
+  /// 검색 중 키보드가 움직이기 시작할 때의 최종 높이(내려간 뒤에는 0).
+  final ValueChanged<double>? onSearchKeyboard;
+
+  /// 바뀔 때마다 검색창 키보드를 내린다(결과 목록을 스크롤할 때).
+  final int searchKeyboardDismissToken;
+
+  /// [searchTextToken] 이 바뀔 때마다 검색창 글자를 [searchText] 로 바꾼다.
+  final String searchText;
+  final int searchTextToken;
+
+  /// 바뀔 때마다 검색창에 초점을 준다(키보드가 올라온다).
+  final int searchFocusToken;
+
+  /// 플랫폼 뷰 뒤의 Flutter 위젯도 같이 누르게 한다. 뷰를 키보드 자리까지 늘 크게
+  /// 잡아 둘 때, 빈 윗부분이 화면 터치를 먹지 않게.
+  final bool iosHitTestTransparent;
+
+  /// 플랫폼 뷰가 받을 제스처. null 이면 기본(Tap). 어느 터치를 네이티브가
+  /// 받을지 여기서 거른다.
+  final Set<Factory<OneSequenceGestureRecognizer>>? iosGestureRecognizers;
+
   const LiquidGlassTabBar({
     super.key,
     required this.items,
@@ -224,21 +264,54 @@ class LiquidGlassTabBar extends StatefulWidget {
     this.iosItemPositioning = LiquidGlassTabBarItemPositioning.automatic,
     this.iosItemSpacing,
     this.iosItemWidth,
-  }) : assert(items.length >= 2, 'LiquidGlassTabBar requires at least 2 tab items.'),
+    this.iosNativeSearch = false,
+    this.searchPlaceholder,
+    this.searchActive = false,
+    this.onSearchActiveChanged,
+    this.onSearchChanged,
+    this.onSearchSubmitted,
+    this.onSearchKeyboard,
+    this.searchKeyboardDismissToken = 0,
+    this.searchText = '',
+    this.searchTextToken = 0,
+    this.searchFocusToken = 0,
+    this.iosHitTestTransparent = false,
+    this.iosGestureRecognizers,
+  }) : assert(
+         items.length >= 2,
+         'LiquidGlassTabBar requires at least 2 tab items.',
+       ),
        assert(currentIndex >= 0, 'currentIndex must be >= 0.'),
-       assert(currentIndex < items.length, 'currentIndex must be within the range of items.'),
-       assert(height >= 56, 'height should be >= 56 for comfortable tap targets.'),
-       assert(iconSize == null || iconSize > 0, 'iconSize must be > 0 when provided.'),
-       assert(iosItemSpacing == null || iosItemSpacing >= 0, 'iosItemSpacing must be >= 0 when provided.'),
-       assert(iosItemWidth == null || iosItemWidth > 0, 'iosItemWidth must be > 0 when provided.');
+       assert(
+         currentIndex < items.length,
+         'currentIndex must be within the range of items.',
+       ),
+       assert(
+         height >= 56,
+         'height should be >= 56 for comfortable tap targets.',
+       ),
+       assert(
+         iconSize == null || iconSize > 0,
+         'iconSize must be > 0 when provided.',
+       ),
+       assert(
+         iosItemSpacing == null || iosItemSpacing >= 0,
+         'iosItemSpacing must be >= 0 when provided.',
+       ),
+       assert(
+         iosItemWidth == null || iosItemWidth > 0,
+         'iosItemWidth must be > 0 when provided.',
+       );
 
   @override
   State<LiquidGlassTabBar> createState() => _LiquidGlassTabBarState();
 }
 
-class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassRouteSuppression {
+class _LiquidGlassTabBarState extends State<LiquidGlassTabBar>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   List<Map<String, Object?>>? _nativeTabs;
   Map<String, Object?>? _nativeActionButton;
   int? _lastNativeSelectedIndex;
@@ -253,9 +326,14 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
   @override
   void initState() {
     super.initState();
-    _itemsStructuralSignature =
-        _computeStructuralSignature(widget.items, widget.iosActionButton);
-    _badgeSignature = _computeBadgeSignature(widget.items, widget.iosActionButton);
+    _itemsStructuralSignature = _computeStructuralSignature(
+      widget.items,
+      widget.iosActionButton,
+    );
+    _badgeSignature = _computeBadgeSignature(
+      widget.items,
+      widget.iosActionButton,
+    );
     _prepareNativeTabsPayloads();
   }
 
@@ -263,22 +341,52 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
   void didUpdateWidget(covariant LiquidGlassTabBar oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final newStructural =
-        _computeStructuralSignature(widget.items, widget.iosActionButton);
+    final newStructural = _computeStructuralSignature(
+      widget.items,
+      widget.iosActionButton,
+    );
     if (newStructural != _itemsStructuralSignature) {
       // Icons / labels / sizing / badge colors changed: the native view must be
       // rebuilt (new key + fresh creationParams).
       _itemsStructuralSignature = newStructural;
-      _badgeSignature = _computeBadgeSignature(widget.items, widget.iosActionButton);
+      _badgeSignature = _computeBadgeSignature(
+        widget.items,
+        widget.iosActionButton,
+      );
       _prepareNativeTabsPayloads();
     } else {
-      final newBadge = _computeBadgeSignature(widget.items, widget.iosActionButton);
+      final newBadge = _computeBadgeSignature(
+        widget.items,
+        widget.iosActionButton,
+      );
       if (newBadge != _badgeSignature) {
         // Only the badge value/visibility changed: push it to the live native
         // view instead of recreating it (which would flicker).
         _badgeSignature = newBadge;
         _pushBadgeUpdate();
       }
+    }
+
+    if (oldWidget.searchTextToken != widget.searchTextToken) {
+      unawaited(
+        _invoke('setSearchText', <String, Object?>{'text': widget.searchText}),
+      );
+    }
+    if (oldWidget.searchFocusToken != widget.searchFocusToken) {
+      unawaited(_invoke('focusSearch', null));
+    }
+
+    if (oldWidget.searchKeyboardDismissToken !=
+        widget.searchKeyboardDismissToken) {
+      unawaited(_invoke('dismissSearchKeyboard', null));
+    }
+
+    if (oldWidget.searchActive != widget.searchActive) {
+      unawaited(
+        _invoke('setSearchActive', <String, Object?>{
+          'active': widget.searchActive,
+        }),
+      );
     }
 
     if (oldWidget.currentIndex != widget.currentIndex) {
@@ -308,6 +416,7 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
     _nativeChannel?.setMethodCallHandler(null);
     super.dispose();
   }
+
   void _rollbackIfSelectionRejected(int nativeSelectedIndex) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -334,6 +443,20 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
       case 'onActionButtonPressed':
         widget.onActionButtonPressed?.call();
         return;
+      case 'onSearchActive':
+        widget.onSearchActiveChanged?.call(call.arguments == true);
+        return;
+      case 'onSearchChanged':
+        widget.onSearchChanged?.call(call.arguments as String? ?? '');
+        return;
+      case 'onSearchSubmitted':
+        widget.onSearchSubmitted?.call(call.arguments as String? ?? '');
+        return;
+      case 'onSearchKeyboard':
+        widget.onSearchKeyboard?.call(
+          (call.arguments as num?)?.toDouble() ?? 0,
+        );
+        return;
       default:
         return;
     }
@@ -346,7 +469,18 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
     _nativeChannel = channel;
 
     _syncNativeSelectedIndex(widget.currentIndex);
+    if (widget.searchActive) {
+      unawaited(_invoke('setSearchActive', <String, Object?>{'active': true}));
+    }
     syncGlassRouteVisibility();
+  }
+
+  Future<void> _invoke(String method, Object? arguments) async {
+    try {
+      await _nativeChannel?.invokeMethod<void>(method, arguments);
+    } catch (_) {
+      // 탭 바 호출이 실패해도 Flutter 쪽은 멈추지 않는다.
+    }
   }
 
   void _syncNativeSelectedIndex(int index) {
@@ -373,10 +507,18 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
 
     final fontWeight = _fontWeightToInt(style.fontWeight);
     final payload = <String, Object?>{
-      ...?(style.fontSize == null ? null : <String, Object?>{'fontSize': style.fontSize}),
-      ...?(fontWeight == null ? null : <String, Object?>{'fontWeight': fontWeight}),
-      ...?(style.fontFamily?.isNotEmpty == true ? <String, Object?>{'fontFamily': style.fontFamily} : null),
-      ...?(style.letterSpacing == null ? null : <String, Object?>{'letterSpacing': style.letterSpacing}),
+      ...?(style.fontSize == null
+          ? null
+          : <String, Object?>{'fontSize': style.fontSize}),
+      ...?(fontWeight == null
+          ? null
+          : <String, Object?>{'fontWeight': fontWeight}),
+      ...?(style.fontFamily?.isNotEmpty == true
+          ? <String, Object?>{'fontFamily': style.fontFamily}
+          : null),
+      ...?(style.letterSpacing == null
+          ? null
+          : <String, Object?>{'letterSpacing': style.letterSpacing}),
     };
 
     if (payload.isEmpty) {
@@ -416,7 +558,12 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
     );
   }
 
-  Map<String, Object?> _creationParamsCached(double resolvedWidth, List<Map<String, Object?>> nativeTabs, Map<String, Object?>? nativeActionButton, String brightness) {
+  Map<String, Object?> _creationParamsCached(
+    double resolvedWidth,
+    List<Map<String, Object?>> nativeTabs,
+    Map<String, Object?>? nativeActionButton,
+    String brightness,
+  ) {
     // `nativeTabs`/`nativeActionButton` change identity only when
     // `_prepareNativeTabsPayloads` publishes a new list via setState,
     // so identity hashing is a safe proxy for their content here.
@@ -434,18 +581,30 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
       brightness,
       identityHashCode(nativeTabs),
       identityHashCode(nativeActionButton),
+      widget.iosNativeSearch,
+      widget.searchPlaceholder,
     ]);
     final cached = _cachedCreationParams;
     if (_creationParamsCacheKey == key && cached != null) {
       return cached;
     }
-    final params = _buildNativeCreationParams(resolvedWidth, nativeTabs, nativeActionButton, brightness);
+    final params = _buildNativeCreationParams(
+      resolvedWidth,
+      nativeTabs,
+      nativeActionButton,
+      brightness,
+    );
     _creationParamsCacheKey = key;
     _cachedCreationParams = params;
     return params;
   }
 
-  Map<String, Object?> _buildNativeCreationParams(double resolvedWidth, List<Map<String, Object?>> nativeTabs, Map<String, Object?>? nativeActionButton, String brightness) {
+  Map<String, Object?> _buildNativeCreationParams(
+    double resolvedWidth,
+    List<Map<String, Object?>> nativeTabs,
+    Map<String, Object?>? nativeActionButton,
+    String brightness,
+  ) {
     final labelStylePayload = _buildLabelStylePayload(widget.labelTextStyle);
 
     return <String, Object?>{
@@ -456,12 +615,26 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
       'currentIndex': widget.currentIndex,
       'itemPositioning': widget.iosItemPositioning.platformValue,
       'brightness': brightness,
-      ...?(widget.iconSize == null ? null : <String, Object?>{'iconSize': widget.iconSize}),
-      ...?(labelStylePayload == null ? null : <String, Object?>{'labelStyle': labelStylePayload}),
+      ...?(widget.iconSize == null
+          ? null
+          : <String, Object?>{'iconSize': widget.iconSize}),
+      ...?(labelStylePayload == null
+          ? null
+          : <String, Object?>{'labelStyle': labelStylePayload}),
       'selectedItemColor': widget.selectedItemColor?.toARGB32(),
-      ...?(widget.iosItemSpacing == null ? null : <String, Object?>{'itemSpacing': widget.iosItemSpacing}),
-      ...?(widget.iosItemWidth == null ? null : <String, Object?>{'itemWidth': widget.iosItemWidth}),
-      ...?(nativeActionButton == null ? null : <String, Object?>{'actionButton': nativeActionButton}),
+      ...?(widget.iosItemSpacing == null
+          ? null
+          : <String, Object?>{'itemSpacing': widget.iosItemSpacing}),
+      ...?(widget.iosItemWidth == null
+          ? null
+          : <String, Object?>{'itemWidth': widget.iosItemWidth}),
+      ...?(nativeActionButton == null
+          ? null
+          : <String, Object?>{'actionButton': nativeActionButton}),
+      'nativeSearch': widget.iosNativeSearch,
+      ...?(widget.searchPlaceholder == null
+          ? null
+          : <String, Object?>{'searchPlaceholder': widget.searchPlaceholder}),
       'tabs': nativeTabs,
     };
   }
@@ -469,8 +642,12 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
   Future<void> _prepareNativeTabsPayloads() async {
     final requestId = ++_nativePayloadRequestId;
 
-    final payload = await Future.wait<Map<String, Object?>>(widget.items.map(_buildNativeTabPayload));
-    final actionButtonPayload = widget.iosActionButton == null ? null : await _buildNativeTabPayload(widget.iosActionButton!);
+    final payload = await Future.wait<Map<String, Object?>>(
+      widget.items.map(_buildNativeTabPayload),
+    );
+    final actionButtonPayload = widget.iosActionButton == null
+        ? null
+        : await _buildNativeTabPayload(widget.iosActionButton!);
 
     if (!mounted || requestId != _nativePayloadRequestId) {
       return;
@@ -483,7 +660,9 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
     });
   }
 
-  Future<Map<String, Object?>> _buildNativeTabPayload(LiquidGlassTabItem item) async {
+  Future<Map<String, Object?>> _buildNativeTabPayload(
+    LiquidGlassTabItem item,
+  ) async {
     final resolvedIcon = item.icon;
     final resolvedSelectedIcon = item.selectedIcon ?? item.icon;
 
@@ -500,15 +679,21 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
       'selectedAssetIconPng': selectedPayload.assetIconPng,
       'badgeValue': item.iosBadgeValue,
       'showBadge': item.iosShowBadge || item.iosBadgeValue != null,
-      if (item.iosBadgeColor != null) 'badgeColor': item.iosBadgeColor!.toARGB32(),
-      if (item.iosBadgeTextColor != null) 'badgeTextColor': item.iosBadgeTextColor!.toARGB32(),
-      ...?(item.iconSize == null ? null : <String, Object?>{'iconSize': item.iconSize}),
+      if (item.iosBadgeColor != null)
+        'badgeColor': item.iosBadgeColor!.toARGB32(),
+      if (item.iosBadgeTextColor != null)
+        'badgeTextColor': item.iosBadgeTextColor!.toARGB32(),
+      ...?(item.iconSize == null
+          ? null
+          : <String, Object?>{'iconSize': item.iconSize}),
       'selectedItemColor': item.selectedItemColor?.toARGB32(),
     };
   }
 
   int _computeStructuralSignature(
-      List<LiquidGlassTabItem> items, LiquidGlassTabItem? iosActionButton) {
+    List<LiquidGlassTabItem> items,
+    LiquidGlassTabItem? iosActionButton,
+  ) {
     return Object.hashAll([
       ...items.map((item) => item.structuralSignature),
       iosActionButton?.structuralSignature,
@@ -516,7 +701,9 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
   }
 
   int _computeBadgeSignature(
-      List<LiquidGlassTabItem> items, LiquidGlassTabItem? iosActionButton) {
+    List<LiquidGlassTabItem> items,
+    LiquidGlassTabItem? iosActionButton,
+  ) {
     return Object.hashAll([
       ...items.map((item) => item.badgeSignature),
       iosActionButton?.badgeSignature,
@@ -531,12 +718,14 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
 
     final badges = <Map<String, Object?>>[
       for (final item in widget.items) _badgePayload(item),
-      if (widget.iosActionButton != null) _badgePayload(widget.iosActionButton!),
+      if (widget.iosActionButton != null)
+        _badgePayload(widget.iosActionButton!),
     ];
     unawaited(_invokeUpdateBadges(badges));
   }
 
-  Map<String, Object?> _badgePayload(LiquidGlassTabItem item) => <String, Object?>{
+  Map<String, Object?> _badgePayload(LiquidGlassTabItem item) =>
+      <String, Object?>{
         'badgeValue': item.iosBadgeValue,
         'showBadge': item.iosShowBadge || item.iosBadgeValue != null,
       };
@@ -594,14 +783,24 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
     return LayoutBuilder(
       builder: (context, constraints) {
         final resolvedWidth = _resolveWidth(context, constraints);
-        final actionButtonReady = widget.iosActionButton == null || _nativeActionButton != null;
+        final actionButtonReady =
+            widget.iosActionButton == null || _nativeActionButton != null;
 
-        if (NativeLiquidGlassUtils.supportsLiquidGlass && _nativeTabs != null && actionButtonReady) {
+        if (NativeLiquidGlassUtils.supportsLiquidGlass &&
+            _nativeTabs != null &&
+            actionButtonReady) {
           // Mirror the app's theme brightness to the native bar so its
           // background, labels, and icons follow the Flutter theme instead of
           // the device appearance (which made them invert after navigation).
-          final brightness = Theme.of(context).brightness == Brightness.dark ? 'dark' : 'light';
-          return _buildNativeIosTabBar(resolvedWidth, _nativeTabs!, _nativeActionButton, brightness);
+          final brightness = Theme.of(context).brightness == Brightness.dark
+              ? 'dark'
+              : 'light';
+          return _buildNativeIosTabBar(
+            resolvedWidth,
+            _nativeTabs!,
+            _nativeActionButton,
+            brightness,
+          );
         }
 
         return const SizedBox();
@@ -609,7 +808,12 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
     );
   }
 
-  Widget _buildNativeIosTabBar(double resolvedWidth, List<Map<String, Object?>> nativeTabs, Map<String, Object?>? nativeActionButton, String brightness) {
+  Widget _buildNativeIosTabBar(
+    double resolvedWidth,
+    List<Map<String, Object?>> nativeTabs,
+    Map<String, Object?>? nativeActionButton,
+    String brightness,
+  ) {
     final nativeViewKey = ValueKey<int>(
       Object.hash(
         widget.showLabels,
@@ -622,6 +826,8 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
         widget.iosItemPositioning,
         widget.iosItemSpacing,
         widget.iosItemWidth,
+        widget.iosNativeSearch,
+        widget.searchPlaceholder,
         // Recreate the platform view when the app theme flips so the native
         // bar picks up the new brightness via creationParams.
         brightness,
@@ -634,10 +840,20 @@ class _LiquidGlassTabBarState extends State<LiquidGlassTabBar> with LiquidGlassR
       child: UiKitView(
         key: nativeViewKey,
         viewType: 'liquid-glass-tab-bar-view',
-        creationParams: _creationParamsCached(resolvedWidth, nativeTabs, nativeActionButton, brightness),
+        creationParams: _creationParamsCached(
+          resolvedWidth,
+          nativeTabs,
+          nativeActionButton,
+          brightness,
+        ),
         creationParamsCodec: const StandardMessageCodec(),
         onPlatformViewCreated: _onNativePlatformViewCreated,
-        gestureRecognizers: _tabBarGestureRecognizers,
+        gestureRecognizers:
+            widget.iosGestureRecognizers ?? _tabBarGestureRecognizers,
+        // transparent 면 플랫폼 뷰가 아예 안 눌린다. translucent 라야 뒤와 같이 히트된다.
+        hitTestBehavior: widget.iosHitTestTransparent
+            ? PlatformViewHitTestBehavior.translucent
+            : PlatformViewHitTestBehavior.opaque,
       ),
     );
   }

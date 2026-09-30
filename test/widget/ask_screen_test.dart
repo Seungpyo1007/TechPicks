@@ -12,6 +12,7 @@ import 'package:techpicks/data/dto/smartphone.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/domain/model/ask_answer.dart';
 import 'package:techpicks/feature/ask/ask_screen.dart';
+import 'package:techpicks/app/theme/tp_icons.dart';
 
 /// 모델을 부르지 않는 가짜. 화면만 검사한다.
 class _StubAsk implements AskService {
@@ -235,8 +236,8 @@ void main() {
     await tester.enterText(find.byType(TextField), '두 번째');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.arrow_upward));
-    await tester.pump();
+    // 기다리는 동안 보내기 자리는 멈춤이다.
+    expect(_icon((i) => i.send), findsNothing);
 
     // 두 번째 질문은 안 나갔고,
     expect(slow.asked, <String>['첫 번째']);
@@ -274,6 +275,62 @@ void main() {
 
     expect(container.read(askProvider), hasLength(3));
   });
+  testWidgets('생각 중에 멈추면 질문을 거두고 글을 돌려놓는다', (tester) async {
+    final answer = Completer<AskReply?>();
+    final container = await pumpScreen(
+      tester,
+      const AskScreen(),
+      size: const Size(1200, 2400),
+      overrides: <Override>[
+        askServiceProvider.overrideWithValue(_SlowAsk(answer.future)),
+      ],
+    );
+
+    await tester.enterText(find.byType(TextField), '뭐가 좋아?');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(find.byKey(AskScreen.thinkingKey), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel(K.cancel.tr()));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(AskScreen.thinkingKey), findsNothing);
+    expect(container.read(askBusyProvider), isFalse);
+    // 씨앗만 남는다.
+    expect(container.read(askProvider), hasLength(1));
+    expect(find.widgetWithText(TextField, '뭐가 좋아?'), findsOneWidget);
+
+    // 늦게 온 답은 버린다.
+    answer.complete(const AskReply.pick(_answer));
+    await tester.pumpAndSettle();
+    expect(container.read(askProvider), hasLength(1));
+    expect(find.text('OnePlus 13'), findsNothing);
+  });
+
+  testWidgets('멈춰도 새로 친 글은 덮지 않는다', (tester) async {
+    final answer = Completer<AskReply?>();
+    await pumpScreen(
+      tester,
+      const AskScreen(),
+      size: const Size(1200, 2400),
+      overrides: <Override>[
+        askServiceProvider.overrideWithValue(_SlowAsk(answer.future)),
+      ],
+    );
+
+    await tester.enterText(find.byType(TextField), '첫 번째');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), '두 번째');
+    await tester.pump();
+
+    await tester.tap(find.bySemanticsLabel(K.cancel.tr()));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(TextField, '두 번째'), findsOneWidget);
+    answer.complete(null);
+    await tester.pumpAndSettle();
+  });
 }
 
 /// 시킨 대로 늦게 답한다.
@@ -290,3 +347,10 @@ class _SlowAsk implements AskService {
     return answer;
   }
 }
+
+/// 크롬마다 아이콘이 다르다. 어느 쪽이든 찾는다.
+Finder _icon(IconData Function(TpIcons) pick) => find.byWidgetPredicate(
+  (w) =>
+      w is Icon &&
+      (w.icon == pick(TpIcons.ios) || w.icon == pick(TpIcons.android)),
+);

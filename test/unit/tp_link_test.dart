@@ -14,8 +14,21 @@ void main() {
 
   test('비교 링크가 왕복한다', () {
     final uri = TpLink.compare('galaxy-s25', 'oneplus-13');
-    expect(uri.toString(), 'techpicks://compare/galaxy-s25/oneplus-13');
+    expect(uri.toString(), 'techpicks://decide/galaxy-s25/oneplus-13');
     expect(TpLink.parse(uri), const CompareTarget('galaxy-s25', 'oneplus-13'));
+  });
+
+  test('예전 compare 링크도 받는다', () {
+    // 비교 탭이 조립 견적까지 들고 `decide` 로 넓어지기 전에 나간 링크들이
+    // 있다. 받기만 하고 내보내지는 않는다.
+    expect(
+      TpLink.parse(Uri.parse('techpicks://compare/galaxy-s25/oneplus-13')),
+      const CompareTarget('galaxy-s25', 'oneplus-13'),
+    );
+    expect(
+      TpLink.parse(Uri.parse('https://techpicks.app/compare/a/b')),
+      const CompareTarget('a', 'b'),
+    );
   });
 
   test('host 없이 경로로만 와도 같은 것으로 본다', () {

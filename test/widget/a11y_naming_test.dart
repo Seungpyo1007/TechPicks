@@ -6,7 +6,7 @@ import 'package:riverpod/misc.dart' show Override;
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/feature/ask/ask_screen.dart';
-import 'package:techpicks/feature/login/email_login_screen.dart';
+import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 
 import '../support/harness.dart';
@@ -44,14 +44,17 @@ void main() {
 
   testWidgets('이메일·비밀번호 칸은 글자를 쳐도 이름이 남는다', (tester) async {
     final handle = tester.ensureSemantics();
-    await pumpScreen(tester, EmailLoginScreen(onBack: () {}));
+    await pumpScreen(tester, const LoginScreen());
+    await tester.tap(find.text(K.continueEmail.tr()));
+    await tester.pumpAndSettle();
 
-    expect(
-      _fields(tester).map((d) => d.label),
-      containsAll(<String>[K.emailLabel.tr(), K.passwordLabel.tr()]),
-    );
+    // 빈 칸이면 이름 뒤에 흐린 안내("name@example.com")가 붙어 읽힌다.
+    final labels = _fields(tester).map((d) => d.label).toList();
+    for (final name in <String>[K.emailLabel.tr(), K.passwordLabel.tr()]) {
+      expect(labels.any((l) => l.startsWith(name)), isTrue, reason: name);
+    }
 
-    await tester.enterText(find.byType(TextField).first, 'a@b.com');
+    await tester.enterText(find.byType(EditableText).first, 'a@b.com');
     await tester.pumpAndSettle();
 
     expect(

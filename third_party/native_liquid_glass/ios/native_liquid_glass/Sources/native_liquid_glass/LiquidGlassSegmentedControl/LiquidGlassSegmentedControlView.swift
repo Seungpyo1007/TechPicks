@@ -75,6 +75,8 @@ final class LiquidGlassSegmentedControlPlatformView: NSObject, FlutterPlatformVi
     let hc = UIHostingController(rootView: swiftUIView)
     hc.view.backgroundColor = .clear
     hc.view.translatesAutoresizingMaskIntoConstraints = false
+    // TechPicks 패치: 창의 안전 영역만큼 안쪽으로 밀리지 않게(유리 컨테이너와 같은 이유).
+    hc.safeAreaRegions = []
 
     containerView.addSubview(hc.view)
     NSLayoutConstraint.activate([

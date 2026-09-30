@@ -11,8 +11,8 @@ import 'utils/native_liquid_glass_utils.dart';
 /// The swatch opens the system color picker on tap; declaring the
 /// recognizer up-front avoids Flutter's default lazy forwarding swallowing
 /// the touch.
-final Set<Factory<OneSequenceGestureRecognizer>> _colorPickerGestureRecognizers =
-    <Factory<OneSequenceGestureRecognizer>>{
+final Set<Factory<OneSequenceGestureRecognizer>>
+_colorPickerGestureRecognizers = <Factory<OneSequenceGestureRecognizer>>{
   Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
 };
 
@@ -36,15 +36,24 @@ class LiquidGlassColorPicker extends StatefulWidget {
   /// Size of the color swatch. Defaults to 44.
   final double size;
 
-  const LiquidGlassColorPicker({super.key, required this.selectedColor, required this.onColorChanged, this.title, this.supportsAlpha = true, this.size = 44});
+  const LiquidGlassColorPicker({
+    super.key,
+    required this.selectedColor,
+    required this.onColorChanged,
+    this.title,
+    this.supportsAlpha = true,
+    this.size = 44,
+  });
 
   @override
   State<LiquidGlassColorPicker> createState() => _LiquidGlassColorPickerState();
 }
 
-class _LiquidGlassColorPickerState extends State<LiquidGlassColorPicker> with LiquidGlassRouteSuppression {
+class _LiquidGlassColorPickerState extends State<LiquidGlassColorPicker>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   int? _lastColor;
 
   Future<void> _handleNativeMethodCall(MethodCall call) async {
@@ -93,7 +102,12 @@ class _LiquidGlassColorPickerState extends State<LiquidGlassColorPicker> with Li
   }
 
   Map<String, Object?> _buildCreationParams() {
-    return <String, Object?>{'color': widget.selectedColor.toARGB32(), 'title': widget.title, 'supportsAlpha': widget.supportsAlpha, 'size': widget.size};
+    return <String, Object?>{
+      'color': widget.selectedColor.toARGB32(),
+      'title': widget.title,
+      'supportsAlpha': widget.supportsAlpha,
+      'size': widget.size,
+    };
   }
 
   @override

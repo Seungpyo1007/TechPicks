@@ -35,7 +35,7 @@ void main() {
 
   for (final (name, frame, top, bottom) in devices) {
     testWidgets('$name — 목록 끝의 줄이 눌린다', (tester) async {
-      var logouts = 0;
+      var sources = 0;
       var licenses = 0;
 
       tester.view.physicalSize = frame;
@@ -54,27 +54,31 @@ void main() {
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: AppTheme.of(TpChrome.ios),
-            home: YouScreen(onLogout: () => logouts++),
+            home: YouScreen(onSources: () => sources++),
           ),
         ),
       );
       await tester.pumpAndSettle();
 
       // 끝까지 내린다.
-      await tester.fling(find.byType(ListView), const Offset(0, -600), 2000);
+      await tester.fling(
+        find.byType(Scrollable).first,
+        const Offset(0, -600),
+        2000,
+      );
       await tester.pumpAndSettle();
 
       // 화면 좌표로 누른다. find.text 로 누르면 위젯이 화면 밖이어도 통과한다.
-      // 계정 없이 띄운 화면이라 마지막 줄은 "로그인"이다.
-      final logout = tester.getRect(find.text(K.signIn.tr()));
-      expect(
-        logout.bottom,
-        lessThan(frame.height),
-        reason: '$name 로그아웃 줄이 화면 밖',
-      );
-      await tester.tapAt(logout.center);
+      // 마지막 줄은 "정보"다. 데이터 출처와 버전은 그 안에 있다.
+      final last = tester.getRect(find.text(K.about.tr()));
+      expect(last.bottom, lessThan(frame.height), reason: '$name 마지막 줄이 화면 밖');
+      await tester.tapAt(last.center);
+      await tester.pumpAndSettle();
+
+      final sourcesRow = tester.getRect(find.text(K.sources.tr()));
+      await tester.tapAt(sourcesRow.center);
       await tester.pump();
-      expect(logouts, 1, reason: '$name 로그아웃');
+      expect(sources, 1, reason: '$name 데이터 출처 줄');
 
       final version = tester.getRect(find.text(YouScreen.versionLine));
       expect(

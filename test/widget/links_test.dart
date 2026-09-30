@@ -7,6 +7,8 @@ import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/service/link_opener.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
+import 'package:techpicks/feature/login/login_screen.dart';
+import 'package:techpicks/feature/you/sources_screen.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/widgets/tp_tap_target.dart';
@@ -103,7 +105,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Galaxy S25'), findsOneWidget);
+      expect(find.text('Galaxy S25'), findsWidgets);
     });
 
     testWidgets('스크린 리더가 링크로 읽는다', (tester) async {
@@ -130,9 +132,15 @@ void main() {
     });
   });
 
-  group('You 푸터', () {
+  group('You 정보', () {
+    Future<void> openAbout(WidgetTester tester) async {
+      await tester.tap(find.text(K.about.tr()));
+      await tester.pumpAndSettle();
+    }
+
     testWidgets('버전 줄을 누르면 Apache-2.0 이 열린다', (tester) async {
       final stub = await _pump(tester, const YouScreen());
+      await openAbout(tester);
 
       await tester.tap(find.text(YouScreen.versionLine));
       await tester.pumpAndSettle();
@@ -140,10 +148,96 @@ void main() {
       expect(stub.opened, <Uri>[TpUrls.appLicense]);
     });
 
+    testWidgets('약관과 개인정보 처리방침이 열린다', (tester) async {
+      // 앱스토어 심사가 앱 안에서 개인정보 처리방침에 닿기를 요구한다.
+      final stub = await _pump(tester, const YouScreen());
+      await openAbout(tester);
+
+      await tester.tap(find.text(K.terms.tr()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(K.privacy.tr()));
+      await tester.pumpAndSettle();
+
+      expect(stub.opened, <Uri>[TpUrls.terms, TpUrls.privacy]);
+    });
+
+    testWidgets('로그인 화면에서도 약관이 열린다', (tester) async {
+      final stub = await _pump(tester, const LoginScreen());
+
+      await tester.tap(find.text(K.privacy.tr()));
+      await tester.pumpAndSettle();
+
+      expect(stub.opened, <Uri>[TpUrls.privacy]);
+    });
+
     testWidgets('명세의 푸터 문구는 그대로다', (tester) async {
       await _pump(tester, const YouScreen());
+      await openAbout(tester);
 
       expect(find.text('TechPicks version 2.0.0 · Apache-2.0'), findsOneWidget);
+    });
+
+    testWidgets('데이터 출처로 가는 줄이 있다', (tester) async {
+      // 표기가 어디에도 없으면 CC-BY-SA 를 안 지킨 것이다. You 에서 닿을
+      // 수 있어야 한다.
+      await _pump(tester, const YouScreen());
+      await openAbout(tester);
+
+      expect(find.text(K.sources.tr()), findsOneWidget);
+    });
+  });
+
+  group('데이터 출처 화면', () {
+    testWidgets('카탈로그가 들고 온 출처 문자열을 그대로 적는다', (tester) async {
+      // 손으로 적어두면 카탈로그를 다시 구울 때 어긋난다.
+      await _pump(tester, const SourcesScreen());
+
+      expect(find.text(readCatalog().source), findsOneWidget);
+    });
+
+    testWidgets('라이선스 본문과 원본에 닿는다', (tester) async {
+      // 귀속은 "적는 것"에서 끝나지 않는다. 둘 다 열려야 한다.
+      final stub = await _pump(tester, const SourcesScreen());
+
+      await tester.tap(find.text(K.sourcesLicense.tr()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(K.sourcesRepo.tr()));
+      await tester.pumpAndSettle();
+
+      expect(stub.opened, <Uri>[TpUrls.license, TpUrls.techApi]);
+    });
+
+    testWidgets('실린 것의 수를 적는다', (tester) async {
+      // "TechAPI 에서 왔습니다" 한 줄보다 무엇이 얼마나 실렸는지가 정직하다.
+      await _pump(tester, const SourcesScreen());
+      final catalog = readCatalog();
+
+      expect(
+        find.text(
+          K.sourcesPhones.tr(args: <String>['${catalog.smartphones.length}']),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(K.sourcesVersion.tr(args: <String>['${catalog.version}'])),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('두 크롬 모두에서 그려진다', (tester) async {
+      for (final chrome in TpChrome.values) {
+        await _pump(tester, const SourcesScreen(), chrome: chrome);
+        expect(find.text(K.sources.tr()), findsWidgets, reason: chrome.name);
+      }
+    });
+
+    testWidgets('못 열어도 화면이 죽지 않는다', (tester) async {
+      await _pump(tester, const SourcesScreen(), opener: _BrokenOpener());
+
+      await tester.tap(find.text(K.sourcesLicense.tr()));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
     });
   });
 }

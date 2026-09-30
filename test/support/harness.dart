@@ -18,8 +18,12 @@ import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/router.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/data/repository/catalog_repository.dart';
+import 'package:techpicks/data/repository/laptop_repository.dart';
+import 'package:techpicks/data/repository/parts_repository.dart';
 import 'package:techpicks/domain/model/ranking.dart';
 import 'package:techpicks/domain/model/tp_weights.dart';
+
+import 'fake_account_sync.dart';
 
 /// 애셋을 파일에서 그대로 읽는 번들.
 ///
@@ -147,11 +151,13 @@ Future<void> pumpScreenNoSettle(
   String catalogAsset = defaultCatalogAsset,
   double textScale = 1,
   bool disableAnimations = false,
+  bool dark = false,
 }) async {
   await _pump(
     tester,
     screen,
     chrome: chrome,
+    dark: dark,
     overrides: overrides,
     size: size,
     viewPadding: viewPadding,
@@ -178,6 +184,24 @@ Catalog readCatalog() => Catalog.fromJson(
 /// 기본 가중치로 매긴 순위. 랭킹 화면이 보여주는 것과 같은 순서다.
 List<RankedDevice> readRanking() =>
     Ranking.of(readCatalog().smartphones, RankAxis.tpIndex, TpWeights.defaults);
+
+/// 구워둔 실제 데스크톱 부품.
+const String defaultPartsAsset = 'assets/parts/desktop-v1.json';
+
+/// 구워둔 실제 노트북 목록.
+const String defaultLaptopsAsset = 'assets/laptops/v1.json';
+
+/// 부품 애셋을 그대로 읽는다. 카탈로그와 같은 이유다 — 기대값을 데이터에서
+/// 끌어오지 않으면 애셋을 다시 구울 때마다 테스트가 깨진다.
+DesktopParts readParts() => DesktopParts.fromJson(
+  jsonDecode(File(defaultPartsAsset).readAsStringSync())
+      as Map<String, dynamic>,
+);
+
+Laptops readLaptops() => Laptops.fromJson(
+  jsonDecode(File(defaultLaptopsAsset).readAsStringSync())
+      as Map<String, dynamic>,
+);
 
 /// 없는 경로. 애셋이 빠졌거나 깨진 빌드를 흉내낸다.
 const String missingCatalogAsset = 'assets/catalog/없는파일.json';
@@ -209,6 +233,14 @@ Future<void> _pump(
         catalogRepositoryProvider.overrideWithValue(
           CatalogRepository(bundle: FileBundle(), assetPath: catalogAsset),
         ),
+        // 부품·노트북도 실제 애셋을 읽는다. rootBundle 은 테스트에서 안 된다.
+        partsRepositoryProvider.overrideWithValue(
+          PartsRepository(bundle: FileBundle()),
+        ),
+        laptopRepositoryProvider.overrideWithValue(
+          LaptopRepository(bundle: FileBundle()),
+        ),
+        accountSyncServiceProvider.overrideWithValue(FakeAccountSync()),
         ...overrides,
       ],
       child: MaterialApp(
@@ -250,7 +282,7 @@ Future<ProviderContainer> pumpApp(
   bool settle = true,
   bool onboarded = true,
 }) async {
-  // 온보딩·로그인 게이트는 이제 라우터의 redirect 에 있다. 대부분의 테스트는
+  // 온보딩 게이트는 라우터의 redirect 에 있다. 대부분의 테스트는
   // **그 뒤의 앱**을 보므로 기본으로 지나 있게 둔다. 게이트 자체를 보는
   // 테스트(startup_test)만 false 를 준다.
   //
@@ -258,7 +290,6 @@ Future<ProviderContainer> pumpApp(
   if (onboarded) {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_tutorial_completed', true);
-    await prefs.setBool('browsing_as_guest', true);
   }
 
   tester.view.physicalSize = size;
@@ -272,6 +303,7 @@ Future<ProviderContainer> pumpApp(
       catalogRepositoryProvider.overrideWithValue(
         CatalogRepository(bundle: FileBundle(), assetPath: catalogAsset),
       ),
+      accountSyncServiceProvider.overrideWithValue(FakeAccountSync()),
       ...overrides,
     ],
   );

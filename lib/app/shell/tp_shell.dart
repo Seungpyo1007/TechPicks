@@ -1,17 +1,19 @@
 import '../theme/tp_motion.dart';
-import '../theme/tp_native_glass.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_tap_target.dart';
+import '../theme/tp_sys.dart';
 import '../theme/tp_tokens.dart';
 import '../theme/tp_typography.dart';
 import '../../shared/copy_keys.dart';
 import 'tp_tab.dart';
+import 'tp_tab_bar.dart';
 import 'tp_window.dart';
-import '../../shared/widgets/tp_press.dart';
+import '../theme/tp_icons.dart';
 
 /// 셸이 크롬에 내준 자리.
 ///
@@ -101,9 +103,9 @@ class TpShell extends StatelessWidget {
     this.tab,
     this.mode = TpChromeMode.full,
     this.onBack,
-    this.onTabSelected,
     this.trailing,
     this.floatingAction,
+    this.scrollTitle,
   });
 
   final Widget child;
@@ -111,12 +113,11 @@ class TpShell extends StatelessWidget {
   /// 축소 헤더에 들어가는 제목. iOS 는 유리 알약, Android 는 app bar.
   final String? title;
 
-  /// 현재 탭. null 이면 탭 바를 그리지 않는다(푸시된 화면).
+  /// 현재 탭. null 이면 푸시된 화면이다. 탭 바는 [TabHost] 가 그리고 셸은 자리만 비운다.
   final TpTab? tab;
 
   final TpChromeMode mode;
   final VoidCallback? onBack;
-  final ValueChanged<TpTab>? onTabSelected;
 
   /// 헤더 오른쪽 버튼. 지금은 상세의 공유가 유일하다.
   final TpShellAction? trailing;
@@ -124,15 +125,19 @@ class TpShell extends StatelessWidget {
   /// Android 확장 FAB. iOS 는 콘텐츠 안 인라인 버튼을 쓰므로 무시한다.
   final Widget? floatingAction;
 
-  static const double iosTabHeight = 62;
+  /// iOS 에서 큰 제목이 콘텐츠 안에 있는 화면의 제목.
+  ///
+  /// 큰 제목이 스크롤로 사라지면 헤더 알약에 작은 제목으로 떠오른다. 안
+  /// 그러면 스크롤한 홈은 이름 없는 화면이 된다. [title] 이 있으면 무시한다.
+  final String? scrollTitle;
 
-  /// 고른 탭 알약. 명세 프로토타입이 48 을 준다.
-  static const double iosTabPill = 48;
-  static const double _iosTabGap = 10;
+  /// 큰 제목(34pt)이 헤더 밑으로 다 들어갔다고 보는 스크롤 양.
+  static const double _scrollTitleAfter = 44;
+
   static const double _iosHeaderScrim = 106;
   static const double _iosContentTop = 60;
 
-  static const double _androidTabHeight = 78;
+  static const double _androidTabHeight = TpTabBar.androidHeight;
 
   /// FAB 가 가리는 만큼 콘텐츠 아래를 더 비운다.
   ///
@@ -151,12 +156,22 @@ class TpShell extends StatelessWidget {
       // 검은 글자가 검은 배경 위에 남는다.
       value: t.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: DecoratedBox(
-        decoration: t.pageBackground,
+        // v3: iOS 는 시스템 grouped 바탕. 그라데이션은 Android 만 남는다.
+        decoration: t.isGlass
+            ? BoxDecoration(color: context.sys.background)
+            : t.pageBackground,
         // Ink 계열 위젯(InkWell, IconButton)이 Material 조상을 요구한다.
         // 배경은 위 DecoratedBox 가 그리므로 여기서는 투명하게 둔다.
         child: Material(
           type: MaterialType.transparency,
-          child: t.isGlass ? _buildIos(context) : _buildAndroid(context),
+          child: TpReselect(
+            tab: tab,
+            onReselect: _scrollToTop,
+            child: Builder(
+              builder: (context) =>
+                  t.isGlass ? _buildIos(context) : _buildAndroid(context),
+            ),
+          ),
         ),
       ),
     );
@@ -225,26 +240,79 @@ class TpShell extends StatelessWidget {
     );
   }
 
+  /// 이 화면의 목록을 맨 위로 올린다. 상태 바를 누르거나 지금 탭을 다시
+  /// 누를 때. iOS 에서는 Scaffold 가 해주던 일인데 이 앱은 Scaffold 가 없다.
+  static void _scrollToTop(BuildContext context) {
+    final controller = PrimaryScrollController.maybeOf(context);
+    if (controller == null) return;
+    final move = context.motion.reveal;
+    for (final position in controller.positions.toList()) {
+      if (move.duration == Duration.zero) {
+        position.jumpTo(0);
+      } else {
+        position.animateTo(
+          0,
+          duration: const Duration(milliseconds: 380),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    }
+  }
+
+  /// [past] 가 있으면 켜질 때만 보인다. 숨은 동안은 트리에 없다 — 누를
+  /// 수도, 스크린 리더가 큰 제목과 두 번 읽을 수도 없다.
+  Widget _fadeIn(
+    BuildContext context,
+    ValueListenable<bool>? past,
+    Widget child,
+  ) {
+    if (past == null) return child;
+    final move = context.motion.selection;
+    return ValueListenableBuilder<bool>(
+      valueListenable: past,
+      child: child,
+      builder: (context, shown, child) => AnimatedSwitcher(
+        duration: move.duration,
+        switchInCurve: move.curve,
+        switchOutCurve: move.curve,
+        child: shown ? child : const SizedBox.shrink(),
+      ),
+    );
+  }
+
   // ── iOS 26 Liquid Glass ──────────────────────────────────────
   Widget _buildIos(BuildContext context) {
+    if (title == null && scrollTitle != null && mode == TpChromeMode.full) {
+      return _ScrollPast(
+        after: _scrollTitleAfter,
+        builder: (context, past) => _buildIosChrome(context, past),
+      );
+    }
+    return _buildIosChrome(context, null);
+  }
+
+  Widget _buildIosChrome(BuildContext context, ValueListenable<bool>? past) {
     final t = context.tp;
     final type = context.tpText;
     final safe = MediaQuery.viewPaddingOf(context);
     final showChrome = mode == TpChromeMode.full;
     final takeover = mode == TpChromeMode.takeover;
+    // 헤더 알약에 들어갈 글자. 스크롤 제목은 [past] 가 켜질 때만 보인다.
+    final pillTitle = title ?? (past == null ? null : scrollTitle);
 
     final topInset = switch (mode) {
       TpChromeMode.full => safe.top + _iosContentTop,
       TpChromeMode.plain => safe.top + 12,
       TpChromeMode.takeover => 0.0,
     };
-    final tabBottom = safe.bottom + _iosTabGap;
     final bottomInset = takeover
         // 인수 화면은 위아래로 화면을 통째로 쓴다. 여기서 안전 영역을 비우면
         // 어두운 화면 아래로 밝은 배경이 띠처럼 남는다. 스캔·뷰어는 자기
         // 컨트롤에 안전 영역을 직접 더한다.
         ? 0.0
-        : (tab != null ? tabBottom + iosTabHeight + 16 : safe.bottom + 24);
+        : (tab != null
+              ? safe.bottom + TpTabBar.coverOf(context) + 16
+              : safe.bottom + 24);
 
     return Stack(
       children: <Widget>[
@@ -257,7 +325,7 @@ class TpShell extends StatelessWidget {
             context,
             top: topInset,
             bottom: bottomInset,
-            child: _TabBody(tab: tab, child: child),
+            child: child,
           ),
         ),
 
@@ -294,7 +362,8 @@ class TpShell extends StatelessWidget {
             ),
           ),
 
-        if (showChrome && (onBack != null || title != null || trailing != null))
+        if (showChrome &&
+            (onBack != null || pillTitle != null || trailing != null))
           Positioned(
             top: safe.top,
             left: 12,
@@ -307,36 +376,45 @@ class TpShell extends StatelessWidget {
                   TpTapTarget(
                     onTap: onBack,
                     label: K.back.tr(),
-                    child: const TpSurface.chrome(
+                    child: TpSurface.chrome(
                       radius: TpTokens.rControl,
                       child: SizedBox(
                         width: 42,
                         height: 42,
-                        child: Icon(Icons.chevron_left, size: 24),
+                        child: Icon(TpIcons.ios.back, size: 22),
                       ),
                     ),
                   )
                 // 오른쪽에만 버튼이 있으면 제목이 왼쪽으로 밀린다.
-                else if (trailing != null && title != null)
+                else if (trailing != null && pillTitle != null)
                   const SizedBox(width: 48),
                 // 제목이 없는 화면(상세)은 밀어줄 것이 없어 오른쪽 버튼이
                 // 왼쪽에 붙는다.
-                if (title == null && trailing != null) const Spacer(),
-                if (title != null) ...<Widget>[
+                if (pillTitle == null && trailing != null) const Spacer(),
+                if (pillTitle != null) ...<Widget>[
                   const Spacer(),
-                  TpSurface.chrome(
-                    radius: TpTokens.rControl,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 11,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        const _AppMark(width: 13, height: 19),
-                        const SizedBox(width: 8),
-                        Text(title!, style: type.appBarTitle),
-                      ],
+                  _fadeIn(
+                    context,
+                    past,
+                    TpSurface.chrome(
+                      radius: TpTokens.rControl,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 11,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          const _AppMark(width: 13, height: 19),
+                          const SizedBox(width: 8),
+                          // 시스템 바처럼 글자 확대에 상한을 둔다. 알약 높이가
+                          // 고정이라 넘치면 잘린다.
+                          MediaQuery.withClampedTextScaling(
+                            maxScaleFactor: 1.2,
+                            child: Text(pillTitle, style: type.appBarTitle),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -355,54 +433,24 @@ class TpShell extends StatelessWidget {
                     ),
                   )
                 // 뒤로 버튼과 좌우 균형을 맞춘다.
-                else if (onBack != null && title != null)
+                else if (onBack != null && pillTitle != null)
                   const SizedBox(width: 48),
               ],
             ),
           ),
 
-        if (tab != null)
+        // 상태 바를 누르면 맨 위로. iOS 는 그 자리의 탭을 앱에 넘겨준다.
+        if (!takeover)
           Positioned(
-            // 시스템 바는 자기 여백을 스스로 잡는다. 우리가 좌우 12 를 또
-            // 물리면 그 안쪽으로 한 번 더 들어가 좁고 붕 뜬 바가 된다.
-            left: TpNativeGlass.enabled ? 0 : 12,
-            right: TpNativeGlass.enabled ? 0 : 12,
-            // 시스템 바는 홈 인디케이터 바로 위에 앉는다. 명세의 44pt 는
-            // 우리가 그리는 알약 바의 값이다.
-            bottom: TpNativeGlass.enabled ? safe.bottom : tabBottom,
-            height: TpNativeGlass.enabled
-                ? iosTabHeight + TpNativeTabBar.overflow
-                : iosTabHeight,
-            child: TpNativeGlass.enabled
-                ? TpNativeTabBar(
-                    index: TpTab.values.indexOf(tab!),
-                    onSelected: onTabSelected == null
-                        ? null
-                        : (i) => onTabSelected!(TpTab.values[i]),
-                    height: iosTabHeight,
-                    tint: TpTokens.blue,
-                    // 아이콘 크기도 라벨 타이포도 안 넘긴다. 우리 값을 얹는
-                    // 순간 간격이 어긋난다 — 28pt 아이콘은 라벨을 덮었다.
-                    // 시스템 바의 간격은 UIKit 이 잡게 둔다.
-                    items: <TpNativeTabItem>[
-                      for (final t in TpTab.values)
-                        TpNativeTabItem(
-                          label: K.tab(t).tr(),
-                          symbol: t.symbol,
-                          activeSymbol: t.activeSymbol,
-                        ),
-                    ],
-                  )
-                : TpSurface.chrome(
-                    raised: true,
-                    radius: TpTokens.rControl,
-                    child: _IosTabBar(
-                      current: tab!,
-                      onSelected: onTabSelected,
-                      tokens: t,
-                      type: type,
-                    ),
-                  ),
+            top: 0,
+            left: 0,
+            right: 0,
+            height: safe.top,
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              excludeFromSemantics: true,
+              onTap: () => _scrollToTop(context),
+            ),
           ),
       ],
     );
@@ -445,7 +493,7 @@ class TpShell extends StatelessWidget {
             context,
             top: topInset,
             bottom: bottomInset,
-            child: _TabBody(tab: tab, child: child),
+            child: child,
           ),
         ),
 
@@ -518,266 +566,16 @@ class TpShell extends StatelessWidget {
                 16,
             child: floatingAction!,
           ),
-
-        if (tab != null && !rail)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              color: t.tabBar,
-              padding: EdgeInsets.only(bottom: safe.bottom),
-              height: _androidTabHeight + safe.bottom,
-              child: _AndroidTabBar(
-                current: tab!,
-                onSelected: onTabSelected,
-                tokens: t,
-                type: type,
-              ),
-            ),
-          ),
       ],
     );
-
-    if (!rail) return body;
-    return Row(
-      children: <Widget>[
-        _TpRail(current: tab!, onSelected: onTabSelected, tokens: t),
-        Expanded(child: body),
-      ],
-    );
+    return body;
   }
 }
 
-/// 넓은 창의 왼쪽 내비게이션.
-///
-/// 다섯 [TpTab] 과 1:1 로 맞고, `NavigationRail` 은 포커스와 화살표 이동을
-/// 공짜로 준다 — 이 앱은 키보드로 닿는 곳이 입력칸뿐이라 그것만으로도 크다.
-///
-/// 라벨은 아이콘 아래에 둔다(`extended` 안 씀). 펼친 레일은 256pt 라 1024pt
-/// 창에서 본문 840pt 와 같이 놓으면 안 들어간다.
-class _TpRail extends StatelessWidget {
-  const _TpRail({
-    required this.current,
-    required this.onSelected,
-    required this.tokens,
-  });
-
-  final TpTab current;
-  final ValueChanged<TpTab>? onSelected;
-  final TpTokens tokens;
-
-  @override
-  Widget build(BuildContext context) => NavigationRail(
-    backgroundColor: tokens.tabBar,
-    indicatorColor: TpTokens.blue,
-    selectedIndex: TpTab.values.indexOf(current),
-    onDestinationSelected: onSelected == null
-        ? null
-        : (i) => onSelected!(TpTab.values[i]),
-    labelType: NavigationRailLabelType.all,
-    selectedIconTheme: const IconThemeData(color: Colors.white, size: 22),
-    unselectedIconTheme: IconThemeData(color: tokens.chromeDim, size: 22),
-    selectedLabelTextStyle: context.tpText.caption.copyWith(
-      color: tokens.ink,
-      fontWeight: tokens.boldWeight,
-    ),
-    unselectedLabelTextStyle: context.tpText.caption.copyWith(
-      color: tokens.chromeDim,
-    ),
-    destinations: <NavigationRailDestination>[
-      for (final t in TpTab.values)
-        NavigationRailDestination(
-          icon: Icon(t.icon),
-          selectedIcon: Icon(t.activeIcon),
-          label: Text(K.tab(t).tr()),
-        ),
-    ],
-  );
-}
-
-/// 활성 탭이 파란 알약으로 채워지는 iOS 캡슐 바.
-class _IosTabBar extends StatelessWidget {
-  const _IosTabBar({
-    required this.current,
-    required this.onSelected,
-    required this.tokens,
-    required this.type,
-  });
-
-  final TpTab current;
-  final ValueChanged<TpTab>? onSelected;
-  final TpTokens tokens;
-  final TpTypography type;
-
-  @override
-  Widget build(BuildContext context) {
-    final motion = context.motion;
-    return LayoutBuilder(
-      builder: (context, box) {
-        final tabs = TpTab.values;
-        final cell = box.maxWidth / tabs.length;
-        final index = tabs.indexOf(current);
-
-        return Stack(
-          children: <Widget>[
-            // 알약은 한 장뿐이고 칸에서 칸으로 미끄러진다. 칸마다 따로 그려
-            // 색만 교차시키던 때는 아무것도 움직이지 않아 툭 바뀌는 것처럼
-            // 보였다. 명세 프로토타입도 알약이 칸을 꽉 채운다(flex:1, 48).
-            AnimatedPositioned(
-              key: const ValueKey<String>('tab-pill'),
-              duration: motion.selection.duration,
-              curve: motion.selection.curve,
-              left: index * cell,
-              width: cell,
-              top: (TpShell.iosTabHeight - TpShell.iosTabPill) / 2,
-              height: TpShell.iosTabPill,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                // 고른 알약도 유리다. iOS 26 의 탭 바는 알약과 바가 같은
-                // 재질이고, 여기만 불투명 파랑이면 유리 위에 스티커를 붙인
-                // 것처럼 보인다. 파랑은 색이 아니라 **틴트**로 들어간다.
-                //
-                // 바와 하나로 합쳐지지는(glassEffectUnion) 않는다 — 플랫폼
-                // 뷰마다 네임스페이스가 따로라 그건 한 컨테이너 안에서만 된다.
-                child: TpNativeGlass.enabled
-                    ? TpNativeGlassSurface(
-                        radius: TpTokens.rControl,
-                        capsule: true,
-                        tint: TpTokens.blue,
-                        // 누르는 것은 그 아래 탭 항목이다. 알약은 장식이다.
-                        interactive: false,
-                        child: const SizedBox.expand(),
-                      )
-                    : DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: TpTokens.blue,
-                          borderRadius: BorderRadius.circular(
-                            TpTokens.rControl,
-                          ),
-                        ),
-                      ),
-              ),
-            ),
-            Row(
-              children: tabs.map((TpTab t) {
-                final active = t == current;
-                final color = active ? Colors.white : tokens.chromeDim;
-                return Expanded(
-                  child: Semantics(
-                    button: onSelected != null,
-                    selected: active,
-                    label: K.tab(t).tr(),
-                    // excludeSemantics 는 안쪽 글자와 **함께 탭 액션도**
-                    // 지운다. 그래서 보이스오버가 "탭, 버튼"이라고 읽어주고
-                    // 두 번 눌러도 아무 일이 없었다 — 탭을 바꿀 수가 없었다.
-                    onTap: onSelected == null ? null : () => onSelected!(t),
-                    excludeSemantics: true,
-                    child: TpPress(
-                      semanticsButton: false,
-                      onTap: onSelected == null ? null : () => onSelected!(t),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            // 알약이 지나가는 동안 글자·아이콘 색도 같이 넘어간다.
-                            TweenAnimationBuilder<Color?>(
-                              tween: ColorTween(end: color),
-                              duration: motion.selection.duration,
-                              curve: motion.selection.curve,
-                              builder: (context, value, _) => Icon(
-                                active ? t.activeIcon : t.icon,
-                                size: 22,
-                                color: value,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            AnimatedDefaultTextStyle(
-                              duration: motion.selection.duration,
-                              curve: motion.selection.curve,
-                              // 라벨이 두 줄이 되면 캡슐(62)을 넘긴다. 명세가
-                              // 높이를 고정해서 늘릴 수 없다.
-                              style: type.tabLabel.copyWith(color: color),
-                              child: Text(
-                                K.tab(t).tr(),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-/// 활성 탭이 색으로만 표시되는 Android 고정 바.
-class _AndroidTabBar extends StatelessWidget {
-  const _AndroidTabBar({
-    required this.current,
-    required this.onSelected,
-    required this.tokens,
-    required this.type,
-  });
-
-  final TpTab current;
-  final ValueChanged<TpTab>? onSelected;
-  final TpTokens tokens;
-  final TpTypography type;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: TpTab.values.map((TpTab t) {
-        final active = t == current;
-        final color = active ? TpTokens.blue : tokens.dim;
-        final move = context.motion.selection;
-        return Expanded(
-          child: InkWell(
-            onTap: onSelected == null ? null : () => onSelected!(t),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                // iOS 는 알약이 180ms 로 차오르는데 여기는 색이 툭 바뀌었다.
-                // 같은 동작이 두 크롬에서 정반대로 보였다.
-                AnimatedSwitcher(
-                  duration: move.duration,
-                  switchInCurve: move.curve,
-                  child: Icon(
-                    active ? t.activeIcon : t.icon,
-                    key: ValueKey<bool>(active),
-                    size: 24,
-                    color: color,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                AnimatedDefaultTextStyle(
-                  duration: move.duration,
-                  curve: move.curve,
-                  style: type.tabLabel.copyWith(color: color),
-                  child: Text(K.tab(t).tr()),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-/// 헤더의 앱 마크.
 ///
 /// 명세 Assets 표가 크기를 못박았다 — iOS 13×19, Android 16×22.
 /// 장식이라 스크린 리더에서는 뺀다. 제목이 바로 옆에 있다.
+/// 헤더의 앱 마크.
 class _AppMark extends StatelessWidget {
   const _AppMark({required this.width, required this.height});
 
@@ -810,93 +608,84 @@ class TpActiveTab extends InheritedWidget {
   bool updateShouldNotify(TpActiveTab old) => old.tab != tab;
 }
 
-/// 탭 본문이 들어올 때의 전환.
-///
-/// 탭 알약은 칸에서 칸으로 미끄러지는데 그 아래 본문은 툭 갈렸다. 한 동작
-/// 안에서 한쪽만 움직이면 나머지가 고장 난 것처럼 읽힌다.
-///
-/// M3 의 fade-through 와 같은 모양이다: 나가는 것은 안 보여주고 **들어오는
-/// 것**만 옅게·조금 작게 시작해 제자리로 온다.
-///
-/// **크롬은 안 움직인다.** 셸 안쪽에서 콘텐츠만 감싸기 때문이다 — 바깥에서
-/// 화면을 통째로 감싸면 탭 캡슐까지 같이 줄었다 커진다.
-class _TabBody extends StatefulWidget {
-  const _TabBody({required this.tab, required this.child});
+/// 세로 스크롤이 [after] 를 넘었는지 알려준다. 넘나들 때만 다시 그린다.
+class _ScrollPast extends StatefulWidget {
+  const _ScrollPast({required this.after, required this.builder});
 
-  /// 이 셸이 그리는 탭. null 이면(상세·스캔·뷰어) 아무것도 안 한다.
-  final TpTab? tab;
-
-  final Widget child;
+  final double after;
+  final Widget Function(BuildContext context, ValueListenable<bool> past)
+  builder;
 
   @override
-  State<_TabBody> createState() => _TabBodyState();
+  State<_ScrollPast> createState() => _ScrollPastState();
 }
 
-class _TabBodyState extends State<_TabBody>
-    with SingleTickerProviderStateMixin {
-  // late final 로 두면 안 된다. 탭이 아닌 셸(상세·스캔·뷰어)은 build 가 먼저
-  // 빠져나가서 dispose 가 **첫 접근**이 되고, 그때는 트리가 이미 떨어져 나가
-  // TickerMode 를 못 찾는다.
-  late final AnimationController _c;
-
-  TpTab? _active;
-
-  @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1),
-      value: 1,
-    );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final active = TpActiveTab.maybeOf(context);
-    final was = _active;
-    _active = active;
-
-    // 처음 붙을 때는 안 움직인다. 앱을 켜자마자 홈이 커지며 나타나면
-    // 화면이 한 번 튄 것처럼 보인다.
-    if (was == null || active == was) return;
-    if (widget.tab == null || active != widget.tab) return;
-
-    final move = context.motion.contentSwap;
-    if (move.duration == Duration.zero) return;
-    _c.duration = move.duration;
-    _c.forward(from: 0);
-  }
+class _ScrollPastState extends State<_ScrollPast> {
+  final ValueNotifier<bool> _past = ValueNotifier<bool>(false);
 
   @override
   void dispose() {
-    _c.dispose();
+    _past.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.tab == null) return widget.child;
-
-    final curve = CurvedAnimation(
-      parent: _c,
-      curve: context.motion.contentSwap.curve,
-    );
-
-    return AnimatedBuilder(
-      animation: curve,
-      builder: (context, child) {
-        final t = curve.value;
-        if (t == 1) return child!;
-        return Opacity(
-          opacity: t,
-          // 96% 에서 시작한다. 더 줄이면 목록이 크게 튀어 보이고, 안 줄이면
-          // 페이드만 남아 어디서 온 건지 안 읽힌다.
-          child: Transform.scale(scale: 0.96 + 0.04 * t, child: child),
-        );
+    return NotificationListener<ScrollUpdateNotification>(
+      onNotification: (n) {
+        // 안쪽의 가로 목록(칩 줄)이 굴러도 제목이 깜빡이면 안 된다.
+        if (n.depth == 0 && n.metrics.axis == Axis.vertical) {
+          _past.value = n.metrics.pixels > widget.after;
+        }
+        return false;
       },
-      child: widget.child,
+      child: widget.builder(context, _past),
     );
   }
+}
+
+/// 지금 탭을 다시 누르면 [TabHost] 가 알린다. 이 셸의 탭이면 맨 위로.
+class TpReselect extends StatefulWidget {
+  const TpReselect({
+    super.key,
+    required this.tab,
+    required this.onReselect,
+    required this.child,
+  });
+
+  final TpTab? tab;
+  final void Function(BuildContext context) onReselect;
+  final Widget child;
+
+  @override
+  State<TpReselect> createState() => TpReselectState();
+}
+
+class TpReselectState extends State<TpReselect> {
+  TpTabReselectNotifier? _bus;
+  final GlobalKey _inner = GlobalKey();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final bus = widget.tab == null ? null : TpTabReselect.maybeOf(context);
+    if (bus == _bus) return;
+    _bus?.removeListener(_heard);
+    _bus = bus?..addListener(_heard);
+  }
+
+  void _heard() {
+    final inner = _inner.currentContext;
+    if (_bus?.last == widget.tab && inner != null) widget.onReselect(inner);
+  }
+
+  @override
+  void dispose() {
+    _bus?.removeListener(_heard);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      KeyedSubtree(key: _inner, child: widget.child);
 }

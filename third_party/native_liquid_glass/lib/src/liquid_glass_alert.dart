@@ -24,10 +24,22 @@ class LiquidGlassAlertAction {
   /// Whether this is the cancel action.
   final bool isCancel;
 
-  const LiquidGlassAlertAction({required this.id, required this.title, this.icon, this.isDestructive = false, this.isCancel = false});
+  const LiquidGlassAlertAction({
+    required this.id,
+    required this.title,
+    this.icon,
+    this.isDestructive = false,
+    this.isCancel = false,
+  });
 
   Map<String, Object?> toMap() {
-    return <String, Object?>{'id': id, 'title': title, 'sfSymbolName': icon?.sfSymbolName, 'isDestructive': isDestructive, 'isCancel': isCancel};
+    return <String, Object?>{
+      'id': id,
+      'title': title,
+      'sfSymbolName': icon?.sfSymbolName,
+      'isDestructive': isDestructive,
+      'isCancel': isCancel,
+    };
   }
 }
 
@@ -52,7 +64,8 @@ class LiquidGlassAlert {
   /// Pending alert requests keyed by request id. The shared presenter channel
   /// is used by alert/sheet/popover at once, so a single persistent handler
   /// dispatches results by id instead of clobbering the handler per-show.
-  static final Map<int, Completer<String?>> _pending = <int, Completer<String?>>{};
+  static final Map<int, Completer<String?>> _pending =
+      <int, Completer<String?>>{};
   static bool _handlerInstalled = false;
 
   LiquidGlassAlert._();
@@ -136,7 +149,11 @@ class LiquidGlassAlert {
       title: title,
       message: message,
       actions: [
-        LiquidGlassAlertAction(id: 'cancel', title: cancelTitle, isCancel: true),
+        LiquidGlassAlertAction(
+          id: 'cancel',
+          title: cancelTitle,
+          isCancel: true,
+        ),
         LiquidGlassAlertAction(id: 'confirm', title: confirmTitle),
       ],
     );
@@ -156,8 +173,16 @@ class LiquidGlassAlert {
       title: title,
       message: message,
       actions: [
-        LiquidGlassAlertAction(id: 'cancel', title: cancelTitle, isCancel: true),
-        LiquidGlassAlertAction(id: 'destructive', title: destructiveTitle, isDestructive: true),
+        LiquidGlassAlertAction(
+          id: 'cancel',
+          title: cancelTitle,
+          isCancel: true,
+        ),
+        LiquidGlassAlertAction(
+          id: 'destructive',
+          title: destructiveTitle,
+          isDestructive: true,
+        ),
       ],
     );
     return result == 'destructive';

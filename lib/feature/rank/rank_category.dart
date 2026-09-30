@@ -9,6 +9,15 @@ enum RankCategory {
 
   const RankCategory(this.key);
 
-  /// `assets/translations/*.json` 의 번역 키.
+  /// `assets/translations/*.json` 의 번역 키. 주소 조각으로도 쓴다 —
+  /// `/browse/cpus` 의 `cpus` 가 이 값이다.
   final String key;
+
+  /// 주소에서 온 조각. 모르는 값이면 null 이고, 라우터가 폰으로 떨어뜨린다.
+  static RankCategory? parse(String? key) {
+    for (final value in values) {
+      if (value.key == key) return value;
+    }
+    return null;
+  }
 }

@@ -1,7 +1,6 @@
 import 'package:riverpod/misc.dart' show Override;
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/app/shell/tp_tab.dart';
-import 'package:techpicks/app/shell/tp_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
@@ -11,8 +10,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/app/theme/tp_motion.dart';
-import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
+import 'package:motor/motor.dart';
+import 'package:techpicks/shared/widgets/tp_pulse.dart';
+import 'package:techpicks/shared/widgets/tp_shimmer.dart';
 
 import '../support/harness.dart';
 
@@ -54,31 +55,31 @@ void main() {
   group('명세가 정한 값', () {
     // 이 값들은 디자인 결정이라 플랫폼과 무관하게 같아야 한다.
     for (final chrome in TpChrome.values) {
-      test('$chrome — 랭킹 재정렬은 220ms 에 명세 커브', () {
+      test('$chrome — 랭킹 재정렬은 380ms 에 명세 커브', () {
         final m = motionOf(chrome).reorder;
-        expect(m.duration, const Duration(milliseconds: 220));
+        expect(m.duration, const Duration(milliseconds: 380));
         expect(m.curve, const Cubic(.2, .8, .2, 1));
       });
 
-      test('$chrome — 스캔 결과 카드는 240ms 에 같은 커브', () {
+      test('$chrome — 스캔 결과 카드는 380ms 에 같은 커브', () {
         final m = motionOf(chrome).reveal;
-        expect(m.duration, const Duration(milliseconds: 240));
+        expect(m.duration, const Duration(milliseconds: 380));
         expect(m.curve, const Cubic(.2, .8, .2, 1));
       });
 
-      test('$chrome — 누름은 90ms', () {
+      test('$chrome — 누름은 120ms', () {
         expect(
           motionOf(chrome).press.duration,
-          const Duration(milliseconds: 90),
+          const Duration(milliseconds: 120),
         );
       });
     }
 
-    test('iOS 탭 알약은 180ms', () {
+    test('iOS 탭 알약은 280ms', () {
       // 명세 Interactions 표가 iOS 만 못박았다.
       expect(
         motionOf(TpChrome.ios).selection.duration,
-        const Duration(milliseconds: 180),
+        const Duration(milliseconds: 280),
       );
     });
   });
@@ -90,22 +91,22 @@ void main() {
     test('내용 교체', () {
       expect(ios.contentSwap, isNot(android.contentSwap));
       // Android 는 Flutter 가 들고 있는 M3 토큰을 그대로 쓴다.
-      expect(android.contentSwap.duration, Durations.medium2);
+      expect(android.contentSwap.duration, Durations.long1);
       expect(android.contentSwap.curve, Easing.emphasizedDecelerate);
     });
 
     test('값 변화', () {
       expect(ios.valueChange, isNot(android.valueChange));
-      expect(android.valueChange.duration, Durations.medium1);
+      expect(android.valueChange.duration, Durations.medium4);
     });
 
     test('목록 항목', () {
       expect(ios.listItem, isNot(android.listItem));
-      expect(android.listItem.duration, Durations.medium1);
+      expect(android.listItem.duration, Durations.medium4);
     });
 
     test('고른 상태', () {
-      expect(android.selection.duration, Durations.short4);
+      expect(android.selection.duration, Durations.medium2);
     });
 
     test('iOS 는 감속 커브를 쓴다', () {
@@ -140,7 +141,7 @@ void main() {
 
       testWidgets('$chrome — 끄면 그대로다', (tester) async {
         final m = await readMotion(tester, chrome: chrome);
-        expect(m.reorder.duration, const Duration(milliseconds: 220));
+        expect(m.reorder.duration, const Duration(milliseconds: 380));
         expect(m.isReduced, isFalse);
       });
     }
@@ -153,6 +154,130 @@ void main() {
         disableAnimations: true,
       );
       expect(m.reorder.curve, const Cubic(.2, .8, .2, 1));
+    });
+  });
+
+  group('스프링', () {
+    test('iOS 는 SwiftUI 프리셋과 같다', () {
+      final m = motionOf(TpChrome.ios);
+      expect(
+        m.bouncy,
+        const CupertinoMotion.bouncy(
+          duration: Duration(milliseconds: 700),
+          snapToEnd: true,
+        ),
+      );
+      expect(
+        m.smooth,
+        const CupertinoMotion.smooth(
+          duration: Duration(milliseconds: 800),
+          snapToEnd: true,
+        ),
+      );
+      expect((m.snappy as CupertinoMotion).bounce, closeTo(.15, 1e-9));
+    });
+
+    test('Android 는 M3 Expressive 토큰', () {
+      final m = motionOf(TpChrome.android);
+      expect(
+        m.snappy,
+        const MaterialSpringMotion.standardSpatialDefault(snapToEnd: true),
+      );
+      expect(
+        m.bouncy,
+        const MaterialSpringMotion.expressiveSpatialDefault(snapToEnd: true),
+      );
+      expect(
+        m.smooth,
+        const MaterialSpringMotion.standardSpatialSlow(snapToEnd: true),
+      );
+    });
+
+    for (final chrome in TpChrome.values) {
+      testWidgets('$chrome — 동작 줄이기면 스프링이 없고 반복도 멈춘다', (tester) async {
+        TpMotion.loopsAllowed = true;
+        addTearDown(() => TpMotion.loopsAllowed = false);
+        final m = await readMotion(
+          tester,
+          chrome: chrome,
+          disableAnimations: true,
+        );
+        for (final spring in <Motion>[m.snappy, m.bouncy, m.smooth]) {
+          expect(spring, isA<TpInstantMotion>());
+        }
+        expect(m.loops, isFalse);
+        expect((await readMotion(tester, chrome: chrome)).loops, isTrue);
+      });
+    }
+
+    test('테스트에서는 반복이 꺼져 있다', () {
+      // test/flutter_test_config.dart. 켜져 있으면 pumpAndSettle 이 안 끝난다.
+      expect(motionOf(TpChrome.ios).loops, isFalse);
+    });
+  });
+
+  group('튀기와 반짝임', () {
+    Widget pulse(Object trigger) => Center(
+      child: TpPulse(
+        trigger: trigger,
+        child: const SizedBox(width: 40, height: 40),
+      ),
+    );
+    // Transform.scale 은 z 를 1 로 두므로 getMaxScaleOnAxis 는 늘 1 이상이다.
+    double scale(WidgetTester tester) => tester
+        .widget<Transform>(
+          find.descendant(
+            of: find.byType(TpPulse),
+            matching: find.byType(Transform),
+          ),
+        )
+        .transform
+        .storage[0];
+
+    testWidgets('처음에는 안 튀고, 바뀌면 줄었다가 1 을 넘었다가 돌아온다', (tester) async {
+      await pumpScreen(tester, pulse(false));
+      expect(scale(tester), 1);
+
+      await pumpScreenNoSettle(tester, pulse(true));
+      await tester.pump();
+      expect(scale(tester), lessThan(1));
+
+      var peak = 0.0;
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        if (scale(tester) > peak) peak = scale(tester);
+      }
+      expect(peak, greaterThan(1));
+      await tester.pumpAndSettle();
+      expect(scale(tester), closeTo(1, 0.001));
+    });
+
+    testWidgets('동작을 줄이면 안 튄다', (tester) async {
+      await pumpScreen(tester, pulse(false), disableAnimations: true);
+      await pumpScreenNoSettle(tester, pulse(true), disableAnimations: true);
+      await tester.pump();
+      expect(scale(tester), 1);
+    });
+
+    testWidgets('반복이 꺼져 있으면 반짝임은 그냥 자식이다', (tester) async {
+      await pumpScreen(
+        tester,
+        const TpShimmer(child: SizedBox(width: 10, height: 10)),
+      );
+      expect(find.byType(ShaderMask), findsNothing);
+    });
+
+    testWidgets('반복이 켜져 있으면 빛이 지나간다', (tester) async {
+      TpMotion.loopsAllowed = true;
+      addTearDown(() => TpMotion.loopsAllowed = false);
+      await pumpScreenNoSettle(
+        tester,
+        const TpShimmer(child: SizedBox(width: 10, height: 10)),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(ShaderMask), findsOneWidget);
+      // 테스트가 끝나기 전에 트리를 비워 반복을 멈춘다.
+      await tester.pumpWidget(const SizedBox());
     });
   });
 
@@ -204,31 +329,6 @@ void main() {
   });
 
   group('홈 상태 변화', _homeMotion);
-
-  group('스캔 라인', () {
-    testWidgets('평소에는 계속 돈다', (tester) async {
-      await pumpScreenNoSettle(
-        tester,
-        ScanScreen(onBack: () {}),
-        size: const Size(1200, 2400),
-      );
-      // 무한 반복이라 settle 이 끝나지 않는다.
-      expect(tester.hasRunningAnimations, isTrue);
-      await tester.pump(const Duration(milliseconds: 300));
-    });
-
-    testWidgets('동작을 줄이면 멈춘다', (tester) async {
-      // 반복이 없으니 settle 이 끝난다. 안 끝나면 여기서 타임아웃이 난다.
-      await pumpScreen(
-        tester,
-        ScanScreen(onBack: () {}),
-        size: const Size(1200, 2400),
-        disableAnimations: true,
-      );
-
-      expect(tester.hasRunningAnimations, isFalse);
-    });
-  });
 }
 
 /// 홈의 상태 변화.
@@ -250,7 +350,7 @@ void _homeMotion() {
 
     await tester.pumpAndSettle();
     expect(find.text(K.emptyShortlist.tr()), findsNothing);
-    expect(find.text(K.verdict.tr().toUpperCase()), findsOneWidget);
+    expect(find.text(K.verdict.tr()), findsOneWidget);
   });
 
   // 한동안 행마다 AnimatedSize 를 하나씩 달아두고 "지우면 접히며 사라진다"고
@@ -275,23 +375,6 @@ void _homeMotion() {
     expect(tester.takeException(), isNull);
   });
 
-  // 같은 동작이 두 크롬에서 정반대였다 — iOS 는 선택만 움직이고 눌림이 없었고,
-  // 안드로이드는 눌림만 있고 선택이 툭 바뀌었다.
-  testWidgets('안드로이드 탭도 선택이 움직인다', (tester) async {
-    await pumpScreen(
-      tester,
-      HomeScreen(onTabSelected: (_) {}),
-      chrome: TpChrome.android,
-    );
-
-    final labels = find.descendant(
-      of: find.byType(TpShell),
-      matching: find.byType(AnimatedDefaultTextStyle),
-    );
-    // 탭 다섯 개 + 앱 바 제목. 여섯 개면 다섯 개가 다 감싸졌다는 뜻이다.
-    expect(labels, findsNWidgets(TpTab.values.length + 1));
-  });
-
   // 알약이 칸마다 따로 있어 색만 교차하던 때는 **아무것도 움직이지 않았다**.
   // 이제 한 장이 칸에서 칸으로 미끄러진다.
   testWidgets('iOS 탭 알약은 한 장이고 고른 칸으로 옮겨간다', (tester) async {
@@ -309,56 +392,15 @@ void _homeMotion() {
     // 자리를 시간에 걸쳐 옮기는 위젯이어야 한다.
     expect(
       tester.widget<AnimatedPositioned>(pill).duration.inMilliseconds,
-      180,
+      280,
     );
 
     final home = tester.getRect(pill);
 
-    await tester.tap(find.text(K.tab(TpTab.you).tr()));
+    await tester.tap(find.text(K.tab(TpTab.compare).tr()));
     await tester.pumpAndSettle();
 
     expect(tester.getRect(pill).left, greaterThan(home.left));
     expect(find.byKey(const ValueKey<String>('tab-pill')), findsOneWidget);
-  });
-
-  // 알약은 미끄러지는데 그 아래 본문은 툭 갈렸다. 한 동작 안에서 한쪽만
-  // 움직이면 나머지가 고장 난 것처럼 읽힌다.
-  testWidgets('탭을 바꾸면 본문이 옅게 들어오고 크롬은 안 움직인다', (tester) async {
-    await pumpApp(
-      tester,
-      size: const Size(402, 874),
-      overrides: <Override>[
-        askServiceProvider.overrideWithValue(const LocalAskService()),
-      ],
-    );
-    await tester.pumpAndSettle();
-
-    final pill = find.byKey(const ValueKey<String>('tab-pill'));
-    Rect chrome() => tester.getRect(
-      find.ancestor(of: pill, matching: find.byType(Stack)).first,
-    );
-    final before = chrome();
-
-    await tester.tap(find.text(K.tab(TpTab.you).tr()));
-    // 한 프레임은 티커를 시작만 한다. 그 다음 프레임이 전환의 한가운데다.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 60));
-
-    final fading = tester.widgetList<Opacity>(find.byType(Opacity));
-    expect(
-      fading.any((o) => o.opacity > 0 && o.opacity < 1),
-      isTrue,
-      reason: '본문이 옅게 들어와야 한다',
-    );
-    // 크롬은 자기 자리에 그대로 있다.
-    expect(chrome(), before);
-
-    await tester.pumpAndSettle();
-    expect(
-      tester
-          .widgetList<Opacity>(find.byType(Opacity))
-          .every((o) => o.opacity == 1),
-      isTrue,
-    );
   });
 }

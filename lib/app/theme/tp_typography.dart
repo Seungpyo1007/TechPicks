@@ -69,12 +69,33 @@ class TpTypography extends ThemeExtension<TpTypography> {
         fontSize: glass ? 15 : 20,
         height: glass ? null : 1.2,
         fontWeight: t.boldWeight,
+        letterSpacing: glass ? sfTracking(15) : null,
       ),
-      cardTitle: base.copyWith(fontSize: 17, fontWeight: t.boldWeight),
-      body: base.copyWith(fontSize: 15, height: 1.4),
-      secondary: base.copyWith(fontSize: 13.5, color: t.dim),
-      caption: base.copyWith(fontSize: 11.5, color: t.dim),
-      tabLabel: base.copyWith(fontSize: 10, fontWeight: t.boldWeight),
+      cardTitle: base.copyWith(
+        fontSize: 17,
+        fontWeight: t.boldWeight,
+        letterSpacing: glass ? sfTracking(17) : null,
+      ),
+      body: base.copyWith(
+        fontSize: 15,
+        height: 1.4,
+        letterSpacing: glass ? sfTracking(15) : null,
+      ),
+      secondary: base.copyWith(
+        fontSize: 13.5,
+        color: t.dim,
+        letterSpacing: glass ? sfTracking(13.5) : null,
+      ),
+      caption: base.copyWith(
+        fontSize: 11.5,
+        color: t.dim,
+        letterSpacing: glass ? sfTracking(11.5) : null,
+      ),
+      tabLabel: base.copyWith(
+        fontSize: 10,
+        fontWeight: t.boldWeight,
+        letterSpacing: glass ? sfTracking(10) : null,
+      ),
       eyebrow: base.copyWith(
         fontSize: 11,
         fontWeight: t.boldWeight,
@@ -88,6 +109,34 @@ class TpTypography extends ThemeExtension<TpTypography> {
         height: 1,
       ),
     );
+  }
+
+  /// SF Pro 의 크기별 자간(pt). UIKit 은 시스템 글꼴에 이걸 알아서 주는데
+  /// Flutter 는 안 준다. 그래서 본문이 네이티브보다 헐겁게 보였다.
+  ///
+  /// Apple 의 SF Pro 트래킹 표에서 우리가 쓰는 크기만 옮겼다. 사이 값은
+  /// 가까운 두 점을 잇는다.
+  static double sfTracking(double size) {
+    const table = <(double, double)>[
+      (10, 0.12),
+      (11, 0.06),
+      (12, 0),
+      (13, -0.08),
+      (15, -0.23),
+      (17, -0.43),
+      (20, -0.45),
+    ];
+    if (size <= table.first.$1) return table.first.$2;
+    if (size >= table.last.$1) return table.last.$2;
+    for (var i = 1; i < table.length; i++) {
+      final (hiSize, hiTrack) = table[i];
+      if (size <= hiSize) {
+        final (loSize, loTrack) = table[i - 1];
+        final f = (size - loSize) / (hiSize - loSize);
+        return loTrack + (hiTrack - loTrack) * f;
+      }
+    }
+    return 0;
   }
 
   @override

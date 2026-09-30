@@ -84,9 +84,11 @@ class LiquidGlassStepper extends StatefulWidget {
   State<LiquidGlassStepper> createState() => _LiquidGlassStepperState();
 }
 
-class _LiquidGlassStepperState extends State<LiquidGlassStepper> with LiquidGlassRouteSuppression {
+class _LiquidGlassStepperState extends State<LiquidGlassStepper>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   double? _lastValue;
   double? _lastMin;
   double? _lastMax;
@@ -122,8 +124,14 @@ class _LiquidGlassStepperState extends State<LiquidGlassStepper> with LiquidGlas
       await ch.invokeMethod('setValue', {'value': widget.value});
       _lastValue = widget.value;
     }
-    if (_lastMin != widget.min || _lastMax != widget.max || _lastStep != widget.step) {
-      await ch.invokeMethod('setRange', {'min': widget.min, 'max': widget.max, 'step': widget.step});
+    if (_lastMin != widget.min ||
+        _lastMax != widget.max ||
+        _lastStep != widget.step) {
+      await ch.invokeMethod('setRange', {
+        'min': widget.min,
+        'max': widget.max,
+        'step': widget.step,
+      });
       _lastMin = widget.min;
       _lastMax = widget.max;
       _lastStep = widget.step;
@@ -199,7 +207,9 @@ class _LiquidGlassStepperState extends State<LiquidGlassStepper> with LiquidGlas
           creationParams: _buildCreationParams(),
           creationParamsCodec: const StandardMessageCodec(),
           onPlatformViewCreated: _onPlatformViewCreated,
-          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{Factory<TapGestureRecognizer>(() => TapGestureRecognizer())},
+          gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+            Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+          },
         ),
       );
     }
@@ -212,12 +222,23 @@ class _LiquidGlassStepperState extends State<LiquidGlassStepper> with LiquidGlas
         children: [
           IconButton(
             icon: const Icon(Icons.remove),
-            onPressed: widget.enabled && widget.value > widget.min ? () => widget.onChanged((widget.value - widget.step).clamp(widget.min, widget.max)) : null,
+            onPressed: widget.enabled && widget.value > widget.min
+                ? () => widget.onChanged(
+                    (widget.value - widget.step).clamp(widget.min, widget.max),
+                  )
+                : null,
           ),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text(widget.value.toStringAsFixed(widget.step < 1 ? 1 : 0))),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(widget.value.toStringAsFixed(widget.step < 1 ? 1 : 0)),
+          ),
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: widget.enabled && widget.value < widget.max ? () => widget.onChanged((widget.value + widget.step).clamp(widget.min, widget.max)) : null,
+            onPressed: widget.enabled && widget.value < widget.max
+                ? () => widget.onChanged(
+                    (widget.value + widget.step).clamp(widget.min, widget.max),
+                  )
+                : null,
           ),
         ],
       ),
