@@ -19,7 +19,7 @@ export function LegalPage({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** 문의 메일. 정해지면 여기 한 곳만 바꾼다. */
-export const CONTACT_EMAIL = "CONTACT_EMAIL";
+/** 문의 메일. 바꿀 때는 여기 한 곳만. */
+export const CONTACT_EMAIL = "rush94434@gmail.com";
 export const EFFECTIVE_KO = "2026년 9월 27일";
 export const EFFECTIVE_EN = "September 27, 2026";
