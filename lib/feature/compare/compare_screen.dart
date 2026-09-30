@@ -31,13 +31,23 @@ double _lines(BuildContext context, TextStyle style, int lines) =>
     lines;
 
 /// 비교. 두 기기 머리 카드, 한 장의 표.
-class CompareScreen extends ConsumerWidget {
+class CompareScreen extends ConsumerStatefulWidget {
   const CompareScreen({super.key, this.onPick});
 
   final ValueChanged<CompareSide>? onPick;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CompareScreen> createState() => _CompareScreenState();
+}
+
+class _CompareScreenState extends ConsumerState<CompareScreen> {
+  /// 머리 카드. 이게 바 뒤로 다 지나가면 이름 줄을 띄운다.
+  final GlobalKey _heads = GlobalKey();
+
+  ValueChanged<CompareSide>? get onPick => widget.onPick;
+
+  @override
+  Widget build(BuildContext context) {
     final catalog = ref.watch(catalogProvider);
     final slots = ref.watch(compareProvider);
     final pairs = ref.watch(comparisonProvider);
@@ -95,10 +105,17 @@ class CompareScreen extends ConsumerWidget {
       slivers: <Widget>[
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            // 두 대가 있으면 아래 여백은 이름 줄 자리가 맡는다.
+            padding: EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              a != null && b != null && pairs.isNotEmpty ? 0 : 16,
+            ),
             child: TpCoachTarget(
               id: 'compare-heads',
               child: Row(
+                key: _heads,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Expanded(
@@ -131,8 +148,175 @@ class CompareScreen extends ConsumerWidget {
             ),
           ),
         ),
+        if (a != null && b != null && pairs.isNotEmpty)
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _NamesBar(
+              height: _NamesBar.heightFor(context),
+              heads: _heads,
+              a: a,
+              b: b,
+              weights: weights,
+            ),
+          ),
         SliverToBoxAdapter(child: table),
       ],
+    );
+  }
+}
+
+/// 스크롤로 머리 카드가 지나가면 바 아래에 붙는 한 줄: 두 이름 + 지수.
+///
+/// 표 아래쪽을 볼 때 어느 열이 어느 기기인지 잃지 않게. 카드가 보이는 동안은
+/// 자리만 차지하고 비어 있다(머리 카드와 표 사이 여백).
+class _NamesBar extends SliverPersistentHeaderDelegate {
+  _NamesBar({
+    required this.height,
+    required this.heads,
+    required this.a,
+    required this.b,
+    required this.weights,
+  });
+
+  final double height;
+  final GlobalKey heads;
+  final Smartphone a;
+  final Smartphone b;
+  final TpWeights weights;
+
+  static const TextStyle _style = TextStyle(
+    fontSize: 13,
+    height: 1.3,
+    fontWeight: FontWeight.w600,
+  );
+
+  static double heightFor(BuildContext context) =>
+      _lines(context, _style, 1) + 14;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlaps) =>
+      SizedBox(
+        height: height,
+        child: _Names(heads: heads, a: a, b: b, weights: weights),
+      );
+
+  @override
+  bool shouldRebuild(_NamesBar old) =>
+      old.height != height ||
+      old.a != a ||
+      old.b != b ||
+      old.weights != weights;
+}
+
+class _Names extends StatefulWidget {
+  const _Names({
+    required this.heads,
+    required this.a,
+    required this.b,
+    required this.weights,
+  });
+
+  final GlobalKey heads;
+  final Smartphone a;
+  final Smartphone b;
+  final TpWeights weights;
+
+  @override
+  State<_Names> createState() => _NamesState();
+}
+
+class _NamesState extends State<_Names> {
+  ScrollPosition? _position;
+  bool _shown = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final next = Scrollable.maybeOf(context)?.position;
+    if (next == _position) return;
+    _position?.removeListener(_check);
+    _position = next?..addListener(_check);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+  }
+
+  @override
+  void dispose() {
+    _position?.removeListener(_check);
+    super.dispose();
+  }
+
+  /// 이 줄이 바 아래에 붙고 머리 카드가 그 위로 지나갔는가.
+  void _check() {
+    if (!mounted) return;
+    final me = context.findRenderObject() as RenderBox?;
+    final heads = widget.heads.currentContext?.findRenderObject() as RenderBox?;
+    if (me == null || !me.attached || heads == null || !heads.attached) return;
+    final top = me.localToGlobal(Offset.zero).dy;
+    final bottom = heads.localToGlobal(Offset(0, heads.size.height)).dy;
+    // 붙기 전에는 카드 바로 아래라 둘이 같다. 붙은 뒤에만 카드가 더 올라간다.
+    final shown = bottom < top - .5;
+    if (shown != _shown) setState(() => _shown = shown);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sys = context.sys;
+    Widget side(Smartphone d, TextAlign align) {
+      final index = TpIndex.of(d.score, widget.weights);
+      return Expanded(
+        child: Text.rich(
+          TextSpan(
+            children: <InlineSpan>[
+              TextSpan(text: d.name),
+              if (index != null)
+                TextSpan(
+                  text: '  $index',
+                  style: TextStyle(color: sys.accentText),
+                ),
+            ],
+          ),
+          textAlign: align,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: _NamesBar._style.copyWith(color: sys.label),
+        ),
+      );
+    }
+
+    return IgnorePointer(
+      ignoring: !_shown,
+      child: AnimatedOpacity(
+        opacity: _shown ? 1 : 0,
+        duration: context.motion.selection.duration,
+        child: ExcludeSemantics(
+          // 머리 카드가 이미 같은 것을 읽어 준다.
+          excluding: !_shown,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: sys.background.withValues(alpha: .92),
+              border: Border(
+                bottom: BorderSide(color: sys.separator, width: .5),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: <Widget>[
+                  side(widget.a, TextAlign.start),
+                  const SizedBox(width: 10),
+                  side(widget.b, TextAlign.end),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
