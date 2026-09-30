@@ -13,6 +13,7 @@ import '../../app/theme/tp_native_glass.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../domain/model/search_index.dart';
+import '../../shared/coach/tp_coach.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_glass_search.dart';
 import '../../shared/widgets/tp_group.dart';
@@ -99,10 +100,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       widget.onHit?.call(hit);
     }
 
-    final field = TpGlassSearch(
-      placeholder: K.searchAllHint.tr(),
-      controller: _input,
-      onChanged: _set,
+    final field = TpCoachTarget(
+      id: 'search-field',
+      child: TpGlassSearch(
+        placeholder: K.searchAllHint.tr(),
+        controller: _input,
+        onChanged: _set,
+      ),
     );
 
     final slivers = <Widget>[
@@ -159,44 +163,49 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
       if (!typing)
         SliverToBoxAdapter(
-          child: TpGroup(
-            header: K.browseByKind.tr(),
-            children: <Widget>[
-              TpRow(
-                title: K.phones.tr(),
-                value: catalog == null ? null : '${catalog.smartphones.length}',
-                leading: TpIconTile(
-                  icon: glass
-                      ? CupertinoIcons.device_phone_portrait
-                      : Icons.smartphone,
+          child: TpCoachTarget(
+            id: 'search-kinds',
+            child: TpGroup(
+              header: K.browseByKind.tr(),
+              children: <Widget>[
+                TpRow(
+                  title: K.phones.tr(),
+                  value: catalog == null
+                      ? null
+                      : '${catalog.smartphones.length}',
+                  leading: TpIconTile(
+                    icon: glass
+                        ? CupertinoIcons.device_phone_portrait
+                        : Icons.smartphone,
+                  ),
+                  onTap: widget.onKind == null
+                      ? null
+                      : () => widget.onKind!(RankCategory.phones),
                 ),
-                onTap: widget.onKind == null
-                    ? null
-                    : () => widget.onKind!(RankCategory.phones),
-              ),
-              TpRow(
-                title: K.cpus.tr(),
-                value: catalog == null
-                    ? null
-                    : '${catalog.socs.length + catalog.cpus.length}',
-                leading: TpIconTile(icon: Icons.memory),
-                onTap: widget.onKind == null
-                    ? null
-                    : () => widget.onKind!(RankCategory.processors),
-              ),
-              TpRow(
-                title: K.laptops.tr(),
-                value: laptops.value == null
-                    ? null
-                    : '${laptops.value!.byPrice.length}',
-                leading: TpIconTile(
-                  icon: glass ? CupertinoIcons.device_laptop : Icons.laptop,
+                TpRow(
+                  title: K.cpus.tr(),
+                  value: catalog == null
+                      ? null
+                      : '${catalog.socs.length + catalog.cpus.length}',
+                  leading: TpIconTile(icon: Icons.memory),
+                  onTap: widget.onKind == null
+                      ? null
+                      : () => widget.onKind!(RankCategory.processors),
                 ),
-                onTap: widget.onKind == null
-                    ? null
-                    : () => widget.onKind!(RankCategory.laptops),
-              ),
-            ],
+                TpRow(
+                  title: K.laptops.tr(),
+                  value: laptops.value == null
+                      ? null
+                      : '${laptops.value!.byPrice.length}',
+                  leading: TpIconTile(
+                    icon: glass ? CupertinoIcons.device_laptop : Icons.laptop,
+                  ),
+                  onTap: widget.onKind == null
+                      ? null
+                      : () => widget.onKind!(RankCategory.laptops),
+                ),
+              ],
+            ),
           ),
         )
       else if (loading)
@@ -259,6 +268,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final page = TpPage(
       title: K.searchTitle.tr(),
       tab: TpTab.search,
+      // 첫 방문 안내. iOS 26 네이티브 검색창은 Flutter 밖이라 잴 수 없으면 건너뛴다.
+      coach: const <TpCoachStep>[
+        TpCoachStep(
+          target: 'search-field',
+          title: K.coachSearch,
+          body: K.coachSearchBody,
+        ),
+        TpCoachStep(
+          target: 'search-kinds',
+          title: K.coachKinds,
+          body: K.coachKindsBody,
+        ),
+      ],
       slivers: slivers,
     );
     if (!glass) return page;
