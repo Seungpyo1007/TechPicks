@@ -1,4 +1,11 @@
-# TechPicks
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="tool/icons/readme_dark.png">
+    <img src="tool/icons/readme_light.png" width="200" alt="TechPicks 앱 아이콘">
+  </picture>
+</p>
+
+<h1 align="center">TechPicks</h1>
 
 기기를 고를 때 숫자 하나로 답을 주는 앱. 성능·카메라·화면·배터리·가성비에
 매긴 점수를 **사용자가 정한 비중**으로 합쳐 TP Index 를 낸다. 같은 기기라도
@@ -50,6 +57,13 @@ flutter test
 ```
 
 Firebase 설정이 없어도 앱은 뜬다. 로그인만 안 되고 랭킹·비교·상담은 다 된다.
+
+### 로그인
+
+로그인은 선택이다(Apple · Google · 이메일). 로그인하면 관심 목록·가중치·최근 검색이 `users/{uid}/state/*` 로 동기화된다.
+
+- Android Google 로그인은 웹 클라이언트 ID 가 필요하다: `flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=<id>.apps.googleusercontent.com`. 없으면 버튼이 숨는다.
+- 규칙 배포: `firebase deploy --only firestore:rules,storage`.
 
 ## 라이선스
 

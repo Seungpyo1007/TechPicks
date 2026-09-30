@@ -32,7 +32,9 @@ void main() {
     var taps = 0;
     await pumpScreen(
       tester,
-      Center(child: TpButton(label: '눌러', onTap: () => taps++)),
+      Center(
+        child: TpButton(label: '눌러', onTap: () => taps++),
+      ),
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -47,7 +49,9 @@ void main() {
     var taps = 0;
     await pumpScreen(
       tester,
-      Center(child: TpButton(label: '눌러', onTap: () => taps++)),
+      Center(
+        child: TpButton(label: '눌러', onTap: () => taps++),
+      ),
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);

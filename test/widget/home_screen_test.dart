@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:techpicks/shared/copy_keys.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../support/harness.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:techpicks/app/providers.dart';
@@ -36,7 +38,7 @@ void main() {
     expect(find.text('Nothing on your shortlist yet'), findsOneWidget);
     expect(find.text('Add a device'), findsOneWidget);
     // 명세: 빈 상태에서는 결론 카드를 보여주지 않는다.
-    expect(find.text('WHERE THIS LANDS'), findsNothing);
+    expect(find.text('Where this lands'), findsNothing);
     expect(find.byType(TpScoreStrip), findsNothing);
   });
 
@@ -46,10 +48,11 @@ void main() {
     });
     await _pump(tester);
 
-    expect(find.text('WHERE THIS LANDS'), findsOneWidget);
+    expect(find.text('Where this lands'), findsOneWidget);
     expect(find.byType(TpScoreStrip), findsOneWidget);
     expect(find.text('Compare all'), findsOneWidget);
-    expect(find.text('Ask why'), findsOneWidget);
+    // 질문은 툴바의 반짝이 버튼이 맡는다. 카드에는 없다.
+    expect(find.text('Ask why'), findsNothing);
     expect(find.text('Nothing on your shortlist yet'), findsNothing);
   });
 
@@ -80,9 +83,12 @@ void main() {
     );
   });
 
-  testWidgets('저장된 순위가 없으면 Movers 섹션이 없다', (tester) async {
+  testWidgets('저장된 순위가 없으면 변동을 지어내지 않고 다음부터 보인다고 한다', (tester) async {
     await _pump(tester);
-    expect(find.text('Movers this week'), findsNothing);
+    expect(find.text('Movers this week'), findsOneWidget);
+    expect(find.text(K.moversFirstRun.tr()), findsOneWidget);
+    expect(find.textContaining('▲'), findsNothing);
+    expect(find.textContaining('▼'), findsNothing);
   });
 
   testWidgets('저장된 순위가 있으면 Movers 가 나온다', (tester) async {
@@ -110,8 +116,7 @@ void main() {
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
     for (final chrome in TpChrome.values) {
       await _pump(tester, chrome: chrome);
-      // iOS 는 콘텐츠 안, Android 는 large app bar 에 제목이 있다.
-      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('Today'), findsWidgets);
     }
   });
 }
@@ -124,14 +129,63 @@ void _shortlistRemoval() {
       'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
     });
 
-    final container = await pumpScreen(tester, const HomeScreen());
+    final container = await pumpScreen(
+      tester,
+      const HomeScreen(),
+      size: const Size(402, 874),
+    );
     await tester.pumpAndSettle();
     expect(container.read(shortlistProvider).length, 2);
 
-    await tester.longPress(find.text('iPhone 16 Pro Max').first);
+    // 길게 누르면 컨텍스트 메뉴가 뜨고, 지우기는 그 안에 있다. iOS 는
+    // 800ms 를 눌러야 뜬다.
+    final hold = await tester.startGesture(
+      tester.getCenter(find.text('iPhone 16 Pro Max').first),
+    );
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await hold.up();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(K.removeShort.tr()));
+    // 메뉴가 닫히고 행이 접히는 동안은 아직 목록에 있다.
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    expect(container.read(shortlistProvider), hasLength(2));
+    final folding = tester
+        .widgetList<SizeTransition>(find.byType(SizeTransition))
+        .where((w) => w.sizeFactor.value < 1);
+    expect(folding, isNotEmpty);
+
+    await tester.pumpAndSettle();
+    expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
+  });
+
+  testWidgets('Android 는 오른쪽으로 밀면 비교로 간다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
+    });
+    String? compared;
+
+    final container = await pumpScreen(
+      tester,
+      HomeScreen(onCompareDevice: (s) => compared = s),
+      chrome: TpChrome.android,
+    );
     await tester.pumpAndSettle();
 
-    expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
+    await tester.drag(
+      find.text('iPhone 16 Pro Max').first,
+      const Offset(500, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(compared, 'iphone-16-pro-max');
+    // 비교는 줄을 안 뺀다.
+    expect(container.read(shortlistProvider), hasLength(2));
+    expect(find.text('iPhone 16 Pro Max'), findsWidgets);
   });
 
   testWidgets('스와이프도 그대로 지운다', (tester) async {
@@ -147,6 +201,84 @@ void _shortlistRemoval() {
       find.text('iPhone 16 Pro Max').first,
       const Offset(-500, 0),
     );
+    await tester.pumpAndSettle();
+
+    expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
+  });
+
+  for (final chrome in <TpChrome>[TpChrome.ios, TpChrome.android]) {
+    testWidgets('지운 뒤 되돌리기로 제자리에 돌아온다 · ${chrome.name}', (tester) async {
+      await initLocalization();
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'shortlist_slugs': <String>['iphone-16-pro-max', 'galaxy-s25-ultra'],
+      });
+
+      final container = await pumpScreen(
+        tester,
+        const HomeScreen(),
+        chrome: chrome,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+        find.text('iPhone 16 Pro Max').first,
+        const Offset(-500, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);
+
+      final undo = K.shortlistRemoved
+          .tr(args: <String>['iPhone 16 Pro Max'])
+          .split(' · ')
+          .last;
+      await tester.tap(find.text(undo));
+      await tester.pumpAndSettle();
+
+      expect(container.read(shortlistProvider), <String>[
+        'iphone-16-pro-max',
+        'galaxy-s25-ultra',
+      ]);
+      expect(find.text(undo), findsNothing);
+    });
+  }
+
+  testWidgets('되돌리기는 잠깐 뒤 사라진다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
+    });
+
+    await pumpScreen(tester, const HomeScreen());
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.text('iPhone 16 Pro Max').first,
+      const Offset(-500, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('iPhone 16 Pro Max'), findsOneWidget);
+
+    await tester.pump(HomeScreen.undoHold);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('iPhone 16 Pro Max'), findsNothing);
+  });
+
+  testWidgets('Android 도 길게 누르면 메뉴에서 지운다', (tester) async {
+    await initLocalization();
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'shortlist_slugs': <String>['galaxy-s25-ultra', 'iphone-16-pro-max'],
+    });
+
+    final container = await pumpScreen(
+      tester,
+      const HomeScreen(),
+      chrome: TpChrome.android,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.text('iPhone 16 Pro Max').first);
+    await tester.pumpAndSettle();
+    expect(find.text(K.compareButton.tr()), findsNothing);
+    await tester.tap(find.text(K.removeShort.tr()));
     await tester.pumpAndSettle();
 
     expect(container.read(shortlistProvider), <String>['galaxy-s25-ultra']);

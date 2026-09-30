@@ -24,7 +24,8 @@ class LiquidGlassSheet {
   /// Live sheet handles keyed by request id. The shared presenter channel is
   /// used by alert/sheet/popover at once, so a single persistent handler
   /// routes dismiss events by id instead of clobbering the handler per-show.
-  static final Map<int, LiquidGlassSheetHandle> _live = <int, LiquidGlassSheetHandle>{};
+  static final Map<int, LiquidGlassSheetHandle> _live =
+      <int, LiquidGlassSheetHandle>{};
   static bool _handlerInstalled = false;
 
   LiquidGlassSheet._();
@@ -52,7 +53,10 @@ class LiquidGlassSheet {
     String? title,
     String? message,
     WidgetBuilder? builder,
-    List<LiquidGlassSheetDetent> detents = const [LiquidGlassSheetDetent.medium, LiquidGlassSheetDetent.large],
+    List<LiquidGlassSheetDetent> detents = const [
+      LiquidGlassSheetDetent.medium,
+      LiquidGlassSheetDetent.large,
+    ],
     bool prefersGrabberVisible = true,
     bool isModal = false,
   }) {

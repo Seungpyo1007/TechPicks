@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:native_liquid_glass/native_liquid_glass.dart';
 
@@ -113,9 +114,49 @@ class TpNativeTabBar extends StatelessWidget {
     required this.onSelected,
     required this.height,
     required this.tint,
+    this.onSearch,
+    this.searchLabel,
     this.labelStyle,
     this.iconSize,
+    this.nativeSearch = false,
+    this.searchActive = false,
+    this.searchPlaceholder,
+    this.onSearchChanged,
+    this.onSearchKeyboard,
+    this.keyboardDismissToken = 0,
+    this.searchText = '',
+    this.searchTextToken = 0,
+    this.searchFocusToken = 0,
+    this.hitTestTransparent = false,
+    this.acceptsAt,
   });
+
+  /// 뷰 뒤의 Flutter 위젯도 히트되게.
+  final bool hitTestTransparent;
+
+  /// 이 전역 좌표의 터치를 네이티브 바가 받을지. null 이면 전부 받는다.
+  final bool Function(Offset global)? acceptsAt;
+
+  /// [searchTextToken] 이 바뀔 때 검색창 글자를 이걸로.
+  final String searchText;
+  final int searchTextToken;
+
+  /// 바뀔 때 검색창에 초점.
+  final int searchFocusToken;
+
+  /// 검색 중 키보드의 최종 높이. 움직이기 시작할 때 온다.
+  final ValueChanged<double>? onSearchKeyboard;
+
+  /// 검색 원을 진짜 검색 탭으로. 누르면 UIKit 이 칸을 밀어내고 검색창을 펼친다.
+  final bool nativeSearch;
+
+  /// 검색 탭이 켜져 있어야 하는가.
+  final bool searchActive;
+  final String? searchPlaceholder;
+  final ValueChanged<String>? onSearchChanged;
+
+  /// 바뀔 때마다 검색창 키보드를 내린다.
+  final int keyboardDismissToken;
 
   final List<TpNativeTabItem> items;
   final int index;
@@ -124,6 +165,10 @@ class TpNativeTabBar extends StatelessWidget {
 
   /// 고른 칸의 강조색.
   final Color tint;
+
+  /// 바 오른쪽 검색 원. iOS 26 은 이걸 `UISearchTab` 으로 그린다.
+  final VoidCallback? onSearch;
+  final String? searchLabel;
 
   /// 라벨 타이포. null 이면 시스템 기본.
   ///
@@ -147,8 +192,36 @@ class TpNativeTabBar extends StatelessWidget {
     height: height,
     selectedItemColor: tint,
     iconSize: iconSize,
-    // 칸이 다섯이라 꽉 채운다. 가운데 모으기는 두세 칸짜리 바의 모양이다.
     iosItemPositioning: LiquidGlassTabBarItemPositioning.fill,
+    iosActionButton: onSearch == null
+        ? null
+        : LiquidGlassTabItem(
+            label: searchLabel ?? '',
+            icon: NativeLiquidGlassIcon.sfSymbol('magnifyingglass'),
+          ),
+    onActionButtonPressed: onSearch,
+    iosNativeSearch: nativeSearch,
+    searchActive: searchActive,
+    searchPlaceholder: searchPlaceholder,
+    // 켜질 때만 알린다. 꺼질 때는 onTabSelected 가 돌아갈 칸을 같이 준다.
+    onSearchActiveChanged: (active) {
+      if (active) onSearch?.call();
+    },
+    onSearchChanged: onSearchChanged,
+    onSearchSubmitted: onSearchChanged,
+    onSearchKeyboard: onSearchKeyboard,
+    searchKeyboardDismissToken: keyboardDismissToken,
+    searchText: searchText,
+    searchTextToken: searchTextToken,
+    searchFocusToken: searchFocusToken,
+    iosHitTestTransparent: hitTestTransparent,
+    iosGestureRecognizers: acceptsAt == null
+        ? null
+        : <Factory<OneSequenceGestureRecognizer>>{
+            Factory<OneSequenceGestureRecognizer>(
+              () => _RegionEager(acceptsAt!),
+            ),
+          },
     labelTextStyle: labelStyle,
     items: <LiquidGlassTabItem>[
       for (final item in items)
@@ -160,3 +233,337 @@ class TpNativeTabBar extends StatelessWidget {
     ],
   );
 }
+
+/// OS 가 그리는 유리 검색 바. 펼친 채로 두고 취소 버튼은 안 쓴다.
+class TpNativeSearchBar extends StatelessWidget {
+  const TpNativeSearchBar({
+    super.key,
+    required this.placeholder,
+    required this.height,
+    this.onChanged,
+    this.onSubmitted,
+    this.tint,
+    this.textColor,
+    this.placeholderColor,
+    this.iconColor,
+  });
+
+  final String placeholder;
+  final double height;
+  final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+  final Color? tint;
+  final Color? textColor;
+  final Color? placeholderColor;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassSearchBar(
+    placeholder: placeholder,
+    onChanged: onChanged,
+    onSubmitted: onSubmitted,
+    expandable: false,
+    initiallyExpanded: true,
+    expandedHeight: height,
+    showCancelButton: false,
+    tint: tint,
+    textColor: textColor,
+    placeholderColor: placeholderColor,
+    iconColor: iconColor,
+  );
+}
+
+/// iOS 26 의 `UISegmentedControl`. 고른 칸이 유리 캡슐로 미끄러진다.
+///
+/// Flutter 의 `CupertinoSlidingSegmentedControl` 은 iOS 13 모양이다 — 모서리가
+/// 각지고 두껍다. 26 에서는 캡슐이고 32pt 다.
+class TpNativeSegmented extends StatelessWidget {
+  const TpNativeSegmented({
+    super.key,
+    required this.labels,
+    required this.index,
+    required this.onChanged,
+  });
+
+  final List<String> labels;
+  final int index;
+  final ValueChanged<int> onChanged;
+
+  static const double height = 32;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassSegmentedControl(
+    labels: labels,
+    selectedIndex: index,
+    onValueChanged: onChanged,
+    height: height,
+  );
+}
+
+/// 풀다운 메뉴 한 줄(네이티브용).
+class TpNativeMenuEntry {
+  const TpNativeMenuEntry({
+    required this.label,
+    this.checked = false,
+    this.destructive = false,
+    this.symbol,
+  });
+
+  final String label;
+  final bool checked;
+  final bool destructive;
+
+  /// 줄 오른쪽 SF Symbol.
+  final String? symbol;
+}
+
+/// iOS 26 툴바의 메뉴 버튼. 유리 원을 누르면 `UIMenu` 가 펼쳐진다.
+///
+/// Flutter 의 `CupertinoMenuAnchor` 는 iOS 13 메뉴 모양이다. 이건 시스템 것이라
+/// 유리 번짐, 체크 표시, 여는 모션이 전부 OS 그대로다.
+class TpNativeMenuButton extends StatelessWidget {
+  const TpNativeMenuButton({
+    super.key,
+    required this.symbol,
+    required this.label,
+    required this.entries,
+    required this.onSelected,
+    this.tint,
+  });
+
+  /// SF Symbol 이름.
+  final String symbol;
+
+  /// 스크린 리더 이름.
+  final String label;
+  final List<TpNativeMenuEntry> entries;
+  final ValueChanged<int> onSelected;
+
+  /// 아이콘 색. 필터가 걸려 있을 때 액센트.
+  final Color? tint;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassMenu.icon(
+    icon: NativeLiquidGlassIcon.sfSymbol(symbol),
+    glass: true,
+    accessibilityLabel: label,
+    color: tint,
+    height: 44,
+    items: <LiquidGlassMenuItem>[
+      for (var i = 0; i < entries.length; i++)
+        LiquidGlassMenuItem(
+          id: '$i',
+          title: entries[i].label,
+          isChecked: entries[i].checked,
+          isDestructive: entries[i].destructive,
+        ),
+    ],
+    onItemSelected: (id) => onSelected(int.parse(id)),
+  );
+}
+
+/// 정해진 자리의 터치만 곧바로 네이티브에 넘긴다. 나머지는 참가하지 않아서
+/// 뒤의 Flutter 위젯이 받는다.
+class _RegionEager extends EagerGestureRecognizer {
+  _RegionEager(this.acceptsAt);
+
+  final bool Function(Offset global) acceptsAt;
+
+  @override
+  bool isPointerAllowed(PointerDownEvent event) =>
+      acceptsAt(event.position) && super.isPointerAllowed(event);
+}
+
+/// iOS 26 툴바의 아이콘 버튼. 시스템 유리 버튼이라 누르면 유리가 OS 식으로
+/// 눌렸다 튀어 오른다.
+class TpNativeIconButton extends StatelessWidget {
+  const TpNativeIconButton({
+    super.key,
+    required this.symbol,
+    required this.onTap,
+    this.tint,
+  });
+
+  /// SF Symbol 이름.
+  final String symbol;
+  final VoidCallback? onTap;
+
+  /// 아이콘 색. null 이면 글자색.
+  final Color? tint;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassButton.icon(
+    icon: NativeLiquidGlassIcon.sfSymbol(symbol),
+    onPressed: onTap,
+    size: 44,
+    iconSize: 18,
+    iconColor: tint,
+  );
+}
+
+/// 설정 줄 오른쪽의 풀다운 값 버튼. 유리 캡슐에 "값 ⌃⌄", 누르면 UIMenu.
+class TpNativeMenuPicker extends StatelessWidget {
+  const TpNativeMenuPicker({
+    super.key,
+    required this.value,
+    required this.label,
+    required this.entries,
+    required this.onSelected,
+  });
+
+  /// 지금 값. 캡슐에 보인다.
+  final String value;
+
+  /// 줄 이름(스크린 리더).
+  final String label;
+  final List<TpNativeMenuEntry> entries;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassMenu(
+    // 값이 바뀌면 캡슐 글자도 바뀌어야 한다. 네이티브는 처음 값만 받으므로
+    // 새로 만든다.
+    key: ValueKey<String>(value),
+    label: value,
+    icon: NativeLiquidGlassIcon.sfSymbol('chevron.up.chevron.down'),
+    iconSize: 11,
+    glass: true,
+    imageTrailing: true,
+    height: 36,
+    labelTextStyle: const TextStyle(fontSize: 15),
+    accessibilityLabel: '$label, $value',
+    items: <LiquidGlassMenuItem>[
+      for (var i = 0; i < entries.length; i++)
+        LiquidGlassMenuItem(
+          id: '$i',
+          title: entries[i].label,
+          isChecked: entries[i].checked,
+        ),
+    ],
+    onItemSelected: (id) => onSelected(int.parse(id)),
+  );
+}
+
+/// 글자 버튼에서 펼쳐지는 시스템 풀다운. 프로필 수정의 "사진 바꾸기".
+///
+/// 유리 캡슐이 아니라 링크 색 글자다. 누르면 그 자리에서 UIMenu 가 펼쳐진다.
+class TpNativeMenuLink extends StatelessWidget {
+  const TpNativeMenuLink({
+    super.key,
+    required this.label,
+    required this.entries,
+    required this.onSelected,
+    this.color,
+  });
+
+  final String label;
+  final List<TpNativeMenuEntry> entries;
+  final ValueChanged<int> onSelected;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassMenu(
+    // 항목이 바뀌면(사진이 생기면 "지우기") 새로 만든다.
+    key: ValueKey<int>(entries.length),
+    label: label,
+    color: color,
+    labelTextStyle: const TextStyle(fontSize: 17),
+    accessibilityLabel: label,
+    height: 44,
+    items: <LiquidGlassMenuItem>[
+      for (var i = 0; i < entries.length; i++)
+        LiquidGlassMenuItem(
+          id: '$i',
+          title: entries[i].label,
+          icon: entries[i].symbol == null
+              ? null
+              : NativeLiquidGlassIcon.sfSymbol(entries[i].symbol!),
+          isDestructive: entries[i].destructive,
+        ),
+    ],
+    onItemSelected: (id) => onSelected(int.parse(id)),
+  );
+}
+
+/// iOS 26 스위치(UISwitch). 누르면 손잡이가 유리 렌즈로 바뀐다.
+class TpNativeSwitch extends StatelessWidget {
+  const TpNativeSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) =>
+      LiquidGlassToggle(value: value, onChanged: onChanged);
+}
+
+/// iOS 26 슬라이더(UISlider). 끌면 손잡이가 유리로 늘어난다.
+class TpNativeSlider extends StatelessWidget {
+  const TpNativeSlider({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.min = 0,
+    this.max = 1,
+    this.step,
+    this.color,
+  });
+
+  final double value;
+  final ValueChanged<double> onChanged;
+  final double min;
+  final double max;
+  final double? step;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => LiquidGlassSlider(
+    value: value,
+    min: min,
+    max: max,
+    step: step,
+    color: color,
+    onChanged: onChanged,
+  );
+}
+
+/// 시스템 액션 시트 한 줄.
+class TpNativeSheetAction {
+  const TpNativeSheetAction({
+    required this.id,
+    required this.label,
+    this.destructive = false,
+    this.cancel = false,
+  });
+
+  final String id;
+  final String label;
+  final bool destructive;
+  final bool cancel;
+}
+
+/// iOS 26 시스템 액션 시트(UIAlertController). 고른 줄의 [TpNativeSheetAction.id].
+Future<String?> showTpNativeActionSheet(
+  BuildContext context, {
+  String? title,
+  String? message,
+  required List<TpNativeSheetAction> actions,
+}) => LiquidGlassAlert.show(
+  context: context,
+  title: title,
+  message: message,
+  style: LiquidGlassAlertStyle.actionSheet,
+  actions: <LiquidGlassAlertAction>[
+    for (final a in actions)
+      LiquidGlassAlertAction(
+        id: a.id,
+        title: a.label,
+        isDestructive: a.destructive,
+        isCancel: a.cancel,
+      ),
+  ],
+);

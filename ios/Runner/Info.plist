@@ -34,7 +34,7 @@
 			<dict>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<string>com.googleusercontent.apps.746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq</string>
+					<string>com.googleusercontent.apps.746932050988-gmv9q1o03iccpcj276o4tflfj8ogugo1</string>
 				</array>
 			</dict>
 			<dict>
@@ -49,7 +49,7 @@
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
 		<key>GIDClientID</key>
-		<string>746932050988-0fc0nl3vn8rgi6tb04u6n0mmsmb1t3tq.apps.googleusercontent.com</string>
+		<string>746932050988-gmv9q1o03iccpcj276o4tflfj8ogugo1.apps.googleusercontent.com</string>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 		<key>LSRequiresIPhoneOS</key>
@@ -78,6 +78,8 @@
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<!-- 프로필 사진을 고를 때만 앨범을 연다. 카메라는 안 쓴다. -->
+		<key>NSCameraUsageDescription</key>
+		<string>Take a profile photo. It only shows on your account.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Pick a profile photo from your library.</string>
 		<key>UILaunchStoryboardName</key>

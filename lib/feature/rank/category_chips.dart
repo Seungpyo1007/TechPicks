@@ -1,37 +1,72 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/providers.dart';
-import '../../shared/widgets/tp_chip.dart';
+import '../../app/theme/tp_native_glass.dart';
+import '../../app/theme/tp_sys.dart';
+import '../../app/theme/tp_tokens.dart';
 import 'rank_category.dart';
 
-/// 랭킹 탭 맨 위의 카테고리 칩 행. 세 카테고리 화면이 같은 걸 쓴다.
-class CategoryChips extends ConsumerWidget {
-  const CategoryChips({super.key});
+/// 둘러보기 맨 위의 카테고리 세그먼트. 세 카테고리 화면이 같은 걸 쓴다.
+///
+/// 지금 카테고리는 주소가 쥔다. 고르면 바깥이 주소를 바꾼다.
+class CategoryChips extends StatelessWidget {
+  const CategoryChips({
+    super.key,
+    required this.current,
+    required this.onSelect,
+  });
+
+  final RankCategory current;
+  final ValueChanged<RankCategory> onSelect;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(rankCategoryProvider);
-
+  Widget build(BuildContext context) {
+    if (!context.tp.isGlass) {
+      return SegmentedButton<RankCategory>(
+        segments: <ButtonSegment<RankCategory>>[
+          for (final c in RankCategory.values)
+            ButtonSegment<RankCategory>(value: c, label: Text(c.key.tr())),
+        ],
+        selected: <RankCategory>{current},
+        onSelectionChanged: (s) => onSelect(s.first),
+      );
+    }
+    if (TpNativeGlass.enabled) {
+      return Semantics(
+        container: true,
+        child: SizedBox(
+          width: double.infinity,
+          child: TpNativeSegmented(
+            labels: <String>[for (final c in RankCategory.values) c.key.tr()],
+            index: RankCategory.values.indexOf(current),
+            onChanged: (i) {
+              final c = RankCategory.values[i];
+              if (c != current) onSelect(c);
+            },
+          ),
+        ),
+      );
+    }
+    final sys = context.sys;
     return SizedBox(
-      height: 46,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: RankCategory.values.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final category = RankCategory.values[i];
-          // Laptops 화면(명세 §6)이 아직 없다. 누르면 빈 화면이 뜨는 것보다
-          // 못 누르는 게 낫다.
-          final enabled = category != RankCategory.laptops;
-          return TpChip(
-            label: category.key.tr(),
-            selected: category == current,
-            onTap: enabled
-                ? () => ref.read(rankCategoryProvider.notifier).set(category)
-                : null,
-          );
+      width: double.infinity,
+      child: CupertinoSlidingSegmentedControl<RankCategory>(
+        groupValue: current,
+        backgroundColor: sys.fill3,
+        padding: const EdgeInsets.all(3),
+        onValueChanged: (c) {
+          if (c != null && c != current) onSelect(c);
+        },
+        children: <RankCategory, Widget>{
+          for (final c in RankCategory.values)
+            c: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              child: Text(
+                c.key.tr(),
+                style: TextStyle(fontSize: 15, color: sys.label),
+              ),
+            ),
         },
       ),
     );

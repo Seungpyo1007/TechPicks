@@ -1,6 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_gemma_builtin_ai/flutter_gemma_builtin_ai.dart'
+    show BuiltInAiAvailability;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -15,6 +19,8 @@ import 'package:techpicks/domain/model/tp_weights.dart';
 import 'package:techpicks/app/locale_controller.dart';
 import 'package:techpicks/data/service/device_info_service.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
+import 'package:techpicks/shared/widgets/tp_switch.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 
 ProviderContainer? _container;
 
@@ -39,13 +45,27 @@ Future<void> _pump(
   );
 }
 
+Future<void> _pumpPriorities(WidgetTester tester) async {
+  _container = await pumpScreen(
+    tester,
+    const PrioritiesScreen(),
+    size: const Size(1200, 3600),
+  );
+}
+
+/// 맨 위 카드를 눌러 계정 화면으로.
+Future<void> _openAccount(WidgetTester tester, String label) async {
+  await tester.tap(find.text(label).first);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUp(initLocalization);
 
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
   testWidgets('다섯 축 슬라이더가 있다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
     expect(find.byType(Slider), findsNWidgets(5));
     for (final label in <String>[
       'Performance',
@@ -62,7 +82,7 @@ void main() {
   // 카탈로그 154종이 다시 줄 세워지고, 탭 다섯이 IndexedStack 안에 다 살아
   // 있어서 랭킹·비교·홈이 같이 돈다. 한 번 끄는 데 300번쯤이었다.
   testWidgets('슬라이더가 걸음으로 움직인다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
 
     for (final slider in tester.widgetList<Slider>(find.byType(Slider))) {
       expect(slider.divisions, isNotNull);
@@ -72,7 +92,7 @@ void main() {
   // 축 이름은 옆줄에 따로 있어서 스크린 리더는 퍼센트만 읽었다 — 어느 축을
   // 만지는지 알 수 없었다.
   testWidgets('슬라이더가 어느 축인지 읽어준다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
 
     final slider = tester.widget<Slider>(find.byType(Slider).first);
     expect(
@@ -82,7 +102,7 @@ void main() {
   });
 
   testWidgets('슬라이더를 움직이면 가중치가 바뀐다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
     final before = _container!.read(weightsProvider);
 
     // 첫 슬라이더(성능)를 오른쪽 끝으로.
@@ -128,7 +148,7 @@ void main() {
   });
 
   testWidgets('Reset 이 기본값으로 돌린다', (tester) async {
-    await _pump(tester);
+    await _pumpPriorities(tester);
     final container = _container!;
 
     container
@@ -156,23 +176,52 @@ void main() {
     expect(_container!.read(weightsProvider).performance, 0.5);
   });
 
-  testWidgets('설정 줄과 버전 푸터', (tester) async {
+  testWidgets('설정 줄, 정보 안의 버전 줄', (tester) async {
     await _pump(tester);
     for (final label in <String>[
       'Language',
       'Dark mode',
       'AI engine',
+      // 통화 줄은 한때 뺐었다 — 'USD' 가 못박혀 있고 핸들러도 없었다.
+      // 원화가 들어오면서 고를 것이 생겼다.
+      'Currency',
       'Notifications',
-      // 계정이 없으면 마지막 줄은 로그인이다.
+      'About',
+      // 계정이 없으면 맨 위 카드에 로그인이 있다.
       'Sign in',
     ]) {
       expect(find.text(label), findsOneWidget, reason: label);
     }
+    // 버전·안내 다시 보기·데이터 출처는 정보 안에 있다.
+    expect(find.text(YouScreen.versionLine), findsNothing);
+    await tester.tap(find.text('About'));
+    await tester.pumpAndSettle();
     expect(find.text(YouScreen.versionLine), findsOneWidget);
-    // 통화 줄은 뺐다. 'USD' 가 못박혀 있고 핸들러도 없고 이걸 읽는 코드가
-    // 앱에 하나도 없었다 — 못 누르는 설정 줄은 옆의 진짜 설정까지 못 미덥게
-    // 만든다.
-    expect(find.text('Currency'), findsNothing);
+    expect(find.text(K.coachReplay.tr()), findsOneWidget);
+    expect(find.text(K.sources.tr()), findsOneWidget);
+  });
+
+  testWidgets('통화를 고르면 그 값이 남는다', (tester) async {
+    await _pump(tester);
+    final container = _container!;
+
+    await tester.tap(find.text('Currency'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Korean won'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(currencyProvider), TpCurrency.krw);
+  });
+
+  testWidgets('통화 시트가 환율이 어디서 왔는지 밝힌다', (tester) async {
+    // 명세는 환율 환산을 금지했다. 그걸 뒤집는 것이라, 무슨 값을 언제
+    // 받아 쓰는지 안 보이면 지어낸 숫자와 구분이 안 된다.
+    await _pump(tester);
+
+    await tester.tap(find.text('Currency'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('1 USD = ₩'), findsOneWidget);
   });
 
   testWidgets('비밀번호 줄은 메일 주소가 있을 때만 나온다', (tester) async {
@@ -182,19 +231,29 @@ void main() {
     expect(find.text('Change password'), findsNothing);
 
     await _pump(tester, name: '홍길동', email: 'a@b.com');
+    // 루트에는 없고 계정 화면에 있다.
+    expect(find.text('Change password'), findsNothing);
+    await _openAccount(tester, '홍길동');
     expect(find.text('Change password'), findsOneWidget);
   });
 
   testWidgets('로그인 전에는 계정 없이 쓰는 상태로 보인다', (tester) async {
     await _pump(tester);
-    expect(find.text('Browsing without an account'), findsOneWidget);
-    expect(find.text('?'), findsOneWidget);
+    expect(find.text(K.guestTitle.tr()), findsOneWidget);
+    expect(find.text(K.guestBody.tr()), findsOneWidget);
+    // 계정 묶음이 없다.
+    expect(find.text(K.deleteAccount.tr()), findsNothing);
+    expect(find.text(K.logout.tr()), findsNothing);
+    // "?" 가 아니라 회색 원에 사람 모양.
+    expect(find.text('?'), findsNothing);
+    expect(find.byIcon(CupertinoIcons.person_fill), findsOneWidget);
     // 고칠 프로필이 없다. 열어 봐야 저장이 조용히 실패한다.
     expect(find.text('Edit profile'), findsNothing);
   });
 
   testWidgets('계정이 있으면 프로필 수정이 나온다', (tester) async {
     await _pump(tester, name: '홍길동', email: 'a@b.com');
+    await _openAccount(tester, '홍길동');
     expect(find.text('Edit profile'), findsOneWidget);
     expect(find.text('Log out'), findsOneWidget);
   });
@@ -252,7 +311,8 @@ void main() {
     await tester.tap(find.text('Notifications'));
     await tester.pumpAndSettle();
     expect(_container!.read(notificationsProvider), isFalse);
-    expect(find.text('Off'), findsWidgets);
+    expect(find.byType(TpSwitch), findsOneWidget);
+    expect(tester.widget<TpSwitch>(find.byType(TpSwitch)).value, isFalse);
   });
 
   group('내 기기', () {
@@ -264,7 +324,6 @@ void main() {
         ),
       );
 
-      expect(find.text('YOUR DEVICE'), findsOneWidget);
       expect(find.text('Galaxy S25 Ultra'), findsOneWidget);
       // 기본 가중치에서 77.
       expect(find.text('77'), findsOneWidget);
@@ -316,6 +375,132 @@ void main() {
       // 탭 라벨과 화면 제목이 같은 단어라 둘 다 잡힌다.
       expect(find.text('You'), findsWidgets);
     }
+  });
+
+  testWidgets('로그아웃은 시트에서 한 번 더 묻는다', (tester) async {
+    var logouts = 0;
+    await pumpScreen(
+      tester,
+      YouScreen(email: 'a@b.c', onLogout: () => logouts++),
+      size: const Size(1200, 3600),
+    );
+    await _openAccount(tester, 'a@b.c');
+
+    await tester.tap(find.text('Log out'));
+    await tester.pumpAndSettle();
+    expect(logouts, 0);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(logouts, 0);
+
+    await tester.tap(find.text('Log out'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log out').last);
+    await tester.pumpAndSettle();
+    expect(logouts, 1);
+  });
+
+  group('AI 엔진', () {
+    Future<void> open(WidgetTester tester, TpChrome chrome) async {
+      await pumpScreen(
+        tester,
+        const YouScreen(),
+        chrome: chrome,
+        size: const Size(1200, 3600),
+        overrides: <Override>[
+          onDeviceAiProvider.overrideWith(
+            (ref) async => BuiltInAiAvailability.unavailableDisabled,
+          ),
+        ],
+      );
+      await tester.tap(find.text(K.aiEngine.tr()));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('선택지마다 부제가 있다', (tester) async {
+      await open(tester, TpChrome.ios);
+      for (final key in <String>[
+        K.aiEngineAutoBody,
+        K.aiEngineOnDeviceBody,
+        K.aiEngineCloudBody,
+      ]) {
+        expect(find.text(key.tr()), findsOneWidget, reason: key);
+      }
+      expect(find.text(K.aiEngineDisabled.tr()), findsOneWidget);
+    });
+
+    testWidgets('Android 각주는 Apple Intelligence 를 말하지 않는다', (tester) async {
+      await open(tester, TpChrome.android);
+      expect(find.text(K.aiEngineDisabled.tr()), findsNothing);
+      expect(find.text(K.aiEngineUnavailable.tr()), findsOneWidget);
+    });
+  });
+
+  group('나눈 화면', () {
+    testWidgets('루트는 짧다: 슬라이더와 계정 줄은 하위 화면에', (tester) async {
+      await _pump(tester, name: '홍길동', email: 'a@b.com');
+      expect(find.byType(Slider), findsNothing);
+      expect(find.text('Log out'), findsNothing);
+      expect(find.text(K.weights.tr()), findsOneWidget);
+    });
+
+    testWidgets('가중치 줄은 가장 큰 축을 말하고 누르면 슬라이더로', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'tp_weights': jsonEncode(<String, dynamic>{
+          'performance': 0.1,
+          'camera': 0.6,
+          'display': 0.1,
+          'battery': 0.1,
+          'value': 0.1,
+        }),
+      });
+      await _pump(tester);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          K.weightsLead.tr(args: <String>[SpecLabels.axis(TpAxisKind.camera)]),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(K.weights.tr()));
+      await tester.pumpAndSettle();
+      expect(find.byType(Slider), findsNWidgets(5));
+    });
+
+    testWidgets('고르면 고르게라고 한다', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'tp_weights': jsonEncode(<String, dynamic>{
+          'performance': 0.2,
+          'camera': 0.2,
+          'display': 0.2,
+          'battery': 0.2,
+          'value': 0.2,
+        }),
+      });
+      await _pump(tester);
+      await tester.pumpAndSettle();
+      expect(find.text(K.weightsBalanced.tr()), findsOneWidget);
+    });
+
+    testWidgets('안내 다시 보기는 본 표시를 지운다', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'coach_seen_today': true,
+      });
+      await _pump(tester);
+
+      await tester.tap(find.text(K.about.tr()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(K.coachReplay.tr()));
+      await tester.pumpAndSettle();
+
+      expect(find.text(K.coachReplayed.tr()), findsOneWidget);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('coach_seen_today'), isNull);
+      // 소개 화면도 다시(라우터가 온보딩으로 보낸다).
+      expect(_container!.read(onboardingDoneProvider), isFalse);
+    });
   });
 }
 

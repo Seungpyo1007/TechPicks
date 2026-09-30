@@ -8,92 +8,177 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../core/error_reporter.dart';
 
+/// 로그인 방법. 화면의 버튼 셋과 짝이 맞는다.
+///
+/// 익명은 뺐다. 로그인은 선택이고, 로그인하지 않은 사람의 데이터는 기기에만
+/// 둔다 — 익명 계정을 만들어 봐야 나중에 진짜 계정과 이어 붙일 일만 생긴다.
+/// Facebook 은 개발자 계정·앱 심사를 치를 만큼 쓰일 근거가 없어 안 붙였다.
+enum AuthMethod { apple, google, email }
+
 /// 로그인한 사람.
 class TpUser {
   const TpUser({
     required this.uid,
     this.name,
     this.email,
-    this.isAnonymous = false,
+    this.method,
+    this.emailVerified = false,
+    this.photoUrl,
   });
 
   final String uid;
   final String? name;
   final String? email;
-  final bool isAnonymous;
+
+  /// 어느 방법으로 만든 계정인가. 비밀번호 변경 줄은 이메일 계정에만 뜬다.
+  final AuthMethod? method;
+
+  /// 이메일 계정이 메일 주소를 확인했는가. Apple·Google 은 늘 true 다.
+  final bool emailVerified;
+  final String? photoUrl;
 }
 
-/// 로그인 방법. 화면의 버튼 네 개와 짝이 맞는다.
+/// 로그인이 안 된 까닭. 화면은 이걸 문장 하나로 바꾼다.
 ///
-/// Facebook 은 뺐다. 붙이려면 개발자 계정과 앱 심사가 따로 필요한데 그걸
-/// 치를 만큼 쓰일 거라고 볼 근거가 없었다.
-enum AuthMethod { google, apple, email, anonymous }
+/// 예전에는 전부 null 이었다. 비밀번호가 틀려도, 이미 가입된 메일이어도,
+/// 인터넷이 끊겨도 "로그인하지 못했습니다" 하나였고, Google·Apple 은 무엇이
+/// 실패해도 "아직 연결되지 않았습니다"였다.
+enum AuthFailure {
+  /// 스스로 닫았다. **실패로 보여주지 않는다.**
+  canceled,
 
-/// 사용자가 로그인 시트를 닫았다.
-///
-/// **실패가 아니다.** 스스로 그만둔 사람에게 "연결되지 않았습니다"를
-/// 보여주면 앱이 고장 난 것처럼 읽힌다.
-class AuthCanceled implements Exception {
-  const AuthCanceled();
+  /// 메일이나 비밀번호가 틀렸다. 열거 보호가 켜진 Firebase 는 "계정 없음"과
+  /// "비밀번호 틀림"을 구분해 주지 않는다.
+  badCredentials,
+  emailInUse,
+  weakPassword,
+  invalidEmail,
+  network,
+  tooMany,
 
-  @override
-  String toString() => 'AuthCanceled';
+  /// 같은 메일이 다른 방법(Google 등)으로 이미 가입돼 있다.
+  otherProvider,
+
+  /// 계정 삭제처럼 민감한 일은 방금 로그인했어야 한다.
+  requiresRecentLogin,
+  disabled,
+
+  /// 콘솔에서 이 방법을 안 켰거나, 빌드에 설정이 없다.
+  notConfigured,
+  unknown;
+
+  /// Firebase 오류 코드를 우리 이유로.
+  static AuthFailure fromCode(String code) => switch (code) {
+    'wrong-password' ||
+    'user-not-found' ||
+    'invalid-credential' ||
+    'INVALID_LOGIN_CREDENTIALS' => badCredentials,
+    'email-already-in-use' => emailInUse,
+    'weak-password' => weakPassword,
+    'invalid-email' => invalidEmail,
+    'network-request-failed' => network,
+    'too-many-requests' => tooMany,
+    'account-exists-with-different-credential' ||
+    'credential-already-in-use' => otherProvider,
+    'requires-recent-login' => requiresRecentLogin,
+    'user-disabled' => disabled,
+    'operation-not-allowed' ||
+    'configuration-not-found' ||
+    'app-not-authorized' => notConfigured,
+    _ => unknown,
+  };
+}
+
+/// 로그인·가입의 결말. 성공이면 [user], 아니면 [failure].
+class AuthResult {
+  const AuthResult.ok(TpUser this.user) : failure = null;
+  const AuthResult.failed(AuthFailure this.failure) : user = null;
+
+  final TpUser? user;
+  final AuthFailure? failure;
+
+  bool get ok => user != null;
 }
 
 /// 인증.
 ///
 /// 화면은 이 인터페이스만 본다. 테스트가 Firebase 를 띄우지 않게 하려는
-/// 것이고, v1 처럼 화면 안에서 FirebaseAuth 를 직접 부르면 로그인 흐름을
-/// 검사할 방법이 없다.
+/// 것이다.
 abstract class AuthService {
   TpUser? get current;
 
-  /// 로그인 상태가 바뀔 때마다 흘린다.
-  ///
-  /// [current] 만 읽으면 앱을 켠 그 순간의 값이 전부다. Firebase 는 저장된
-  /// 세션을 비동기로 복원하므로, 돌아온 사용자가 한 프레임 차이로 로그인
-  /// 화면을 보고 동기화도 안 붙는 일이 생긴다.
+  /// 로그인 상태가 바뀔 때마다 흘린다. Firebase 는 저장된 세션을 비동기로
+  /// 복원하므로 [current] 만으로는 모자란다.
   Stream<TpUser?> changes();
 
-  Future<TpUser?> signIn(AuthMethod method, {String? email, String? password});
+  Future<AuthResult> signIn(
+    AuthMethod method, {
+    String? email,
+    String? password,
+  });
 
-  /// 이메일 가입. 성공하면 그대로 로그인된 상태다.
-  Future<TpUser?> signUp({required String email, required String password});
+  /// 이메일 가입. 성공하면 로그인된 상태고, 확인 메일이 나간다.
+  Future<AuthResult> signUp({required String email, required String password});
 
-  /// 비밀번호 재설정 메일. 지금 비밀번호를 안 물어보는 표준 방식이다.
-  ///
-  /// 메일 주소가 없는 계정(익명)에는 보낼 곳이 없다.
-  Future<bool> sendPasswordReset(String email);
+  /// 비밀번호 재설정 메일. **로그아웃 상태에서도** 쓴다(비밀번호 찾기).
+  /// 보냈으면 null.
+  Future<AuthFailure?> sendPasswordReset(String email);
+
+  /// 메일 주소 확인 메일을 다시 보낸다. 보냈으면 null.
+  Future<AuthFailure?> sendEmailVerification();
 
   /// 표시 이름을 바꾼다. 성공하면 바뀐 사용자를 돌려준다.
   Future<TpUser?> updateName(String name);
+
+  /// 계정을 지운다. 성공하면 null.
+  ///
+  /// 순서가 중요하다: **먼저 다시 인증**하고(Apple 은 토큰 취소에 쓸 코드를
+  /// 이때 받는다), [cleanup] 으로 계정의 데이터를 지우고, Apple 토큰을
+  /// 취소하고, 마지막에 계정을 지운다. 인증부터 하지 않으면 데이터만 지워지고
+  /// 계정은 "최근 로그인 필요"로 남는 일이 생긴다.
+  ///
+  /// 이메일 계정은 [password] 가 있어야 한다.
+  Future<AuthFailure?> deleteAccount({
+    String? password,
+    required Future<void> Function(String uid) cleanup,
+  });
 
   Future<void> signOut();
 }
 
 /// Firebase 구현.
 ///
-/// Google 과 Apple 은 각자 플러그인이 계정을 고르게 하고, 거기서 받은 토큰을
-/// Firebase 자격증명으로 바꿔 넣는다. 어느 쪽도 콘솔 설정 없이는 안 돈다 —
-/// Google 은 `google-services.json`·`GoogleService-Info.plist` 의
-/// `oauth_client`, Apple 은 Apple Developer 에서 켠 Sign in with Apple 이다.
-/// 설정이 없으면 플러그인이 던지고, 여기서 삼켜 화면이 안내를 띄운다.
+/// Google 과 Apple 은 각자 플러그인이 계정을 고르게 하고, 받은 토큰을
+/// Firebase 자격증명으로 바꿔 넣는다. 어느 쪽도 콘솔 설정 없이는 안 돈다.
 class FirebaseAuthService implements AuthService {
-  FirebaseAuthService({fb.FirebaseAuth? auth, GoogleSignIn? google})
-    : _given = auth,
-      _google = google;
+  FirebaseAuthService({
+    fb.FirebaseAuth? auth,
+    GoogleSignIn? google,
+    String? googleServerClientId,
+  }) : _given = auth,
+       _google = google,
+       _serverClientId =
+           googleServerClientId ??
+           (_envServerClientId.isEmpty ? null : _envServerClientId);
+
+  /// Android 의 Google 로그인은 웹 클라이언트 ID 가 있어야 ID 토큰을 준다.
+  /// 빌드할 때 `--dart-define=GOOGLE_SERVER_CLIENT_ID=...` 로 넣는다.
+  static const String _envServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+  );
+
+  /// Android 에서 Google 버튼을 보여도 되는가. iOS 는 plist 의 CLIENT_ID 로 충분하다.
+  static bool get googleConfiguredForAndroid => _envServerClientId.isNotEmpty;
 
   final fb.FirebaseAuth? _given;
-
   GoogleSignIn? _google;
+  final String? _serverClientId;
 
   /// `initialize()` 는 한 번만 부르면 된다.
   bool _googleReady = false;
 
   /// Firebase 가 초기화되지 않았으면 `FirebaseAuth.instance` 자체가 던진다.
-  ///
-  /// 생성자에서 잡으면 프로바이더를 읽는 순간 앱이 죽는다. main.dart 가
-  /// 초기화 실패를 삼키는 것과 짝이 맞아야 해서 여기서도 null 로 떨어뜨린다.
+  /// main.dart 가 초기화 실패를 삼키는 것과 짝이 맞게 null 로 떨어뜨린다.
   fb.FirebaseAuth? get _auth {
     if (_given != null) return _given;
     try {
@@ -115,70 +200,100 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
-  Future<TpUser?> signIn(
+  Stream<TpUser?> changes() {
+    final auth = _auth;
+    if (auth == null) return const Stream<TpUser?>.empty();
+    return auth.userChanges().map(_map);
+  }
+
+  /// 오류를 이유로 바꾸고 기록한다.
+  AuthFailure _fail(Object e, StackTrace s, String reason) {
+    if (e is _Canceled) return AuthFailure.canceled;
+    TpErrors.record(e, s, reason: reason);
+    if (e is fb.FirebaseAuthException) return AuthFailure.fromCode(e.code);
+    if (e is GoogleSignInException) return AuthFailure.notConfigured;
+    if (e is SignInWithAppleException) return AuthFailure.notConfigured;
+    return AuthFailure.unknown;
+  }
+
+  @override
+  Future<AuthResult> signIn(
     AuthMethod method, {
     String? email,
     String? password,
   }) async {
     final auth = _auth;
-    if (auth == null) return null;
+    if (auth == null) return const AuthResult.failed(AuthFailure.notConfigured);
     try {
-      return switch (method) {
-        AuthMethod.anonymous => _map((await auth.signInAnonymously()).user),
-        AuthMethod.email =>
-          email == null || password == null
-              ? null
-              : _map(
-                  (await auth.signInWithEmailAndPassword(
-                    email: email,
-                    password: password,
-                  )).user,
-                ),
-        AuthMethod.google => await _signInWithGoogle(auth),
+      final fb.User? user = switch (method) {
+        AuthMethod.email => (await auth.signInWithEmailAndPassword(
+          email: email ?? '',
+          password: password ?? '',
+        )).user,
+        AuthMethod.google => (await auth.signInWithCredential(
+          await _googleCredential(),
+        )).user,
         AuthMethod.apple => await _signInWithApple(auth),
       };
-    } on AuthCanceled {
-      // 스스로 그만둔 것이다. 화면이 실패로 안 읽게 그대로 올려보낸다.
-      rethrow;
+      final mapped = _map(user);
+      return mapped == null
+          ? const AuthResult.failed(AuthFailure.unknown)
+          : AuthResult.ok(mapped);
     } catch (e, s) {
-      // FirebaseAuthException 만 잡으면 설정이 없는 빌드에서 새어 나간다.
-      // 화면은 어느 쪽이든 "연결되지 않았다"로 떨어진다.
-      TpErrors.record(e, s, reason: 'auth.signIn.$method');
-      return null;
+      return AuthResult.failed(_fail(e, s, 'auth.signIn.${method.name}'));
     }
   }
 
   @override
-  Future<TpUser?> signUp({
+  Future<AuthResult> signUp({
     required String email,
     required String password,
   }) async {
     final auth = _auth;
-    if (auth == null) return null;
+    if (auth == null) return const AuthResult.failed(AuthFailure.notConfigured);
     try {
       final cred = await auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return _map(cred.user);
+      // 확인 메일이 안 나가도 가입은 됐다. 내 정보에서 다시 보낼 수 있다.
+      try {
+        await cred.user?.sendEmailVerification();
+      } catch (e, s) {
+        TpErrors.record(e, s, reason: 'auth.signUp.verify');
+      }
+      final mapped = _map(cred.user);
+      return mapped == null
+          ? const AuthResult.failed(AuthFailure.unknown)
+          : AuthResult.ok(mapped);
     } catch (e, s) {
-      TpErrors.record(e, s, reason: 'auth.signUp');
-      return null;
+      return AuthResult.failed(_fail(e, s, 'auth.signUp'));
     }
   }
 
   @override
-  Future<bool> sendPasswordReset(String email) async {
+  Future<AuthFailure?> sendPasswordReset(String email) async {
     final auth = _auth;
-    if (auth == null) return false;
+    if (auth == null) return AuthFailure.notConfigured;
     try {
-      await auth.sendPasswordResetEmail(email: email);
-      return true;
+      await auth.sendPasswordResetEmail(email: email.trim());
+      return null;
     } catch (e, s) {
-      // 없는 계정이어도 Firebase 는 알려주지 않는 설정이 있다. 어느 쪽이든
-      // 화면은 "보냈다"와 "못 보냈다" 둘로만 갈린다.
-      TpErrors.record(e, s, reason: 'auth.passwordReset');
-      return false;
+      final failure = _fail(e, s, 'auth.passwordReset');
+      // 없는 계정이라고 알려주면 가입한 메일을 캐는 데 쓰인다. 보낸 것처럼 둔다.
+      return failure == AuthFailure.badCredentials ? null : failure;
+    }
+  }
+
+  @override
+  Future<AuthFailure?> sendEmailVerification() async {
+    final user = _auth?.currentUser;
+    if (user == null) return AuthFailure.unknown;
+    try {
+      await user.sendEmailVerification();
+      return null;
+    } catch (e, s) {
+      return _fail(e, s, 'auth.verify');
     }
   }
 
@@ -197,11 +312,50 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
-  Stream<TpUser?> changes() {
-    final auth = _auth;
-    // Firebase 가 안 떴으면 바뀔 것도 없다.
-    if (auth == null) return const Stream<TpUser?>.empty();
-    return auth.userChanges().map(_map);
+  Future<AuthFailure?> deleteAccount({
+    String? password,
+    required Future<void> Function(String uid) cleanup,
+  }) async {
+    final user = _auth?.currentUser;
+    if (user == null) return AuthFailure.unknown;
+    try {
+      String? appleCode;
+      switch (_methodOf(user)) {
+        case AuthMethod.apple:
+          final apple = await _appleCredential();
+          appleCode = apple.$2.authorizationCode;
+          await user.reauthenticateWithCredential(apple.$1);
+        case AuthMethod.google:
+          await user.reauthenticateWithCredential(await _googleCredential());
+        case AuthMethod.email:
+          if (password == null || password.isEmpty) {
+            return AuthFailure.badCredentials;
+          }
+          await user.reauthenticateWithCredential(
+            fb.EmailAuthProvider.credential(
+              email: user.email ?? '',
+              password: password,
+            ),
+          );
+        case null:
+          break;
+      }
+      await cleanup(user.uid);
+      if (appleCode != null) {
+        try {
+          await _auth?.revokeTokenWithAuthorizationCode(appleCode);
+        } catch (e, s) {
+          // 토큰 취소가 안 돼도 계정은 지운다. Apple 쪽 연결은 사용자가 설정에서
+          // 끊을 수 있다.
+          TpErrors.record(e, s, reason: 'auth.delete.revoke');
+        }
+      }
+      await user.delete();
+      await _signOutProviders();
+      return null;
+    } catch (e, s) {
+      return _fail(e, s, 'auth.delete');
+    }
   }
 
   @override
@@ -209,52 +363,52 @@ class FirebaseAuthService implements AuthService {
     try {
       await _auth?.signOut();
     } catch (e, s) {
-      // 이미 로그아웃 상태거나 Firebase 가 없다. 어느 쪽이든 할 일이 없다.
       TpErrors.record(e, s, reason: 'auth.signOut');
+    }
+    await _signOutProviders();
+  }
+
+  /// Google 은 자기 세션을 따로 쥔다. 안 끊으면 다음 로그인에서 계정을
+  /// 고르지 않고 방금 그 계정으로 바로 들어간다.
+  Future<void> _signOutProviders() async {
+    if (!_googleReady) return;
+    try {
+      await (_google ?? GoogleSignIn.instance).signOut();
+    } catch (e, s) {
+      TpErrors.record(e, s, reason: 'auth.google.signOut');
     }
   }
 
-  /// 구글 계정 선택 → ID 토큰 → Firebase.
+  /// 구글 계정 선택 → ID 토큰 → Firebase 자격증명.
   ///
   /// v7 부터 `authenticate()` 는 성공 아니면 던진다. 취소도 예외로 온다.
-  Future<TpUser?> _signInWithGoogle(fb.FirebaseAuth auth) async {
+  Future<fb.AuthCredential> _googleCredential() async {
     final google = _google ??= GoogleSignIn.instance;
-
-    // 모바일만 쓴다. 웹은 버튼을 직접 그려야 해서 여기로 안 온다.
-    if (!google.supportsAuthenticate()) return null;
-
+    if (!google.supportsAuthenticate()) {
+      throw fb.FirebaseAuthException(code: 'operation-not-allowed');
+    }
     if (!_googleReady) {
-      await google.initialize();
+      await google.initialize(serverClientId: _serverClientId);
       _googleReady = true;
     }
-
     final GoogleSignInAccount account;
     try {
       account = await google.authenticate();
     } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) {
-        throw const AuthCanceled();
-      }
+      if (e.code == GoogleSignInExceptionCode.canceled) throw const _Canceled();
       rethrow;
     }
-
     final idToken = account.authentication.idToken;
-    if (idToken == null) return null;
-
-    final credential = fb.GoogleAuthProvider.credential(idToken: idToken);
-    return _map((await auth.signInWithCredential(credential)).user);
+    if (idToken == null) {
+      throw fb.FirebaseAuthException(code: 'configuration-not-found');
+    }
+    return fb.GoogleAuthProvider.credential(idToken: idToken);
   }
 
-  /// Apple 자격증명 → Firebase.
-  ///
-  /// nonce 를 원문으로 Firebase 에 주고 Apple 에는 해시를 준다. 그래야 받은
-  /// 토큰이 이 요청에 대한 응답인지 확인된다.
-  ///
-  /// **이름은 첫 로그인에만 온다.** 그때 프로필에 심어두지 않으면 다시 받을
-  /// 방법이 없다.
-  Future<TpUser?> _signInWithApple(fb.FirebaseAuth auth) async {
+  /// Apple 자격증명. nonce 원문은 Firebase 에, 해시는 Apple 에 준다.
+  Future<(fb.AuthCredential, AuthorizationCredentialAppleID)>
+  _appleCredential() async {
     final rawNonce = AppleNonce.create();
-
     final AuthorizationCredentialAppleID apple;
     try {
       apple = await SignInWithApple.getAppleIDCredential(
@@ -265,15 +419,13 @@ class FirebaseAuthService implements AuthService {
         nonce: AppleNonce.hash(rawNonce),
       );
     } on SignInWithAppleAuthorizationException catch (e) {
-      if (e.code == AuthorizationErrorCode.canceled) {
-        throw const AuthCanceled();
-      }
+      if (e.code == AuthorizationErrorCode.canceled) throw const _Canceled();
       rethrow;
     }
-
     final idToken = apple.identityToken;
-    if (idToken == null) return null;
-
+    if (idToken == null) {
+      throw fb.FirebaseAuthException(code: 'configuration-not-found');
+    }
     final credential = fb.AppleAuthProvider.credentialWithIDToken(
       idToken,
       rawNonce,
@@ -282,27 +434,28 @@ class FirebaseAuthService implements AuthService {
         familyName: apple.familyName,
       ),
     );
-
-    final user = (await auth.signInWithCredential(credential)).user;
-    await _adoptAppleName(user, apple);
-    return _map(user);
+    return (credential, apple);
   }
 
-  /// Apple 이 준 이름을 프로필에 한 번 심는다.
-  ///
-  /// 실패해도 로그인 자체는 성공이다. 이름 하나 때문에 되돌리지 않는다.
+  /// **이름은 첫 로그인에만 온다.** 그때 프로필에 심어두지 않으면 다시 받을
+  /// 방법이 없다.
+  Future<fb.User?> _signInWithApple(fb.FirebaseAuth auth) async {
+    final (credential, apple) = await _appleCredential();
+    final user = (await auth.signInWithCredential(credential)).user;
+    await _adoptAppleName(user, apple);
+    return user;
+  }
+
   static Future<void> _adoptAppleName(
     fb.User? user,
     AuthorizationCredentialAppleID apple,
   ) async {
     if (user == null || (user.displayName?.isNotEmpty ?? false)) return;
-
     final name = <String?>[
       apple.givenName,
       apple.familyName,
     ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
     if (name.isEmpty) return;
-
     try {
       await user.updateDisplayName(name);
       await user.reload();
@@ -311,14 +464,37 @@ class FirebaseAuthService implements AuthService {
     }
   }
 
-  static TpUser? _map(fb.User? u) => u == null
-      ? null
-      : TpUser(
-          uid: u.uid,
-          name: u.displayName,
-          email: u.email,
-          isAnonymous: u.isAnonymous,
-        );
+  static AuthMethod? _methodOf(fb.User u) {
+    for (final p in u.providerData) {
+      switch (p.providerId) {
+        case 'apple.com':
+          return AuthMethod.apple;
+        case 'google.com':
+          return AuthMethod.google;
+        case 'password':
+          return AuthMethod.email;
+      }
+    }
+    return null;
+  }
+
+  static TpUser? _map(fb.User? u) {
+    if (u == null || u.isAnonymous) return null;
+    final method = _methodOf(u);
+    return TpUser(
+      uid: u.uid,
+      name: u.displayName,
+      email: u.email,
+      method: method,
+      emailVerified: method != AuthMethod.email || u.emailVerified,
+      photoUrl: u.photoURL,
+    );
+  }
+}
+
+/// 사용자가 계정 선택·Apple 시트를 닫았다. 밖으로는 [AuthFailure.canceled].
+class _Canceled implements Exception {
+  const _Canceled();
 }
 
 /// Apple 로그인에 붙이는 일회용 난수.
@@ -344,8 +520,3 @@ abstract final class AppleNonce {
 
   static String hash(String raw) => sha256.convert(utf8.encode(raw)).toString();
 }
-
-/// 로그인 시도의 결말.
-///
-/// 성공과 실패만 두면 취소가 실패로 섞인다. 화면이 셋을 다르게 다뤄야 한다.
-enum SignInOutcome { ok, canceled, failed }

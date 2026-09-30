@@ -1,13 +1,18 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:riverpod/misc.dart' show Override;
+import 'package:techpicks/app/providers.dart';
+import 'package:techpicks/data/repository/catalog_repository.dart';
 import 'package:techpicks/domain/model/device_specs.dart';
 import 'package:techpicks/domain/model/tp_index.dart';
 import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/spec_labels.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
-import 'package:techpicks/shared/widgets/tp_button.dart';
+import 'package:techpicks/shared/widgets/tp_shimmer.dart';
 
 import '../support/harness.dart';
 
@@ -88,39 +93,54 @@ void main() {
       size: const Size(1200, 3200),
     );
 
-    // 열 머리 둘 + (화면·프로세서·카메라) × 두 열.
-    expect(find.byType(TpBar), findsNWidgets(2 + 6));
+    // (화면·프로세서·카메라) × 두 열. 열 머리는 TpTrack 이다.
+    expect(find.byType(TpBar), findsNWidgets(6));
   });
 
-  testWidgets('이유 물어보기가 표를 안 지나고 화면 안에 있다', (tester) async {
+  testWidgets('머리 카드가 지나가면 바 아래에 두 이름 줄이 붙는다', (tester) async {
     await pumpScreen(tester, const CompareScreen(), size: const Size(402, 874));
 
-    final button = tester.getRect(find.byType(TpButton));
-    expect(button.bottom, lessThanOrEqualTo(874));
-    expect(button.top, greaterThan(0));
+    double opacity() => tester
+        .widget<AnimatedOpacity>(
+          find.byWidgetPredicate(
+            (w) => w is AnimatedOpacity && w.child is ExcludeSemantics,
+          ),
+        )
+        .opacity;
+
+    // 카드가 보이는 동안은 비어 있다.
+    expect(opacity(), 0);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(opacity(), 1);
+
+    // 다시 내리면 사라진다.
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 500));
+    await tester.pumpAndSettle();
+    expect(opacity(), 0);
   });
 
-  testWidgets('바닥 버튼이 마지막 줄을 가리지 않는다', (tester) async {
+  testWidgets('이유 물어보기 버튼이 없다', (tester) async {
     await pumpScreen(tester, const CompareScreen(), size: const Size(402, 874));
+    expect(find.text(K.askWhy.tr()), findsNothing);
+  });
 
-    // 끝까지 내린다. 목록이 자기 패딩에 버튼 자리를 안 더하면 마지막 줄이
-    // 버튼 뒤에 영영 숨는다.
-    final list = find.byType(Scrollable).first;
-    await tester.scrollUntilVisible(
-      find.text(SpecLabels.of(SpecKind.released)),
-      400,
-      scrollable: list,
+  testWidgets('스켈레톤도 표처럼 좌우 16 을 띄운다', (tester) async {
+    // 끝나지 않는 카탈로그. 읽는 중에 머문다.
+    final never = Completer<Catalog>();
+    await pumpScreenNoSettle(
+      tester,
+      const CompareScreen(),
+      size: const Size(402, 874),
+      overrides: <Override>[
+        catalogProvider.overrideWith((ref) => never.future),
+      ],
     );
-    await tester.pumpAndSettle();
-    // 스크롤이 끝까지 갔는지와 무관하게, 더 내려도 안 움직일 때까지 민다.
-    await tester.fling(list, const Offset(0, -600), 2000);
-    await tester.pumpAndSettle();
 
-    final button = tester.getRect(find.byType(TpButton));
-    final released = tester.getRect(
-      find.text(SpecLabels.of(SpecKind.released)),
-    );
-    expect(released.bottom, lessThanOrEqualTo(button.top));
+    final skeleton = tester.getRect(find.byType(TpShimmer));
+    expect(skeleton.left, 16);
+    expect(skeleton.right, 402 - 16);
   });
 
   test('점수 막대는 승자를 못 가리는 줄에만 있다', () {

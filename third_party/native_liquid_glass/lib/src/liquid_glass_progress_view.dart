@@ -27,15 +27,21 @@ class LiquidGlassProgressView extends StatefulWidget {
     this.progressTintColor,
     this.trackTintColor,
     this.height = 8,
-  }) : assert(progress >= 0.0 && progress <= 1.0, 'progress must be between 0.0 and 1.0.');
+  }) : assert(
+         progress >= 0.0 && progress <= 1.0,
+         'progress must be between 0.0 and 1.0.',
+       );
 
   @override
-  State<LiquidGlassProgressView> createState() => _LiquidGlassProgressViewState();
+  State<LiquidGlassProgressView> createState() =>
+      _LiquidGlassProgressViewState();
 }
 
-class _LiquidGlassProgressViewState extends State<LiquidGlassProgressView> with LiquidGlassRouteSuppression {
+class _LiquidGlassProgressViewState extends State<LiquidGlassProgressView>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   double? _lastProgress;
   int? _lastProgressTint;
   int? _lastTrackTint;
@@ -58,7 +64,10 @@ class _LiquidGlassProgressViewState extends State<LiquidGlassProgressView> with 
       final pt = widget.progressTintColor?.toARGB32();
       final tt = widget.trackTintColor?.toARGB32();
       if (_lastProgressTint != pt || _lastTrackTint != tt) {
-        await ch.invokeMethod('setColors', {'progressTintColor': pt, 'trackTintColor': tt});
+        await ch.invokeMethod('setColors', {
+          'progressTintColor': pt,
+          'trackTintColor': tt,
+        });
         _lastProgressTint = pt;
         _lastTrackTint = tt;
       }

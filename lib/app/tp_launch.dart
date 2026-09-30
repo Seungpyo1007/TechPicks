@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
 import 'theme/tp_motion.dart';
@@ -27,6 +28,19 @@ class TpLaunch extends StatefulWidget {
 
   /// 네이티브 스플래시의 로고 크기. `LaunchImage@3x.png` 375px ÷ 3.
   static const double logoSize = 125;
+
+  /// 네이티브 스플래시와 같은 로고(pubspec 의 flutter_native_splash).
+  ///
+  /// 스플래시는 크롬이 아니라 진짜 OS 와 시스템 다크 모드를 따른다. iOS 는
+  /// 유리 아이콘, Android 는 M3 적응형 아이콘 모양이다.
+  static String logoFor(TargetPlatform platform, Brightness brightness) {
+    final dark = brightness == Brightness.dark;
+    return platform == TargetPlatform.android
+        ? (dark
+              ? 'assets/logo/logo_android_dark.png'
+              : 'assets/logo/logo_android.png')
+        : (dark ? 'assets/logo/logo_dark.png' : 'assets/logo/logo.png');
+  }
 
   /// 로고가 열리는 시간.
   ///
@@ -82,7 +96,7 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
     if (_done) return widget.child;
 
     final t = context.tp;
-    // "동작 줄이기" 면 열리는 장면을 건너뛴다. 로고는 여전히 읽는 동안 떠 있다.
+    // "동작 줄이기" 면 크기 변화 없이 페이드만 한다. 로고는 여전히 읽는 동안 떠 있다.
     final reduced = MediaQuery.disableAnimationsOf(context);
 
     return Stack(
@@ -95,7 +109,9 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
             final t = Curves.easeOutCubic.transform(_c.value);
             return Opacity(
               opacity: reduced ? _c.value : t,
-              child: Transform.scale(scale: 0.98 + 0.02 * t, child: child),
+              child: reduced
+                  ? child
+                  : Transform.scale(scale: 0.98 + 0.02 * t, child: child),
             );
           },
           child: widget.child,
@@ -119,7 +135,9 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
                     opacity: reduced ? logo : Curves.easeIn.transform(logo),
                     child: Transform.scale(
                       // 커지며 열린다. 작아지면 앱이 뒤로 물러나는 것처럼 읽힌다.
-                      scale: 1 + 0.35 * Curves.easeInCubic.transform(v),
+                      scale: reduced
+                          ? 1
+                          : 1 + 0.35 * Curves.easeInCubic.transform(v),
                       child: child,
                     ),
                   ),
@@ -128,10 +146,13 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
             );
           },
           child: Image.asset(
-            'assets/logo/logo.png',
+            TpLaunch.logoFor(
+              defaultTargetPlatform,
+              MediaQuery.platformBrightnessOf(context),
+            ),
             width: TpLaunch.logoSize,
             height: TpLaunch.logoSize,
-            // 로고 자체가 둥근 사각형이라 여기서 또 깎지 않는다.
+            // 로고 자체가 둥근 사각형(Android 는 원)이라 여기서 또 깎지 않는다.
             filterQuality: FilterQuality.medium,
           ),
         ),

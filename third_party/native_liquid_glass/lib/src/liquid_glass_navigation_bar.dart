@@ -15,8 +15,8 @@ import 'utils/text_style_utils.dart';
 /// from losing the touch.
 final Set<Factory<OneSequenceGestureRecognizer>> _navBarGestureRecognizers =
     <Factory<OneSequenceGestureRecognizer>>{
-  Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
-};
+      Factory<TapGestureRecognizer>(() => TapGestureRecognizer()),
+    };
 
 /// A navigation bar item for leading/trailing actions.
 class LiquidGlassNavBarItem {
@@ -32,10 +32,20 @@ class LiquidGlassNavBarItem {
   /// Optional icon size override for this item on iOS.
   final double? iconSize;
 
-  const LiquidGlassNavBarItem({required this.id, this.icon, this.label, this.iconSize});
+  const LiquidGlassNavBarItem({
+    required this.id,
+    this.icon,
+    this.label,
+    this.iconSize,
+  });
 
   Map<String, Object?> toMap() {
-    return <String, Object?>{'id': id, 'sfSymbol': icon?.sfSymbolName, 'label': label, if (iconSize != null) 'iconSize': iconSize};
+    return <String, Object?>{
+      'id': id,
+      'sfSymbol': icon?.sfSymbolName,
+      'label': label,
+      if (iconSize != null) 'iconSize': iconSize,
+    };
   }
 }
 
@@ -88,12 +98,15 @@ class LiquidGlassNavigationBar extends StatefulWidget {
   });
 
   @override
-  State<LiquidGlassNavigationBar> createState() => _LiquidGlassNavigationBarState();
+  State<LiquidGlassNavigationBar> createState() =>
+      _LiquidGlassNavigationBarState();
 }
 
-class _LiquidGlassNavigationBarState extends State<LiquidGlassNavigationBar> with LiquidGlassRouteSuppression {
+class _LiquidGlassNavigationBarState extends State<LiquidGlassNavigationBar>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   String? _lastTitle;
   int? _lastTintColor;
   int? _lastBgColor;
@@ -110,7 +123,11 @@ class _LiquidGlassNavigationBarState extends State<LiquidGlassNavigationBar> wit
   }
 
   int _computeItemsHash(List<LiquidGlassNavBarItem> items) {
-    return Object.hashAll(items.map((i) => Object.hash(i.id, i.icon?.nativeSignature, i.label, i.iconSize)));
+    return Object.hashAll(
+      items.map(
+        (i) => Object.hash(i.id, i.icon?.nativeSignature, i.label, i.iconSize),
+      ),
+    );
   }
 
   Future<void> _syncPropsToNativeIfNeeded() async {
@@ -124,15 +141,22 @@ class _LiquidGlassNavigationBarState extends State<LiquidGlassNavigationBar> wit
     final tintColor = widget.tintColor?.toARGB32();
     final bgColor = widget.backgroundColor?.toARGB32();
     final titleStyleHash = textStyleSignature(widget.titleTextStyle);
-    if (_lastTintColor != tintColor || _lastBgColor != bgColor || _lastTitleStyleHash != titleStyleHash) {
-      await ch.invokeMethod('setStyle', {'tintColor': tintColor, 'backgroundColor': bgColor, 'titleStyle': textStylePayload(widget.titleTextStyle)});
+    if (_lastTintColor != tintColor ||
+        _lastBgColor != bgColor ||
+        _lastTitleStyleHash != titleStyleHash) {
+      await ch.invokeMethod('setStyle', {
+        'tintColor': tintColor,
+        'backgroundColor': bgColor,
+        'titleStyle': textStylePayload(widget.titleTextStyle),
+      });
       _lastTintColor = tintColor;
       _lastBgColor = bgColor;
       _lastTitleStyleHash = titleStyleHash;
     }
     final leadingHash = _computeItemsHash(widget.leadingItems);
     final trailingHash = _computeItemsHash(widget.trailingItems);
-    if (_lastLeadingItemsHash != leadingHash || _lastTrailingItemsHash != trailingHash) {
+    if (_lastLeadingItemsHash != leadingHash ||
+        _lastTrailingItemsHash != trailingHash) {
       await ch.invokeMethod('setItems', {
         'leadingItems': widget.leadingItems.map((i) => i.toMap()).toList(),
         'trailingItems': widget.trailingItems.map((i) => i.toMap()).toList(),

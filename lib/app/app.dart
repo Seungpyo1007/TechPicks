@@ -72,7 +72,7 @@ class _RootState extends ConsumerState<TechPicksRoot> {
 
     // 관심 목록 동기화. 로그인하는 순간 맞춰야 하므로 로그인 화면보다 위에서
     // 살아 있어야 한다.
-    ref.listenManual(shortlistSyncProvider, (_, _) {});
+    ref.listenManual(accountSyncProvider, (_, _) {});
   }
 
   @override

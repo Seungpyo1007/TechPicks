@@ -26,42 +26,38 @@ abstract final class LiquidGlassSpring {
   static SpringDescription bouncy({
     Duration duration = const Duration(milliseconds: 500),
     double extraBounce = 0.0,
-  }) =>
-      SpringDescription.withDurationAndBounce(
-        duration: duration,
-        bounce: 0.3 + extraBounce,
-      );
+  }) => SpringDescription.withDurationAndBounce(
+    duration: duration,
+    bounce: 0.3 + extraBounce,
+  );
 
   /// Snappy spring — 500 ms duration, 0.15 bounce.
   static SpringDescription snappy({
     Duration duration = const Duration(milliseconds: 500),
     double extraBounce = 0.0,
-  }) =>
-      SpringDescription.withDurationAndBounce(
-        duration: duration,
-        bounce: 0.15 + extraBounce,
-      );
+  }) => SpringDescription.withDurationAndBounce(
+    duration: duration,
+    bounce: 0.15 + extraBounce,
+  );
 
   /// Smooth spring — 500 ms duration, critically-damped (0.0 bounce).
   static SpringDescription smooth({
     Duration duration = const Duration(milliseconds: 500),
     double extraBounce = 0.0,
-  }) =>
-      SpringDescription.withDurationAndBounce(
-        duration: duration,
-        bounce: 0.0 + extraBounce,
-      );
+  }) => SpringDescription.withDurationAndBounce(
+    duration: duration,
+    bounce: 0.0 + extraBounce,
+  );
 
   /// Interactive spring — 150 ms response, 0.14 bounce.
   /// Ideal for tracking a pointer during drag.
   static SpringDescription interactive({
     Duration duration = const Duration(milliseconds: 150),
     double extraBounce = 0.0,
-  }) =>
-      SpringDescription.withDurationAndBounce(
-        duration: duration,
-        bounce: 0.14 + extraBounce,
-      );
+  }) => SpringDescription.withDurationAndBounce(
+    duration: duration,
+    bounce: 0.14 + extraBounce,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,10 +98,10 @@ class SingleSpringController extends ChangeNotifier {
     double initialValue = 0.0,
     double? lowerBound,
     double? upperBound,
-  })  : _spring = spring,
-        _value = initialValue,
-        _lowerBound = lowerBound,
-        _upperBound = upperBound {
+  }) : _spring = spring,
+       _value = initialValue,
+       _lowerBound = lowerBound,
+       _upperBound = upperBound {
     _ticker = vsync.createTicker(_tick);
   }
 
@@ -184,8 +180,10 @@ class SingleSpringController extends ChangeNotifier {
 
   void _tick(Duration elapsed) {
     _tickerElapsed = elapsed.inMicroseconds / Duration.microsecondsPerSecond;
-    final simElapsed =
-        (_tickerElapsed - _simStartTime).clamp(0.0, double.infinity);
+    final simElapsed = (_tickerElapsed - _simStartTime).clamp(
+      0.0,
+      double.infinity,
+    );
     final sim = _sim;
     if (sim == null) {
       _ticker.stop();
@@ -271,11 +269,8 @@ class OffsetSpringController extends ChangeNotifier {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Builder function signature for [SpringBuilder].
-typedef SpringWidgetBuilder = Widget Function(
-  BuildContext context,
-  double value,
-  Widget? child,
-);
+typedef SpringWidgetBuilder =
+    Widget Function(BuildContext context, double value, Widget? child);
 
 /// Animates a [double] [value] to new targets using a spring, calling
 /// [builder] on every frame.
@@ -361,12 +356,13 @@ class _SpringBuilderState extends State<SpringBuilder>
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Builder function signature for [VelocitySpringBuilder].
-typedef VelocitySpringWidgetBuilder = Widget Function(
-  BuildContext context,
-  double value,
-  double velocity,
-  Widget? child,
-);
+typedef VelocitySpringWidgetBuilder =
+    Widget Function(
+      BuildContext context,
+      double value,
+      double velocity,
+      Widget? child,
+    );
 
 /// Like [SpringBuilder] but also provides the current spring [velocity] to
 /// the builder.
@@ -441,7 +437,8 @@ class _VelocitySpringBuilderState extends State<VelocitySpringBuilder>
   void didUpdateWidget(VelocitySpringBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    final springChanged = widget.active != oldWidget.active ||
+    final springChanged =
+        widget.active != oldWidget.active ||
         widget.springWhenActive != oldWidget.springWhenActive ||
         widget.springWhenReleased != oldWidget.springWhenReleased;
     if (springChanged) {
@@ -478,11 +475,8 @@ class _VelocitySpringBuilderState extends State<VelocitySpringBuilder>
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Builder function signature for [OffsetSpringBuilder].
-typedef OffsetSpringWidgetBuilder = Widget Function(
-  BuildContext context,
-  Offset value,
-  Widget? child,
-);
+typedef OffsetSpringWidgetBuilder =
+    Widget Function(BuildContext context, Offset value, Widget? child);
 
 /// Like [SpringBuilder] but for [Offset] values.
 ///

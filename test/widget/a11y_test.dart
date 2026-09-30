@@ -9,19 +9,18 @@ import 'package:techpicks/feature/cpu/processor_screen.dart';
 import 'package:techpicks/feature/compare/picker_screen.dart';
 import 'package:techpicks/feature/detail/detail_screen.dart';
 import 'package:techpicks/feature/home/home_screen.dart';
-import 'package:techpicks/feature/login/email_login_screen.dart';
 import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/feature/rank/rank_screen.dart';
-import 'package:techpicks/feature/scan/scan_screen.dart';
 import 'package:techpicks/feature/viewer/viewer_screen.dart';
 import 'package:techpicks/feature/you/you_screen.dart';
 
+import 'package:techpicks/app/theme/app_theme.dart';
 import '../support/harness.dart';
 
 final _screens = <String, Widget>{
   'home': const HomeScreen(),
-  'rank': RankScreen(onScan: () {}),
+  'rank': const RankScreen(),
   'cpu': const ProcessorScreen(),
   'compare': const CompareScreen(),
   'detail': const DetailScreen(slug: 'galaxy-s25'),
@@ -32,12 +31,10 @@ final _screens = <String, Widget>{
   // 뒤로 가기처럼 아이콘만 있는 버튼이 있는 화면들.
   'detail-with-back': DetailScreen(slug: 'galaxy-s25', onBack: () {}),
   'picker': PickerScreen(onDone: () {}),
-  'email-login': EmailLoginScreen(onBack: () {}),
 };
 
 /// 스캔·뷰어는 애니메이션이 멈추지 않아 settle 이 끝나지 않는다.
 final _noSettle = <String, Widget>{
-  'scan': ScanScreen(onBack: () {}, recognizedText: 'Galaxy S25 Ultra Samsung'),
   'viewer': ViewerScreen(deviceName: 'Galaxy S25', onBack: () {}),
 };
 
@@ -48,6 +45,23 @@ void main() {
   setUp(seedHomeContent);
 
   for (final entry in _screens.entries) {
+    // 크롬마다 그 플랫폼의 기준. iOS 44pt, Android 48dp.
+    testWidgets('${entry.key} — 탭 타깃 크기 · android', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpScreen(
+        tester,
+        entry.value,
+        chrome: TpChrome.android,
+        size: const Size(1200, 3200),
+        overrides: <Override>[
+          askServiceProvider.overrideWithValue(const LocalAskService()),
+        ],
+      );
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      handle.dispose();
+    });
+
     testWidgets('${entry.key} — 탭 타깃 크기', (tester) async {
       final handle = tester.ensureSemantics();
       await pumpScreen(
@@ -58,7 +72,6 @@ void main() {
           askServiceProvider.overrideWithValue(const LocalAskService()),
         ],
       );
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
       // 아이콘만 있는 버튼은 스크린 리더가 읽을 이름이 있어야 한다.
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
@@ -100,19 +113,29 @@ void main() {
   }
 
   for (final entry in _noSettle.entries) {
-    testWidgets('${entry.key} — 탭 타깃 크기', (tester) async {
-      final handle = tester.ensureSemantics();
-      await pumpScreenNoSettle(
-        tester,
-        entry.value,
-        size: const Size(1200, 2400),
-      );
-      await tester.pump(const Duration(milliseconds: 300));
+    // 크롬마다 그 플랫폼의 기준. iOS 44pt, Android 48dp.
+    for (final chrome in TpChrome.values) {
+      testWidgets('${entry.key} — 탭 타깃 크기 · ${chrome.name}', (tester) async {
+        final handle = tester.ensureSemantics();
+        await pumpScreenNoSettle(
+          tester,
+          entry.value,
+          chrome: chrome,
+          size: const Size(1200, 2400),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
 
-      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
-      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      handle.dispose();
-    });
+        await expectLater(
+          tester,
+          meetsGuideline(
+            chrome == TpChrome.android
+                ? androidTapTargetGuideline
+                : iOSTapTargetGuideline,
+          ),
+        );
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        handle.dispose();
+      });
+    }
   }
 }

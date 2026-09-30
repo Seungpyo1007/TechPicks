@@ -35,12 +35,6 @@ ios/Runner/GoogleService-Info.plist
 .pub-cache/
 .pub/
 /build/
-.flutter-plugins
-.flutter-plugins-dependencies
-
-# Local Xcode user state.
-**/xcuserdata/
-**/*.xcuserstate
 
 # Symbolication related
 app.*.symbols
@@ -55,7 +49,25 @@ android/.gradle/
 
 # 골든이 어긋나면 flutter test 가 여기에 비교 이미지를 쏟는다.
 test/golden/failures/
+
+# 명세·인계·디자인 시안. 로컬에만 둔다.
+docs/
+
+# Xcode 가 프로젝트를 열 때마다 써넣는 개인 설정. 스킴을 접었는지 펼쳤는지
+# 같은 것이라 공유할 내용이 없는데, third_party/native_liquid_glass 안에
+# 들어 있어서 열 때마다 작업 트리가 더러워졌다.
+**/xcuserdata/
+**/*.xcuserstate
+
+# Flutter 가 빌드마다 다시 쓰는 플러그인 목록. 기기마다 경로가 달라 늘 바뀐다.
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# 테스트 커버리지 결과물.
 coverage/
 
-# 로컬 에이전트 설정
+# Firebase Hosting 배포 캐시.
+.firebase/
+
+# 로컬 에이전트 설정·워크트리.
 .claude/

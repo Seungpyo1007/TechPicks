@@ -309,6 +309,10 @@ struct LiquidGlassTabBarConfig {
   let itemSpacing: CGFloat?
   let itemWidth: CGFloat?
   let glassOverflow: CGFloat
+  /// TechPicks 패치: 검색 탭을 실제로 고르게 두고 `UISearchController` 를 붙인다.
+  /// 그러면 UIKit 이 탭 칸을 밀어내고 검색창을 바 자리로 펼친다(iOS 26).
+  let nativeSearch: Bool
+  let searchPlaceholder: String?
   /// Interface style the native bar should lock to, mirrored from the Flutter
   /// app's theme brightness. `.unspecified` means follow the system (device).
   let userInterfaceStyle: UIUserInterfaceStyle
@@ -476,6 +480,9 @@ struct LiquidGlassTabBarConfig {
     } else {
       itemWidth = nil
     }
+
+    nativeSearch = (args?["nativeSearch"] as? Bool) ?? false
+    searchPlaceholder = args?["searchPlaceholder"] as? String
 
     if let overflow = (args?["glassOverflow"] as? NSNumber)?.doubleValue, overflow > 0 {
       glassOverflow = CGFloat(overflow)

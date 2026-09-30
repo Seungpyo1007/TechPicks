@@ -14,6 +14,9 @@ analyzer:
     # Swift Package Manager 로 옮기면서 Firebase 패키지 소스가 여기 체크아웃된다.
     # 그 안에 Dart 테스트가 들어 있어 분석기가 남의 코드를 700건 넘게 문다.
     - build/**
+    - android/**
+    - ios/**
+    - macos/**
 
 linter:
   # The lint rules applied to this project can be customized in the

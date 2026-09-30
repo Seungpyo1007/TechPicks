@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:motor/motor.dart';
 
 /// 지속 시간과 커브 한 쌍.
 ///
@@ -23,6 +24,48 @@ class TpMove {
 
   @override
   String toString() => 'TpMove(${duration.inMilliseconds}ms, $curve)';
+}
+
+/// 바로 끝값으로 가는 모션. 동작 줄이기용.
+///
+/// motor 의 `NoMotion` 은 **시작값**에 머문다. 그걸 쓰면 값이 아예 안 바뀐다.
+@immutable
+class TpInstantMotion extends Motion {
+  const TpInstantMotion();
+
+  @override
+  Simulation createSimulation({
+    double start = 0,
+    double end = 1,
+    double velocity = 0,
+  }) => _Instant(end);
+
+  @override
+  bool get needsSettle => false;
+
+  @override
+  bool get unboundedWillSettle => true;
+
+  @override
+  bool operator ==(Object other) => other is TpInstantMotion;
+
+  @override
+  int get hashCode => (TpInstantMotion).hashCode;
+}
+
+class _Instant extends Simulation {
+  _Instant(this.end);
+
+  final double end;
+
+  @override
+  double x(double time) => end;
+
+  @override
+  double dx(double time) => 0;
+
+  @override
+  bool isDone(double time) => true;
 }
 
 /// 앱의 모션 토큰.
@@ -50,7 +93,15 @@ class TpMotion extends ThemeExtension<TpMotion> {
     required this.valueChange,
     required this.contentSwap,
     required this.listItem,
-  });
+    required this.snappy,
+    required this.bouncy,
+    required this.smooth,
+    bool loops = true,
+  }) : _loops = loops;
+
+  /// 무한 반복을 허용할지. 테스트 설정(`test/flutter_test_config.dart`)이 끈다 —
+  /// 도는 게 하나라도 있으면 `pumpAndSettle` 이 끝나지 않는다.
+  static bool loopsAllowed = true;
 
   /// 명세 Interactions 의 재정렬·등장 커브. 두 곳에 리터럴로 박혀 있던 값이다.
   static const Curve specCurve = Cubic(.2, .8, .2, 1);
@@ -77,26 +128,58 @@ class TpMotion extends ThemeExtension<TpMotion> {
   /// 목록에 항목이 들어오고 나갈 때.
   final TpMove listItem;
 
+  /// 스프링. 토글·누름처럼 짧게 튀는 것.
+  final Motion snappy;
+
+  /// 스프링. 추가·강조처럼 눈에 띄게 튀는 것.
+  final Motion bouncy;
+
+  /// 스프링. 숫자·막대·자리 이동처럼 튀지 않고 도착하는 것.
+  final Motion smooth;
+
+  final bool _loops;
+
+  /// 스켈레톤 반짝임, 뷰어 대기 흔들림처럼 끝없이 도는 것을 돌릴지.
+  bool get loops => _loops && loopsAllowed;
+
   /// iOS. 짧고 감속 위주.
   factory TpMotion.ios() => const TpMotion(
-    press: TpMove(Duration(milliseconds: 90), Curves.easeOutCubic),
-    selection: TpMove(Duration(milliseconds: 180), Curves.easeOutCubic),
-    reorder: TpMove(Duration(milliseconds: 220), specCurve),
-    reveal: TpMove(Duration(milliseconds: 240), specCurve),
-    valueChange: TpMove(Duration(milliseconds: 220), Curves.easeOutCubic),
-    contentSwap: TpMove(Duration(milliseconds: 200), Curves.easeInOut),
-    listItem: TpMove(Duration(milliseconds: 250), Curves.easeOutCubic),
+    press: TpMove(Duration(milliseconds: 120), Curves.easeOutCubic),
+    selection: TpMove(Duration(milliseconds: 280), Curves.easeOutCubic),
+    reorder: TpMove(Duration(milliseconds: 380), specCurve),
+    reveal: TpMove(Duration(milliseconds: 380), specCurve),
+    valueChange: TpMove(Duration(milliseconds: 380), Curves.easeOutCubic),
+    contentSwap: TpMove(Duration(milliseconds: 320), Curves.easeInOut),
+    listItem: TpMove(Duration(milliseconds: 420), Curves.easeOutCubic),
+    // SwiftUI 의 .snappy / .bouncy / .smooth 모양에 시간을 늘렸다. 끝에서는
+    // 목표값에 딱 맞춘다 — 안 그러면 막대가 목표보다 0.0001 모자란 채 멈춘다.
+    snappy: CupertinoMotion.snappy(
+      duration: Duration(milliseconds: 500),
+      snapToEnd: true,
+    ),
+    bouncy: CupertinoMotion.bouncy(
+      duration: Duration(milliseconds: 700),
+      snapToEnd: true,
+    ),
+    smooth: CupertinoMotion.smooth(
+      duration: Duration(milliseconds: 800),
+      snapToEnd: true,
+    ),
   );
 
   /// Android Material 3.
   factory TpMotion.android() => const TpMotion(
-    press: TpMove(Duration(milliseconds: 90), Easing.standard),
-    selection: TpMove(Durations.short4, Easing.standard),
-    reorder: TpMove(Duration(milliseconds: 220), specCurve),
-    reveal: TpMove(Duration(milliseconds: 240), specCurve),
-    valueChange: TpMove(Durations.medium1, Easing.standard),
-    contentSwap: TpMove(Durations.medium2, Easing.emphasizedDecelerate),
-    listItem: TpMove(Durations.medium1, Easing.emphasizedDecelerate),
+    press: TpMove(Duration(milliseconds: 120), Easing.standard),
+    selection: TpMove(Durations.medium2, Easing.standard),
+    reorder: TpMove(Duration(milliseconds: 380), specCurve),
+    reveal: TpMove(Duration(milliseconds: 380), specCurve),
+    valueChange: TpMove(Durations.medium4, Easing.standard),
+    contentSwap: TpMove(Durations.long1, Easing.emphasizedDecelerate),
+    listItem: TpMove(Durations.medium4, Easing.emphasizedDecelerate),
+    // M3 Expressive 스프링 토큰, 한 단계 느린 것.
+    snappy: MaterialSpringMotion.standardSpatialDefault(snapToEnd: true),
+    bouncy: MaterialSpringMotion.expressiveSpatialDefault(snapToEnd: true),
+    smooth: MaterialSpringMotion.standardSpatialSlow(snapToEnd: true),
   );
 
   /// 모든 시간을 0 으로. 손쉬운 사용에서 동작을 줄였을 때.
@@ -108,6 +191,10 @@ class TpMotion extends ThemeExtension<TpMotion> {
     valueChange: valueChange.instant,
     contentSwap: contentSwap.instant,
     listItem: listItem.instant,
+    snappy: const TpInstantMotion(),
+    bouncy: const TpInstantMotion(),
+    smooth: const TpInstantMotion(),
+    loops: false,
   );
 
   /// 시간이 다 0 이면 줄이기가 켜진 것이다. 무한 반복을 멈출지 판단하는 데 쓴다.
@@ -122,6 +209,10 @@ class TpMotion extends ThemeExtension<TpMotion> {
     TpMove? valueChange,
     TpMove? contentSwap,
     TpMove? listItem,
+    Motion? snappy,
+    Motion? bouncy,
+    Motion? smooth,
+    bool? loops,
   }) => TpMotion(
     press: press ?? this.press,
     selection: selection ?? this.selection,
@@ -130,6 +221,10 @@ class TpMotion extends ThemeExtension<TpMotion> {
     valueChange: valueChange ?? this.valueChange,
     contentSwap: contentSwap ?? this.contentSwap,
     listItem: listItem ?? this.listItem,
+    snappy: snappy ?? this.snappy,
+    bouncy: bouncy ?? this.bouncy,
+    smooth: smooth ?? this.smooth,
+    loops: loops ?? _loops,
   );
 
   /// 두 모션 집합 사이를 애니메이션할 일이 없다. 중간값 대신 한쪽을 고른다.

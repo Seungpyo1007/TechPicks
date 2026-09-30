@@ -8,8 +8,11 @@ import 'providers.dart';
 import 'router.dart';
 import 'shell/tp_shell.dart';
 import 'shell/tp_tab.dart';
+import 'shell/tp_tab_bar.dart';
+import 'shell/tp_window.dart';
+import 'theme/tp_tokens.dart';
 
-/// 탭 다섯 개를 들고 있는 자리.
+/// 탭 네 개와 하나뿐인 탭 바를 들고 있는 자리.
 ///
 /// 명세의 back stack 은 한 단계다. 상세·선택·스캔·뷰어는 이 위로 밀어 올리고
 /// 뒤로 가면 원래 탭으로 돌아온다.
@@ -26,6 +29,25 @@ class TabHost extends ConsumerStatefulWidget {
 }
 
 class _TabHostState extends ConsumerState<TabHost> {
+  final TpTabReselectNotifier _reselect = TpTabReselectNotifier();
+
+  /// 검색 탭에서 접힌 바의 원 버튼이 돌아갈 곳.
+  TpTab _lastBarTab = TpTab.today;
+
+  @override
+  void dispose() {
+    _reselect.dispose();
+    super.dispose();
+  }
+
+  void _select(TpTab picked, TpTab current) {
+    if (picked == current) {
+      _reselect.fire(picked);
+      return;
+    }
+    context.go(TpRoute.of(picked));
+  }
+
   @override
   void initState() {
     super.initState();
@@ -59,18 +81,53 @@ class _TabHostState extends ConsumerState<TabHost> {
   @override
   Widget build(BuildContext context) {
     final tab = TpTab.values[widget.shell.currentIndex];
+    if (tab != TpTab.search) _lastBarTab = tab;
+    final rail =
+        !context.tp.isGlass && tpWindowClass(context) != TpWindowClass.compact;
 
     // 다른 탭에서 시스템 뒤로 가기를 누르면 앱을 끄는 대신 홈으로 온다.
     // 명세의 back stack 은 밀어 올린 화면만 다루고 탭은 언급하지 않는데,
     // Android 에서 탭 하나 눌렀다가 뒤로 갔다고 앱이 꺼지면 사고에 가깝다.
     return PopScope(
-      canPop: tab == TpTab.home,
+      canPop: tab == TpTab.today,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) context.go(TpRoute.home);
       },
-      // 지금 어느 탭인지 아래로 알린다. 본문의 전환은 각 화면의 셸이 한다 —
-      // 여기서 통째로 감싸면 탭 캡슐까지 같이 줄었다 커진다.
-      child: TpActiveTab(tab: tab, child: widget.shell),
+      child: TpActiveTab(
+        tab: tab,
+        child: TpSearchReturn(
+          tab: _lastBarTab,
+          onReturn: () => context.go(TpRoute.of(_lastBarTab)),
+          child: TpTabReselect(
+            notifier: _reselect,
+            child: rail
+                ? Row(
+                    children: <Widget>[
+                      TpTabRail(
+                        current: tab,
+                        onSelected: (t) => _select(t, tab),
+                      ),
+                      Expanded(child: widget.shell),
+                    ],
+                  )
+                : Stack(
+                    children: <Widget>[
+                      Positioned.fill(child: widget.shell),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: TpTabBar(
+                          current: tab,
+                          returnTo: _lastBarTab,
+                          onSelected: (t) => _select(t, tab),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
     );
   }
 }

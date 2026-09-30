@@ -133,14 +133,19 @@ LiquidGlassPathOp _transformOp(
       return LiquidGlassPathOp.lineTo(mapX(encoded[1]), mapY(encoded[2]));
     case 'cubicTo':
       return LiquidGlassPathOp.cubicTo(
-        mapX(encoded[1]), mapY(encoded[2]),
-        mapX(encoded[3]), mapY(encoded[4]),
-        mapX(encoded[5]), mapY(encoded[6]),
+        mapX(encoded[1]),
+        mapY(encoded[2]),
+        mapX(encoded[3]),
+        mapY(encoded[4]),
+        mapX(encoded[5]),
+        mapY(encoded[6]),
       );
     case 'quadTo':
       return LiquidGlassPathOp.quadTo(
-        mapX(encoded[1]), mapY(encoded[2]),
-        mapX(encoded[3]), mapY(encoded[4]),
+        mapX(encoded[1]),
+        mapY(encoded[2]),
+        mapX(encoded[3]),
+        mapY(encoded[4]),
       );
     case 'close':
     default:

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 
-import '../platform/platform_info_stub.dart' if (dart.library.io) '../platform/platform_info_io.dart' as platform_info;
+import '../platform/platform_info_stub.dart'
+    if (dart.library.io) '../platform/platform_info_io.dart'
+    as platform_info;
 
 /// Utility helpers for checking native Liquid Glass availability.
 final class NativeLiquidGlassUtils {
@@ -12,7 +14,9 @@ final class NativeLiquidGlassUtils {
   static void _ensureInitialized() {
     if (_isInitialized) return;
     if (!kIsWeb && platform_info.isIOS) {
-      _cachedIOSVersion = _parseMajorVersion(platform_info.operatingSystemVersion);
+      _cachedIOSVersion = _parseMajorVersion(
+        platform_info.operatingSystemVersion,
+      );
     }
     _isInitialized = true;
   }

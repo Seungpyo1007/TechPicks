@@ -1,26 +1,32 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart' show CupertinoSheetRoute;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/model/device_specs.dart';
+import '../domain/model/search_index.dart';
 import '../feature/ask/ask_screen.dart';
+import '../feature/build/build_screen.dart';
 import '../feature/compare/compare_screen.dart';
 import '../feature/compare/picker_screen.dart';
+import '../feature/cpu/processor_screen.dart';
+import '../domain/model/processor.dart';
 import '../feature/detail/detail_screen.dart';
 import '../feature/home/home_screen.dart';
-import '../feature/login/email_login_screen.dart';
 import '../feature/login/login_screen.dart';
 import '../feature/onboarding/onboarding_screen.dart';
+import '../feature/rank/rank_category.dart';
 import '../feature/rank/rank_tab.dart';
-import '../feature/scan/scan_screen.dart';
+import '../feature/search/search_screen.dart';
 import '../feature/share/tp_link.dart';
 import '../feature/viewer/viewer_screen.dart';
 import '../feature/you/you_screen.dart';
 import 'providers.dart';
 import 'shell/tp_tab.dart';
 import 'tab_host.dart';
+import 'theme/tp_tokens.dart';
 
 /// 주소 문법.
 ///
@@ -28,23 +34,40 @@ import 'tab_host.dart';
 /// 스킴 `techpicks://device/x` 가 그냥 `/device/x` 가 된다.
 abstract final class TpRoute {
   static const String home = '/';
-  static const String rank = '/rank';
+  static const String browse = '/browse';
   static const String compare = '/compare';
+  static const String search = '/search';
+
+  /// 시트. 탭이 아니다.
   static const String ask = '/ask';
   static const String you = '/you';
+
+  /// 둘러보기의 카테고리 하나. `/browse` 는 폰과 같다.
+  ///
+  /// 카테고리는 쿼리다. 하위 경로(`/browse/cpus`)이던 때는 세그먼트를 누를
+  /// 때마다 새 화면이 위로 밀려 들어왔다 — 같은 페이지 안에서 내용만
+  /// 바뀌어야 한다.
+  static String browseOf(RankCategory c) =>
+      c == RankCategory.phones ? browse : '$browse?c=${c.key}';
+
+  /// 조립 견적. 프로세서 목록 맨 위 행에서 들어간다.
+  static const String build = '/browse/cpus/build';
+
+  /// 예전 주소. 공유된 링크가 아직 이걸 들고 있다.
+  static const String legacyRank = '/rank';
+  static const String legacyDecide = '/decide';
+  static const String legacyScan = '/scan';
 
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String emailLogin = '/login/email';
-  static const String scan = '/scan';
 
   /// 탭 하나가 사는 자리.
   static String of(TpTab tab) => switch (tab) {
-    TpTab.home => home,
-    TpTab.rank => rank,
+    TpTab.today => home,
+    TpTab.browse => browse,
     TpTab.compare => compare,
-    TpTab.ask => ask,
-    TpTab.you => you,
+    TpTab.search => search,
   };
 }
 
@@ -56,9 +79,10 @@ final routerProvider = Provider<GoRouter>((ref) => buildRouter(ref));
 /// `StatefulShellRoute.indexedStack` 은 탭 스크롤과 입력을 유지하는
 /// IndexedStack 에 주소와 이력을 붙인 것이다.
 GoRouter buildRouter(Ref ref) {
+  final root = GlobalKey<NavigatorState>();
   return GoRouter(
     initialLocation: TpRoute.home,
-    navigatorKey: GlobalKey<NavigatorState>(),
+    navigatorKey: root,
     // 커스텀 스킴 딥링크는 플랫폼이 라우터에 **그대로** 넘긴다 —
     // `techpicks://compare/a/b` 는 우리 경로가 아니라서 라우터가 못 찾고
     // "Page Not Found" 를 그렸다. 문법은 TpLink 가 안다.
@@ -82,31 +106,33 @@ GoRouter buildRouter(Ref ref) {
       }
       if (here == TpRoute.onboarding) return TpRoute.home;
 
-      final signedIn =
-          ref.read(currentUserProvider) != null || ref.read(guestProvider);
-      if (!signedIn) {
-        return here.startsWith(TpRoute.login) ? null : TpRoute.login;
-      }
-      return here.startsWith(TpRoute.login) ? TpRoute.home : null;
+      // 로그인은 선택이다. 온보딩만 거치면 앱이다.
+      return null;
     },
     routes: <RouteBase>[
       GoRoute(
         path: TpRoute.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
+        // 명세 흐름: 온보딩 → 로그인. 완료 표시가 먼저 남으므로 로그인 화면은
+        // 게이트를 지난다. 로그인은 선택이라 뒤로 가면 오늘.
+        builder: (context, state) =>
+            OnboardingScreen(onDone: () => context.go(TpRoute.login)),
       ),
+      // 로그인. 다른 화면처럼 옆에서 밀려 들어오고 뒤로 버튼으로 나간다(아래에서
+      // 올라오는 모달이던 때는 버튼 줄이 다른 화면과 어긋나 보였다). 온보딩에서
+      // 왔으면 뒤로가 오늘로.
       GoRoute(
         path: TpRoute.login,
-        builder: (context, state) => _Login(),
+        pageBuilder: (context, state) {
+          void back() =>
+              context.canPop() ? context.pop() : context.go(TpRoute.home);
+          final child = LoginScreen(onClose: back, onSignedIn: back);
+          return context.tp.isGlass
+              ? MaterialPage<void>(key: state.pageKey, child: child)
+              : MaterialPage<void>(key: state.pageKey, child: child);
+        },
         routes: <RouteBase>[
-          GoRoute(
-            path: 'email',
-            builder: (context, state) => EmailLoginScreen(
-              startInSignUp: state.uri.queryParameters['signUp'] == '1',
-              onBack: () =>
-                  context.canPop() ? context.pop() : context.go(TpRoute.login),
-              onSignedIn: () => context.go(TpRoute.home),
-            ),
-          ),
+          // 예전 주소.
+          GoRoute(path: 'email', redirect: (_, _) => TpRoute.login),
         ],
       ),
 
@@ -124,12 +150,25 @@ GoRouter buildRouter(Ref ref) {
               GoRoute(
                 path: TpRoute.home,
                 builder: (context, state) => HomeScreen(
-                  onTabSelected: (t) => context.go(TpRoute.of(t)),
                   onDeviceTap: (s) => context.push('/device/$s'),
-                  onAdd: () => context.go(TpRoute.rank),
+                  onAdd: () => context.go(TpRoute.search),
                   onCompareAll: () => context.go(TpRoute.compare),
-                  onAskWhy: () => context.go(TpRoute.ask),
-                  onMoversTap: () => context.go(TpRoute.rank),
+                  onAskWhy: () => context.push(TpRoute.ask),
+                  onMoversTap: () => context.go(TpRoute.browse),
+                  onYou: () => context.push(TpRoute.you),
+                  onAsk: () {
+                    ProviderScope.containerOf(
+                      context,
+                    ).read(askTopicProvider.notifier).set(null);
+                    context.push(TpRoute.ask);
+                  },
+                  onWeights: () => context.push(TpRoute.you),
+                  onCompareDevice: (slug) {
+                    ProviderScope.containerOf(
+                      context,
+                    ).read(compareProvider.notifier).pick(CompareSide.a, slug);
+                    context.go(TpRoute.compare);
+                  },
                 ),
               ),
             ],
@@ -138,12 +177,48 @@ GoRouter buildRouter(Ref ref) {
             preload: true,
             routes: <RouteBase>[
               GoRoute(
-                path: TpRoute.rank,
-                builder: (context, state) => RankTab(
-                  onTabSelected: (t) => context.go(TpRoute.of(t)),
-                  onDeviceTap: (s) => context.push('/device/$s'),
-                  onScan: () => context.push(TpRoute.scan),
+                path: TpRoute.browse,
+                builder: (context, state) => _browse(
+                  context,
+                  RankCategory.parse(state.uri.queryParameters['c']) ??
+                      RankCategory.phones,
                 ),
+                routes: <RouteBase>[
+                  // `:category` 보다 먼저 와야 한다.
+                  GoRoute(
+                    path: 'cpus/all/:segment',
+                    builder: (context, state) => ProcessorListScreen(
+                      segment:
+                          state.pathParameters['segment'] ==
+                              ProcessorSegment.laptop.name
+                          ? ProcessorSegment.laptop
+                          : ProcessorSegment.mobile,
+                      onBack: () => context.canPop()
+                          ? context.pop()
+                          : context.go(
+                              TpRoute.browseOf(RankCategory.processors),
+                            ),
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'cpus/build',
+                    builder: (context, state) => BuildScreen(
+                      onBack: () => context.canPop()
+                          ? context.pop()
+                          : context.go(
+                              TpRoute.browseOf(RankCategory.processors),
+                            ),
+                    ),
+                  ),
+                  // 예전 주소(`/browse/cpus`). 공유된 링크가 들고 있을 수 있다.
+                  GoRoute(
+                    path: ':category',
+                    redirect: (context, state) => TpRoute.browseOf(
+                      RankCategory.parse(state.pathParameters['category']) ??
+                          RankCategory.phones,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -159,10 +234,15 @@ GoRouter buildRouter(Ref ref) {
                   // a='pick', b='a' 인 비교를 열려고 한다.
                   GoRoute(
                     path: 'pick/:side',
-                    builder: (context, state) => _Picker(
-                      side: state.pathParameters['side'] == 'b'
-                          ? CompareSide.b
-                          : CompareSide.a,
+                    parentNavigatorKey: root,
+                    pageBuilder: (context, state) => _sheet(
+                      context,
+                      state,
+                      _Picker(
+                        side: state.pathParameters['side'] == 'b'
+                            ? CompareSide.b
+                            : CompareSide.a,
+                      ),
                     ),
                   ),
                   // 링크로 들어온 비교. 두 슬롯을 채우고 같은 화면을 그린다.
@@ -181,25 +261,29 @@ GoRouter buildRouter(Ref ref) {
             preload: true,
             routes: <RouteBase>[
               GoRoute(
-                path: TpRoute.ask,
-                builder: (context, state) => AskScreen(
-                  onTabSelected: (t) => context.go(TpRoute.of(t)),
-                  onDeviceTap: (s) => context.push('/device/$s'),
+                path: TpRoute.search,
+                builder: (context, state) => SearchScreen(
+                  onHit: (hit) => _openHit(context, hit),
+                  onKind: (c) => context.go(TpRoute.browseOf(c)),
                 ),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            preload: true,
-            routes: <RouteBase>[
-              GoRoute(
-                path: TpRoute.you,
-                builder: (context, state) => const YouTab(),
               ),
             ],
           ),
         ],
       ),
+
+      // 시트. iOS 는 뒤 화면이 줄어들며 위에 남는 큰 시트다.
+      // 질문도 내 정보처럼 옆에서 밀려 들어오는 화면이다.
+      GoRoute(
+        path: TpRoute.ask,
+        builder: (context, state) => AskScreen(
+          onDeviceTap: (s) => context.push('/device/$s'),
+          onBack: () =>
+              context.canPop() ? context.pop() : context.go(TpRoute.home),
+        ),
+      ),
+      // 내 정보는 시트가 아니라 옆에서 밀려 들어오는 화면이다.
+      GoRoute(path: TpRoute.you, builder: (context, state) => const YouSheet()),
 
       // 탭 위로 밀리는 화면들. 명세의 back stack 은 한 단계다.
       GoRoute(
@@ -207,17 +291,81 @@ GoRouter buildRouter(Ref ref) {
         builder: (context, state) =>
             _Detail(slug: state.pathParameters['slug']!),
         routes: <RouteBase>[
+          // 전체 화면 모달. 아래에서 올라오고 X 로 닫는다.
           GoRoute(
             path: '3d',
-            builder: (context, state) =>
-                _Viewer(slug: state.pathParameters['slug']!),
+            pageBuilder: (context, state) => context.tp.isGlass
+                ? MaterialPage<void>(
+                    key: state.pageKey,
+                    fullscreenDialog: true,
+                    child: _Viewer(slug: state.pathParameters['slug']!),
+                  )
+                : MaterialPage<void>(
+                    key: state.pageKey,
+                    fullscreenDialog: true,
+                    child: _Viewer(slug: state.pathParameters['slug']!),
+                  ),
           ),
         ],
       ),
-      GoRoute(path: TpRoute.scan, builder: (context, state) => const _Scan()),
+      // 예전 주소. 공유된 링크와 저장된 딥링크가 아직 이걸 들고 있다.
+      // onException 이 TpLink 를 통해 건져내기는 하지만, 그건 "못 찾았다"
+      // 뒤의 회수 경로라 눈에 안 보이는 한 번의 실패를 거친다.
+      GoRoute(
+        path: TpRoute.legacyRank,
+        redirect: (context, state) => TpRoute.browse,
+      ),
+      GoRoute(
+        path: TpRoute.legacyDecide,
+        // 하위 경로(`/decide/a/b`)까지 여기서 보내면 슬러그가 사라진다.
+        redirect: (context, state) =>
+            state.matchedLocation == TpRoute.legacyDecide
+            ? TpRoute.compare
+            : null,
+        routes: <RouteBase>[
+          GoRoute(path: 'build', redirect: (context, state) => TpRoute.build),
+          GoRoute(
+            path: ':a/:b',
+            redirect: (context, state) =>
+                '${TpRoute.compare}/${state.pathParameters['a']}'
+                '/${state.pathParameters['b']}',
+          ),
+        ],
+      ),
+      GoRoute(
+        path: TpRoute.legacyScan,
+        redirect: (context, state) => TpRoute.search,
+      ),
     ],
   );
 }
+
+/// 검색 결과를 연다.
+///
+/// 노트북은 상세 화면이 없어 목록으로 보낸다. 없는 화면으로 보내 빈 자리를
+/// 그리느니, 그 기기가 있는 목록에 내려놓는 편이 낫다.
+void _openHit(BuildContext context, SearchHit hit) {
+  switch (hit.kind) {
+    case SearchKind.phone:
+      context.push('/device/${hit.slug}');
+    case SearchKind.processor:
+      context.go(TpRoute.browseOf(RankCategory.processors));
+    case SearchKind.laptop:
+      context.go(TpRoute.browseOf(RankCategory.laptops));
+  }
+}
+
+/// 둘러보기 한 카테고리. 세 주소가 같은 배선을 쓴다.
+RankTab _browse(BuildContext context, RankCategory category) => RankTab(
+  category: category,
+  onDeviceTap: (s) => context.push('/device/$s'),
+  // push 라야 뒤로 갔을 때 프로세서 화면이 그대로 남아 있다.
+  onBuild: () => context.push(TpRoute.build),
+  onAllProcessors: (s) => context.go('${TpRoute.browse}/cpus/all/${s.name}'),
+  // 칩은 같은 브랜치 안에서 주소만 바꾼다. push 가 아니라 go 라 뒤로 가기가
+  // 쌓이지 않는다 — 명세가 "교체지 푸시가 아니다" 라고 한 그대로다.
+  onCategory: (c) => context.go(TpRoute.browseOf(c)),
+);
 
 /// 게이트가 보는 값이 바뀌면 라우터를 깨운다.
 class _Gate extends ChangeNotifier {
@@ -225,7 +373,6 @@ class _Gate extends ChangeNotifier {
     for (final sub in <void Function()>[
       () => ref.listen(onboardingDoneProvider, (_, _) => notifyListeners()),
       () => ref.listen(currentUserProvider, (_, _) => notifyListeners()),
-      () => ref.listen(guestProvider, (_, _) => notifyListeners()),
     ]) {
       sub();
     }
@@ -260,68 +407,37 @@ class _CompareWithState extends ConsumerState<_CompareWith> {
   Widget build(BuildContext context) => const _Compare();
 }
 
-class _Login extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context, WidgetRef ref) => LoginScreen(
-    onSignedIn: () => context.go(TpRoute.home),
-    // 푸터의 `Sign up` 은 가입 화면을 연다. 지금까지는 로그인을 건너뛰어서,
-    // 가입하려던 사람이 그냥 앱에 들어와 버렸다.
-    onSignUp: () => context.go('${TpRoute.emailLogin}?signUp=1'),
-    onEmail: () => context.go(TpRoute.emailLogin),
-    onBrowse: () {
-      unawaited(ref.read(guestProvider.notifier).stay());
-      context.go(TpRoute.home);
-    },
-  );
-}
-
-/// 비교 탭. 프로바이더를 만지는 행동 둘이 있어서 감싼다.
-class _Compare extends ConsumerWidget {
+/// 비교 탭.
+class _Compare extends StatelessWidget {
   const _Compare();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => CompareScreen(
-    onTabSelected: (t) => context.go(TpRoute.of(t)),
+  Widget build(BuildContext context) => CompareScreen(
     onPick: (side) => context.push('${TpRoute.compare}/pick/${side.name}'),
-    onAskWhy: () => _askAboutCompared(context, ref),
   );
-
-  /// 비교 중인 두 기기를 그대로 상담으로 넘긴다.
-  ///
-  /// 한쪽이라도 비어 있으면 물어볼 게 없으니 탭만 바꾼다.
-  static void _askAboutCompared(BuildContext context, WidgetRef ref) {
-    context.go(TpRoute.ask);
-
-    final slots = ref.read(compareProvider);
-    final catalog = ref.read(catalogProvider).value;
-    if (catalog == null || slots.a == null || slots.b == null) return;
-
-    String? nameOf(String slug) =>
-        catalog.smartphones.where((d) => d.slug == slug).firstOrNull?.name;
-
-    final a = nameOf(slots.a!);
-    final b = nameOf(slots.b!);
-    if (a == null || b == null) return;
-    unawaited(ref.read(askProvider.notifier).askAbout(a, b));
-  }
 }
 
-/// 내 정보 탭. 로그인 상태를 읽어야 해서 감싼다.
-class YouTab extends ConsumerWidget {
-  const YouTab({super.key});
+/// 내 정보 시트. 로그인 상태를 읽어야 해서 감싼다.
+class YouSheet extends ConsumerWidget {
+  const YouSheet({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => YouScreen(
-    onTabSelected: (t) => context.go(TpRoute.of(t)),
-    name: ref.watch(currentUserProvider)?.name,
-    email: ref.watch(currentUserProvider)?.email,
-    // 손님 표시도 같이 지운다. 안 지우면 로그아웃해도 탭에 남는다.
-    onLogout: () {
-      unawaited(ref.read(currentUserProvider.notifier).signOut());
-      unawaited(ref.read(guestProvider.notifier).clear());
-    },
-    onDeviceTap: (s) => context.push('/device/$s'),
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    return YouScreen(
+      onBack: () => context.canPop() ? context.pop() : context.go(TpRoute.home),
+      name: user?.name,
+      email: user?.email,
+      method: user?.method,
+      emailVerified: user?.emailVerified ?? true,
+      onLogout: () =>
+          unawaited(ref.read(currentUserProvider.notifier).signOut()),
+      onSignIn: () => context.push(TpRoute.login),
+      // 내 정보 위에 그대로 쌓는다. 닫고 다시 밀면 두 전환이 겹쳐 그
+      // 사이로 오늘 화면(툴바 유리 버튼)이 한 번 비친다.
+      onDeviceTap: (s) => context.push('/device/$s'),
+    );
+  }
 }
 
 class _Picker extends ConsumerStatefulWidget {
@@ -362,6 +478,7 @@ class _Detail extends ConsumerWidget {
       context.go(TpRoute.compare);
     },
     onView3D: (s) => context.push('/device/$s/3d'),
+    onSignIn: () => context.push(TpRoute.login),
   );
 }
 
@@ -388,14 +505,40 @@ class _Viewer extends ConsumerWidget {
   }
 }
 
-class _Scan extends StatelessWidget {
-  const _Scan();
+/// 시트로 뜨는 화면(질문, 내 정보).
+///
+/// iOS 는 `CupertinoSheetRoute`: 뒤 화면이 줄어들며 위에 남고, 목록이 맨
+/// 위일 때 끌어내리면 닫힌다. 그래서 시트가 준 컨트롤러를 목록의 기본
+/// 컨트롤러로 넘긴다. Android 는 전체 높이 M3 바텀 시트(드래그 핸들, 모서리 28).
+Page<void> _sheet(BuildContext context, GoRouterState state, Widget child) {
+  if (context.tp.isGlass) return _SheetPage(key: state.pageKey, child: child);
+  return _BottomSheetPage(key: state.pageKey, child: child);
+}
+
+class _BottomSheetPage extends Page<void> {
+  const _BottomSheetPage({super.key, required this.child});
+
+  final Widget child;
 
   @override
-  Widget build(BuildContext context) => ScanScreen(
-    onBack: () => context.canPop() ? context.pop() : context.go(TpRoute.rank),
-    // 스캔 결과에서 상세로. 스캔은 이력에서 빠진다 — 뒤로 가면
-    // 랭킹으로 돌아오는 게 맞다.
-    onOpenDevice: (slug) => context.pushReplacement('/device/$slug'),
+  Route<void> createRoute(BuildContext context) => ModalBottomSheetRoute<void>(
+    settings: this,
+    isScrollControlled: true,
+    useSafeArea: true,
+    showDragHandle: true,
+    builder: (context) => child,
+  );
+}
+
+class _SheetPage extends Page<void> {
+  const _SheetPage({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Route<void> createRoute(BuildContext context) => CupertinoSheetRoute<void>(
+    settings: this,
+    scrollableBuilder: (context, controller) =>
+        PrimaryScrollController(controller: controller, child: child),
   );
 }

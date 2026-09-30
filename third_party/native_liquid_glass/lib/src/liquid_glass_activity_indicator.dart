@@ -49,9 +49,11 @@ class LiquidGlassActivityIndicator extends StatefulWidget {
 }
 
 class _LiquidGlassActivityIndicatorState
-    extends State<LiquidGlassActivityIndicator> with LiquidGlassRouteSuppression {
+    extends State<LiquidGlassActivityIndicator>
+    with LiquidGlassRouteSuppression {
   MethodChannel? _nativeChannel;
-  @override MethodChannel? get suppressionChannel => _nativeChannel;
+  @override
+  MethodChannel? get suppressionChannel => _nativeChannel;
   bool? _lastAnimating;
   int? _lastColor;
 
@@ -84,7 +86,9 @@ class _LiquidGlassActivityIndicatorState
 
   void _onPlatformViewCreated(int viewId) {
     _nativeChannel?.setMethodCallHandler(null);
-    final channel = MethodChannel('liquid-glass-activity-indicator-view/$viewId');
+    final channel = MethodChannel(
+      'liquid-glass-activity-indicator-view/$viewId',
+    );
     _nativeChannel = channel;
     _lastAnimating = widget.animating;
     _lastColor = widget.color?.toARGB32();

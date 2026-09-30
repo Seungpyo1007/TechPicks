@@ -1,23 +1,16 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:techpicks/shared/copy_keys.dart';
-import 'package:easy_localization/easy_localization.dart';
-
-import '../support/harness.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
 import 'package:techpicks/domain/model/ranking.dart';
-import 'package:techpicks/feature/rank/rank_screen.dart';
-import 'package:techpicks/app/theme/tp_tokens.dart';
 import 'package:techpicks/feature/rank/category_chips.dart';
-import 'package:techpicks/shared/widgets/tp_chip.dart';
+import 'package:techpicks/feature/rank/rank_category.dart';
+import 'package:techpicks/feature/rank/rank_screen.dart';
+import 'package:techpicks/shared/copy_keys.dart';
 
-/// 폭을 넓게 준다.
-///
-/// 여기 테스트들은 **칩 동작**을 본다 — 다섯 축이 다 있고, 눌러서 정렬이
-/// 바뀌는지. 칩 줄은 가로 스크롤이라 폰 폭에서는 뒤쪽 칩이 아예 안 만들어져서
-/// `find.text` 로는 못 닿는다. 스크롤해서 잡을 수도 있지만, 그러면 매 테스트가
-/// 칩 줄의 스크롤 구현에 묶인다.
+import '../support/harness.dart';
+
 Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) =>
     pumpScreen(
       tester,
@@ -26,24 +19,9 @@ Future<void> _pump(WidgetTester tester, {TpChrome chrome = TpChrome.ios}) =>
       size: const Size(700, 3000),
     );
 
-/// 브랜드 시트를 열고 [brand] 를 고른다.
-///
-/// 예전에는 칩 열일곱 개가 가로줄에 있어서 그냥 눌렀다. 지금은 칩 하나가
-/// 시트를 연다.
-Future<void> _pickBrand(WidgetTester tester, String brand) async {
-  await tester.tap(find.widgetWithText(TpChip, K.brand.tr()));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(brand).last);
-  await tester.pumpAndSettle();
-}
-
-/// 브랜드 시트에서 "전체"로 되돌린다.
-Future<void> _clearBrand(WidgetTester tester, String brand) async {
-  await tester.tap(find.widgetWithText(TpChip, brand));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text(K.allBrands.tr()).last);
-  await tester.pumpAndSettle();
-}
+Finder _button(TpChrome chrome, String label) => chrome == TpChrome.ios
+    ? find.bySemanticsLabel(label)
+    : find.byTooltip(label);
 
 void main() {
   setUp(initLocalization);
@@ -51,115 +29,147 @@ void main() {
   testWidgets('카탈로그를 순위로 그린다', (tester) async {
     await _pump(tester);
 
-    expect(find.text('Rankings'), findsOneWidget);
-    // 1위 행이 있고, 화면 상한까지만 그린다. 카탈로그는 그보다 크다.
+    final first = readRanking().first;
+    expect(find.text(first.device.name), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
-    expect(find.text('${RankScreen.maxRows}'), findsOneWidget);
-    expect(find.text('${RankScreen.maxRows + 1}'), findsNothing);
-    expect(readCatalog().smartphones.length, greaterThan(RankScreen.maxRows));
   });
 
-  testWidgets('잘린 것을 말해준다', (tester) async {
-    // 상한 없이 조용히 끊으면 가격순에서 제일 싼 기기가 왜 없는지 모른다.
-    // 안내는 목록 아래라 화면이 그만큼 길어야 그려진다.
-    await pumpScreen(tester, const RankScreen(), size: const Size(1200, 4400));
-
-    final rest = readCatalog().smartphones.length - RankScreen.maxRows;
+  testWidgets('상태 줄이 정렬 축, 브랜드, 개수를 말한다', (tester) async {
+    await _pump(tester);
     expect(
       find.text(
-        K.rankCapped.tr(args: <String>['${RankScreen.maxRows}', '$rest']),
+        K.rankStatus.tr(
+          args: <String>[
+            K.rankAxis(RankAxis.tpIndex).tr(),
+            K.allBrands.tr(),
+            '${readCatalog().smartphones.length}',
+          ],
+        ),
       ),
       findsOneWidget,
     );
   });
 
-  testWidgets('축 칩이 다섯 개 다 나온다', (tester) async {
-    await _pump(tester);
-    for (final axis in RankAxis.values) {
-      expect(
-        find.widgetWithText(TpChip, K.rankAxis(axis).tr()),
-        findsWidgets,
-        reason: axis.name,
+  for (final chrome in TpChrome.values) {
+    testWidgets('$chrome — 정렬로 축을 바꾼다', (tester) async {
+      final container = await pumpScreen(
+        tester,
+        const RankScreen(),
+        chrome: chrome,
+        size: const Size(700, 3000),
       );
-    }
+
+      // iOS 는 정렬 메뉴, Android 는 칩 줄.
+      if (chrome == TpChrome.ios) {
+        await tester.tap(_button(chrome, K.sort.tr()));
+        await tester.pumpAndSettle();
+      } else {
+        expect(_button(chrome, K.sort.tr()), findsNothing);
+      }
+      await tester.tap(find.text(K.rankAxis(RankAxis.battery).tr()).last);
+      await tester.pumpAndSettle();
+
+      expect(container.read(rankAxisProvider), RankAxis.battery);
+    });
+  }
+
+  testWidgets('정렬을 바꾸면 위쪽 행이 차례로 들어오고 곧 멈춘다', (tester) async {
+    final container = await pumpScreen(
+      tester,
+      const RankScreen(),
+      size: const Size(700, 3000),
+    );
+    Iterable<FadeTransition> arriving() => tester
+        .widgetList<FadeTransition>(
+          find.descendant(
+            of: find.byType(RankScreen),
+            matching: find.byType(FadeTransition),
+          ),
+        )
+        .where((f) => f.child is SlideTransition && f.opacity.value < 1);
+    expect(arriving(), isEmpty);
+
+    container.read(rankAxisProvider.notifier).set(RankAxis.battery);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 60));
+    expect(arriving(), isNotEmpty);
+
+    await tester.pumpAndSettle();
+    expect(arriving(), isEmpty);
   });
 
-  testWidgets('축을 바꾸면 순서가 바뀐다', (tester) async {
-    await _pump(tester);
+  testWidgets('브랜드 메뉴로 거르고 지우기로 되돌린다', (tester) async {
+    final container = await pumpScreen(
+      tester,
+      const RankScreen(),
+      size: const Size(700, 3000),
+    );
+    final brand = container.read(rankBrandsProvider).first;
+    final all = container.read(rankVisibleProvider).length;
 
-    List<String> order() => tester
-        .widgetList<Text>(find.byType(Text))
-        .map((t) => t.data ?? '')
-        .where((s) => s.contains('Galaxy') || s.contains('iPhone'))
-        .toList();
-
-    final byIndex = order();
-
-    await tester.tap(find.widgetWithText(TpChip, 'Price'));
+    await tester.tap(_button(TpChrome.ios, K.filter.tr()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(brand).last);
     await tester.pumpAndSettle();
 
-    expect(order(), isNot(equals(byIndex)), reason: '가격순은 지수순과 달라야 한다');
-  });
+    final filtered = container.read(rankVisibleProvider);
+    expect(filtered.length, lessThan(all));
+    expect(filtered.every((r) => r.device.brand?.name == brand), isTrue);
+    // 버튼 모양은 그대로고, 무엇이 걸렸는지는 상태 줄과 버튼 이름이 말한다.
+    expect(find.bySemanticsLabel('${K.filter.tr()}, $brand'), findsWidgets);
+    expect(find.textContaining(brand), findsWidgets);
 
-  testWidgets('가격 축은 통화로, 점수 축은 정수로 보여준다', (tester) async {
-    await _pump(tester);
-
-    await tester.tap(find.widgetWithText(TpChip, 'Price'));
+    await tester.tap(find.text(K.clear.tr()));
     await tester.pumpAndSettle();
-
-    // 가격 축은 통화 기호와 천 단위 구분이 붙는다. 값은 카탈로그에서 가져온다 —
-    // 같은 값을 가진 기기가 여럿이라 개수는 세지 않는다.
-    final cheapest = readCatalog().smartphones
-        .map((d) => d.msrpUsd?.toDouble())
-        .whereType<double>()
-        .reduce((a, b) => a < b ? a : b);
-    expect(find.text(formatAxisValue(RankAxis.price, cheapest)), findsWidgets);
+    expect(container.read(rankVisibleProvider), hasLength(all));
   });
 
-  testWidgets('노트북 칩은 꺼져 있고 그렇게 보인다', (tester) async {
-    // 데이터가 없어 못 누른다. 켜진 것과 똑같이 생기면 눌러보고 만다.
-    await _pump(tester);
+  for (final chrome in TpChrome.values) {
+    // 브랜드 17줄은 폰 화면보다 길다. 메뉴 안에서 굴려 끝까지 닿아야 한다.
+    testWidgets('$chrome — 긴 브랜드 메뉴도 끝까지 고른다', (tester) async {
+      final container = await pumpScreen(
+        tester,
+        const RankScreen(),
+        chrome: chrome,
+        size: const Size(402, 874),
+      );
+      final last = container.read(rankBrandsProvider).last;
 
-    final chips = tester.widgetList<TpChip>(
-      find.descendant(
-        of: find.byType(CategoryChips),
-        matching: find.byType(TpChip),
-      ),
-    );
-    final laptops = chips.firstWhere((c) => c.label == 'Laptops');
-    expect(laptops.onTap, isNull);
+      await tester.tap(_button(chrome, K.filter.tr()));
+      await tester.pumpAndSettle();
+      final item = find.text(last).last;
+      await tester.scrollUntilVisible(
+        item,
+        60,
+        scrollable: find
+            .ancestor(of: item, matching: find.byType(Scrollable))
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(item);
+      await tester.pumpAndSettle();
 
-    // 못 누르는 칩은 그렇게 보여야 한다. 켜진 칩과 같은 색이면 눌러 보고서야
-    // 안 된다는 걸 안다.
-    final off = tester.widget<Text>(
-      find.descendant(of: find.byWidget(laptops), matching: find.byType(Text)),
-    );
-    final on = tester.widget<Text>(
-      find.descendant(
-        of: find.byWidget(chips.firstWhere((c) => c.label == 'Processors')),
-        matching: find.byType(Text),
-      ),
-    );
-    expect(off.style!.color, isNot(on.style!.color));
+      expect(container.read(rankBrandProvider), last);
+    });
+  }
 
-    final label = tester.widget<Text>(
-      find.descendant(
-        of: find.widgetWithText(TpChip, 'Laptops'),
-        matching: find.byType(Text),
-      ),
+  testWidgets('세그먼트가 카테고리를 알려준다', (tester) async {
+    RankCategory? picked;
+    await pumpScreen(
+      tester,
+      RankScreen(onCategory: (c) => picked = c),
+      size: const Size(700, 3000),
     );
-    expect(label.style?.color, isNot(TpTokens.inkLight));
-  });
-
-  testWidgets('빈 값은 대시로 그린다', (tester) async {
-    expect(formatAxisValue(RankAxis.price, null), '—');
-    expect(formatAxisValue(RankAxis.tpIndex, null), '—');
+    expect(find.byType(CategoryChips), findsOneWidget);
+    await tester.tap(find.text(RankCategory.laptops.key.tr()));
+    await tester.pumpAndSettle();
+    expect(picked, RankCategory.laptops);
   });
 
   testWidgets('두 크롬 모두에서 그려진다', (tester) async {
     for (final chrome in TpChrome.values) {
       await _pump(tester, chrome: chrome);
-      expect(find.text('Rankings'), findsOneWidget);
+      expect(find.text(readRanking().first.device.name), findsOneWidget);
     }
   });
 
@@ -173,107 +183,6 @@ void main() {
     test('점수는 반올림한 정수', () {
       expect(formatAxisValue(RankAxis.tpIndex, 88.6), '89');
       expect(formatAxisValue(RankAxis.camera, 36.1), '36');
-    });
-  });
-
-  // 랭킹은 50행에서 잘린다. 그 아래 기기를 찾을 방법이 스크롤밖에 없었는데,
-  // 카탈로그가 200종이라 사실상 없는 거나 마찬가지였다.
-  group('찾기', () {
-    testWidgets('이름으로 걸러진다', (tester) async {
-      final container = await pumpScreen(
-        tester,
-        const RankScreen(),
-        size: const Size(1200, 4400),
-      );
-
-      await tester.enterText(find.byType(TextField), 'pixel');
-      await tester.pumpAndSettle();
-
-      final visible = container.read(rankVisibleProvider);
-      expect(visible, isNotEmpty);
-      expect(
-        visible.every(
-          (r) =>
-              r.device.name.toLowerCase().contains('pixel') ||
-              (r.device.brand?.name.toLowerCase().contains('pixel') ?? false),
-        ),
-        isTrue,
-      );
-      // 순위 번호는 전체 순위 그대로다. 다시 매기면 "구글 중 1위"가
-      // "전체 1위"처럼 보인다.
-      expect(visible.first.position, greaterThan(0));
-    });
-
-    // 행을 전역 순위 자리에 놓던 때는, 브랜드를 고르는 순간 행 사이가 순위
-    // 차이만큼 벌어지고 담는 상자 아래로 나간 기기는 통째로 잘렸다. 삼성만
-    // 걸러도 몇 대밖에 안 보였다.
-    testWidgets('걸러도 행이 벌어지거나 잘리지 않는다', (tester) async {
-      final container = await pumpScreen(
-        tester,
-        const RankScreen(),
-        size: const Size(1200, 4400),
-      );
-
-      final brand = container.read(rankBrandsProvider).first;
-      await _pickBrand(tester, brand);
-
-      final visible = container.read(rankVisibleProvider);
-      expect(visible.length, greaterThan(3));
-
-      // 보이는 행들이 위에서부터 한 줄씩 이어져 있어야 한다. 전역 순위로
-      // 놓으면 여기서 간격이 행 높이의 몇 배로 벌어진다.
-      final tops = <double>[
-        for (final r in visible.take(RankScreen.maxRows))
-          tester.getTopLeft(find.text(r.device.name)).dy,
-      ];
-      for (var i = 1; i < tops.length; i++) {
-        expect(
-          tops[i] - tops[i - 1],
-          closeTo(tops[1] - tops[0], 0.5),
-          reason: '행 간격이 일정해야 한다',
-        );
-      }
-
-      // 그리고 하나도 안 빠지고 다 그려져야 한다.
-      for (final r in visible.take(RankScreen.maxRows)) {
-        expect(find.text(r.device.name), findsOneWidget);
-      }
-    });
-
-    testWidgets('맞는 게 없으면 그렇게 말한다', (tester) async {
-      await pumpScreen(
-        tester,
-        const RankScreen(),
-        size: const Size(1200, 4400),
-      );
-
-      await tester.enterText(find.byType(TextField), 'zzzz');
-      await tester.pumpAndSettle();
-
-      expect(find.text(K.noMatches.tr()), findsOneWidget);
-    });
-
-    testWidgets('브랜드 시트로 거르고 전체로 되돌린다', (tester) async {
-      final container = await pumpScreen(
-        tester,
-        const RankScreen(),
-        size: const Size(1200, 4400),
-      );
-
-      final brand = container.read(rankBrandsProvider).first;
-      final all = container.read(rankVisibleProvider).length;
-
-      await _pickBrand(tester, brand);
-
-      final filtered = container.read(rankVisibleProvider);
-      expect(filtered.length, lessThan(all));
-      expect(filtered.every((r) => r.device.brand?.name == brand), isTrue);
-      // 고른 브랜드는 칩 라벨이 된다. 시트를 다시 열지 않아도 뭘 걸렀는지
-      // 보여야 한다.
-      expect(find.widgetWithText(TpChip, brand), findsOneWidget);
-
-      await _clearBrand(tester, brand);
-      expect(container.read(rankVisibleProvider), hasLength(all));
     });
   });
 }

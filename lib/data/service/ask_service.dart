@@ -10,6 +10,7 @@ import '../../domain/model/ask_answer.dart';
 import '../dto/smartphone.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
+import '../../domain/model/tp_money.dart';
 import '../../domain/model/tp_weights.dart';
 import '../../shared/copy_keys.dart';
 
@@ -27,18 +28,19 @@ abstract class AskService {
 /// 모델에게 이 표를 시키면 안 되는 이유가 둘이다. TP 지수는 사용자가 만지는
 /// 가중치라 모델이 계산할 수 없고, 한국어로 답하는 모델은 줄 이름을 제 마음대로
 /// 짓는다 — 그러면 같은 표가 비교·상세와 다르게 읽힌다.
-List<AskRow> askRowsFor(Smartphone d, TpWeights weights) => <AskRow>[
+List<AskRow> askRowsFor(
+  Smartphone d,
+  TpWeights weights, [
+  TpMoney money = const TpMoney.usd(),
+]) => <AskRow>[
   AskRow(
     label: K.tpIndex.tr(),
     value: TpIndex.of(d.score, weights)?.toString() ?? DeviceSpecs.empty,
   ),
-  AskRow(
-    label: K.spec(SpecKind.price).tr(),
-    value: DeviceSpecs.formatPrice(d.msrpUsd),
-  ),
+  AskRow(label: K.spec(SpecKind.price).tr(), value: money.format(d.msrpUsd)),
   AskRow(
     label: K.spec(SpecKind.battery).tr(),
-    value: d.batteryMah == null ? DeviceSpecs.empty : '${d.batteryMah}mAh',
+    value: DeviceSpecs.battery(d.batteryMah),
   ),
   AskRow(
     label: K.spec(SpecKind.camera).tr(),
@@ -115,6 +117,7 @@ class GeminiAskService implements AskService {
     AskAnswer answer,
     List<Smartphone> catalog, {
     TpWeights weights = TpWeights.defaults,
+    TpMoney money = const TpMoney.usd(),
   }) {
     Smartphone? bySlug;
     for (final d in catalog) {
@@ -132,7 +135,7 @@ class GeminiAskService implements AskService {
       pick: picked.name,
       reason: answer.reason,
       // 모델이 준 rows 는 버린다. 방금 맞춘 기기에서 우리가 만든다.
-      rows: askRowsFor(picked, weights),
+      rows: askRowsFor(picked, weights, money),
       pickSlug: picked.slug,
     );
   }
@@ -224,9 +227,15 @@ class FallbackAskService implements AskService {
 /// 오프라인이거나 Firebase 설정이 없을 때 화면이 죽지 않게 한다. 예산과
 /// 관심 축을 질문에서 대충 뽑아 지수가 가장 높은 기기를 고른다.
 class LocalAskService implements AskService {
-  const LocalAskService({this.weights = TpWeights.defaults});
+  const LocalAskService({
+    this.weights = TpWeights.defaults,
+    this.money = const TpMoney.usd(),
+  });
 
   final TpWeights weights;
+
+  /// 답변 표와 예산 문구가 쓴다. 사용자에게 보이는 값이라 환산한다.
+  final TpMoney money;
 
   @override
   Future<AskReply?> ask(String question, List<Smartphone> catalog) async {
@@ -255,10 +264,8 @@ class LocalAskService implements AskService {
         pickSlug: best.slug,
         reason: budget == null
             ? K.askLocalTop.tr()
-            : K.askLocalBudget.tr(
-                args: <String>[DeviceSpecs.formatPrice(budget)],
-              ),
-        rows: askRowsFor(best, weights),
+            : K.askLocalBudget.tr(args: <String>[money.format(budget)]),
+        rows: askRowsFor(best, weights, money),
       ),
       // 모델을 한 번도 안 불렀다. 화면이 그렇다고 밝힌다.
       fromCatalog: true,

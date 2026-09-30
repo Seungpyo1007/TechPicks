@@ -59,7 +59,7 @@ void main() {
     // 명세가 짚은 예시들. 그대로 옮기지 않고 뜻으로 옮겼는지 본다.
     expect(ko['verdict'], '지금의 결론');
     expect(ko['movers'], '이번 주 변동');
-    expect(ko['tabYou'], '내 정보');
+    expect(ko['tabCompare'], '비교');
   });
 
   test('K 가 쓰는 키가 전부 번역 파일에 있다', () {
@@ -95,26 +95,39 @@ void main() {
 /// 명세의 `T` 객체에서 그대로 가져온 문자열이라 값 자체는 확정이다. 어느
 /// 요소에 붙는지가 확정이 아니다 — 프로토타입(`TechPicks-Web`)이 지워져서
 /// 바인딩을 확인할 수 없다. 임의로 정하지 않고 여기 적어둔다.
+///
+/// **"안 쓰기로 정한 것"은 여기 두지 않는다.** 그건 미정이 아니라 결정이라,
+/// 번역 파일에서 지운다. 한두 낱말짜리는 필요해지면 다시 만들면 된다.
 const Map<String, String> _pending = <String, String>{
-  'laptopTitle': 'Laptops 화면(명세 §6)이 아직 없다',
-  'currency': '통화 줄을 뺐다. 값이 USD 하나뿐이라 고를 것이 없다 — 여러 통화로 들어오면 되살린다',
-  'rankBy': '정렬 축 줄의 눈썹이었다. 칩 라벨이 이미 정렬이라고 말해서 뺐다',
-  'seeAll': '명세가 이 버튼을 어느 섹션 헤더에 두는지 안 적었다. Shortlist 는 Add 를 쓴다',
-  'swap': '비교 화면 슬롯은 캡션 tapToChange 를 쓴다. Change 가 별도 버튼인지 불명',
-  'viewerTitle': '뷰어 헤더는 기기 이름을 쓴다. 어느 기기인지가 3D 뷰어라는 사실보다 쓸모 있다',
-  'askPlaceholder': '입력창 힌트는 askHint 를 쓴다. 둘 다 T 에 있고 어느 쪽이 입력창인지 불명',
-  'indexNote': 'TP Index 설명. 명세의 어느 화면 절에도 안 나온다',
-  'version': '설정의 버전 줄은 명세 §13 의 확정 문구를 통째로 쓴다',
-  'welcomeSub': '로그인 부제. welcomeSubShort 도 T 에 있고 지금은 그쪽을 쓴다',
+  'welcomeSub':
+      '로그인 부제. 관심 목록이 기기 간에 유지된다는 걸 말해 주는 한 문장인데, '
+      '지금 화면은 짧은 welcomeSubShort 를 쓴다. 문장이 길어서 다시 쓰기 아까워 남긴다',
 };
 
 /// 코드가 실제로 쓰는 번역 키.
 ///
-/// 키는 전부 [K] 를 거친다. 손으로 목록을 복사해두면 새 키를 넣을 때마다
-/// 같이 고쳐야 하고, 안 고쳐도 테스트가 통과한다. 그래서 파일을 읽는다.
+/// 대부분은 [K] 를 거치지만 전부는 아니다. 값마다 제 키를 들고 있는
+/// 열거형들이 있는데, 그쪽이 더 나은 자리다 — 예컨대 `BuildUseCase` 는
+/// 가중치와 라벨 키를 한 값에 묶어 두므로 둘이 따로 놀 수 없다. 그걸
+/// `K` 에도 복사해두면 그 복사본이 진짜 쓰이는지 아무도 모르게 된다.
+///
+/// 손으로 목록을 복사해두면 새 키를 넣을 때마다 같이 고쳐야 하고, 안 고쳐도
+/// 테스트가 통과한다. 그래서 파일을 읽는다.
 Set<String> _keysInCode() {
-  final src = File('lib/shared/copy_keys.dart').readAsStringSync();
-  return RegExp(
-    r"'([A-Za-z][A-Za-z0-9_]*)'",
-  ).allMatches(src).map((m) => m.group(1)!).toSet();
+  const sources = <String>[
+    'lib/shared/copy_keys.dart',
+    // 값이 제 번역 키를 들고 있는 열거형들.
+    'lib/domain/model/build_estimate.dart',
+    'lib/feature/rank/rank_category.dart',
+  ];
+  final keys = <String>{};
+  for (final path in sources) {
+    final src = File(path).readAsStringSync();
+    keys.addAll(
+      RegExp(
+        r"'([A-Za-z][A-Za-z0-9_]*)'",
+      ).allMatches(src).map((m) => m.group(1)!),
+    );
+  }
+  return keys;
 }

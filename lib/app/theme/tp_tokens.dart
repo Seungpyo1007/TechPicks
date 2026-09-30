@@ -330,14 +330,14 @@ class TpTokens extends ThemeExtension<TpTokens> {
     saturation: 1.8,
     cardShadow: <BoxShadow>[
       // 어두운 바탕에서는 그림자가 거의 안 보인다. 더 진하게 준다.
-      BoxShadow(color: Color(0x3D000000), blurRadius: 28, offset: Offset(0, 10)),
+      BoxShadow(
+        color: Color(0x3D000000),
+        blurRadius: 28,
+        offset: Offset(0, 10),
+      ),
     ],
     buttonShadow: <BoxShadow>[
-      BoxShadow(
-        color: Color(0x520C78D8),
-        blurRadius: 18,
-        offset: Offset(0, 6),
-      ),
+      BoxShadow(color: Color(0x520C78D8), blurRadius: 18, offset: Offset(0, 6)),
     ],
     hasSpecular: true,
     chromeFill: Color(0x9E141A24), // rgba(20,26,36,.62)
@@ -348,7 +348,11 @@ class TpTokens extends ThemeExtension<TpTokens> {
       BoxShadow(color: Color(0x59000000), blurRadius: 22, offset: Offset(0, 6)),
     ],
     chromeShadowRaised: <BoxShadow>[
-      BoxShadow(color: Color(0x66000000), blurRadius: 32, offset: Offset(0, 10)),
+      BoxShadow(
+        color: Color(0x66000000),
+        blurRadius: 32,
+        offset: Offset(0, 10),
+      ),
     ],
     chromeEdge: Color(0x14000000),
     chromeDim: Color(0xC7FFFFFF), // white .78
