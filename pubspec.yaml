@@ -79,10 +79,6 @@ flutter:
 
   assets:
     # 디렉터리째 싣지 않는다. 런타임에 읽는 것만 싣는다.
-    - assets/logo/logo.png
-    - assets/logo/logo_dark.png
-    - assets/logo/logo_android.png
-    - assets/logo/logo_android_dark.png
     - assets/logo/NBlogo_black.png
     - assets/logo/apple_logo.png
     - assets/logo/google_logo.png
@@ -98,7 +94,8 @@ flutter:
 flutter_native_splash:
   # 앱 배경 그라디언트의 첫 색. 흰 화면에서 파란 화면으로 튀지 않는다.
   color: "#EEF3FA"
-  # 플랫폼마다 그 플랫폼 아이콘을 띄운다. TpLaunch 가 같은 그림을 이어받는다.
+  # 플랫폼마다 그 플랫폼 아이콘, 토글은 꺼진 채. TpLaunch 가 같은 그림(TpLogo)에서
+  # 이어받아 켠다. PNG 는 tool/icons/render_splash_test.dart 가 TpLogo 에서 뜬다.
   image_ios: assets/logo/logo.png
   image_android: assets/logo/logo_android.png
   # 어두운 테마로 켜면 흰 화면이 한 번 번쩍였다. 배경 그라디언트의 첫 색과

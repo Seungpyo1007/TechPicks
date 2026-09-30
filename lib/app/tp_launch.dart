@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 
+import '../shared/brand/tp_logo.dart';
+import '../shared/tp_haptics.dart';
 import 'theme/tp_motion.dart';
 import 'theme/tp_tokens.dart';
 
@@ -16,7 +18,10 @@ import 'theme/tp_tokens.dart';
 ///    크기(125pt — `LaunchImage@3x` 가 375px)로 같은 자리에 그린다. 넘어오는
 ///    순간이 화면에서는 안 보인다.
 /// 2. **읽는 동안 로고를 들고 있는다.** 빈 화면 대신 로고가 그대로 있다.
-/// 3. **로고가 열리며 앱이 나온다.** 로고는 커지며 옅어지고 그 아래에서
+/// 3. **토글이 켜진다.** 로고가 토글이라 앱을 켜는 장면으로 쓴다. 스플래시는
+///    꺼진 로고이고, 첫 프레임부터 손잡이가 미끄러지며 지나간 자리가 파랗게
+///    남는다. 다 켜지면 틱 한 번.
+/// 4. **로고가 열리며 앱이 나온다.** 로고는 커지며 옅어지고 그 아래에서
 ///    첫 화면이 올라온다 — iOS 가 아이콘에서 앱을 여는 것과 같은 방향이다.
 class TpLaunch extends StatefulWidget {
   const TpLaunch({super.key, required this.ready, required this.child});
@@ -29,18 +34,9 @@ class TpLaunch extends StatefulWidget {
   /// 네이티브 스플래시의 로고 크기. `LaunchImage@3x.png` 375px ÷ 3.
   static const double logoSize = 125;
 
-  /// 네이티브 스플래시와 같은 로고(pubspec 의 flutter_native_splash).
-  ///
-  /// 스플래시는 크롬이 아니라 진짜 OS 와 시스템 다크 모드를 따른다. iOS 는
-  /// 유리 아이콘, Android 는 M3 적응형 아이콘 모양이다.
-  static String logoFor(TargetPlatform platform, Brightness brightness) {
-    final dark = brightness == Brightness.dark;
-    return platform == TargetPlatform.android
-        ? (dark
-              ? 'assets/logo/logo_android_dark.png'
-              : 'assets/logo/logo_android.png')
-        : (dark ? 'assets/logo/logo_dark.png' : 'assets/logo/logo.png');
-  }
+  /// 토글이 켜지는 시간. 저장값을 읽는 동안 같이 돌아서 켜는 시간을 늘리지
+  /// 않는다. 준비가 먼저 끝나도 이것만은 끝까지 본다.
+  static const Duration toggle = Duration(milliseconds: 620);
 
   /// 로고가 열리는 시간.
   ///
@@ -55,6 +51,10 @@ class TpLaunch extends StatefulWidget {
 
 class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
   late final AnimationController _c;
+  late final AnimationController _on = AnimationController(
+    vsync: this,
+    duration: TpLaunch.toggle,
+  );
 
   /// 로고가 다 열렸는가. 그 뒤로는 이 위젯이 아무것도 안 얹는다.
   bool _done = false;
@@ -68,25 +68,42 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
           setState(() => _done = true);
         }
       });
-    if (widget.ready) _start();
+    _on.addStatusListener((status) {
+      if (status != AnimationStatus.completed) return;
+      TpHaptics.selection();
+      if (widget.ready) _start();
+    });
+    // 첫 프레임은 스플래시와 같은 꺼진 로고. 그다음부터 켠다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _on.value = 1;
+        if (widget.ready) _start();
+      } else {
+        _on.forward();
+      }
+    });
   }
 
   @override
   void didUpdateWidget(TpLaunch old) {
     super.didUpdateWidget(old);
-    if (widget.ready && !old.ready) _start();
+    if (widget.ready && !old.ready && _on.isCompleted) _start();
   }
 
   void _start() {
     // 저장값을 이미 들고 있으면(두 번째 실행 등) 한 프레임 안에 준비가 끝난다.
     // 그래도 한 번은 로고를 보여준다 — 켜자마자 화면이 튀는 것보다 낫다.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _c.forward();
-    });
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (mounted) _c.forward();
+      })
+      ..scheduleFrame();
   }
 
   @override
   void dispose() {
+    _on.dispose();
     _c.dispose();
     super.dispose();
   }
@@ -145,15 +162,15 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
               ),
             );
           },
-          child: Image.asset(
-            TpLaunch.logoFor(
-              defaultTargetPlatform,
-              MediaQuery.platformBrightnessOf(context),
+          // 스플래시는 크롬이 아니라 진짜 OS 와 시스템 다크 모드를 따른다.
+          child: AnimatedBuilder(
+            animation: _on,
+            builder: (context, _) => TpLogo(
+              size: TpLaunch.logoSize,
+              on: Curves.easeInOutCubic.transform(_on.value),
+              android: defaultTargetPlatform == TargetPlatform.android,
+              dark: MediaQuery.platformBrightnessOf(context) == Brightness.dark,
             ),
-            width: TpLaunch.logoSize,
-            height: TpLaunch.logoSize,
-            // 로고 자체가 둥근 사각형(Android 는 원)이라 여기서 또 깎지 않는다.
-            filterQuality: FilterQuality.medium,
           ),
         ),
       ],

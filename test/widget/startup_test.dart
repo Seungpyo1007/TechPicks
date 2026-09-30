@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -9,6 +8,7 @@ import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/feature/onboarding/onboarding_screen.dart';
 import 'package:techpicks/app/tab_host.dart';
 import 'package:techpicks/app/tp_launch.dart';
+import 'package:techpicks/shared/brand/tp_logo.dart';
 
 import '../support/fake_auth.dart';
 import '../support/harness.dart';
@@ -117,11 +117,9 @@ void main() {
 
       // 첫 프레임에 로고가 떠 있다. 그 아래에서 화면이 자리를 잡는 중이다.
       expect(find.byType(TpLaunch), findsOneWidget);
-      // 테스트는 Android · 밝은 모드로 돈다.
-      expect(
-        find.image(const AssetImage('assets/logo/logo_android.png')),
-        findsOne,
-      );
+      // 첫 프레임은 스플래시와 같은 꺼진 토글.
+      expect(find.byType(TpLogo), findsOne);
+      expect(tester.widget<TpLogo>(find.byType(TpLogo)).on, 0);
 
       await tester.pumpAndSettle();
       expect(find.byType(TabHost), findsOneWidget);
@@ -135,30 +133,34 @@ void main() {
       await tester.pumpAndSettle();
 
       // 다 열린 뒤에는 위젯이 자리를 비운다 — 스택도 불투명 판도 없다.
-      expect(
-        find.image(const AssetImage('assets/logo/logo_android.png')),
-        findsNothing,
-      );
+      expect(find.byType(TpLogo), findsNothing);
       expect(find.byType(OnboardingScreen), findsOneWidget);
     });
 
-    test('플랫폼과 다크 모드마다 스플래시와 같은 로고를 고른다', () {
-      expect(
-        TpLaunch.logoFor(TargetPlatform.iOS, Brightness.light),
-        'assets/logo/logo.png',
+    testWidgets('토글이 다 켜진 뒤에 열린다', (tester) async {
+      await initLocalization();
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+
+      await pumpApp(
+        tester,
+        onboarded: false,
+        settle: false,
+        overrides: <Override>[
+          authServiceProvider.overrideWithValue(_NoFirebase()),
+        ],
       );
-      expect(
-        TpLaunch.logoFor(TargetPlatform.iOS, Brightness.dark),
-        'assets/logo/logo_dark.png',
-      );
-      expect(
-        TpLaunch.logoFor(TargetPlatform.android, Brightness.light),
-        'assets/logo/logo_android.png',
-      );
-      expect(
-        TpLaunch.logoFor(TargetPlatform.android, Brightness.dark),
-        'assets/logo/logo_android_dark.png',
-      );
+      await tester.pump();
+      // 켜지는 중간. 아직 열리지 않았다.
+      await tester.pump(TpLaunch.toggle ~/ 2);
+      final mid = tester.widget<TpLogo>(find.byType(TpLogo)).on;
+      expect(mid, greaterThan(0));
+      expect(mid, lessThan(1));
+
+      await tester.pump(TpLaunch.toggle);
+      expect(tester.widget<TpLogo>(find.byType(TpLogo)).on, 1);
+
+      await tester.pumpAndSettle();
+      expect(find.byType(TpLogo), findsNothing);
     });
 
     testWidgets('네이티브 스플래시와 같은 크기로 그린다', (tester) async {
