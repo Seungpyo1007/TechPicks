@@ -37,6 +37,10 @@ class TpLaunch extends StatefulWidget {
   /// 네이티브 스플래시의 로고 크기. `LaunchImage@3x.png` 375px ÷ 3.
   static const double logoSize = 125;
 
+  /// Android 12 부터는 시스템이 스플래시를 그리고, 아이콘 바탕 원이 160dp 다.
+  /// 그 원과 같은 크기로 이어받는다(pubspec 의 android_12).
+  static const double androidLogoSize = 160;
+
   /// 판이 다 커졌을 때의 모서리. 요즘 iPhone 화면 모서리에 가까운 값이라
   /// 다 커지면 화면 테두리와 겹쳐 안 보인다.
   static const double screenCorner = 55;
@@ -128,7 +132,7 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
     final screen = MediaQuery.sizeOf(context);
     final end = context.sys.background;
     final from = TpLogo.plateColors(android: android, dark: dark);
-    const size = TpLaunch.logoSize;
+    final size = android ? TpLaunch.androidLogoSize : TpLaunch.logoSize;
 
     // 막대: 판 위에 따로. 토글이 켜지고, 열릴 때는 먼저 빠진다.
     final mark = AnimatedBuilder(
@@ -181,21 +185,17 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
 
         final Widget plate;
         if (android) {
-          final diagonal =
+          // 아이콘이 원이라 창도 원 그대로 화면 끝까지 퍼진다(원형 리빌).
+          final open = part(0, .62, Curves.easeInOutCubicEmphasized);
+          final reach =
               math.sqrt(
                 screen.width * screen.width + screen.height * screen.height,
               ) /
               2;
-          final r = size / 2 + (diagonal - size / 2) * grow;
-          plate = Center(
-            child: Container(
-              width: r * 2,
-              height: r * 2,
-              decoration: BoxDecoration(
-                color: colors.first,
-                shape: BoxShape.circle,
-              ),
-            ),
+          final r = size / 2 + (reach - size / 2) * open;
+          // 상자는 화면 폭을 못 넘으니 원을 직접 그린다.
+          plate = CustomPaint(
+            painter: _Disc(radius: r, color: colors.first),
           );
         } else {
           // 세로가 먼저 자라 폰 화면 모양을 닮아 가고, 모서리는 아이콘 곡선에서
@@ -251,4 +251,22 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
       },
     );
   }
+}
+
+/// 화면 가운데 원. 화면보다 커질 수 있다.
+class _Disc extends CustomPainter {
+  _Disc({required this.radius, required this.color});
+
+  final double radius;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) => canvas.drawCircle(
+    size.center(Offset.zero),
+    radius,
+    Paint()..color = color,
+  );
+
+  @override
+  bool shouldRepaint(_Disc old) => old.radius != radius || old.color != color;
 }

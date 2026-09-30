@@ -103,5 +103,13 @@ flutter_native_splash:
   color_dark: "#121A24"
   image_dark_ios: assets/logo/logo_dark.png
   image_dark_android: assets/logo/logo_android_dark.png
+  # Android 12+ 는 시스템 스플래시. 바탕 원(160dp)은 시스템이 칠하고 그림은 꺼진 토글 막대.
+  android_12:
+    image: assets/logo/splash_android12.png
+    image_dark: assets/logo/splash_android12_dark.png
+    icon_background_color: "#D8E2FF"
+    icon_background_color_dark: "#1A2A45"
+    color: "#EEF3FA"
+    color_dark: "#121A24"
   android: true
   ios: true
