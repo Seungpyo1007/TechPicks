@@ -119,28 +119,36 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Expanded(
-                    child: _ColumnHead(
-                      device: a,
-                      weights: weights,
-                      winner:
-                          pairs.isNotEmpty &&
-                          pairs.first.winner == CompareSide.a,
-                      onTap: onPick == null
-                          ? null
-                          : () => onPick!(CompareSide.a),
+                    child: _Swap(
+                      side: CompareSide.a,
+                      slug: a?.slug,
+                      child: _ColumnHead(
+                        device: a,
+                        weights: weights,
+                        winner:
+                            pairs.isNotEmpty &&
+                            pairs.first.winner == CompareSide.a,
+                        onTap: onPick == null
+                            ? null
+                            : () => onPick!(CompareSide.a),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _ColumnHead(
-                      device: b,
-                      weights: weights,
-                      winner:
-                          pairs.isNotEmpty &&
-                          pairs.first.winner == CompareSide.b,
-                      onTap: onPick == null
-                          ? null
-                          : () => onPick!(CompareSide.b),
+                    child: _Swap(
+                      side: CompareSide.b,
+                      slug: b?.slug,
+                      child: _ColumnHead(
+                        device: b,
+                        weights: weights,
+                        winner:
+                            pairs.isNotEmpty &&
+                            pairs.first.winner == CompareSide.b,
+                        onTap: onPick == null
+                            ? null
+                            : () => onPick!(CompareSide.b),
+                      ),
                     ),
                   ),
                 ],
@@ -161,6 +169,43 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
           ),
         SliverToBoxAdapter(child: table),
       ],
+    );
+  }
+}
+
+/// 머리 카드의 기기가 바뀔 때. 맞바꾸면 새 기기가 반대편에서 밀려 들어온다
+/// (A 칸은 오른쪽에서, B 칸은 왼쪽에서). 동작 줄이기면 바로 바뀐다.
+class _Swap extends StatelessWidget {
+  const _Swap({required this.side, required this.slug, required this.child});
+
+  final CompareSide side;
+  final String? slug;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final move = context.motion.contentSwap;
+    final from = side == CompareSide.a ? .35 : -.35;
+    return AnimatedSwitcher(
+      duration: move.duration,
+      switchInCurve: move.curve,
+      switchOutCurve: move.curve,
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.topCenter,
+        children: <Widget>[...previous, ?current],
+      ),
+      transitionBuilder: (child, animation) {
+        final incoming = child.key == ValueKey<String?>(slug);
+        final offset = Tween<Offset>(
+          begin: Offset(incoming ? from : -from, 0),
+          end: Offset.zero,
+        ).animate(animation);
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(position: offset, child: child),
+        );
+      },
+      child: KeyedSubtree(key: ValueKey<String?>(slug), child: child),
     );
   }
 }
