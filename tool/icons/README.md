@@ -28,3 +28,7 @@
 
 `assets/logo/logo*.png` → `dart run flutter_native_splash:create`.
 iOS 는 유리 아이콘, Android 는 M3 원형. `TpLaunch.logoFor` 가 같은 그림을 이어받는다.
+
+## README
+
+`readme_light.png`·`readme_dark.png` — 저장소 README 맨 위. 1024 네모 원본에 둥근 모서리·얇은 테두리·그림자를 얹은 것(GitHub 흰/어두운 화면용).
