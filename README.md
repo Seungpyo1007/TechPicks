@@ -7,64 +7,48 @@
 
 <h1 align="center">TechPicks</h1>
 
-기기를 고를 때 숫자 하나로 답을 주는 앱. 성능·카메라·화면·배터리·가성비에
-매긴 점수를 **사용자가 정한 비중**으로 합쳐 TP Index 를 낸다. 같은 기기라도
-카메라를 중요하게 보는 사람과 배터리를 중요하게 보는 사람의 점수가 다르다.
+<p align="center">스펙으로 고르는 전자기기 · iOS · Android · <a href="https://techpicks-mu.vercel.app">웹</a></p>
 
-Flutter 로 만들고 iOS·Android 를 함께 지원한다.
+성능·카메라·화면·배터리·가성비 점수를 내가 정한 비중으로 합친 숫자 하나, TP Index.
+카메라가 중요한 사람과 배터리가 중요한 사람은 같은 폰이라도 점수가 다름.
 
 ## 화면
 
-| 화면 | 하는 일 |
-|---|---|
-| 홈 | 관심 목록에서 지금의 결론 하나, 그 근거, 이번 주 순위 변동 |
-| 랭킹 | 폰·프로세서를 지수·배터리·카메라·가성비·가격 축으로 세운다 |
-| 비교 | 두 기기를 한 표에 놓고 줄마다 이긴 쪽을 표시한다 |
-| 상세 | 스펙 표와 다섯 축 점수, 관심 목록 담기, 3D 보기 |
-| 상담 | 예산과 중요한 조건을 말하면 기기 하나와 4줄 표로 답한다 |
-| 내 정보 | 가중치 슬라이더. 움직이면 앱 전체 지수가 다시 계산된다 |
-| 스캔 | 뒷면 모델명을 읽어 카탈로그와 맞춘다 |
+- 오늘: 관심 목록 속 지금의 결론, 이번 주 순위 변동
+- 둘러보기: 스마트폰 · 프로세서 · 노트북 순위, 조립 견적
+- 비교: 두 기기 한 표, 줄마다 이긴 쪽 표시
+- 검색: 이름으로 찾기, 종류별 보기
+- 상세: 스펙, 다섯 축 점수, 3D 보기
+- 질문: 예산이랑 조건 말하면 기기 하나 + 짧은 표 (기기 안 AI 또는 Gemini)
+- 내 정보: 가중치, 계정, 설정
+
+로그인은 선택. Apple · Google · 이메일, 로그인하면 관심 목록·가중치·최근 검색이 기기끼리 이어짐.
 
 ## 데이터
 
-기기 정보는 [TechAPI](https://github.com/GetTechAPI/TechAPI) 를 쓴다 (CC-BY-SA 4.0).
-
-목록 인덱스에는 점수가 없고 전체 목록은 19MB 라 앱에서 그대로 못 쓴다. 그래서
-빌드 시점에 큐레이션한 기기만 받아 애셋으로 굽는다.
+[TechAPI](https://github.com/GetTechAPI/TechAPI) (CC-BY-SA 4.0). 큐레이션한 기기만 빌드 때 받아서 애셋으로.
 
 ```
-dart tool/build_catalog.dart      # assets/catalog/v1.json 을 다시 만든다
-dart tool/smoke_techapi.dart      # 원격 왕복 확인
+dart tool/build_catalog.dart      # assets/catalog/v1.json 다시 만들기
+dart tool/smoke_techapi.dart      # 원격 확인
 ```
-
-## 디자인
-
-두 플랫폼의 크롬이 다르다. iOS 는 반투명 유리에 블러를, Android M3 는 불투명한
-톤 단계를 쓴다. 화면 코드는 플랫폼 분기를 갖지 않고 토큰만 갈아 끼운다.
-명세와 다르게 간 곳은 이유를 코드 주석에 남겼다.
 
 ## 개발
 
 ```
 flutter pub get
-dart run build_runner build --delete-conflicting-outputs   # freezed / json
+dart run build_runner build --delete-conflicting-outputs
 flutter run
+flutter analyze && flutter test
 ```
 
-```
-flutter analyze
-flutter test
-```
-
-Firebase 설정이 없어도 앱은 뜬다. 로그인만 안 되고 랭킹·비교·상담은 다 된다.
-
-### 로그인
-
-로그인은 선택이다(Apple · Google · 이메일). 로그인하면 관심 목록·가중치·최근 검색이 `users/{uid}/state/*` 로 동기화된다.
-
-- Android Google 로그인은 웹 클라이언트 ID 가 필요하다: `flutter run --dart-define=GOOGLE_SERVER_CLIENT_ID=<id>.apps.googleusercontent.com`. 없으면 버튼이 숨는다.
-- 규칙 배포: `firebase deploy --only firestore:rules,storage`.
+- iOS 는 iOS 26 리퀴드 글라스, Android 는 Material 3
+- Firebase 설정 없어도 실행됨 (로그인만 꺼짐)
+- Android Google 로그인: `--dart-define=GOOGLE_SERVER_CLIENT_ID=<id>.apps.googleusercontent.com`
+- 규칙 배포: `firebase deploy --only firestore:rules,storage`
+- 앱 아이콘: [`tool/icons/README.md`](tool/icons/README.md)
+- 웹 사이트: [`site/`](site/README.md) (Next.js, Vercel)
 
 ## 라이선스
 
-[Apache License 2.0](LICENSE). 기기 데이터는 TechAPI 의 CC-BY-SA 4.0 을 따른다.
+[Apache 2.0](LICENSE). 기기 데이터는 TechAPI 의 CC-BY-SA 4.0.
