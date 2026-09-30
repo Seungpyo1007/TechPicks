@@ -17,6 +17,7 @@ class TpLogo extends StatelessWidget {
     this.on = 1,
     this.android = false,
     this.dark = false,
+    this.plate = true,
   });
 
   final double size;
@@ -26,13 +27,33 @@ class TpLogo extends StatelessWidget {
   final bool android;
   final bool dark;
 
+  /// 판(흰 둥근 네모·원)까지 그리는가. 시작 장면은 판만 따로 키우려고 끈다.
+  final bool plate;
+
+  /// 판의 색. 시작 장면이 이 색에서 앱 바탕색으로 넘어간다.
+  static List<Color> plateColors({required bool android, required bool dark}) =>
+      android
+      ? <Color>[
+          dark ? const Color(0xFF1A2A45) : const Color(0xFFD8E2FF),
+          dark ? const Color(0xFF1A2A45) : const Color(0xFFD8E2FF),
+        ]
+      : dark
+      ? const <Color>[Color(0xFF1A2638), Color(0xFF0B111B)]
+      : const <Color>[Color(0xFFFFFFFF), Color(0xFFE6EDF7)];
+
+  /// iOS 판 모서리(아이콘 한 변에 대한 비).
+  static const double cornerRatio = .2237;
+
+  /// Android 막대가 원 안에서 줄어드는 비(적응형 아이콘 안전 영역).
+  static const double safeZone = .74;
+
   @override
   Widget build(BuildContext context) => SizedBox.square(
     dimension: size,
     child: CustomPaint(
       painter: android
-          ? _M3Painter(on: on, dark: dark)
-          : _GlassPainter(on: on, dark: dark),
+          ? _M3Painter(on: on, dark: dark, plate: plate)
+          : _GlassPainter(on: on, dark: dark, plate: plate),
     ),
   );
 }
@@ -79,10 +100,11 @@ void _inBar(Canvas canvas, int i, void Function() draw) {
 // ── iOS 26 유리 ─────────────────────────────────────────────
 
 class _GlassPainter extends CustomPainter {
-  _GlassPainter({required this.on, required this.dark});
+  _GlassPainter({required this.on, required this.dark, required this.plate});
 
   final double on;
   final bool dark;
+  final bool plate;
 
   static const List<List<Color>> _light = <List<Color>>[
     <Color>[Color(0xFF3C66A6), Color(0xFF2F5A99)],
@@ -99,24 +121,25 @@ class _GlassPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     canvas.scale(size.width / 1024);
     const full = Rect.fromLTWH(0, 0, 1024, 1024);
-    final plate = RRect.fromRectAndRadius(
-      full,
-      const Radius.circular(1024 * .2237),
-    );
-    canvas
-      ..save()
-      ..clipRRect(plate)
-      ..drawRect(
-        full,
-        Paint()
-          ..shader = LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: dark
-                ? const <Color>[Color(0xFF1A2638), Color(0xFF0B111B)]
-                : const <Color>[Color(0xFFFFFFFF), Color(0xFFE6EDF7)],
-          ).createShader(full),
-      );
+    canvas.save();
+    if (plate) {
+      canvas
+        ..clipRRect(
+          RRect.fromRectAndRadius(
+            full,
+            const Radius.circular(1024 * TpLogo.cornerRatio),
+          ),
+        )
+        ..drawRect(
+          full,
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: TpLogo.plateColors(android: false, dark: dark),
+            ).createShader(full),
+        );
+    }
 
     final colors = dark ? _dark : _light;
     final shadow = Paint()
@@ -273,16 +296,18 @@ class _GlassPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GlassPainter old) => old.on != on || old.dark != dark;
+  bool shouldRepaint(_GlassPainter old) =>
+      old.on != on || old.dark != dark || old.plate != plate;
 }
 
 // ── Android Material 3 ──────────────────────────────────────
 
 class _M3Painter extends CustomPainter {
-  _M3Painter({required this.on, required this.dark});
+  _M3Painter({required this.on, required this.dark, required this.plate});
 
   final double on;
   final bool dark;
+  final bool plate;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -296,11 +321,13 @@ class _M3Painter extends CustomPainter {
     // M3 스위치의 꺼진 손잡이: 작고 outline 색.
     final thumbOff = dark ? const Color(0xFF8E9099) : const Color(0xFF5C6B8A);
 
-    canvas.drawCircle(const Offset(512, 512), 512, Paint()..color = bg);
-    // 적응형 아이콘 안전 영역 안으로(0.74).
+    if (plate) {
+      canvas.drawCircle(const Offset(512, 512), 512, Paint()..color = bg);
+    }
+    // 적응형 아이콘 안전 영역 안으로.
     canvas
       ..translate(512, 512)
-      ..scale(.74)
+      ..scale(TpLogo.safeZone)
       ..translate(-512, -512);
 
     for (final (i, color) in <(int, Color)>[(2, bottom), (1, middle)]) {
@@ -334,5 +361,6 @@ class _M3Painter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_M3Painter old) => old.on != on || old.dark != dark;
+  bool shouldRepaint(_M3Painter old) =>
+      old.on != on || old.dark != dark || old.plate != plate;
 }
