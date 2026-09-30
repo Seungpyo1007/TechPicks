@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="assets/logo/logo.png" width="160" alt="TechPicks 앱 아이콘">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="tool/icons/readme_dark.png">
+    <img src="tool/icons/readme_light.png" width="200" alt="TechPicks 앱 아이콘">
+  </picture>
 </p>
 
 <h1 align="center">TechPicks</h1>
