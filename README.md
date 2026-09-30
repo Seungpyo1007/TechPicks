@@ -1,4 +1,8 @@
-# TechPicks
+<p align="center">
+  <img src="assets/logo/logo.png" width="160" alt="TechPicks 앱 아이콘">
+</p>
+
+<h1 align="center">TechPicks</h1>
 
 기기를 고를 때 숫자 하나로 답을 주는 앱. 성능·카메라·화면·배터리·가성비에
 매긴 점수를 **사용자가 정한 비중**으로 합쳐 TP Index 를 낸다. 같은 기기라도
