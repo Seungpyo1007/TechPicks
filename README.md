@@ -7,48 +7,46 @@
 
 <h1 align="center">TechPicks</h1>
 
-<p align="center">스펙으로 고르는 전자기기 · iOS · Android · <a href="https://techpicks-mu.vercel.app">웹</a></p>
+TechPicks는 사용자가 원하는 전자기기를 쉽게 찾고, 성능을 비교하며, AI 챗봇을 통해 맞춤형 추천을 받을 수 있도록 돕는 Flutter 기반 애플리케이션입니다.
 
-성능·카메라·화면·배터리·가성비 점수를 내가 정한 비중으로 합친 숫자 하나, TP Index.
-카메라가 중요한 사람과 배터리가 중요한 사람은 같은 폰이라도 점수가 다름.
+## 주요 기능
 
-## 화면
+- **전자기기 정보 제공**: CPU, 노트북, 스마트폰 등 다양한 전자기기의 상세 정보를 확인할 수 있습니다.
+- **성능 비교**: 여러 제품의 성능을 한눈에 비교하여 합리적인 선택을 돕습니다.
+- **AI 챗봇 상담**: AI 챗봇과의 대화를 통해 사용자에게 맞는 제품을 추천받거나 궁금증을 해결할 수 있습니다.
+- **사용자 맞춤 설정**: 사용자 프로필을 통해 관심 있는 제품군을 설정하고, 앱 테마 등을 변경할 수 있습니다.
+- **3D 모델 뷰어 (지원 예정)**: 제품의 3D 모델을 통해 더욱 자세한 외형 정보를 확인할 수 있습니다.
+- **OCR 스캔 (지원 예정)**: 카메라로 제품 모델명을 스캔하여 빠르게 정보를 검색할 수 있습니다.
 
-- 오늘: 관심 목록 속 지금의 결론, 이번 주 순위 변동
-- 둘러보기: 스마트폰 · 프로세서 · 노트북 순위, 조립 견적
-- 비교: 두 기기 한 표, 줄마다 이긴 쪽 표시
-- 검색: 이름으로 찾기, 종류별 보기
-- 상세: 스펙, 다섯 축 점수, 3D 보기
-- 질문: 예산이랑 조건 말하면 기기 하나 + 짧은 표 (기기 안 AI 또는 Gemini)
-- 내 정보: 가중치, 계정, 설정
+## 대상 사용자
 
-로그인은 선택. Apple · Google · 이메일, 로그인하면 관심 목록·가중치·최근 검색이 기기끼리 이어짐.
+- 새로운 전자기기 구매를 고려하고 있는 모든 분
+- 다양한 전자기기 정보를 한 곳에서 얻고 싶은 분
+- 어떤 제품이 자신에게 맞는지 전문가의 도움이 필요한 분
 
-## 데이터
+## 다운로드
 
-[TechAPI](https://github.com/GetTechAPI/TechAPI) (CC-BY-SA 4.0). 큐레이션한 기기만 빌드 때 받아서 애셋으로.
+최신 버전을 다운로드하려면 [릴리스 페이지](https://github.com/Seungpyo1007/TechPicks/releases/tag/v1.0.1beta)를 방문하세요.
 
-```
-dart tool/build_catalog.dart      # assets/catalog/v1.json 다시 만들기
-dart tool/smoke_techapi.dart      # 원격 확인
-```
+## 사용 기술
 
-## 개발
+- Flutter 프레임워크를 사용하여 iOS와 Android에서 모두 사용 가능한 크로스 플랫폼 앱으로 개발되었습니다.
 
-```
-flutter pub get
-dart run build_runner build --delete-conflicting-outputs
-flutter run
-flutter analyze && flutter test
-```
+## 시작하기
 
-- iOS 는 iOS 26 리퀴드 글라스, Android 는 Material 3
-- Firebase 설정 없어도 실행됨 (로그인만 꺼짐)
-- Android Google 로그인: `--dart-define=GOOGLE_SERVER_CLIENT_ID=<id>.apps.googleusercontent.com`
-- 규칙 배포: `firebase deploy --only firestore:rules,storage`
-- 앱 아이콘: [`tool/icons/README.md`](tool/icons/README.md)
-- 웹 사이트: [`site/`](site/README.md) (Next.js, Vercel)
+이 프로젝트는 Flutter 애플리케이션의 시작점입니다.
+
+Flutter 프로젝트를 처음 사용하는 경우 다음 리소스를 참조하세요.
+
+- [Lab: 첫 Flutter 앱 작성하기](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: 유용한 Flutter 샘플](https://docs.flutter.dev/cookbook)
+
+Flutter 개발 시작에 대한 도움말은 튜토리얼, 샘플, 모바일 개발 지침 및 전체 API 참조를 제공하는 [온라인 설명서](https://docs.flutter.dev/)를 참조하세요.
+
+## 추후 계획
+
+- **TechPicks API**: 더욱 풍부하고 실시간적인 데이터 제공을 위해 TechPicks 전용 API 개발 및 통합을 계획 중입니다.
 
 ## 라이선스
 
-[Apache 2.0](LICENSE). 기기 데이터는 TechAPI 의 CC-BY-SA 4.0.
+이 프로젝트는 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)에 따라 라이선스가 부여됩니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
