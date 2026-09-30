@@ -37,6 +37,10 @@ class TpLaunch extends StatefulWidget {
   /// 네이티브 스플래시의 로고 크기. `LaunchImage@3x.png` 375px ÷ 3.
   static const double logoSize = 125;
 
+  /// 판이 다 커졌을 때의 모서리. 요즘 iPhone 화면 모서리에 가까운 값이라
+  /// 다 커지면 화면 테두리와 겹쳐 안 보인다.
+  static const double screenCorner = 55;
+
   /// 토글이 켜지는 시간. 저장값을 읽는 동안 같이 돌아서 켜는 시간을 늘리지
   /// 않는다. 준비가 먼저 끝나도 이것만은 끝까지 본다.
   static const Duration toggle = Duration(milliseconds: 620);
@@ -167,11 +171,12 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
         }
 
         // 판이 화면만큼 커진다(iOS 는 앱이 열리듯 네모, Android 는 원형 리빌).
-        final grow = part(0, .62, Curves.easeInOutCubic);
+        // 처음에 빠르게, 끝에서 부드럽게(iOS 앱 열기와 같은 쪽).
+        final grow = part(0, .62, Curves.fastEaseInToSlowEaseOut);
         // 판 색은 아이콘 색에서 앱 바탕색으로. 다 커지면 첫 화면과 같은 색이다.
         final tint = part(.05, .62);
         final colors = <Color>[for (final c in from) Color.lerp(c, end, tint)!];
-        final gone = part(0, .25, Curves.easeIn);
+        final gone = part(0, .3, Curves.easeIn);
         final appIn = part(.42, .95, Curves.easeOut);
 
         final Widget plate;
@@ -193,13 +198,19 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
             ),
           );
         } else {
+          // 세로가 먼저 자라 폰 화면 모양을 닮아 가고, 모서리는 아이콘 곡선에서
+          // 화면 모서리 곡선으로 이어진다. 네모난 상자로 보이는 순간이 없다.
           plate = Center(
             child: Container(
               width: size + (screen.width - size) * grow,
-              height: size + (screen.height - size) * grow,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(
-                  size * TpLogo.cornerRatio * (1 - grow),
+              height: size + (screen.height - size) * math.pow(grow, .75),
+              decoration: ShapeDecoration(
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.circular(
+                    size * TpLogo.cornerRatio +
+                        (TpLaunch.screenCorner - size * TpLogo.cornerRatio) *
+                            grow,
+                  ),
                 ),
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -222,14 +233,17 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
                 child: Center(
                   child: Opacity(
                     opacity: 1 - gone,
-                    child: Transform.scale(scale: 1 + .18 * gone, child: mark),
+                    // 판과 같이 커지며 빠진다.
+                    child: Transform.scale(scale: 1 + .6 * grow, child: mark),
                   ),
                 ),
               ),
             // 첫 화면. 처음부터 그려 두고(자리 잡기), 판이 앱 바탕색이 된 뒤에
             // 그 위로 떠오른다.
+            // 완전히 투명하면 Flutter 가 아예 안 그려서, 떠오르는 순간 첫 그리기로
+            // 한 번 멈칫한다. 보이지 않을 만큼 옅게라도 미리 그려 둔다.
             Opacity(
-              opacity: appIn,
+              opacity: math.max(appIn, .001),
               child: Transform.scale(scale: .985 + .015 * appIn, child: app),
             ),
           ],
