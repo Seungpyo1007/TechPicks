@@ -16,6 +16,7 @@ import '../../app/theme/tp_tokens.dart';
 import '../copy_keys.dart';
 import 'tp_group.dart';
 import 'tp_menu.dart';
+import '../brand/tp_logo.dart';
 import '../coach/tp_coach.dart';
 import 'tp_arrive.dart';
 import 'tp_surface.dart';
@@ -232,7 +233,10 @@ class TpPage extends StatelessWidget {
             ),
           ),
         if (onRefresh != null && glass)
-          CupertinoSliverRefreshControl(onRefresh: onRefresh),
+          CupertinoSliverRefreshControl(
+            onRefresh: onRefresh,
+            builder: _refreshMark,
+          ),
         ...slivers,
         SliverToBoxAdapter(child: SizedBox(height: bottom)),
       ],
@@ -256,7 +260,7 @@ class TpPage extends StatelessWidget {
                     tab: tab,
                     coach: coach,
                     child: onRefresh != null && !glass
-                        ? RefreshIndicator(onRefresh: onRefresh!, child: body)
+                        ? _TpRefresh(onRefresh: onRefresh!, child: body)
                         : body,
                   ),
                 ),
@@ -914,15 +918,7 @@ class TpPill extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           if (busy) ...<Widget>[
-            SizedBox.square(
-              dimension: 18,
-              child: context.tp.isGlass
-                  ? CupertinoActivityIndicator(color: sys.label2)
-                  : CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: sys.label2,
-                    ),
-            ),
+            const TpLogoLoader(size: 18),
             const SizedBox(width: 8),
           ] else if (icon != null) ...<Widget>[
             AnimatedSwitcher(
@@ -961,6 +957,74 @@ class TpPill extends StatelessWidget {
       excludeSemantics: true,
       onTap: busy ? null : onTap,
       child: TpTappable(onTap: busy ? null : onTap, press: true, child: face),
+    );
+  }
+}
+
+/// iOS 당겨서 새로고침: 시스템 스피너 대신 로고 로더. 당기는 동안은 당긴 만큼
+/// 나타나고, 놓으면 돈다.
+Widget _refreshMark(
+  BuildContext context,
+  RefreshIndicatorMode mode,
+  double pulled,
+  double trigger,
+  double extent,
+) {
+  final shown = (pulled / trigger).clamp(0.0, 1.0);
+  if (mode == RefreshIndicatorMode.inactive || shown == 0) {
+    return const SizedBox.shrink();
+  }
+  return Center(
+    child: Opacity(
+      opacity: mode == RefreshIndicatorMode.drag ? shown : 1,
+      child: const TpLogoLoader(size: 26),
+    ),
+  );
+}
+
+/// Android 당겨서 새로고침: M3 동작(당기기·튕기기)은 그대로, 원형 스피너
+/// 자리에 로고 로더.
+class _TpRefresh extends StatefulWidget {
+  const _TpRefresh({required this.onRefresh, required this.child});
+
+  final Future<void> Function() onRefresh;
+  final Widget child;
+
+  @override
+  State<_TpRefresh> createState() => _TpRefreshState();
+}
+
+class _TpRefreshState extends State<_TpRefresh> {
+  RefreshIndicatorStatus? _status;
+
+  @override
+  Widget build(BuildContext context) {
+    final busy =
+        _status == RefreshIndicatorStatus.armed ||
+        _status == RefreshIndicatorStatus.snap ||
+        _status == RefreshIndicatorStatus.refresh;
+    return Stack(
+      children: <Widget>[
+        RefreshIndicator.noSpinner(
+          onRefresh: widget.onRefresh,
+          onStatusChange: (s) {
+            if (mounted && s != _status) setState(() => _status = s);
+          },
+          child: widget.child,
+        ),
+        Positioned(
+          top: MediaQuery.paddingOf(context).top + 72,
+          left: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: busy ? 1 : 0,
+              duration: context.motion.selection.duration,
+              child: const Center(child: TpLogoLoader(size: 26)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

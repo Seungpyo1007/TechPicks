@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../shared/brand/tp_logo.dart';
 import '../../app/providers.dart';
 import '../../app/shell/tp_tab.dart';
 import '../../app/shell/tp_tab_bar.dart';
@@ -339,12 +340,7 @@ class _Loading extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          SizedBox.square(
-            dimension: 18,
-            child: context.tp.isGlass
-                ? const CupertinoActivityIndicator()
-                : const CircularProgressIndicator(strokeWidth: 2),
-          ),
+          const TpLogoLoader(size: 18),
           const SizedBox(width: 10),
           Flexible(
             child: Text(

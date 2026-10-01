@@ -12,7 +12,7 @@ import 'package:techpicks/data/dto/smartphone.dart';
 import 'package:techpicks/data/service/ask_service.dart';
 import 'package:techpicks/domain/model/ask_answer.dart';
 import 'package:techpicks/feature/ask/ask_screen.dart';
-import 'package:techpicks/shared/widgets/tp_toggle_loader.dart';
+import 'package:techpicks/shared/brand/tp_logo.dart';
 import 'package:techpicks/app/theme/tp_icons.dart';
 
 /// 모델을 부르지 않는 가짜. 화면만 검사한다.
@@ -209,7 +209,7 @@ void main() {
 
     expect(find.byKey(AskScreen.thinkingKey), findsOneWidget);
     // 로고 토글을 줄인 기다림 표시.
-    expect(find.byType(TpToggleLoader), findsOneWidget);
+    expect(find.byType(TpLogoLoader), findsOneWidget);
 
     answer.complete(null);
     await tester.pumpAndSettle();
