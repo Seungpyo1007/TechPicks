@@ -1,11 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../shared/brand/tp_logo.dart';
-import '../shared/copy_keys.dart';
 import '../shared/tp_haptics.dart';
 import 'theme/tp_motion.dart';
 import 'theme/tp_sys.dart';
@@ -47,13 +45,6 @@ class TpLaunch extends StatefulWidget {
   /// 다 커지면 화면 테두리와 겹쳐 안 보인다.
   static const double screenCorner = 55;
 
-  /// 확인용: `--dart-define=LAUNCH_HOLD_MS=3000` 이면 준비를 그만큼 늦춰
-  /// 기다리는 모습(손잡이 숨)을 볼 수 있다. 기본 0.
-  static const int holdMs = int.fromEnvironment('LAUNCH_HOLD_MS');
-
-  /// 기다리는 동안 손잡이가 한 번 숨 쉬는 시간.
-  static const Duration breath = Duration(milliseconds: 1600);
-
   /// 토글이 켜지는 시간. 저장값을 읽는 동안 같이 돌아서 켜는 시간을 늘리지
   /// 않는다. 준비가 먼저 끝나도 이것만은 끝까지 본다.
   static const Duration toggle = Duration(milliseconds: 620);
@@ -76,30 +67,6 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
     duration: TpLaunch.toggle,
   );
 
-  /// 토글이 다 켜졌는데 준비가 아직이면 손잡이가 숨을 쉰다(1.6초 주기).
-  /// 준비되면 주기를 기다리지 않고 0.2초에 제자리로 돌아와 열린다.
-  late final AnimationController _wait = AnimationController(
-    vsync: this,
-    duration: TpLaunch.breath,
-  );
-  late final AnimationController _settle = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 200),
-  );
-  double _settleFrom = 0;
-
-  /// [TpLaunch.holdMs] 가 지났는가.
-  bool _held = TpLaunch.holdMs <= 0;
-  bool get _ready => widget.ready && _held;
-
-  static double _wave(double v) => (1 - math.cos(2 * math.pi * v)) / 2;
-
-  double get _breath => _settle.isAnimating || _settle.isCompleted
-      ? _settleFrom * (1 - Curves.easeOut.transform(_settle.value))
-      : _wait.isAnimating
-      ? _wave(_wait.value)
-      : 0;
-
   /// 로고가 다 열렸는가. 그 뒤로는 이 위젯이 아무것도 안 얹는다.
   bool _done = false;
 
@@ -112,29 +79,17 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
           setState(() => _done = true);
         }
       });
-    if (!_held) {
-      Future<void>.delayed(const Duration(milliseconds: TpLaunch.holdMs), () {
-        if (!mounted) return;
-        final was = _ready;
-        _held = true;
-        if (!was && _ready) _readied();
-      });
-    }
     _on.addStatusListener((status) {
       if (status != AnimationStatus.completed) return;
       TpHaptics.selection();
-      if (_ready) {
-        _start();
-      } else if (mounted && context.motion.loops) {
-        _wait.repeat();
-      }
+      if (widget.ready) _start();
     });
     // 첫 프레임은 스플래시와 같은 꺼진 로고. 그다음부터 켠다.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (MediaQuery.disableAnimationsOf(context)) {
         _on.value = 1;
-        if (_ready) _start();
+        if (widget.ready) _start();
       } else {
         _on.forward();
       }
@@ -144,23 +99,7 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
   @override
   void didUpdateWidget(TpLaunch old) {
     super.didUpdateWidget(old);
-    if (_ready && !(old.ready && _held)) _readied();
-  }
-
-  /// 준비가 끝났다. 토글이 아직 켜지는 중이면 그게 끝날 때 연다.
-  void _readied() {
-    if (_settle.isAnimating || _c.isAnimating || _c.isCompleted) return;
-    if (_on.isCompleted) {
-      if (_wait.isAnimating) {
-        _settleFrom = _wave(_wait.value);
-        _wait.stop();
-        _settle.forward(from: 0).whenComplete(() {
-          if (mounted) _start();
-        });
-      } else {
-        _start();
-      }
-    }
+    if (widget.ready && !old.ready && _on.isCompleted) _start();
   }
 
   void _start() {
@@ -175,8 +114,6 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _wait.dispose();
-    _settle.dispose();
     _on.dispose();
     _c.dispose();
     super.dispose();
@@ -199,18 +136,13 @@ class _TpLaunchState extends State<TpLaunch> with TickerProviderStateMixin {
 
     // 막대: 판 위에 따로. 토글이 켜지고, 열릴 때는 먼저 빠진다.
     final mark = AnimatedBuilder(
-      animation: Listenable.merge(<Listenable>[_on, _wait, _settle]),
-      builder: (context, _) => Semantics(
-        liveRegion: _wait.isAnimating,
-        label: _wait.isAnimating ? K.launchWaiting.tr() : null,
-        child: TpLogo(
-          size: size,
-          on: Curves.easeInOutCubic.transform(_on.value),
-          android: android,
-          dark: dark,
-          plate: false,
-          breath: _breath,
-        ),
+      animation: _on,
+      builder: (context, _) => TpLogo(
+        size: size,
+        on: Curves.easeInOutCubic.transform(_on.value),
+        android: android,
+        dark: dark,
+        plate: false,
       ),
     );
 
