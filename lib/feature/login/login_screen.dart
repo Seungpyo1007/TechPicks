@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../../shared/brand/tp_logo.dart';
 import '../../app/providers.dart';
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_sys.dart';
@@ -478,15 +479,7 @@ class _GoogleButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           if (busy)
-            SizedBox.square(
-              dimension: 18,
-              child: glass
-                  ? const CupertinoActivityIndicator(color: Color(0xFF1F1F1F))
-                  : const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF1F1F1F),
-                    ),
-            )
+            const TpLogoLoader(size: 18)
           else
             Image.asset('assets/logo/google_logo.png', width: 18, height: 18),
           const SizedBox(width: 10),
@@ -584,7 +577,7 @@ class _AppleButton extends StatelessWidget {
           SizedBox.square(
             dimension: 18,
             child: busy
-                ? CupertinoActivityIndicator(color: fg)
+                ? TpLogoLoader.mono(size: 18, mono: fg, knob: bg)
                 : Transform.translate(
                     // 공식 버튼처럼 글자 줄에 맞춰 살짝 위로.
                     offset: const Offset(0, -1),

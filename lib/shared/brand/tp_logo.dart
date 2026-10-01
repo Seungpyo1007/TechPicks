@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+
+import '../../app/theme/tp_motion.dart';
+import '../../app/theme/tp_tokens.dart';
 
 /// 앱 아이콘을 코드로 그린 것. 토글이 켜지는 정도([on], 0–1)를 받는다.
 ///
@@ -364,4 +367,229 @@ class _M3Painter extends CustomPainter {
   @override
   bool shouldRepaint(_M3Painter old) =>
       old.on != on || old.dark != dark || old.plate != plate;
+}
+
+// ── 로딩 표시 ──────────────────────────────────────────────
+
+/// 앱의 모든 기다림에 쓰는 표시. 로고 그대로 그리고, 막대 셋이 점수 막대처럼
+/// 0.18초씩 어긋나 차올랐다 비워진다(물결). 맨 위 토글 막대는 파란 채움이
+/// 오른쪽에서 차오르고 손잡이가 그 끝을 따라간다.
+///
+/// `motion.loops` 가 꺼져 있으면(동작 줄이기, 테스트) 꽉 찬 로고로 멈춘다.
+/// 채운 버튼 안에서는 [TpLogoLoader.mono] 로 한 색. 디자인 캔버스 "로딩".
+class TpLogoLoader extends StatefulWidget {
+  const TpLogoLoader({super.key, this.size = 24}) : mono = null, knob = null;
+
+  /// 채운 버튼 안: 막대는 [mono] 한 색, 손잡이는 [knob](버튼 바탕색).
+  const TpLogoLoader.mono({
+    super.key,
+    this.size = 16,
+    required Color this.mono,
+    required Color this.knob,
+  });
+
+  /// 16 버튼·글 옆, 24 목록·말풍선, 48 화면 가운데.
+  final double size;
+  final Color? mono;
+  final Color? knob;
+
+  static const Duration period = Duration(milliseconds: 1800);
+
+  /// 한 막대의 차오른 정도. 0.55 까지 차고, 0.8 까지 머물고, 끝에서 비운다.
+  static double fillAt(double t) {
+    const curve = Cubic(.45, 0, .2, 1);
+    final p = t % 1;
+    if (p < .55) return .06 + .94 * curve.transform(p / .55);
+    if (p < .8) return 1;
+    return 1 - .94 * curve.transform((p - .8) / .2);
+  }
+
+  @override
+  State<TpLogoLoader> createState() => _TpLogoLoaderState();
+}
+
+class _TpLogoLoaderState extends State<TpLogoLoader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: TpLogoLoader.period,
+  );
+  bool _loops = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loops = context.motion.loops;
+    if (_loops) {
+      if (!_c.isAnimating) _c.repeat();
+    } else {
+      _c.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final glass = context.tp.isGlass;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return ExcludeSemantics(
+      child: SizedBox.square(
+        dimension: widget.size,
+        child: RepaintBoundary(
+          child: CustomPaint(
+            painter: _LoaderPainter(
+              t: _c,
+              loops: _loops,
+              glass: glass,
+              dark: dark,
+              mono: widget.mono,
+              knob: widget.knob,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LoaderPainter extends CustomPainter {
+  _LoaderPainter({
+    required this.t,
+    required this.loops,
+    required this.glass,
+    required this.dark,
+    this.mono,
+    this.knob,
+  }) : super(repaint: t);
+
+  final Animation<double> t;
+  final bool loops;
+  final bool glass;
+  final bool dark;
+  final Color? mono;
+  final Color? knob;
+
+  /// 위에서부터 막대 색(iOS 유리 가운데 색 · Android M3 톤).
+  List<Color> get _colors => glass
+      ? (dark
+            ? const <Color>[
+                Color(0xFF8DB7EE),
+                Color(0xFF6F9CD9),
+                Color(0xFF547EBB),
+              ]
+            : const <Color>[
+                Color(0xFF3560A0),
+                Color(0xFF4375B9),
+                Color(0xFF5C94D9),
+              ])
+      : (dark
+            ? const <Color>[
+                Color(0xFFA9C7FF),
+                Color(0xFFA9C7FF),
+                Color(0xFF7E9FD6),
+              ]
+            : const <Color>[
+                Color(0xFF2A5CAA),
+                Color(0xFF3D64A3),
+                Color(0xFF5A7FBF),
+              ]);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 로고가 차지하는 자리(1024 중 가운데 860)를 상자에 꽉 채운다.
+    canvas
+      ..scale(size.width / 860)
+      ..translate(-(517.0 - 430), -(510.0 - 430));
+    final colors = _colors;
+    final toggle = mono ?? (glass ? const Color(0xFF0A84FF) : colors[0]);
+
+    for (final i in <int>[2, 1, 0]) {
+      final f = loops ? TpLogoLoader.fillAt(t.value - .1 * (2 - i)) : 1.0;
+      final length = _bars[i].$2;
+      final shape = _capsule(length);
+      final base = mono ?? colors[i];
+      _inBar(canvas, i, () {
+        canvas
+          ..drawRRect(shape, Paint()..color = base.withValues(alpha: .22))
+          ..save()
+          ..clipRRect(shape);
+        if (i == 0) {
+          // 토글 막대: 오른쪽에서 차오르는 파란 채움, 손잡이가 끝을 따라간다.
+          // 다 차면 로고와 같은 자리(손잡이가 가운데쯤)에서 멈춘다.
+          final left = shape.right - (shape.right - _knobOn) * f;
+          canvas
+            ..drawRect(
+              Rect.fromLTRB(left, -_h / 2, shape.right, _h / 2),
+              Paint()..color = toggle,
+            )
+            ..restore();
+          _knob(canvas, Offset(math.min(left, shape.right - _h / 2), 0));
+        } else {
+          canvas
+            ..drawRect(
+              Rect.fromLTRB(
+                shape.left,
+                -_h / 2,
+                shape.left + length * f,
+                _h / 2,
+              ),
+              Paint()..color = base,
+            )
+            ..restore();
+        }
+      });
+    }
+  }
+
+  void _knob(Canvas canvas, Offset c) {
+    if (mono != null) {
+      canvas.drawCircle(c, _h * .36, Paint()..color = knob!);
+      return;
+    }
+    if (!glass) {
+      canvas.drawCircle(
+        c,
+        _h * .36,
+        Paint()
+          ..color = dark ? const Color(0xFF0A2A5A) : const Color(0xFFFFFFFF),
+      );
+      return;
+    }
+    const r = 76.0;
+    final rect = Rect.fromCircle(center: c, radius: r);
+    canvas
+      ..drawCircle(
+        c.translate(0, 10),
+        r,
+        Paint()
+          ..color = const Color(0x3316335E)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14),
+      )
+      ..drawCircle(
+        c,
+        r,
+        Paint()
+          ..shader = RadialGradient(
+            center: const Alignment(-.3, -.4),
+            radius: .8,
+            colors: <Color>[
+              const Color(0xFFFFFFFF),
+              dark ? const Color(0xFFC9D1DC) : const Color(0xFFE7ECF3),
+            ],
+          ).createShader(rect),
+      );
+  }
+
+  @override
+  bool shouldRepaint(_LoaderPainter old) =>
+      old.loops != loops ||
+      old.glass != glass ||
+      old.dark != dark ||
+      old.mono != mono ||
+      old.knob != knob;
 }
