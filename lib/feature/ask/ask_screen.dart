@@ -12,6 +12,7 @@ import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../domain/model/ask_answer.dart';
+import '../../shared/brand/tp_logo.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
@@ -417,38 +418,139 @@ class _AiShape extends StatelessWidget {
 /// 답을 기다리는 동안 답 자리에 놓이는 뼈대.
 ///
 /// 글자로 "생각 중…" 이라고 쓰면 그게 답인 줄 알고 읽게 된다.
-class _Thinking extends StatelessWidget {
+class _Thinking extends StatefulWidget {
   const _Thinking({super.key});
+
+  /// 하는 일 한 줄이 바뀌는 간격. 로고 로더 한 주기와 같다.
+  static const Duration step = TpLogoLoader.period;
+
+  @override
+  State<_Thinking> createState() => _ThinkingState();
+}
+
+/// 답을 기다리는 말풍선: 로고 로더 + 하는 일 한 줄 + 곧 올 표의 모양.
+class _ThinkingState extends State<_Thinking> {
+  static const List<String> _steps = <String>[
+    K.askStepPerformance,
+    K.askStepCamera,
+    K.askStepPrice,
+  ];
+
+  Timer? _timer;
+  int _at = 0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _timer?.cancel();
+    _timer = context.motion.loops
+        ? Timer.periodic(_Thinking.step, (_) {
+            if (mounted) setState(() => _at = (_at + 1) % _steps.length);
+          })
+        : null;
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final sys = context.sys;
-    // 답 글자 한 줄과 같은 높이. 배율을 따라간다.
-    final line = (MediaQuery.textScalerOf(context).scale(17) * 1.3)
-        .ceilToDouble();
-
-    Widget bar(double factor) => FractionallySizedBox(
-      alignment: Alignment.centerLeft,
-      widthFactor: factor,
-      child: Container(
-        height: line,
-        decoration: BoxDecoration(
-          color: sys.fill3,
-          borderRadius: BorderRadius.circular(6),
-        ),
+    final move = context.motion.contentSwap;
+    Widget stub(double w, double h) => Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: sys.fill3,
+        borderRadius: BorderRadius.circular(h / 2),
       ),
     );
-
     return Semantics(
       container: true,
+      liveRegion: true,
       label: K.askThinking.tr(),
       excludeSemantics: true,
       child: _AiShape(
-        child: TpShimmer(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[bar(0.9), const SizedBox(height: 8), bar(0.6)],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                const TpLogoLoader(size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: move.duration,
+                    switchInCurve: move.curve,
+                    switchOutCurve: move.curve,
+                    layoutBuilder: (current, previous) => Stack(
+                      alignment: Alignment.centerLeft,
+                      children: <Widget>[...previous, ?current],
+                    ),
+                    transitionBuilder: (child, a) => FadeTransition(
+                      opacity: a,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, .3),
+                          end: Offset.zero,
+                        ).animate(a),
+                        child: child,
+                      ),
+                    ),
+                    child: Text(
+                      _steps[_at].tr(),
+                      key: ValueKey<int>(_at),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 20 / 15,
+                        color: sys.label2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // 곧 올 표: 이름 칸 + 값 막대. 막대는 점수처럼 찼다 비워진다.
+            TpShimmer(
+              child: Column(
+                children: <Widget>[
+                  for (final (name, value) in const <(double, double)>[
+                    (54, .86),
+                    (46, .64),
+                    (40, .72),
+                  ])
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: <Widget>[
+                          SizedBox(
+                            width: 64,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: stub(name, 10),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: value,
+                              child: stub(double.infinity, 8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

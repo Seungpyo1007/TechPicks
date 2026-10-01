@@ -9,6 +9,7 @@ import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../shared/brand/tp_logo.dart';
 import '../../app/providers.dart';
 import '../../app/theme/tp_motion.dart';
 import '../../app/theme/tp_native_glass.dart';
@@ -666,13 +667,21 @@ class _Avatar extends StatelessWidget {
         clipBehavior: Clip.none,
         children: <Widget>[
           face,
+          // 올리는 동안 사진을 어둡게 덮고 가운데 흰 로더. 진행률은 아래 글이 말한다.
           if (uploading)
             Positioned.fill(
-              child: CircularProgressIndicator(
-                value: progress,
-                strokeWidth: 4,
-                color: TpSys.accent,
-                backgroundColor: TpSys.accent.withValues(alpha: .2),
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  color: Color(0x59000000),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: TpLogoLoader.mono(
+                    size: size * .32,
+                    mono: Colors.white,
+                    knob: const Color(0xFF1C1C1E),
+                  ),
+                ),
               ),
             ),
           if (badge)
