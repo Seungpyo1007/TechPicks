@@ -16,7 +16,7 @@ import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_tap_target.dart';
-import '../../shared/widgets/tp_shimmer.dart';
+import '../../shared/widgets/tp_toggle_loader.dart';
 
 /// 질문 시트.
 ///
@@ -423,32 +423,30 @@ class _Thinking extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sys = context.sys;
-    // 답 글자 한 줄과 같은 높이. 배율을 따라간다.
-    final line = (MediaQuery.textScalerOf(context).scale(17) * 1.3)
-        .ceilToDouble();
-
-    Widget bar(double factor) => FractionallySizedBox(
-      alignment: Alignment.centerLeft,
-      widthFactor: factor,
-      child: Container(
-        height: line,
-        decoration: BoxDecoration(
-          color: sys.fill3,
-          borderRadius: BorderRadius.circular(6),
-        ),
-      ),
-    );
-
+    // 로고의 토글을 줄인 표시 + 한 줄. 답이 오면 말풍선이 그대로 답이 된다.
     return Semantics(
       container: true,
+      liveRegion: true,
       label: K.askThinking.tr(),
       excludeSemantics: true,
       child: _AiShape(
-        child: TpShimmer(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[bar(0.9), const SizedBox(height: 8), bar(0.6)],
-          ),
+        hug: true,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const TpToggleLoader(),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                K.askThinking.tr(),
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 20 / 15,
+                  color: sys.label2,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
