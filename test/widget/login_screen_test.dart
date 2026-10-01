@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:riverpod/misc.dart' show Override;
@@ -9,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:techpicks/app/providers.dart';
 import 'package:techpicks/app/theme/app_theme.dart';
+import 'package:techpicks/shared/brand/tp_logo.dart';
 import 'package:techpicks/data/service/auth_service.dart';
 import 'package:techpicks/feature/login/login_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
@@ -115,7 +115,7 @@ void main() {
 
       expect(auth.signIns, <AuthMethod>[AuthMethod.apple]);
       expect(_appleLogo, findsNothing);
-      expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
+      expect(find.byType(TpLogoLoader), findsOneWidget);
       await tester.tap(find.text(K.continueGoogle.tr()));
       await tester.pump();
       expect(auth.signIns, <AuthMethod>[AuthMethod.apple]);

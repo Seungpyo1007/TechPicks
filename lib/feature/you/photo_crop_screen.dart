@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 
+import '../../shared/brand/tp_logo.dart';
 import '../../app/theme/tp_sys.dart';
 import '../../app/theme/tp_tokens.dart';
 import '../../core/error_reporter.dart';
@@ -163,7 +164,11 @@ class _PhotoCropScreenState extends State<PhotoCropScreen> {
                     K.photoFailed.tr(),
                     style: const TextStyle(color: Colors.white),
                   )
-                : const CircularProgressIndicator.adaptive(),
+                : const TpLogoLoader.mono(
+                    size: 32,
+                    mono: Colors.white,
+                    knob: Colors.black,
+                  ),
           );
         }
         _fit(viewport);
