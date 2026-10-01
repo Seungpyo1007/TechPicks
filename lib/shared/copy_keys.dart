@@ -369,7 +369,6 @@ abstract final class K {
   static const String coachCompare = 'coachCompare';
   static const String coachCompareBody = 'coachCompareBody';
   static const String coachKinds = 'coachKinds';
-  static const String launchWaiting = 'launchWaiting';
   static const String coachKindsBody = 'coachKindsBody';
   static const String weightsBalanced = 'weightsBalanced';
   static const String weightsLead = 'weightsLead';
