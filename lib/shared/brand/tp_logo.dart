@@ -18,6 +18,7 @@ class TpLogo extends StatelessWidget {
     this.android = false,
     this.dark = false,
     this.plate = true,
+    this.breath = 0,
   });
 
   final double size;
@@ -29,6 +30,10 @@ class TpLogo extends StatelessWidget {
 
   /// 판(흰 둥근 네모·원)까지 그리는가. 시작 장면은 판만 따로 키우려고 끈다.
   final bool plate;
+
+  /// 기다리는 동안 손잡이의 숨(0–1). 켜진 채 왼쪽으로 조금 갔다 오고, iOS 는
+  /// 그동안 렌즈처럼 늘어나고 Android 는 작아진다. 디자인 캔버스 "시작 · 로딩" 1–2.
+  final double breath;
 
   /// 판의 색. 시작 장면이 이 색에서 앱 바탕색으로 넘어간다.
   static List<Color> plateColors({required bool android, required bool dark}) =>
@@ -52,8 +57,8 @@ class TpLogo extends StatelessWidget {
     dimension: size,
     child: CustomPaint(
       painter: android
-          ? _M3Painter(on: on, dark: dark, plate: plate)
-          : _GlassPainter(on: on, dark: dark, plate: plate),
+          ? _M3Painter(on: on, dark: dark, plate: plate, breath: breath)
+          : _GlassPainter(on: on, dark: dark, plate: plate, breath: breath),
     ),
   );
 }
@@ -100,11 +105,17 @@ void _inBar(Canvas canvas, int i, void Function() draw) {
 // ── iOS 26 유리 ─────────────────────────────────────────────
 
 class _GlassPainter extends CustomPainter {
-  _GlassPainter({required this.on, required this.dark, required this.plate});
+  _GlassPainter({
+    required this.on,
+    required this.dark,
+    required this.plate,
+    required this.breath,
+  });
 
   final double on;
   final bool dark;
   final bool plate;
+  final double breath;
 
   static const List<List<Color>> _light = <List<Color>>[
     <Color>[Color(0xFF3C66A6), Color(0xFF2F5A99)],
@@ -224,7 +235,7 @@ class _GlassPainter extends CustomPainter {
 
   /// 손잡이가 지나간 자리(손잡이부터 오른쪽 끝까지)가 파랗게 남는다.
   void _fill(Canvas canvas, RRect shape) {
-    final x = _knobAt(on);
+    final x = _knobAt(on) - 46 * breath;
     final rect = Rect.fromLTRB(x, -_h / 2, shape.right, _h / 2);
     if (rect.width <= 0) return;
     canvas
@@ -245,9 +256,9 @@ class _GlassPainter extends CustomPainter {
   void _knob(Canvas canvas, Paint shadow) {
     const r = 76.0;
     final moving = math.sin(math.pi * on.clamp(0, 1));
-    final w = r * 2 * (1 + .55 * moving);
+    final w = r * 2 * (1 + .55 * moving + .32 * breath);
     final h = r * 2 * (1 + .08 * moving);
-    final c = Offset(_knobAt(on), 0);
+    final c = Offset(_knobAt(on) - 46 * breath, 0);
     final body = RRect.fromRectAndRadius(
       Rect.fromCenter(center: c, width: w, height: h),
       Radius.circular(h / 2),
@@ -298,17 +309,26 @@ class _GlassPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_GlassPainter old) =>
-      old.on != on || old.dark != dark || old.plate != plate;
+      old.on != on ||
+      old.dark != dark ||
+      old.plate != plate ||
+      old.breath != breath;
 }
 
 // ── Android Material 3 ──────────────────────────────────────
 
 class _M3Painter extends CustomPainter {
-  _M3Painter({required this.on, required this.dark, required this.plate});
+  _M3Painter({
+    required this.on,
+    required this.dark,
+    required this.plate,
+    required this.breath,
+  });
 
   final double on;
   final bool dark;
   final bool plate;
+  final double breath;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -338,7 +358,7 @@ class _M3Painter extends CustomPainter {
     }
     _inBar(canvas, 0, () {
       final shape = _capsule(_bars[0].$2);
-      final x = _knobAt(on);
+      final x = _knobAt(on) - 40 * breath;
       canvas
         ..drawRRect(shape, Paint()..color = track)
         ..save()
@@ -355,7 +375,7 @@ class _M3Painter extends CustomPainter {
         // 켜지며 커지고 색이 바뀐다(M3 스위치 16 → 24dp).
         ..drawCircle(
           Offset(x, 0),
-          _h * (.24 + .12 * on),
+          _h * (.24 + .12 * on) * (1 - .22 * breath),
           Paint()..color = Color.lerp(thumbOff, thumbOn, on)!,
         );
     });
@@ -363,5 +383,8 @@ class _M3Painter extends CustomPainter {
 
   @override
   bool shouldRepaint(_M3Painter old) =>
-      old.on != on || old.dark != dark || old.plate != plate;
+      old.on != on ||
+      old.dark != dark ||
+      old.plate != plate ||
+      old.breath != breath;
 }
