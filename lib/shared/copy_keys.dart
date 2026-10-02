@@ -175,6 +175,8 @@ abstract final class K {
   static const String photoUpdated = 'photoUpdated';
   static const String photoRemoved = 'photoRemoved';
   static const String profileSaved = 'profileSaved';
+  static const String profileSaving = 'profileSaving';
+  static const String deletingAccount = 'deletingAccount';
   static const String profileFailed = 'profileFailed';
   static const String save = 'save';
   static const String logout = 'logout';
