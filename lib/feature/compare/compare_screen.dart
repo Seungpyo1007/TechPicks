@@ -23,7 +23,7 @@ import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_number.dart';
 import '../../shared/widgets/tp_pop_in.dart';
-import '../../shared/widgets/tp_shimmer.dart';
+import '../../shared/widgets/tp_reveal.dart';
 
 double _lines(BuildContext context, TextStyle style, int lines) =>
     MediaQuery.textScalerOf(context).scale(style.fontSize!) *
@@ -71,7 +71,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
 
     final Widget table;
     if (loading) {
-      table = const _TableSkeleton();
+      table = const TpLoadingMark();
     } else if (catalog.hasError) {
       table = const TpCatalogError();
     } else if (pairs.isEmpty) {
@@ -112,47 +112,53 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
               16,
               a != null && b != null && pairs.isNotEmpty ? 0 : 16,
             ),
-            child: TpCoachTarget(
-              id: 'compare-heads',
-              child: Row(
-                key: _heads,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Expanded(
-                    child: _Swap(
-                      side: CompareSide.a,
-                      slug: a?.slug,
-                      child: _ColumnHead(
-                        device: a,
-                        weights: weights,
-                        winner:
-                            pairs.isNotEmpty &&
-                            pairs.first.winner == CompareSide.a,
-                        onTap: onPick == null
-                            ? null
-                            : () => onPick!(CompareSide.a),
+            child: TpReveal(
+              loading: loading,
+              // 읽는 동안은 비워 둔다. "고르기" 칸이 떴다가 기기로 바뀌면 튄다.
+              child: loading
+                  ? const SizedBox.shrink()
+                  : TpCoachTarget(
+                      id: 'compare-heads',
+                      child: Row(
+                        key: _heads,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Expanded(
+                            child: _Swap(
+                              side: CompareSide.a,
+                              slug: a?.slug,
+                              child: _ColumnHead(
+                                device: a,
+                                weights: weights,
+                                winner:
+                                    pairs.isNotEmpty &&
+                                    pairs.first.winner == CompareSide.a,
+                                onTap: onPick == null
+                                    ? null
+                                    : () => onPick!(CompareSide.a),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _Swap(
+                              side: CompareSide.b,
+                              slug: b?.slug,
+                              child: _ColumnHead(
+                                device: b,
+                                weights: weights,
+                                winner:
+                                    pairs.isNotEmpty &&
+                                    pairs.first.winner == CompareSide.b,
+                                onTap: onPick == null
+                                    ? null
+                                    : () => onPick!(CompareSide.b),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _Swap(
-                      side: CompareSide.b,
-                      slug: b?.slug,
-                      child: _ColumnHead(
-                        device: b,
-                        weights: weights,
-                        winner:
-                            pairs.isNotEmpty &&
-                            pairs.first.winner == CompareSide.b,
-                        onTap: onPick == null
-                            ? null
-                            : () => onPick!(CompareSide.b),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ),
@@ -167,7 +173,9 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
               weights: weights,
             ),
           ),
-        SliverToBoxAdapter(child: table),
+        SliverToBoxAdapter(
+          child: TpReveal(loading: loading, order: 1, child: table),
+        ),
       ],
     );
   }
@@ -723,36 +731,6 @@ class _Cell extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TableSkeleton extends StatelessWidget {
-  const _TableSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    final t = context.tp;
-    // 표 카드와 같은 16 여백. 없으면 화면 끝까지 붙는다.
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: TpShimmer(
-        child: Column(
-          children: <Widget>[
-            for (var i = 0; i < 6; i++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Container(
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: t.track,
-                    borderRadius: BorderRadius.circular(t.rInner),
-                  ),
-                ),
-              ),
-          ],
         ),
       ),
     );
