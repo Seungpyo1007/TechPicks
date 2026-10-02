@@ -12,7 +12,7 @@ import 'package:techpicks/feature/compare/compare_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/spec_labels.dart';
 import 'package:techpicks/shared/widgets/tp_bar.dart';
-import 'package:techpicks/shared/widgets/tp_shimmer.dart';
+import 'package:techpicks/shared/widgets/tp_reveal.dart';
 
 import '../support/harness.dart';
 
@@ -126,7 +126,7 @@ void main() {
     expect(find.text(K.askWhy.tr()), findsNothing);
   });
 
-  testWidgets('스켈레톤도 표처럼 좌우 16 을 띄운다', (tester) async {
+  testWidgets('읽는 동안은 로고 로더만 있고 고르기 칸은 없다', (tester) async {
     // 끝나지 않는 카탈로그. 읽는 중에 머문다.
     final never = Completer<Catalog>();
     await pumpScreenNoSettle(
@@ -138,9 +138,8 @@ void main() {
       ],
     );
 
-    final skeleton = tester.getRect(find.byType(TpShimmer));
-    expect(skeleton.left, 16);
-    expect(skeleton.right, 402 - 16);
+    expect(find.byType(TpLoadingMark), findsOneWidget);
+    expect(find.text(K.choose.tr()), findsNothing);
   });
 
   test('점수 막대는 승자를 못 가리는 줄에만 있다', () {

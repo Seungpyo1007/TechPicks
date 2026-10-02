@@ -14,6 +14,7 @@ import '../../domain/model/processor.dart';
 import '../../domain/model/ranking.dart';
 import '../../shared/coach/tp_coach.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_reveal.dart';
 import '../../shared/widgets/tp_arrive.dart';
 import '../../shared/widgets/tp_error_state.dart';
 import '../../shared/widgets/tp_group.dart';
@@ -61,6 +62,7 @@ class _Parts {
     required this.sort,
     required this.status,
     required this.list,
+    this.loading = false,
     this.onClear,
     this.onAll,
     this.top = const <Widget>[],
@@ -70,6 +72,9 @@ class _Parts {
   final List<TpMenuItem> sort;
   final String status;
   final Widget list;
+
+  /// 목록을 처음 읽는 중. 다 읽으면 로더가 사라지고 행이 들어온다.
+  final bool loading;
 
   /// 필터를 기본값으로. null 이면 "지우기"가 없다.
   final VoidCallback? onClear;
@@ -110,7 +115,14 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
       ..listen(processorSegmentProvider, (_, _) => _changed())
       ..listen(processorSortProvider, (_, _) => _changed())
       ..listen(laptopSortProvider, (_, _) => _changed())
-      ..listen(laptopTierProvider, (_, _) => _changed());
+      ..listen(laptopTierProvider, (_, _) => _changed())
+      // 스켈레톤이 걷히는 순간 행이 들어온다. 안 그러면 한 번에 툭 바뀐다.
+      ..listen(catalogProvider, (prev, next) {
+        if (prev is AsyncLoading && next is! AsyncLoading) _changed();
+      })
+      ..listen(laptopsProvider, (prev, next) {
+        if (prev is AsyncLoading && next is! AsyncLoading) _changed();
+      });
 
     final glass = context.tp.isGlass;
     final sys = context.sys;
@@ -193,7 +205,11 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
             ),
           ),
         ),
-        TpArriveScope(at: arriveAt, from: _from, child: parts.list),
+        TpArriveScope(
+          at: arriveAt,
+          from: _from,
+          child: TpReveal.sliver(loading: parts.loading, sliver: parts.list),
+        ),
       ],
     );
   }
@@ -285,6 +301,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
           ? null
           : () => ref.read(rankBrandProvider.notifier).set(null),
       list: list,
+      loading: loading,
     );
   }
 
@@ -373,6 +390,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
           ),
       ],
       list: list,
+      loading: catalog is AsyncLoading && !catalog.hasError,
     );
   }
 
@@ -469,6 +487,7 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
           ? null
           : () => ref.read(laptopTierProvider.notifier).set(null),
       list: list,
+      loading: !laptops.hasError && laptops.isLoading && all.isEmpty,
     );
   }
 }
