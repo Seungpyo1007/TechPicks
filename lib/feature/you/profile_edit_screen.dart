@@ -549,7 +549,16 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     ],
                   ),
                 ),
-                if (_notice != null) ...<Widget>[
+                if (_busy) ...<Widget>[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: <Widget>[
+                      const TpLogoLoader(size: 16),
+                      const SizedBox(width: 8),
+                      Text(K.profileSaving.tr(), style: type.caption),
+                    ],
+                  ),
+                ] else if (_notice != null) ...<Widget>[
                   const SizedBox(height: 10),
                   Text(_notice!, style: type.caption),
                 ],
