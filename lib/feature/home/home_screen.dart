@@ -30,7 +30,7 @@ import '../../shared/tp_haptics.dart';
 import '../../shared/widgets/tp_number.dart';
 import '../../shared/figures/tp_figure.dart';
 import '../../shared/figures/tp_figures.dart';
-import '../../shared/widgets/tp_shimmer.dart';
+import '../../shared/widgets/tp_reveal.dart';
 import '../../shared/widgets/tp_surface.dart';
 
 /// 오늘. 관심 목록과 그 결론.
@@ -134,6 +134,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final verdict = ref.watch(verdictProvider);
     final movers = ref.watch(moversProvider);
     final catalog = ref.watch(catalogProvider);
+    // 담긴 기기 수는 카탈로그 없이도 안다. 스켈레톤 줄 수와 부제에 쓴다.
+    final slugs = ref.watch(shortlistProvider);
     final loading = catalog is AsyncLoading && !catalog.hasError;
     // 지난 순위가 없으면(첫 실행) 변동을 지어내지 않고 다음부터 보인다고 말한다.
     final firstRun =
@@ -145,9 +147,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return TpPage(
       title: K.homeTitle.tr(),
-      subtitle: loading || catalog.hasError
+      subtitle: catalog.hasError
           ? null
-          : HomeScreen._subtitle(shortlist.length),
+          : HomeScreen._subtitle(loading ? slugs.length : shortlist.length),
       tab: TpTab.today,
       floating: removed == null
           ? null
@@ -219,67 +221,85 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding: const EdgeInsets.only(top: 16),
             child: TpCoachTarget(
               id: 'verdict',
-              child: AnimatedSwitcher(
-                duration: context.motion.contentSwap.duration,
-                switchInCurve: context.motion.contentSwap.curve,
-                switchOutCurve: context.motion.contentSwap.curve,
+              // 스켈레톤 → 내용은 떠오르며, 내용끼리(빈 목록 ↔ 결론)는 겹쳐 바뀐다.
+              child: TpReveal(
+                loading: loading,
                 child: loading
-                    ? const _HomeSkeleton(key: ValueKey<String>('skeleton'))
-                    : catalog.hasError
-                    ? const TpCatalogError(key: ValueKey<String>('error'))
-                    : verdict == null
-                    ? _EmptyShortlist(
-                        key: const ValueKey<String>('empty'),
-                        onAdd: onAdd,
-                      )
-                    // 판정 기기가 바뀌어도 카드는 그대로 두고 안의 값만 움직인다.
-                    : _VerdictCard(
-                        key: const ValueKey<String>('verdict'),
-                        device: verdict,
-                        onCompareAll: onCompareAll,
-                        onAskWhy: onAskWhy,
-                        onWeights: onWeights,
+                    ? const TpLoadingMark()
+                    : AnimatedSwitcher(
+                        duration: context.motion.contentSwap.duration,
+                        switchInCurve: context.motion.contentSwap.curve,
+                        switchOutCurve: context.motion.contentSwap.curve,
+                        child: catalog.hasError
+                            ? const TpCatalogError(
+                                key: ValueKey<String>('error'),
+                              )
+                            : verdict == null
+                            ? _EmptyShortlist(
+                                key: const ValueKey<String>('empty'),
+                                onAdd: onAdd,
+                              )
+                            // 판정 기기가 바뀌어도 카드는 그대로 두고 안의 값만 움직인다.
+                            : _VerdictCard(
+                                key: const ValueKey<String>('verdict'),
+                                device: verdict,
+                                onCompareAll: onCompareAll,
+                                onAskWhy: onAskWhy,
+                                onWeights: onWeights,
+                              ),
                       ),
               ),
             ),
           ),
         ),
-        if (shortlist.isNotEmpty)
-          SliverToBoxAdapter(
-            child: TpGroup(
-              header: K.shortlist.tr(),
-              big: true,
-              headerAction: onAdd == null
-                  ? null
-                  : _TextButton(label: K.addDevice.tr(), onTap: onAdd!),
-              children: <Widget>[
-                for (final d in shortlist)
-                  _ShortlistRow(
-                    key: ValueKey<String>('slot-${d.slug}'),
-                    device: d,
-                    onTap: onDeviceTap == null
+        // 늘 자리를 둔다. 로딩이 끝나는 순간 같은 자리에서 떠올라야 한다.
+        SliverToBoxAdapter(
+          child: TpReveal(
+            loading: loading,
+            order: 1,
+            child: shortlist.isEmpty
+                ? const SizedBox.shrink()
+                : TpGroup(
+                    header: K.shortlist.tr(),
+                    big: true,
+                    headerAction: onAdd == null
                         ? null
-                        : () => onDeviceTap!(d.slug),
-                    onCompare: onCompareDevice == null
-                        ? null
-                        : () => onCompareDevice!(d.slug),
-                    onAskWhy: onAskWhy,
-                    onRemove: () => _remove(d),
+                        : _TextButton(label: K.addDevice.tr(), onTap: onAdd!),
+                    children: <Widget>[
+                      for (final d in shortlist)
+                        _ShortlistRow(
+                          key: ValueKey<String>('slot-${d.slug}'),
+                          device: d,
+                          onTap: onDeviceTap == null
+                              ? null
+                              : () => onDeviceTap!(d.slug),
+                          onCompare: onCompareDevice == null
+                              ? null
+                              : () => onCompareDevice!(d.slug),
+                          onAskWhy: onAskWhy,
+                          onRemove: () => _remove(d),
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
-        if (movers.isNotEmpty || firstRun)
-          SliverToBoxAdapter(
-            child: TpGroup(
-              header: K.movers.tr(),
-              big: true,
-              children: <Widget>[
-                for (final m in movers) _MoverRow(mover: m, onTap: onMoversTap),
-                if (firstRun) const _MoversLater(),
-              ],
-            ),
+        ),
+        SliverToBoxAdapter(
+          child: TpReveal(
+            loading: loading,
+            order: 2,
+            child: movers.isEmpty && !firstRun
+                ? const SizedBox.shrink()
+                : TpGroup(
+                    header: K.movers.tr(),
+                    big: true,
+                    children: <Widget>[
+                      for (final m in movers)
+                        _MoverRow(mover: m, onTap: onMoversTap),
+                      if (firstRun) const _MoversLater(),
+                    ],
+                  ),
           ),
+        ),
       ],
     );
   }
@@ -950,30 +970,4 @@ class _MoverRow extends StatelessWidget {
       ),
     );
   }
-}
-
-class _HomeSkeleton extends StatelessWidget {
-  const _HomeSkeleton({super.key});
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: TpShimmer(
-      child: Column(
-        children: <Widget>[
-          for (final height in <double>[260, 60, 60, 60])
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Container(
-                height: height,
-                decoration: BoxDecoration(
-                  color: context.sys.fill3,
-                  borderRadius: BorderRadius.circular(TpGroup.radius),
-                ),
-              ),
-            ),
-        ],
-      ),
-    ),
-  );
 }

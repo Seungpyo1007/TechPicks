@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/analytics.dart';
 import '../core/error_reporter.dart';
+import '../core/slow_load.dart';
 import '../data/dto/cpu.dart';
 import '../data/dto/laptop.dart';
 import '../data/dto/smartphone.dart';
@@ -78,6 +79,7 @@ final laptopRepositoryProvider = Provider<LaptopRepository>(
 
 final catalogProvider = FutureProvider<Catalog>(
   (ref) async {
+    await slowLoad();
     final result = await ref.watch(catalogRepositoryProvider).load();
     return result.fold((c) => c, (f) => throw f);
   },
@@ -545,6 +547,7 @@ final shortlistProvider = NotifierProvider<ShortlistNotifier, List<String>>(
 /// 열려야 한다.
 final deviceProvider = FutureProvider.family<Smartphone, String>(
   (ref, slug) async {
+    await slowLoad();
     final catalog = await ref.watch(catalogProvider.future);
     final local = catalog.smartphones.where((d) => d.slug == slug);
     if (local.isNotEmpty) return local.first;
@@ -1193,6 +1196,7 @@ class ProfileNotifier extends AsyncNotifier<TpProfile> {
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return false;
 
+    await slowLoad();
     final ok = await ref.read(profileServiceProvider).save(uid, profile);
     if (ok && ref.mounted) state = AsyncData(profile);
     return ok;
@@ -1298,6 +1302,7 @@ class CurrentUserNotifier extends Notifier<TpUser?> {
   /// 성공하면 기기의 계정 데이터도 기본값으로 돌린다.
   Future<AuthFailure?> deleteAccount({String? password}) async {
     final cleanup = ref.read(accountCleanupProvider);
+    await slowLoad();
     final failure = await ref
         .read(authServiceProvider)
         .deleteAccount(password: password, cleanup: cleanup);

@@ -460,14 +460,8 @@ class _ThinkingState extends State<_Thinking> {
   Widget build(BuildContext context) {
     final sys = context.sys;
     final move = context.motion.contentSwap;
-    Widget stub(double w, double h) => Container(
-      width: w,
-      height: h,
-      decoration: BoxDecoration(
-        color: sys.fill3,
-        borderRadius: BorderRadius.circular(h / 2),
-      ),
-    );
+    Widget stub(double w, double h, [double delay = 0]) =>
+        TpBone(width: w.isFinite ? w : null, height: h, delay: delay);
     return Semantics(
       container: true,
       liveRegion: true,
