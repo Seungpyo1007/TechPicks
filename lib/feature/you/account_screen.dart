@@ -32,6 +32,9 @@ class AccountScreen extends ConsumerStatefulWidget {
 class _AccountScreenState extends ConsumerState<AccountScreen> {
   String? _notice;
 
+  /// 계정을 지우는 중. 버튼 자리에 로고 로더.
+  bool _deleting = false;
+
   bool get _emailAccount =>
       (widget.method ?? AuthMethod.email) == AuthMethod.email;
 
@@ -132,15 +135,21 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               if (glass) ...<Widget>[
                 TpArrive(
                   index: 3,
-                  child: _AccountAction(label: K.logout.tr(), onTap: logout),
+                  child: _AccountAction(
+                    label: K.logout.tr(),
+                    onTap: _deleting ? null : logout,
+                  ),
                 ),
                 TpArrive(
                   index: 4,
                   child: _AccountAction(
-                    label: K.deleteAccount.tr(),
+                    label: _deleting
+                        ? K.deletingAccount.tr()
+                        : K.deleteAccount.tr(),
                     destructive: true,
+                    busy: _deleting,
                     footer: K.deleteNote.tr(),
-                    onTap: delete,
+                    onTap: _deleting ? null : delete,
                   ),
                 ),
               ] else ...<Widget>[
@@ -152,13 +161,16 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                       title: K.logout.tr(),
                       destructive: true,
                       chevron: false,
-                      onTap: logout,
+                      onTap: _deleting ? null : logout,
                     ),
                     TpRow(
-                      title: K.deleteAccount.tr(),
+                      title: _deleting
+                          ? K.deletingAccount.tr()
+                          : K.deleteAccount.tr(),
                       destructive: true,
                       chevron: false,
-                      onTap: delete,
+                      trailing: _deleting ? const TpLogoLoader(size: 18) : null,
+                      onTap: _deleting ? null : delete,
                     ),
                   ],
                 ),
@@ -200,10 +212,12 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   Future<void> _deleteAccount() async {
     final answer = await _confirmDelete(context, askPassword: _emailAccount);
     if (answer == null || !mounted) return;
+    setState(() => _deleting = true);
     final failure = await ref
         .read(currentUserProvider.notifier)
         .deleteAccount(password: _emailAccount ? answer : null);
     if (!mounted) return;
+    setState(() => _deleting = false);
     if (failure == AuthFailure.canceled) return;
     if (failure == null) {
       TpHaptics.commit();
@@ -233,12 +247,16 @@ class _AccountAction extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.destructive = false,
+    this.busy = false,
     this.footer,
   });
 
   final String label;
   final VoidCallback? onTap;
   final bool destructive;
+
+  /// 처리 중. 글자 앞에 로고 로더, 글자는 그대로 빨강.
+  final bool busy;
 
   /// 카드 아래 한 줄.
   final String? footer;
@@ -270,17 +288,34 @@ class _AccountAction extends StatelessWidget {
                   borderRadius: BorderRadius.circular(TpGroup.radius),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 17,
-                    color: onTap == null
-                        ? sys.label3
-                        : destructive
-                        ? sys.destructive
-                        : sys.label,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (busy) ...<Widget>[
+                      TpLogoLoader.mono(
+                        size: 18,
+                        mono: sys.destructive,
+                        knob: sys.cell,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Flexible(
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 17,
+                          color: busy
+                              ? sys.destructive
+                              : onTap == null
+                              ? sys.label3
+                              : destructive
+                              ? sys.destructive
+                              : sys.label,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

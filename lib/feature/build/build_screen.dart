@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../app/theme/tp_sys.dart';
+import '../../shared/widgets/tp_reveal.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_menu.dart';
 import '../../shared/widgets/tp_page.dart';
@@ -17,7 +18,6 @@ import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/widgets/tp_chip.dart';
 import '../../shared/widgets/tp_error_state.dart';
-import '../../shared/widgets/tp_shimmer.dart';
 import '../../shared/widgets/tp_surface.dart';
 import '../../shared/widgets/tp_slider.dart';
 
@@ -100,6 +100,11 @@ class BuildScreen extends ConsumerWidget {
                 duration: motion.contentSwap.duration,
                 switchInCurve: motion.contentSwap.curve,
                 switchOutCurve: motion.contentSwap.curve,
+                // 위에 맞춰 겹친다. 가운데 맞춤이면 높이가 다른 둘이 위아래로 흔들린다.
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.topCenter,
+                  children: <Widget>[...previous, ?current],
+                ),
                 child: parts.hasError
                     ? TpCatalogError(
                         key: const ValueKey<String>('error'),
@@ -320,41 +325,7 @@ class _ComboSkeleton extends StatelessWidget {
   const _ComboSkeleton({super.key});
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: TpShimmer(
-      child: Column(
-        children: <Widget>[
-          for (var i = 0; i < 3; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: TpSurface(
-                padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    for (final width in <double>[0.6, 0.5, 0.8])
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: FractionallySizedBox(
-                          widthFactor: width,
-                          child: Container(
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: context.sys.fill3,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => const TpLoadingMark(height: 200);
 }
 
 /// 나머지 부품 요구사양. 1등 조합 기준이다.

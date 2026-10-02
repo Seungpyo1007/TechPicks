@@ -17,6 +17,7 @@ import '../../data/dto/smartphone.dart';
 import '../../data/service/link_opener.dart';
 import '../../domain/model/device_specs.dart';
 import '../../domain/model/tp_index.dart';
+import '../../shared/brand/tp_logo.dart';
 import '../../shared/copy_keys.dart';
 import '../../shared/spec_labels.dart';
 import '../../shared/widgets/tp_error_state.dart';
@@ -24,6 +25,7 @@ import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_link_line.dart';
 import '../../shared/widgets/tp_page.dart';
 import '../../shared/widgets/tp_score_strip.dart';
+import '../../shared/widgets/tp_reveal.dart';
 import '../share/share_text.dart';
 import '../../shared/tp_haptics.dart';
 import '../../shared/widgets/tp_number.dart';
@@ -98,17 +100,21 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       ],
       floating: _shareFailed ? const _Notice(key: _Notice.shareKey) : null,
       slivers: <Widget>[
-        device.when(
-          loading: () => const SliverToBoxAdapter(child: _DetailSkeleton()),
-          error: (e, _) => SliverToBoxAdapter(
-            child: _DetailError(error: e, slug: slug),
-          ),
-          data: (d) => SliverToBoxAdapter(
-            child: _DetailBody(
-              device: d,
-              onCompare: widget.onCompare,
-              onView3D: widget.onView3D,
-              onSignIn: widget.onSignIn,
+        TpReveal.sliver(
+          loading: !device.hasValue && !device.hasError,
+          sliver: device.when(
+            loading: () =>
+                const SliverToBoxAdapter(child: TpLoadingMark(height: 420)),
+            error: (e, _) => SliverToBoxAdapter(
+              child: _DetailError(error: e, slug: slug),
+            ),
+            data: (d) => SliverToBoxAdapter(
+              child: _DetailBody(
+                device: d,
+                onCompare: widget.onCompare,
+                onView3D: widget.onView3D,
+                onSignIn: widget.onSignIn,
+              ),
             ),
           ),
         ),
@@ -472,34 +478,14 @@ class _ImageSlot extends StatelessWidget {
               fit: BoxFit.contain,
               width: double.infinity,
               height: 236,
+              // 받는 동안은 로고 로더. 다 오면 사진이 바로 자리를 잇는다.
+              loadingBuilder: (_, child, progress) => progress == null
+                  ? child
+                  : const Center(child: TpLogoLoader(size: 32)),
               errorBuilder: (_, _, _) => placeholder,
             ),
     );
   }
-}
-
-class _DetailSkeleton extends StatelessWidget {
-  const _DetailSkeleton();
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: Column(
-      children: <Widget>[
-        for (final h in <double>[236, 40, 110, 220])
-          Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Container(
-              height: h,
-              decoration: BoxDecoration(
-                color: context.sys.fill3,
-                borderRadius: BorderRadius.circular(TpGroup.radius),
-              ),
-            ),
-          ),
-      ],
-    ),
-  );
 }
 
 class _BrandCard extends ConsumerWidget {

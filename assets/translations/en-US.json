@@ -137,6 +137,8 @@
   "prioritiesNote": "These weights are yours. Change them and every index recalculates.",
   "profileFailed": "Could not save. Check your connection and try again.",
   "profileSaved": "Saved.",
+  "profileSaving": "Saving",
+  "deletingAccount": "Deleting account",
   "pronounsLabel": "Pronouns",
   "pwResetFailed": "Could not send the reset link.",
   "pwResetSent": "Password reset link sent to {}.",

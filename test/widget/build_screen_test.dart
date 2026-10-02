@@ -12,7 +12,7 @@ import 'package:techpicks/domain/model/tp_money.dart';
 import 'package:techpicks/feature/build/build_screen.dart';
 import 'package:techpicks/shared/copy_keys.dart';
 import 'package:techpicks/shared/widgets/tp_chip.dart';
-import 'package:techpicks/shared/widgets/tp_shimmer.dart';
+import 'package:techpicks/shared/widgets/tp_reveal.dart';
 
 import '../support/harness.dart';
 
@@ -111,7 +111,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.textContaining(K.buildEmpty.tr()), findsNothing);
-    expect(find.byType(TpShimmer), findsOneWidget);
+    expect(find.byType(TpLoadingMark), findsOneWidget);
   });
 
   testWidgets('다시 시도가 부품 파일도 다시 읽는다', (tester) async {

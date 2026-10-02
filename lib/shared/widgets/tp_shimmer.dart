@@ -1,14 +1,13 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../app/theme/tp_motion.dart';
+import '../../app/theme/tp_sys.dart';
 import '../brand/tp_logo.dart';
 
-/// 스켈레톤 줄이 점수 막대처럼 차올랐다 비워진다(로고 로더와 같은 움직임).
+/// 스켈레톤 묶음. 안의 [TpBone] 이 로고 막대처럼 각자 차올랐다 비워진다.
 ///
-/// 끝없이 돌기 때문에 `motion.loops` 가 꺼져 있으면(동작 줄이기, 테스트) 그냥
-/// [child] 다. 채움은 child 의 칠해진 곳에만 얹힌다.
+/// 끝없이 돌기 때문에 `motion.loops` 가 꺼져 있으면(동작 줄이기, 테스트) 뼈대
+/// 줄만 회색으로 서 있다.
 class TpShimmer extends StatefulWidget {
   const TpShimmer({super.key, required this.child});
 
@@ -45,47 +44,77 @@ class _TpShimmerState extends State<TpShimmer>
   }
 
   @override
+  Widget build(BuildContext context) => _ShimmerScope(
+    animation: context.motion.loops ? _c : null,
+    child: ExcludeSemantics(child: widget.child),
+  );
+}
+
+class _ShimmerScope extends InheritedWidget {
+  const _ShimmerScope({required this.animation, required super.child});
+
+  final Animation<double>? animation;
+
+  @override
+  bool updateShouldNotify(_ShimmerScope old) => old.animation != animation;
+}
+
+/// 스켈레톤 한 줄. 회색 홈 위에 옅은 파랑이 왼쪽부터 찬다.
+///
+/// [width] 를 주면 그 폭, [widthFactor] 를 주면 남은 폭의 비율, 둘 다 없으면
+/// 가득. [delay] 는 0–1 주기 비율로 늦춘다(로고 막대처럼 어긋나게).
+class TpBone extends StatelessWidget {
+  const TpBone({
+    super.key,
+    this.width,
+    this.widthFactor,
+    this.height = 12,
+    this.radius,
+    this.delay = 0,
+  });
+
+  final double? width;
+  final double? widthFactor;
+  final double height;
+  final double? radius;
+  final double delay;
+
+  @override
   Widget build(BuildContext context) {
-    if (!context.motion.loops) return widget.child;
+    final animation = context
+        .dependOnInheritedWidgetOfExactType<_ShimmerScope>()
+        ?.animation;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    // 로고 로더와 같은 움직임: 스켈레톤 줄이 점수 막대처럼 왼쪽부터 옅은
-    // 파랑으로 찼다가 비워진다. 칠해진 곳(child 의 모양)에만 얹힌다.
     final tint = (dark ? const Color(0xFF8DB7EE) : const Color(0xFF4375B9))
         .withValues(alpha: dark ? .32 : .24);
-    // 스켈레톤 모양은 반투명이라 그 위에 칠하면 같이 흐려진다. 모양만 따로
-    // 불투명하게 떠서(알파를 키움) 그 안에 채움을 칠해 위에 얹는다.
-    final mask = ColorFiltered(
-      colorFilter: const ColorFilter.matrix(<double>[
-        0, 0, 0, 0, 0, //
-        0, 0, 0, 0, 0, //
-        0, 0, 0, 0, 0, //
-        0, 0, 0, 12, 0, //
-      ]),
-      child: widget.child,
-    );
-    return Stack(
-      children: <Widget>[
-        widget.child,
-        Positioned.fill(
-          child: IgnorePointer(
-            child: AnimatedBuilder(
-              animation: _c,
-              builder: (context, child) {
-                final p = TpLogoLoader.fillAt(_c.value);
-                return ShaderMask(
-                  blendMode: BlendMode.srcIn,
-                  shaderCallback: (rect) => LinearGradient(
-                    colors: <Color>[tint, tint, tint.withValues(alpha: 0)],
-                    stops: <double>[0, p, math.min(1, p + .05)],
-                  ).createShader(rect),
-                  child: child,
-                );
-              },
-              child: ExcludeSemantics(child: mask),
-            ),
-          ),
+    final r = BorderRadius.circular(radius ?? height / 2);
+    Widget bone = ClipRRect(
+      borderRadius: r,
+      child: SizedBox(
+        width: width ?? double.infinity,
+        height: height,
+        child: ColoredBox(
+          color: context.sys.fill3,
+          child: animation == null
+              ? null
+              : AnimatedBuilder(
+                  animation: animation,
+                  builder: (context, _) => FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: TpLogoLoader.fillAt(animation.value - delay),
+                    child: ColoredBox(color: tint),
+                  ),
+                ),
         ),
-      ],
+      ),
     );
+    if (widthFactor != null) {
+      bone = FractionallySizedBox(
+        alignment: Alignment.centerLeft,
+        widthFactor: widthFactor,
+        child: bone,
+      );
+    }
+    return bone;
   }
 }

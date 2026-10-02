@@ -22,6 +22,7 @@ import '../../data/service/link_opener.dart';
 import '../../domain/model/tp_money.dart';
 import '../../domain/model/tp_weights.dart';
 import '../../shared/coach/tp_coach.dart';
+import '../../shared/brand/tp_logo.dart';
 import '../../shared/copy_keys.dart';
 import '../login/login_screen.dart' show authMessage;
 import 'profile_edit_screen.dart';

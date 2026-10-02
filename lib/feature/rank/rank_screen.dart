@@ -9,11 +9,11 @@ import '../../domain/model/device_specs.dart';
 import '../../domain/model/ranking.dart';
 import '../../domain/model/tp_money.dart';
 import '../../shared/copy_keys.dart';
+import '../../shared/widgets/tp_reveal.dart';
 import '../../shared/widgets/tp_group.dart';
 import '../../shared/widgets/tp_sheet.dart';
 import 'browse_screen.dart';
 import 'rank_category.dart';
-import '../../shared/widgets/tp_shimmer.dart';
 
 /// 둘러보기 · 스마트폰. 뼈대는 [BrowseScreen] 이 그린다.
 class RankScreen extends StatelessWidget {
@@ -119,25 +119,7 @@ class RankSkeleton extends StatelessWidget {
   const RankSkeleton({super.key});
 
   @override
-  Widget build(BuildContext context) => TpShimmer(
-    child: TpGroup(
-      children: <Widget>[
-        for (var i = 0; i < 6; i++)
-          SizedBox(
-            height: 66,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: context.sys.fill3,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) => const TpLoadingMark();
 }
 
 String formatAxisValue(

@@ -259,23 +259,23 @@ void main() {
       expect(scale(tester), 1);
     });
 
-    testWidgets('반복이 꺼져 있으면 반짝임은 그냥 자식이다', (tester) async {
-      await pumpScreen(
-        tester,
-        const TpShimmer(child: SizedBox(width: 10, height: 10)),
-      );
-      expect(find.byType(ShaderMask), findsNothing);
+    testWidgets('반복이 꺼져 있으면 뼈대 줄은 회색으로 서 있다', (tester) async {
+      await pumpScreen(tester, const TpShimmer(child: TpBone(width: 100)));
+      expect(find.byType(FractionallySizedBox), findsNothing);
     });
 
-    testWidgets('반복이 켜져 있으면 빛이 지나간다', (tester) async {
+    testWidgets('반복이 켜져 있으면 뼈대 줄이 차오른다', (tester) async {
       TpMotion.loopsAllowed = true;
       addTearDown(() => TpMotion.loopsAllowed = false);
       await pumpScreenNoSettle(
         tester,
-        const TpShimmer(child: SizedBox(width: 10, height: 10)),
+        const TpShimmer(child: TpBone(width: 100)),
       );
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byType(ShaderMask), findsOneWidget);
+      final fill = tester.widget<FractionallySizedBox>(
+        find.byType(FractionallySizedBox),
+      );
+      expect(fill.widthFactor, greaterThan(.06));
       // 테스트가 끝나기 전에 트리를 비워 반복을 멈춘다.
       await tester.pumpWidget(const SizedBox());
     });

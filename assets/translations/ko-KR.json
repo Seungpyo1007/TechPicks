@@ -137,6 +137,8 @@
   "prioritiesNote": "가중치는 사용자의 것입니다. 바꾸면 모든 지수가 다시 계산됩니다.",
   "profileFailed": "저장하지 못했습니다. 연결을 확인하고 다시 시도하세요.",
   "profileSaved": "저장했습니다.",
+  "profileSaving": "저장하는 중",
+  "deletingAccount": "계정 삭제하는 중",
   "pronounsLabel": "대명사",
   "pwResetFailed": "재설정 링크를 보내지 못했습니다.",
   "pwResetSent": "{} 로 비밀번호 재설정 링크를 보냈습니다.",
